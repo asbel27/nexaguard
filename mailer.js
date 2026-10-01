@@ -9,22 +9,28 @@ const nodemailer = require('nodemailer');
 function createMailer(options = {}) {
   const host = options.host || process.env.SMTP_HOST || 'mail.nexaguards.com';
   const port = Number(options.port || process.env.SMTP_PORT || 465);
-  const secure = options.secure !== undefined ? options.secure : (port === 465);
+  const secureEnv = process.env.SMTP_SECURE;
+  const secure = options.secure !== undefined
+    ? options.secure
+    : (secureEnv !== undefined ? (secureEnv === '1' || secureEnv === 'true') : (port === 465));
   const user = options.user || process.env.SMTP_USER || 'contacto@nexaguards.com';
   const pass = options.pass || process.env.SMTP_PASS || process.env.EMAIL_PASS || '';
   const toEmail = options.to || process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || user;
+  const resendApiKey = options.resendKey || process.env.RESEND_API_KEY || '';
 
-  const isConfigured = !!(host && user && pass);
+  const isConfigured = !!resendApiKey || !!(host && user && pass);
 
   let transporter = null;
-  if (isConfigured) {
+  if (!resendApiKey && isConfigured) {
     transporter = nodemailer.createTransport({
       host,
       port,
       secure,
       auth: { user, pass },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
       tls: {
-        // En servidores cPanel / HostGator permite resolver nombres de host compartidos
         rejectUnauthorized: false
       }
     });
@@ -143,16 +149,45 @@ ${mensaje || 'Sin mensaje adicional.'}
 Puedes responder directamente a este correo para escribirle a ${correo}.
     `;
 
-    const info = await transporter.sendMail({
-      from: `"NexaGuard" <${user}>`,
-      to: toEmail,
-      replyTo: `"${fullName.replace(/["\r\n]/g, '')}" <${correo}>`,
-      subject: emailSubject,
-      text: textContent,
-      html: htmlContent
-    });
+    if (resendApiKey) {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + resendApiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: `NexaGuard <${user}>`,
+          to: [toEmail],
+          reply_to: correo,
+          subject: emailSubject,
+          html: htmlContent,
+          text: textContent
+        })
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || ('Error al enviar con servicio de correo: HTTP ' + res.status));
+      }
+      return await res.json();
+    }
 
-    return info;
+    try {
+      const info = await transporter.sendMail({
+        from: `"NexaGuard" <${user}>`,
+        to: toEmail,
+        replyTo: `"${fullName.replace(/["\r\n]/g, '')}" <${correo}>`,
+        subject: emailSubject,
+        text: textContent,
+        html: htmlContent
+      });
+      return info;
+    } catch (err) {
+      if (err.code === 'ETIMEDOUT' || (err.message && /timeout|ETIMEDOUT/i.test(err.message))) {
+        throw new Error(`Tiempo de espera agotado al conectar a ${host}:${port}. El puerto SMTP está bloqueado o inaccesible desde Render.`);
+      }
+      throw err;
+    }
   }
 
   return {
