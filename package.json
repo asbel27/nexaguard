@@ -1,0 +1,9 @@
+{
+  "name": "nexaguard",
+  "version": "2.1.0",
+  "description": "Web de reparación de WordPress con escáner en vivo, cuentas, paneles y pago con PayPal",
+  "main": "server.js",
+  "private": true,
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

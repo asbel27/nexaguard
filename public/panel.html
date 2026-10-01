@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi panel | NexaGuard</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%230b1235%22/%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%2210%22 y1=%224%22 x2=%2254%22 y2=%2260%22 gradientUnits=%22userSpaceOnUse%22%3E%3Cstop offset=%220%22 stop-color=%22%23ffcf33%22/%3E%3Cstop offset=%221%22 stop-color=%22%236b8cff%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d=%22M32 8L50 14.5V31C50 43 42.5 51.5 32 56C21.5 51.5 14 43 14 31V14.5Z%22 fill=%22%2315214f%22 stroke=%22url(%23g)%22 stroke-width=%223.4%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M24 41V23L40 41V23%22 fill=%22none%22 stroke=%22%23ffcf33%22 stroke-width=%225.4%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#070c22">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#070c22;--bg2:#0d1538;--panel:#101a44;--panel2:#0b1236;--line:rgba(150,175,255,.16);--line2:rgba(170,195,255,.3);--text:#eaf0ff;--muted:#a0acd2;--yellow:#ffcf33;--yellow-ink:#1a1400;--blue:#6b8cff;--red:#ff4560;--green:#3de8a4;--amber:#ffb020;
+  --fd:'Unbounded','Segoe UI',system-ui,sans-serif;--fb:'Schibsted Grotesk','Segoe UI',system-ui,-apple-system,Roboto,sans-serif;--fm:'JetBrains Mono',ui-monospace,Consolas,monospace;color-scheme:dark}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:16px;line-height:1.55;min-height:100vh;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+h1,h2,h3,h4{font-family:var(--fd);font-weight:600;line-height:1.2;letter-spacing:-.01em}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:2px;border-radius:4px}
+.ic{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* Botones y campos */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;padding:.7em 1.15em;border-radius:10px;border:1px solid transparent;font-weight:700;font-size:.92rem;transition:transform .15s,background .2s,border-color .2s;white-space:nowrap;line-height:1.2}
+.btn-y{background:var(--yellow);color:var(--yellow-ink)}.btn-y:hover{transform:translateY(-1px)}
+.btn-o{border-color:var(--line2);background:rgba(255,255,255,.03)}.btn-o:hover{border-color:var(--text)}
+.btn-r{border-color:rgba(255,69,96,.5);color:#ff9fb0;background:rgba(255,69,96,.08)}.btn-r:hover{background:rgba(255,69,96,.18)}
+.btn.sm{padding:.45em .85em;font-size:.84rem}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.in,select.in,textarea.in{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:10px;padding:.7em .9em;transition:border-color .2s}
+.in:focus{outline:none;border-color:var(--yellow)}
+select.in option{background:#0d1538}
+textarea.in{resize:vertical;min-height:110px}
+.fld{display:grid;gap:6px;margin-bottom:14px}
+.fld>label,.fld>.lb{font-size:.86rem;font-weight:600;color:#cdd6f5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;color:#cdd6f5;cursor:pointer}
+.chk input{margin-top:.3em;accent-color:var(--yellow);width:17px;height:17px;flex:none}
+.err{color:#ff8ba0;font-size:.88rem;min-height:1.3em;margin:6px 0}
+.hint{color:var(--muted);font-size:.86rem}
+
+/* Login */
+.auth{min-height:100vh;display:grid;place-items:center;padding:24px}
+.auth-box{width:min(440px,100%);background:var(--panel2);border:1px solid var(--line2);border-radius:16px;padding:28px;position:relative;overflow:hidden;box-shadow:0 40px 80px -40px #000}
+.auth-box::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:repeating-linear-gradient(-45deg,#ffcf33 0 10px,#0b1030 10px 20px)}
+.brand{display:flex;align-items:center;margin:8px 0 18px;line-height:0}
+.brand svg{height:34px;width:auto;display:block}
+.brand .lg-mark{display:none}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:18px}
+.tabs button{padding:.6em;border:1px solid var(--line2);border-radius:10px;background:none;font-weight:700;font-size:.9rem}
+.tabs button[aria-selected=true]{background:var(--yellow);border-color:var(--yellow);color:var(--yellow-ink)}
+.auth-box h1{font-size:1.25rem;margin-bottom:6px}
+.auth-box p.sub{color:var(--muted);font-size:.92rem;margin-bottom:18px}
+.back{display:inline-block;margin-top:14px;color:var(--muted);font-size:.88rem;text-decoration:underline;text-underline-offset:3px}
+
+/* Estructura */
+.shell{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+.side{position:sticky;top:0;height:100vh;background:var(--panel2);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:6px}
+.side .brand{margin:0 8px 18px}
+.nav-i{display:flex;align-items:center;gap:11px;width:100%;padding:.7em .85em;border-radius:10px;border:0;background:none;text-align:left;color:var(--muted);font-weight:600;font-size:.95rem;transition:background .2s,color .2s}
+.nav-i:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.nav-i[aria-current=page]{background:rgba(255,207,51,.12);color:var(--yellow)}
+.nav-i .badge{margin-left:auto;background:var(--red);color:#fff;font-size:.72rem;border-radius:999px;padding:0 .55em;font-weight:800}
+.side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px}
+.who{padding:0 8px;font-size:.86rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.who b{display:block;color:var(--text);font-size:.95rem}
+.main{padding:28px clamp(16px,3vw,40px) 60px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.top h1{font-size:clamp(1.3rem,2.4vw,1.8rem)}
+.top p{color:var(--muted);margin-top:4px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;min-width:0}
+.card>h3,.card-h{font-size:1rem;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stack{display:grid;gap:16px}
+.pill{display:inline-flex;align-items:center;gap:.4em;font-size:.76rem;font-weight:800;padding:.22em .7em;border-radius:999px;border:1px solid var(--line2);white-space:nowrap}
+.pill.ok{color:var(--green);border-color:rgba(61,232,164,.5);background:rgba(61,232,164,.08)}
+.pill.warn{color:var(--amber);border-color:rgba(255,176,32,.55);background:rgba(255,176,32,.08)}
+.pill.crit{color:#ff8ba0;border-color:rgba(255,69,96,.6);background:rgba(255,69,96,.1)}
+.pill.info{color:#9fb3ff;border-color:rgba(107,140,255,.55);background:rgba(107,140,255,.09)}
+.pill.mute{color:var(--muted)}
+.pill.pri{color:var(--yellow-ink);background:var(--yellow);border-color:var(--yellow)}
+.banner{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:12px;border:1px solid var(--line2);margin-bottom:16px}
+.banner.warn{border-color:rgba(255,176,32,.6);background:rgba(255,176,32,.08)}
+.banner.crit{border-color:var(--red);background:rgba(255,69,96,.1)}
+.banner.info{border-color:rgba(107,140,255,.6);background:rgba(107,140,255,.08)}
+.banner .ic{margin-top:.2em;font-size:1.2em}
+.banner div{flex:1}
+.kpi{display:flex;flex-direction:column;gap:2px}
+.kpi b{font-family:var(--fd);font-size:1.6rem;font-weight:600}
+.kpi span{color:var(--muted);font-size:.86rem}
+.kpi.bad b{color:#ff8ba0}.kpi.good b{color:var(--green)}
+.list{list-style:none;display:grid;gap:8px}
+.list li{display:flex;gap:10px;align-items:flex-start;font-size:.93rem}
+.list .ic{color:var(--green);margin-top:.25em}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:.93rem}
+.kv dt{color:var(--muted)}.kv dd{font-weight:600}
+.empty{color:var(--muted);text-align:center;padding:26px 10px;border:1px dashed var(--line2);border-radius:12px;font-size:.93rem}
+
+/* Tablas */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.75em 1em;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:.8rem;background:rgba(255,255,255,.03)}
+tr:last-child td{border-bottom:0}
+tr.click{cursor:pointer}tr.click:hover td{background:rgba(255,255,255,.04)}
+td.wrap{white-space:normal;min-width:180px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.filters .in{width:auto;min-width:160px}
+
+/* Avance del servicio */
+.stepper{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.st{border:1px solid var(--line2);border-radius:12px;padding:12px;font-size:.86rem;color:var(--muted);position:relative}
+.st b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line2);margin-bottom:8px;font-family:var(--fd);font-size:.8rem}
+.st.done{border-color:rgba(61,232,164,.5);color:var(--text)}.st.done b{background:var(--green);color:#032b1a;border-color:var(--green)}
+.st.now{border-color:var(--yellow);color:var(--text);background:rgba(255,207,51,.07)}.st.now b{background:var(--yellow);color:var(--yellow-ink);border-color:var(--yellow)}
+.bar{height:8px;border-radius:8px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--yellow);border-radius:8px}
+
+/* Planes */
+.plan{display:flex;flex-direction:column;gap:10px}
+.plan.cur{border-color:var(--yellow)}
+.plan .price{font-family:var(--fd);font-size:1.7rem;font-weight:700}
+.plan .price small{font-family:var(--fb);font-size:.85rem;color:var(--muted);font-weight:500;margin-left:6px}
+
+/* Soporte */
+.thread{display:grid;gap:12px;margin-bottom:16px}
+.msg{max-width:min(640px,92%);padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.04);white-space:pre-wrap;overflow-wrap:anywhere}
+.msg small{display:block;color:var(--muted);font-size:.76rem;margin-bottom:4px}
+.msg.me{margin-left:auto;background:rgba(255,207,51,.09);border-color:rgba(255,207,51,.4)}
+
+/* Hallazgos */
+.fd{border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:12px 14px;background:rgba(255,255,255,.03)}
+.fd.crit{border-left-color:var(--red)}.fd.warn{border-left-color:var(--amber)}.fd.info{border-left-color:var(--blue)}.fd.ok{border-left-color:var(--green)}
+.fd h4{font-family:var(--fb);font-size:.96rem;font-weight:700;letter-spacing:0;display:flex;gap:10px;align-items:flex-start}
+.fd p{color:var(--muted);font-size:.9rem;margin-top:5px;white-space:pre-line;overflow-wrap:anywhere}
+.fd code{display:block;margin-top:7px;padding:7px 9px;background:#050a20;border:1px solid var(--line);border-radius:8px;font-family:var(--fm);font-size:.74rem;color:#ff9fb0;white-space:pre-wrap;overflow-wrap:anywhere}
+.fd .fix{margin-top:7px;font-size:.88rem;color:#dbe4ff}.fd .fix b{color:var(--yellow)}
+.bdg{flex:none;font-size:.66rem;font-weight:800;padding:.2em .55em;border-radius:6px;letter-spacing:.04em;margin-top:.2em}
+.bdg.crit{background:var(--red);color:#fff}.bdg.warn{background:var(--amber);color:#1a1200}.bdg.info{background:var(--blue);color:#06112e}.bdg.ok{background:var(--green);color:#032b1a}
+details.oks{border:1px dashed var(--line2);border-radius:10px;padding:0 14px}
+details.oks summary{cursor:pointer;padding:12px 0;color:var(--muted);font-weight:600}
+details.oks .fd{margin-bottom:10px}
+
+/* Análisis en vivo */
+.log{font-family:var(--fm);font-size:.76rem;background:#050a20;border:1px solid var(--line);border-radius:10px;padding:12px;height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.log div{flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log .c{color:#c8d4ff}.log .i{color:var(--muted)}.log .e{color:#ff8ba0}.log .w{color:var(--amber)}.log .o{color:var(--green)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.tile{border:1px solid var(--line2);border-radius:9px;padding:8px 10px;font-size:.78rem;opacity:.55}
+.tile small{display:block;color:var(--muted);font-size:.72rem}
+.tile[data-s=running]{opacity:1;border-color:var(--yellow)}
+.tile[data-s=ok]{opacity:1;border-color:rgba(61,232,164,.6)}.tile[data-s=info]{opacity:1;border-color:rgba(107,140,255,.6)}
+.tile[data-s=warn]{opacity:1;border-color:rgba(255,176,32,.7)}.tile[data-s=crit]{opacity:1;border-color:var(--red)}.tile[data-s=skipped]{border-style:dashed}
+
+dialog{background:var(--panel2);color:var(--text);border:1px solid var(--line2);border-radius:16px;padding:0;width:min(640px,94vw);max-height:90vh;overflow:auto}
+dialog::backdrop{background:rgba(3,6,20,.75);backdrop-filter:blur(3px)}
+.dlg{padding:22px}
+.dlg h3{font-size:1.1rem;margin-bottom:14px;display:flex;justify-content:space-between;gap:10px}
+.dlg-x{background:none;border:0;color:var(--muted);font-size:1.4rem;line-height:1}
+.acts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);background:var(--text);color:#0a1030;padding:.75em 1.2em;border-radius:12px;font-weight:600;font-size:.92rem;opacity:0;pointer-events:none;transition:.3s;z-index:90;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.pp-wrap{margin:6px 0}
+.pp-box{min-height:44px;max-width:340px}
+.tempbox{font-family:var(--fm);font-size:1.15rem;background:#050a20;border:1px dashed var(--yellow);border-radius:10px;padding:14px;text-align:center;letter-spacing:.06em;user-select:all;margin:12px 0}
+
+@media (max-width:980px){
+  .shell{grid-template-columns:1fr}
+  .side{position:sticky;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:10px;gap:4px;z-index:20;border-right:0;border-bottom:1px solid var(--line)}
+  .side .brand{margin:0 8px 0 4px}.side .brand .lg-full{display:none}.side .brand .lg-mark{display:block}.side .brand svg{height:30px}
+  .side-foot{margin:0 0 0 auto;border:0;padding:0;display:flex;align-items:center}
+  .side-foot .who{display:none}
+  .nav-i{width:auto;white-space:nowrap;padding:.55em .8em}
+  .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stepper{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:620px){
+  .g2,.g3,.g4,.row2{grid-template-columns:1fr}
+  .main{padding-top:18px}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .nav-i span.t{display:none}.nav-i{padding:.65em .75em}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+'use strict';
+
+/* ================= Utilidades ================= */
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var ICONS = {
+  home: '<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>', life: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m5.6 5.6 3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/>',
+  card: '<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>', cog: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>', out: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', check: '<path d="M20 6 9 17l-5-5"/>', alert: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>', bug: '<path d="M12 20a6 6 0 0 1-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3a6 6 0 0 1-6 6zM12 20v-9M6.5 13H2M17.5 13H22"/><path d="m8 2 1.9 1.9M14.1 3.9 16 2M9 7.1V6a3 3 0 0 1 6 0v1.1"/>'
+};
+var LOGO_FULL = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64" aria-hidden="true"><defs><linearGradient id="nxgp" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffcf33"/><stop offset="1" stop-color="#6b8cff"/></linearGradient><linearGradient id="nxfp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#15214f"/><stop offset="1" stop-color="#0b1235"/></linearGradient></defs><path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="url(#nxfp)" stroke="url(#nxgp)" stroke-width="3.2" stroke-linejoin="round"/><path d="M22 42V22L42 42V22" fill="none" stroke="#eaf0ff" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="22" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><circle cx="22" cy="42" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><circle cx="42" cy="42" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><circle cx="42" cy="22" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><defs><clipPath id="nxcp"><rect x="-2" y="0" width="240" height="20"/></clipPath></defs><g transform="translate(78.0 19.0) scale(1.3)"><g clip-path="url(#nxcp)"><path d="M 2.1 20V 0M 2.1 0L 14.9 20M 14.9 20V 0 M 23.1 0V 20M 21 2.1H 35.5M 21 10H 33.5M 21 17.9H 35.5 M 40 0L 58 20M 58 0L 40 20 M 62 20L 72 0L 82 20M 66.6 14.2H 77.4" fill="none" stroke="#eaf0ff" stroke-width="4.2" stroke-linejoin="miter" stroke-miterlimit="10"/><path d="M 102.05 4.92A 7.9 7.9 0 1 0 103.9 10H 96.5 M 112.1 0V 11A 6.9 6.9 0 0 0 125.9 11V 0 M 132 20L 142 0L 152 20M 136.6 14.2H 147.4 M 158.1 20V 0M 156 2.1H 165.6A 3.9 3.9 0 0 1 165.6 9.9H 158.1M 164 9.9L 171.5 20 M 179.1 0V 20M 177 2.1H 184.6A 7.9 7.9 0 0 1 184.6 17.9H 177" fill="none" stroke="#ffcf33" stroke-width="4.2" stroke-linejoin="miter" stroke-miterlimit="10"/></g></g></svg>', LOGO_MARK = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="nxgq" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffcf33"/><stop offset="1" stop-color="#6b8cff"/></linearGradient><linearGradient id="nxfq" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#15214f"/><stop offset="1" stop-color="#0b1235"/></linearGradient></defs><path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="url(#nxfq)" stroke="url(#nxgq)" stroke-width="3.2" stroke-linejoin="round"/><path d="M22 42V22L42 42V22" fill="none" stroke="#eaf0ff" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="22" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><circle cx="22" cy="42" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><circle cx="42" cy="42" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><circle cx="42" cy="22" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/></svg>';
+function logoEl() { var d = document.createElement('div'); d.className = 'brand'; d.setAttribute('role', 'img'); d.setAttribute('aria-label', 'NexaGuard'); d.innerHTML = '<span class="lg-full">' + LOGO_FULL + '</span><span class="lg-mark">' + LOGO_MARK + '</span>'; return d; }
+function ico(n) { var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', 'ic'); s.setAttribute('aria-hidden', 'true'); s.innerHTML = ICONS[n] || ''; return s; }
+
+/* Constructor de elementos: NUNCA inserta HTML, solo texto (evita XSS) */
+function h(tag, props) {
+  var e = document.createElement(tag), kids = Array.prototype.slice.call(arguments, 2);
+  Object.keys(props || {}).forEach(function (k) {
+    var v = props[k]; if (v == null || v === false) return;
+    if (k === 'class') e.className = v;
+    else if (k === 'on') Object.keys(v).forEach(function (ev) { e.addEventListener(ev, v[ev]); });
+    else if (k === 'for') e.htmlFor = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k === 'dataset') Object.assign(e.dataset, v);
+    else if (k in e && k !== 'list') e[k] = v;
+    else e.setAttribute(k, v === true ? '' : v);
+  });
+  (function add(list) { list.forEach(function (c) { if (c == null || c === false) return; if (Array.isArray(c)) return add(c); e.appendChild(c.nodeType ? c : document.createTextNode(String(c))); }); })(kids);
+  return e;
+}
+var VERDICT = { infected: ['Infectado', 'crit'], suspicious: ['Sospechoso', 'warn'], risk: ['Con riesgos', 'warn'], clean: ['Limpio', 'ok'], limited: ['Limitado', 'info'] };
+var ORDER_ST = { pending_payment: ['Pendiente de pago', 'warn'], in_progress: ['En progreso', 'info'], delivered: ['Entregado', 'ok'], active: ['Activo', 'ok'], cancelled: ['Cancelado', 'mute'] };
+var LEVEL = { pending: ['Pendiente de pago', 'warn'], active: ['Activo', 'ok'], ended: ['Terminado', 'mute'], none: ['Sin plan', 'mute'] };
+var TK = { open: ['Abierto', 'warn'], answered: ['Respondido', 'info'], closed: ['Cerrado', 'mute'] };
+var pill = function (pair, extra) { return h('span', { class: 'pill ' + (pair ? pair[1] : 'mute') }, pair ? pair[0] : extra || '—'); };
+var fmtDate = function (i) { return i ? new Date(i).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'; };
+var fmtDT = function (i) { return i ? new Date(i).toLocaleString('es', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'; };
+var money = function (n, c) { try { return new Intl.NumberFormat('es', { style: 'currency', currency: c || 'USD' }).format(n); } catch (e) { return (c || '') + ' ' + n; } };
+var SEV_ORDER = { crit: 0, warn: 1, info: 2, ok: 3 }, SEV_TXT = { crit: 'GRAVE', warn: 'AVISO', info: 'INFO', ok: 'OK' };
+
+var toastT;
+function toast(m) { var t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 3400); }
+
+async function api(method, url, body) {
+  var r = await fetch(url, { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'parche' }, body: body === undefined ? undefined : JSON.stringify(body) });
+  var d = {}; try { d = await r.json(); } catch (e) {}
+  if (!r.ok) { var err = new Error(d.error || 'Ocurrió un error. Inténtalo de nuevo.'); err.status = r.status; if (r.status === 401 && S.user && !/login|register/.test(url)) { S.user = null; showAuth(); } throw err; }
+  return d;
+}
+
+function modal(title, content) {
+  var dlg = h('dialog', { on: { close: function () { dlg.remove(); } } });
+  var x = h('button', { class: 'dlg-x', type: 'button', 'aria-label': 'Cerrar', on: { click: function () { dlg.close(); } } }, '×');
+  dlg.appendChild(h('div', { class: 'dlg' }, h('h3', null, h('span', null, title), x), content));
+  document.body.appendChild(dlg); dlg.showModal();
+  return { el: dlg, close: function () { dlg.close(); } };
+}
+
+var S = { user: null, dash: null, plans: [], prefill: null, paypal: null };
+
+/* ---------- Pago con PayPal desde el panel (para un plan ya pendiente de pago) ---------- */
+var ppSdkPromise = null;
+function ensurePpSdk() {
+  if (!S.paypal) return Promise.reject(new Error('PayPal no está configurado.'));
+  if (ppSdkPromise) return ppSdkPromise;
+  ppSdkPromise = new Promise(function (resolve, reject) {
+    if (window.paypal) return resolve(window.paypal);
+    var done = false, s = document.createElement('script');
+    s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(S.paypal.clientId) + '&currency=USD&intent=capture';
+    s.onload = function () { if (done) return; done = true; window.paypal ? resolve(window.paypal) : reject(new Error('El SDK de PayPal no se inicializó.')); };
+    s.onerror = function () { if (done) return; done = true; reject(new Error('No se pudo cargar el módulo de pago de PayPal.')); };
+    document.head.appendChild(s);
+    setTimeout(function () { if (done) return; done = true; reject(new Error('El módulo de pago tardó demasiado en cargar.')); }, 9000);
+  });
+  return ppSdkPromise;
+}
+/* Dibuja el botón de PayPal para pagar `planId` desde el panel del cliente ya identificado. */
+function payWithPayPal(container, planId, msgEl) {
+  ensurePpSdk().then(function (sdk) {
+    if (msgEl) msgEl.remove();
+    sdk.Buttons({
+      style: { layout: 'horizontal', color: 'gold', shape: 'pill', label: 'paypal', height: 40 },
+      createOrder: function () {
+        return api('POST', '/api/checkout/paypal/orders', { plan: planId }).then(function (r) { return r.id; })
+          .catch(function (e) { toast(e.message); throw e; });
+      },
+      onApprove: function (data) {
+        return api('POST', '/api/checkout/paypal/orders/' + data.orderID + '/capture', {}).then(function () {
+          toast('¡Pago recibido! Tu plan ya está activo.'); render();
+        }).catch(function (e) { toast(e.message); });
+      },
+      onError: function () { toast('Hubo un problema con PayPal. Puedes reintentar.'); }
+    }).render(container);
+  }).catch(function (e) { if (msgEl) msgEl.textContent = e.message + ' Usa el botón de abajo para coordinar el pago por otra vía.'; });
+}
+function payPalBlock(planId) {
+  if (!S.paypal) return null;
+  var msg = h('p', { class: 'hint', style: 'margin:10px 0' }, 'Cargando el botón de pago…');
+  var box = h('div', { class: 'pp-box' });
+  var wrap = h('div', { class: 'pp-wrap' }, msg, box);
+  setTimeout(function () { payWithPayPal(box, planId, msg); }, 0);
+  return wrap;
+}
+
+/* ================= Acceso ================= */
+function showAuth() {
+  history.replaceState(null, '', location.pathname + location.search + '#/resumen');   // al entrar con otra cuenta siempre se empieza en el resumen
+  badges = {}; S.dash = null; S.prefill = null; $('#toast').classList.remove('show');
+  var qs = new URLSearchParams(location.search), qplan = qs.get('plan'), mode = (qplan || qs.get('registro')) ? 'reg' : 'login';
+  var app = $('#app'); app.innerHTML = '';
+  var err = h('p', { class: 'err', role: 'alert' });
+  var box = h('div', { class: 'auth-box' });
+  function draw() {
+    box.innerHTML = '';
+    box.appendChild(logoEl());
+    box.appendChild(h('div', { class: 'tabs', role: 'tablist' },
+      h('button', { type: 'button', role: 'tab', 'aria-selected': mode === 'login', on: { click: function () { mode = 'login'; draw(); } } }, 'Ingresar'),
+      h('button', { type: 'button', role: 'tab', 'aria-selected': mode === 'reg', on: { click: function () { mode = 'reg'; draw(); } } }, 'Crear cuenta')));
+    err.textContent = '';
+    if (mode === 'login') {
+      var em = h('input', { class: 'in', id: 'lg-e', type: 'email', autocomplete: 'username', required: true }), pw = h('input', { class: 'in', id: 'lg-p', type: 'password', autocomplete: 'current-password', required: true });
+      var f = h('form', { novalidate: true, on: { submit: async function (ev) {
+        ev.preventDefault(); err.textContent = '';
+        try { var d = await api('POST', '/api/login', { email: em.value, password: pw.value }); S.user = d.user; await boot(); } catch (e) { err.textContent = e.message; }
+      } } },
+        h('h1', null, 'Bienvenido de vuelta'), h('p', { class: 'sub' }, 'Entra a tu panel para ver el estado de tu servicio.'),
+        h('div', { class: 'fld' }, h('label', { for: 'lg-e' }, 'Correo'), em), h('div', { class: 'fld' }, h('label', { for: 'lg-p' }, 'Contraseña'), pw), err,
+        h('button', { class: 'btn btn-y', type: 'submit', style: 'width:100%' }, 'Ingresar'));
+      box.appendChild(f);
+    } else {
+      var nm = h('input', { class: 'in', id: 'rg-n', autocomplete: 'name' }), em2 = h('input', { class: 'in', id: 'rg-e', type: 'email', autocomplete: 'email' }),
+        ph = h('input', { class: 'in', id: 'rg-t', type: 'tel', autocomplete: 'tel' }), pw2 = h('input', { class: 'in', id: 'rg-p', type: 'password', autocomplete: 'new-password' }),
+        sel = h('select', { class: 'in', id: 'rg-plan' }, h('option', { value: '' }, 'Elegiré más tarde'), S.plans.map(function (p) { return h('option', { value: p.id, selected: p.id === qplan }, p.name + ' — ' + money(p.price, p.currency) + ' ' + p.period); })),
+        ac = h('input', { type: 'checkbox', id: 'rg-a' });
+      box.appendChild(h('form', { novalidate: true, on: { submit: async function (ev) {
+        ev.preventDefault(); err.textContent = '';
+        try { var d = await api('POST', '/api/register', { name: nm.value, email: em2.value, phone: ph.value, password: pw2.value, plan: sel.value, accept: ac.checked }); S.user = d.user; history.replaceState(null, '', '/panel'); toast('¡Cuenta creada! Bienvenido.'); await boot(); }
+        catch (e) { err.textContent = e.message; }
+      } } },
+        h('h1', null, 'Crea tu cuenta'), h('p', { class: 'sub' }, 'Con tu cuenta sigues el avance de tu servicio y hablas con nosotros desde un solo lugar.'),
+        h('div', { class: 'fld' }, h('label', { for: 'rg-n' }, 'Nombre'), nm),
+        h('div', { class: 'row2' }, h('div', { class: 'fld' }, h('label', { for: 'rg-e' }, 'Correo'), em2), h('div', { class: 'fld' }, h('label', { for: 'rg-t' }, 'Teléfono (opcional)'), ph)),
+        h('div', { class: 'fld' }, h('label', { for: 'rg-p' }, 'Contraseña (mínimo 8 caracteres)'), pw2),
+        h('div', { class: 'fld' }, h('label', { for: 'rg-plan' }, 'Plan'), sel),
+        h('label', { class: 'chk', style: 'margin-bottom:8px' }, ac, h('span', null, 'Acepto que NexaGuard guarde mis datos (nombre, contacto y datos de mis sitios) para prestarme el servicio.')), err,
+        h('button', { class: 'btn btn-y', type: 'submit', style: 'width:100%' }, 'Crear cuenta')));
+    }
+    box.appendChild(h('a', { class: 'back', href: '/' }, 'Volver a la web'));
+  }
+  draw(); app.appendChild(h('div', { class: 'auth' }, box));
+}
+
+/* ================= Estructura ================= */
+var NAV = {
+  client: [['resumen', 'Resumen', 'home'], ['sitios', 'Mis sitios', 'globe'], ['analisis', 'Análisis', 'search'], ['soporte', 'Soporte', 'life'], ['pagos', 'Plan y pagos', 'card'], ['cuenta', 'Mi cuenta', 'user']],
+  admin: [['resumen', 'Resumen', 'home'], ['clientes', 'Clientes', 'users'], ['soporte', 'Soporte', 'life'], ['analisis', 'Análisis', 'search'], ['ajustes', 'Ajustes', 'cog']]
+};
+function go(p) { location.hash = '#/' + p; }
+function routeParts() { var p = location.hash.replace(/^#\/?/, '').split('/'); return { name: p[0] || 'resumen', id: p[1] || null }; }
+
+var badges = {};
+function setBadge(n) {
+  badges.tickets = n;
+  var sb = document.querySelector('.nav-i[data-r="soporte"]'); if (!sb) return;
+  var old = sb.querySelector('.badge'); if (old) old.remove();
+  if (n) sb.appendChild(h('span', { class: 'badge', title: 'Solicitudes que requieren atención' }, n));
+}
+function shell() {
+  var app = $('#app'); app.innerHTML = '';
+  var role = S.user.role, nav = h('nav', { 'aria-label': 'Secciones' });
+  NAV[role].forEach(function (n) {
+    var b = h('button', { class: 'nav-i', type: 'button', dataset: { r: n[0] }, on: { click: function () { go(n[0]); } } }, ico(n[2]), h('span', { class: 't' }, n[1]));
+    if (n[0] === 'soporte' && badges.tickets) b.appendChild(h('span', { class: 'badge' }, badges.tickets));
+    nav.appendChild(b);
+  });
+  var side = h('aside', { class: 'side' }, logoEl(), nav,
+    h('div', { class: 'side-foot' }, h('div', { class: 'who' }, h('b', null, S.user.name), role === 'admin' ? 'Administrador' : 'Cliente'),
+      h('button', { class: 'btn btn-o sm', type: 'button', on: { click: async function () { try { await api('POST', '/api/logout', {}); } catch (e) {} S.user = null; S.dash = null; showAuth(); } } }, ico('out'), h('span', { class: 't' }, 'Salir'))));
+  app.appendChild(h('div', { class: 'shell' }, side, h('main', { class: 'main', id: 'main' })));
+}
+function markNav(name) { document.querySelectorAll('.nav-i').forEach(function (b) { b.dataset.r === name ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'); }); }
+function head(title, sub, right) { return h('div', { class: 'top' }, h('div', null, h('h1', null, title), sub ? h('p', null, sub) : null), right || null); }
+
+async function boot() {
+  try { S.plans = (await api('GET', '/api/plans')).plans; } catch (e) {}
+  try { S.paypal = (await api('GET', '/api/payment/config')).paypal; } catch (e) { S.paypal = null; }
+  if (!S.user) { var m = await api('GET', '/api/me'); S.user = m.user; }
+  if (!S.user) return showAuth();
+  shell(); await render();
+}
+async function render() {
+  if (!S.user) return;
+  var r = routeParts(), role = S.user.role, main = $('#main');
+  if (!main) { shell(); main = $('#main'); }
+  var valid = NAV[role].some(function (n) { return n[0] === r.name; });
+  if (!valid) { return go('resumen'); }
+  markNav(r.name); main.innerHTML = ''; main.appendChild(h('p', { class: 'hint' }, 'Cargando…'));
+  var fn = (role === 'admin' ? AV : CV)[r.name];
+  try { var node = await fn(r.id); main.innerHTML = ''; main.appendChild(node); window.scrollTo(0, 0); }
+  catch (e) { main.innerHTML = ''; main.appendChild(h('div', { class: 'banner crit' }, ico('alert'), h('div', null, e.message))); }
+}
+window.addEventListener('hashchange', render);
+
+/* ================= Componentes comunes ================= */
+function findingEl(f) {
+  var a = h('article', { class: 'fd ' + f.sev }, h('h4', null, h('span', { class: 'bdg ' + f.sev }, SEV_TXT[f.sev] || f.sev), h('span', null, f.title)));
+  if (f.detail) a.appendChild(h('p', null, f.detail));
+  if (f.evidence) a.appendChild(h('code', null, f.evidence));
+  if (f.fix) a.appendChild(h('div', { class: 'fix' }, h('b', null, 'Qué hacer: '), f.fix));
+  return a;
+}
+function findingsBox(list) {
+  var sorted = list.slice().sort(function (a, b) { return SEV_ORDER[a.sev] - SEV_ORDER[b.sev]; }), iss = sorted.filter(function (f) { return f.sev !== 'ok'; }), oks = sorted.filter(function (f) { return f.sev === 'ok'; });
+  var box = h('div', { class: 'stack' }, h('h3', { style: 'font-size:1rem' }, 'Hallazgos (' + iss.length + ')'));
+  if (!iss.length) box.appendChild(h('div', { class: 'empty' }, 'No se encontraron problemas.'));
+  iss.forEach(function (f) { box.appendChild(findingEl(f)); });
+  if (oks.length) box.appendChild(h('details', { class: 'oks' }, h('summary', null, 'Comprobaciones superadas (' + oks.length + ')'), oks.map(findingEl)));
+  return box;
+}
+function table(cols, rows, onClick) {
+  var tb = h('tbody');
+  rows.forEach(function (r) { var tr = h('tr', { class: onClick ? 'click' : '' }, r.cells.map(function (c) { return h('td', null, c); })); if (onClick) tr.addEventListener('click', function () { onClick(r); }); tb.appendChild(tr); });
+  return h('div', { class: 'tw' }, h('table', null, h('thead', null, h('tr', null, cols.map(function (c) { return h('th', null, c); }))), tb));
+}
+function scanTable(scans, admin, open) {
+  if (!scans.length) return h('div', { class: 'empty' }, 'Todavía no hay análisis.');
+  var cols = (admin ? ['Cliente'] : []).concat(['Sitio', 'Fecha', 'Resultado', 'Graves', 'Avisos', 'Tipo']);
+  return table(cols, scans.map(function (s) { return { id: s.id, cells: (admin ? [s.client] : []).concat([s.host, fmtDT(s.at), pill(VERDICT[s.verdict]), String(s.counts.crit), String(s.counts.warn), s.trigger === 'auto' ? 'Automático' : 'Manual']) }; }), function (r) { open(r.id); });
+}
+function planCard(p, current, onPick, label) {
+  return h('div', { class: 'card plan' + (current ? ' cur' : '') }, h('h3', null, p.name, current ? h('span', { class: 'pill pri' }, 'Tu plan') : null),
+    h('div', { class: 'price' }, money(p.price, p.currency), h('small', null, p.period)),
+    h('ul', { class: 'list' }, p.features.map(function (f) { return h('li', null, ico('check'), f); })),
+    h('p', { class: 'hint' }, 'Respuesta de soporte: ' + p.response + '. ' + (p.sites === 1 ? '1 sitio.' : p.sites + ' sitios.')),
+    onPick ? h('button', { class: 'btn btn-o', type: 'button', style: 'margin-top:auto', on: { click: function () { onPick(p); } } }, label || 'Elegir este plan') : null);
+}
+async function loadDash() { S.dash = await api('GET', '/api/dashboard'); setBadge(S.dash.tickets.filter(function (t) { return t.status === 'answered'; }).length); return S.dash; }
+
+function accountView() {
+  var u = S.user, err = h('p', { class: 'err', role: 'alert' }), err2 = h('p', { class: 'err', role: 'alert' });
+  var n = h('input', { class: 'in', id: 'ac-n', value: u.name }), ph = h('input', { class: 'in', id: 'ac-t', value: u.phone || '' }), co = h('input', { class: 'in', id: 'ac-c', value: u.company || '' });
+  var cur = h('input', { class: 'in', id: 'pw-c', type: 'password', autocomplete: 'current-password' }), nw = h('input', { class: 'in', id: 'pw-n', type: 'password', autocomplete: 'new-password' });
+  return h('div', { class: 'grid g2' },
+    h('form', { class: 'card', novalidate: true, on: { submit: async function (e) { e.preventDefault(); err.textContent = ''; try { var d = await api('PATCH', '/api/me', { name: n.value, phone: ph.value, company: co.value }); S.user = d.user; toast('Datos guardados.'); } catch (x) { err.textContent = x.message; } } } },
+      h('h3', null, 'Mis datos'), h('div', { class: 'fld' }, h('label', { for: 'ac-n' }, 'Nombre'), n), h('div', { class: 'fld' }, h('label', null, 'Correo'), h('input', { class: 'in', value: u.email, disabled: true })),
+      h('div', { class: 'row2' }, h('div', { class: 'fld' }, h('label', { for: 'ac-t' }, 'Teléfono'), ph), h('div', { class: 'fld' }, h('label', { for: 'ac-c' }, 'Empresa'), co)), err, h('button', { class: 'btn btn-y', type: 'submit' }, 'Guardar')),
+    h('form', { class: 'card', novalidate: true, on: { submit: async function (e) { e.preventDefault(); err2.textContent = ''; try { await api('POST', '/api/me/password', { current: cur.value, password: nw.value }); S.user.mustChangePassword = false; cur.value = nw.value = ''; toast('Contraseña actualizada. Se cerraron tus otras sesiones.'); } catch (x) { err2.textContent = x.message; } } } },
+      h('h3', null, 'Cambiar contraseña'), h('div', { class: 'fld' }, h('label', { for: 'pw-c' }, 'Contraseña actual'), cur), h('div', { class: 'fld' }, h('label', { for: 'pw-n' }, 'Nueva contraseña (mínimo 8)'), nw), err2, h('button', { class: 'btn btn-y', type: 'submit' }, 'Cambiar contraseña')));
+}
+
+/* ---------- Hilo de soporte (cliente y admin) ---------- */
+function threadView(t, admin, onChange) {
+  var ta = h('textarea', { class: 'in', id: 'tk-r', placeholder: admin ? 'Escribe tu respuesta…' : 'Escribe tu mensaje…' }), err = h('p', { class: 'err', role: 'alert' });
+  var thread = h('div', { class: 'thread' }, t.thread.map(function (m) { var mine = admin ? m.from === 'admin' : m.from === 'client'; return h('div', { class: 'msg' + (mine ? ' me' : '') }, h('small', null, (m.from === 'admin' ? 'Soporte · ' : '') + m.name + ' · ' + fmtDT(m.at)), m.text); }));
+  var st = admin ? h('select', { class: 'in', style: 'width:auto', 'aria-label': 'Estado', on: { change: async function () { try { await api('PATCH', '/api/admin/tickets/' + t.id, { status: st.value }); toast('Estado actualizado.'); onChange(); } catch (e) { toast(e.message); } } } }, Object.keys(TK).map(function (k) { return h('option', { value: k, selected: k === t.status }, TK[k][0]); })) : null;
+  return h('div', { class: 'stack' },
+    h('div', { class: 'card' }, h('div', { class: 'card-h' }, h('span', null, t.subject), h('span', null, t.priority === 'priority' ? h('span', { class: 'pill pri' }, 'Prioritario') : null, ' ', pill(TK[t.status]))),
+      admin ? h('p', { class: 'hint', style: 'margin:-6px 0 12px' }, 'Cliente: ' + (t.client || '')) : null, thread,
+      t.status === 'closed' && !admin ? h('div', { class: 'empty' }, 'Esta solicitud está cerrada. Si necesitas algo más, abre una nueva.') :
+        h('div', null, h('div', { class: 'fld' }, h('label', { for: 'tk-r' }, 'Responder'), ta), err,
+          h('div', { class: 'acts', style: 'justify-content:space-between' }, st || h('button', { class: 'btn btn-o', type: 'button', on: { click: async function () { try { await api('POST', '/api/tickets/' + t.id + '/close', {}); toast('Solicitud cerrada.'); onChange(); } catch (e) { toast(e.message); } } } }, 'Cerrar solicitud'),
+            h('button', { class: 'btn btn-y', type: 'button', on: { click: async function () { err.textContent = ''; try { await api('POST', (admin ? '/api/admin/tickets/' : '/api/tickets/') + t.id + '/messages', { text: ta.value }); toast('Mensaje enviado.'); onChange(); } catch (e) { err.textContent = e.message; } } } }, ico('check'), 'Enviar')))));
+}
+
+/* ---------- Análisis en vivo (modal) ---------- */
+var SC_STAGES = { reach: 'Conexión', tls: 'HTTPS', wp: 'WordPress', plugins: 'Plugins y temas', malware: 'Código malicioso', seo: 'SEO spam', exposed: 'Archivos expuestos', headers: 'Cabeceras', rep: 'Reputación' };
+function liveScan(site, after) {
+  var log = h('div', { class: 'log', 'aria-hidden': 'true' }), tiles = h('div', { class: 'tiles' }, Object.keys(SC_STAGES).map(function (k) { return h('div', { class: 'tile', dataset: { id: k, s: 'pending' } }, SC_STAGES[k], h('small', null, 'En espera')); }));
+  var STT = { running: 'Analizando…', ok: 'Sin problemas', info: 'Informativo', warn: 'Revisar', crit: 'Grave', skipped: 'No verificado' };
+  var pct = h('span', null, '0%'), bar = h('i', { style: 'width:0%' }), res = h('div', { style: 'margin-top:14px' }), acts = h('div', { class: 'acts' });
+  var counts = { crit: 0, warn: 0 }, doneN = 0, ctrl = window.AbortController ? new AbortController() : null, finished = false;
+  var m = modal('Analizando ' + site.host, h('div', null, h('div', { class: 'card-h', style: 'font-family:var(--fm);font-size:.8rem;color:var(--muted)' }, h('span', null, site.url), pct), h('div', { class: 'bar' }, bar), tiles, log, res, acts));
+  m.el.addEventListener('close', function () { if (!finished && ctrl) ctrl.abort(); });
+  function line(c, t) { log.appendChild(h('div', { class: c }, t)); log.scrollTop = log.scrollHeight; }
+  function tile(id, s) { var t = tiles.querySelector('[data-id="' + id + '"]'); if (t) { t.dataset.s = s; t.lastChild.textContent = STT[s] || s; } }
+  function setPct() { var p = Math.round(doneN / 9 * 100); bar.style.width = p + '%'; pct.textContent = p + '%'; }
+  function handle(ev) {
+    if (ev.t === 'stage') { tile(ev.id, 'running'); line('c', '▶ ' + ev.label); }
+    else if (ev.t === 'log') line(/^GET /.test(ev.msg) ? 'c' : 'i', ev.msg);
+    else if (ev.t === 'finding') { line(ev.sev === 'crit' ? 'e' : ev.sev === 'warn' ? 'w' : ev.sev === 'ok' ? 'o' : 'i', (ev.sev === 'crit' ? '[!] ' : ev.sev === 'warn' ? '[~] ' : ev.sev === 'ok' ? '[✓] ' : '[i] ') + ev.title); if (counts[ev.sev] !== undefined) counts[ev.sev]++; }
+    else if (ev.t === 'stage_done') { doneN++; tile(ev.id, ev.state); setPct(); }
+    else if (ev.t === 'done') { finished = true; doneN = 9; setPct(); res.innerHTML = ''; res.appendChild(h('div', { class: 'banner ' + ((VERDICT[ev.verdict] || [])[1] === 'crit' ? 'crit' : (VERDICT[ev.verdict] || [])[1] === 'ok' ? 'info' : 'warn') }, ico('shield'), h('div', null, h('b', null, 'Resultado: '), pill(VERDICT[ev.verdict]), ' ' + ev.counts.crit + ' graves, ' + ev.counts.warn + ' avisos, ' + ev.counts.info + ' informativos.'))); }
+    else if (ev.t === 'saved') { acts.appendChild(h('button', { class: 'btn btn-y', type: 'button', on: { click: function () { m.close(); go('analisis/' + ev.scanId); } } }, 'Ver resultado completo')); }
+    else if (ev.t === 'error') { finished = true; res.innerHTML = ''; res.appendChild(h('div', { class: 'banner crit' }, ico('alert'), h('div', null, ev.message))); }
+  }
+  (async function () {
+    try {
+      var r = await fetch('/api/sites/' + site.id + '/scan', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'parche' }, body: '{}', signal: ctrl ? ctrl.signal : undefined });
+      if (!/ndjson/.test(r.headers.get('content-type') || '')) { var d = {}; try { d = await r.json(); } catch (e) {} finished = true; res.appendChild(h('div', { class: 'banner crit' }, ico('alert'), h('div', null, d.error || 'No se pudo iniciar el análisis.'))); return; }
+      var rd = r.body.getReader(), dec = new TextDecoder(), buf = '';
+      while (true) { var x = await rd.read(); if (x.done) break; buf += dec.decode(x.value, { stream: true }); var ls = buf.split('\n'); buf = ls.pop(); ls.forEach(function (l) { if (l.trim()) { try { handle(JSON.parse(l)); } catch (e) {} } }); }
+    } catch (e) { if (e.name !== 'AbortError') res.appendChild(h('div', { class: 'banner crit' }, ico('alert'), h('div', null, 'Se interrumpió la conexión con el escáner.'))); }
+    finally { finished = true; if (after) after(); }
+  })();
+}
+
+/* ================= VISTAS DEL CLIENTE ================= */
+var CV = {};
+CV.resumen = async function () {
+  var d = await loadDash(), u = d.user, root = h('div', null);
+  root.appendChild(head('Hola, ' + u.name.split(' ')[0], 'Este es el estado de tu servicio.'));
+  if (u.mustChangePassword) root.appendChild(h('div', { class: 'banner warn' }, ico('alert'), h('div', null, 'Estás usando una contraseña temporal. ', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('cuenta'); } } }, 'Cambiarla ahora'))));
+  var bad = d.sites.filter(function (s) { return s.lastScan && (s.lastScan.verdict === 'infected' || s.lastScan.verdict === 'suspicious'); });
+  if (bad.length) root.appendChild(h('div', { class: 'banner crit' }, ico('alert'), h('div', null, h('b', null, 'Atención: '), 'el último análisis de ' + bad.map(function (s) { return s.host; }).join(', ') + ' encontró señales de infección. ', h('button', { class: 'btn btn-y sm', type: 'button', on: { click: function () { go('soporte'); } } }, 'Abrir una solicitud'))));
+  var cur = d.current;
+  if (!cur || d.level === 'ended' || d.level === 'none') {
+    root.appendChild(h('div', { class: 'banner info' }, ico('info'), h('div', null, d.level === 'ended' ? 'Tu plan anterior terminó. Elige uno para volver a activar tu panel.' : 'Todavía no tienes un plan. Elige el que mejor se adapte a tu caso.')));
+    root.appendChild(h('div', { class: 'grid g3' }, S.plans.map(function (p) { return planCard(p, false, async function (pl) { try { await api('POST', '/api/orders', { plan: pl.id }); toast('Solicitud enviada. Te contactaremos para el pago.'); render(); } catch (e) { toast(e.message); } }, 'Solicitar este plan'); })));
+    return root;
+  }
+  var p = d.plan, info = [];
+  info.push(['Estado', pill(LEVEL[d.level])]);
+  info.push(['Precio', money(p.price, p.currency) + ' · ' + p.period]);
+  info.push(['Sitios', d.sites.length + ' de ' + d.limits.sites]);
+  info.push(['Análisis este mes', d.level !== 'active' ? 'Se activan con el pago' : d.limits.unlimited ? d.limits.scansUsed + ' (ilimitados)' : d.limits.scansUsed + ' de ' + d.limits.scans]);
+  info.push(['Monitoreo automático', d.limits.scheduled ? 'Sí, diario' : 'No incluido']);
+  info.push(['Soporte', d.limits.priority ? 'Prioritario · ' + p.response : 'Estándar · ' + p.response]);
+  if (cur.type === 'subscription' && cur.nextBilling) info.push(['Próximo cobro', fmtDate(cur.nextBilling)]);
+  if (cur.accessUntil && cur.type === 'oneoff') info.push([p.id === 'blindaje' ? 'Garantía hasta' : 'Seguimiento hasta', fmtDate(cur.accessUntil)]);
+  root.appendChild(h('div', { class: 'grid', style: 'grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)' },
+    h('div', { class: 'card' }, h('h3', null, p.name), h('dl', { class: 'kv' }, info.map(function (r) { return [h('dt', null, r[0]), h('dd', null, r[1])]; })),
+      cur.overdue ? h('div', { class: 'banner warn', style: 'margin:14px 0 0' }, ico('alert'), h('div', null, 'Tu pago de la suscripción está vencido. Escríbenos para regularizarlo y no perder el monitoreo.')) : null),
+    h('div', { class: 'card' }, h('h3', null, 'Qué incluye tu plan'), h('ul', { class: 'list' }, p.features.map(function (f) { return h('li', null, ico('check'), f); })))));
+  if (d.level === 'pending') root.appendChild(h('div', { class: 'card', style: 'margin-top:16px' }, h('h3', null, 'Activa tu plan'),
+    S.paypal ? h('div', null, h('p', { style: 'margin-bottom:6px' }, 'Paga ahora con PayPal y tu plan queda activo al instante:'), payPalBlock(cur.plan),
+      h('p', { class: 'hint', style: 'margin:12px 0 6px' }, '¿Prefieres otra forma de pago?')) : null,
+    h('p', { style: 'margin-bottom:12px;white-space:pre-line' }, d.paymentText),
+    h('button', { class: 'btn ' + (S.paypal ? 'btn-o' : 'btn-y'), type: 'button', on: { click: function () { S.prefill = { subject: 'Quiero pagar mi plan ' + p.name, text: 'Hola, quiero activar mi plan ' + p.name + '. ¿Cómo realizo el pago?' }; go('soporte'); } } }, 'Preguntar por el pago')));
+  if (cur.type === 'oneoff' && d.level === 'active') {
+    var stg = cur.stage || 0;
+    root.appendChild(h('div', { class: 'card', style: 'margin-top:16px' }, h('h3', null, 'Avance de tu servicio', h('span', { class: 'pill ' + (stg >= 4 ? 'ok' : 'info') }, stg >= 4 ? 'Completado' : stg + ' de 4')),
+      h('div', { class: 'stepper' }, d.stages.map(function (s, i) { return h('div', { class: 'st ' + (i < stg ? 'done' : i === stg ? 'now' : '') }, h('b', null, i < stg ? '✓' : String(i + 1)), s); }))));
+  }
+  var rowsS = d.sites.map(function (s) { return { cells: [s.host, s.lastScan ? pill(VERDICT[s.lastScan.verdict]) : pill(null, 'Sin analizar'), s.lastScan ? fmtDT(s.lastScan.at) : '—'] }; });
+  root.appendChild(h('div', { class: 'grid g2', style: 'margin-top:16px' },
+    h('div', { class: 'card' }, h('h3', null, 'Tus sitios', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('sitios'); } } }, 'Administrar')), rowsS.length ? table(['Sitio', 'Estado', 'Último análisis'], rowsS) : h('div', { class: 'empty' }, 'Agrega tu sitio para poder analizarlo.')),
+    h('div', { class: 'card' }, h('h3', null, 'Soporte', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('soporte'); } } }, 'Ver todo')), d.tickets.length ? table(['Asunto', 'Estado'], d.tickets.slice(0, 4).map(function (t) { return { id: t.id, cells: [t.subject, pill(TK[t.status])] }; }), function (r) { go('soporte/' + r.id); }) : h('div', { class: 'empty' }, 'No tienes solicitudes abiertas.'))));
+  return root;
+};
+
+CV.sitios = async function () {
+  var d = await loadDash(), root = h('div', null), can = d.limits.sites > d.sites.length, err = h('p', { class: 'err', role: 'alert' });
+  root.appendChild(head('Mis sitios', 'Agrega tus sitios WordPress y analízalos cuando quieras.'));
+  if (d.level === 'ended' || d.level === 'none') root.appendChild(h('div', { class: 'banner info' }, ico('info'), h('div', null, 'Necesitas un plan activo para administrar sitios.')));
+  if (d.level === 'pending') root.appendChild(h('div', { class: 'banner info' }, ico('info'), h('div', null, 'Puedes registrar tu sitio ahora. Los análisis se activan cuando registremos tu pago.')));
+  var grid = h('div', { class: 'grid g2' });
+  d.sites.forEach(function (s) {
+    var lastV = s.lastScan ? VERDICT[s.lastScan.verdict] : null;
+    var mon = d.limits.scheduled ? h('label', { class: 'chk', style: 'margin-top:10px' }, h('input', { type: 'checkbox', checked: s.monitoring, on: { change: async function (e) { try { await api('PATCH', '/api/sites/' + s.id, { monitoring: e.target.checked }); toast(e.target.checked ? 'Monitoreo automático activado.' : 'Monitoreo automático desactivado.'); } catch (x) { toast(x.message); } } } }), h('span', null, 'Monitoreo automático diario')) : null;
+    grid.appendChild(h('div', { class: 'card' }, h('h3', null, s.label || s.host, pill(lastV, 'Sin analizar')), h('p', { class: 'hint' }, s.host), h('p', { class: 'hint' }, s.lastScan ? 'Último análisis: ' + fmtDT(s.lastScan.at) + (s.lastScan.trigger === 'auto' ? ' (automático)' : '') : 'Aún no se ha analizado.'), mon,
+      h('div', { class: 'acts', style: 'justify-content:flex-start' },
+        h('button', { class: 'btn btn-y sm', type: 'button', disabled: d.level !== 'active', on: { click: function () { liveScan(s, function () { render(); }); } } }, ico('search'), 'Analizar ahora'),
+        s.lastScan ? h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('analisis/' + s.lastScan.id); } } }, 'Ver último resultado') : null,
+        h('button', { class: 'btn btn-r sm', type: 'button', on: { click: async function () { if (!confirm('¿Quitar ' + s.host + ' de tu panel? Se borrará su historial de análisis.')) return; try { await api('DELETE', '/api/sites/' + s.id, {}); toast('Sitio eliminado.'); render(); } catch (e) { toast(e.message); } } } }, 'Quitar'))));
+  });
+  if (!d.sites.length) grid.appendChild(h('div', { class: 'empty', style: 'grid-column:1/-1' }, 'Aún no has agregado ningún sitio.'));
+  root.appendChild(grid);
+  var url = h('input', { class: 'in', id: 'st-u', placeholder: 'tusitio.com', inputmode: 'url' }), lab = h('input', { class: 'in', id: 'st-l', placeholder: 'Ej: Mi tienda' }), own = h('input', { type: 'checkbox', id: 'st-o' });
+  root.appendChild(h('form', { class: 'card', style: 'margin-top:16px', novalidate: true, on: { submit: async function (e) { e.preventDefault(); err.textContent = ''; try { await api('POST', '/api/sites', { url: url.value, label: lab.value, ownership: own.checked }); toast('Sitio agregado.'); render(); } catch (x) { err.textContent = x.message; } } } },
+    h('h3', null, 'Agregar un sitio'),
+    can ? h('div', null, h('div', { class: 'row2' }, h('div', { class: 'fld' }, h('label', { for: 'st-u' }, 'Dirección'), url), h('div', { class: 'fld' }, h('label', { for: 'st-l' }, 'Nombre (opcional)'), lab)),
+      h('label', { class: 'chk' }, own, h('span', null, 'Confirmo que soy el propietario de este sitio o que tengo autorización para analizarlo.')), err, h('div', { class: 'acts', style: 'justify-content:flex-start' }, h('button', { class: 'btn btn-y', type: 'submit' }, ico('plus'), 'Agregar sitio')))
+      : h('p', { class: 'hint' }, d.limits.sites ? 'Tu plan permite ' + d.limits.sites + ' sitio' + (d.limits.sites > 1 ? 's' : '') + '. Para agregar más, cambia de plan en "Plan y pagos".' : 'Elige un plan para poder agregar sitios.')));
+  return root;
+};
+
+CV.analisis = async function (id) {
+  var d = await loadDash(), root = h('div', null);
+  if (id) {
+    var s = await api('GET', '/api/scans/' + id);
+    root.appendChild(head(s.host, 'Análisis del ' + fmtDT(s.at) + (s.trigger === 'auto' ? ' · automático' : ' · manual'), h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('analisis'); } } }, '← Volver')));
+    root.appendChild(h('div', { class: 'banner ' + ((VERDICT[s.verdict] || [])[1] === 'crit' ? 'crit' : (VERDICT[s.verdict] || [])[1] === 'ok' ? 'info' : 'warn') }, ico('shield'), h('div', null, h('b', null, 'Resultado: '), pill(VERDICT[s.verdict]), ' ' + s.counts.crit + ' graves · ' + s.counts.warn + ' avisos · ' + s.counts.info + ' informativos · ' + s.counts.ok + ' superados.', h('p', { class: 'hint', style: 'margin-top:4px' }, 'Análisis externo: solo ve lo público. No revisa archivos dentro del servidor ni la base de datos.' + (s.meta && s.meta.wp_version ? ' WordPress ' + s.meta.wp_version + '.' : '')))));
+    root.appendChild(findingsBox(s.findings));
+    if (s.counts.crit || s.counts.warn) root.appendChild(h('div', { class: 'acts', style: 'justify-content:flex-start;margin-top:16px' }, h('button', { class: 'btn btn-y', type: 'button', on: { click: function () { S.prefill = { subject: 'Ayuda con el análisis de ' + s.host, text: 'Hola, el análisis del ' + fmtDate(s.at) + ' de ' + s.host + ' encontró ' + s.counts.crit + ' problemas graves y ' + s.counts.warn + ' avisos. ¿Me ayudan a corregirlos?' }; go('soporte'); } } }, 'Pedir ayuda con estos resultados')));
+    return root;
+  }
+  root.appendChild(head('Análisis', 'Historial de los análisis de tus sitios.'));
+  root.appendChild(scanTable(d.scans, false, function (i) { go('analisis/' + i); }));
+  return root;
+};
+
+CV.soporte = async function (id) {
+  var d = await loadDash(), root = h('div', null);
+  if (id) {
+    var t = (await api('GET', '/api/tickets/' + id)).ticket;
+    root.appendChild(head('Solicitud', null, h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('soporte'); } } }, '← Volver')));
+    root.appendChild(threadView(t, false, function () { render(); })); return root;
+  }
+  root.appendChild(head('Soporte', d.limits.priority ? 'Tienes soporte prioritario: ' + (d.plan ? d.plan.response : '') + '.' : 'Escríbenos y te respondemos lo antes posible.'));
+  var pre = S.prefill; S.prefill = null;
+  var sub = h('input', { class: 'in', id: 'tk-s', value: pre ? pre.subject : '', placeholder: 'Ej: Mi sitio redirige a otra página' }), tx = h('textarea', { class: 'in', id: 'tk-t', placeholder: 'Cuéntanos qué pasa…' }), err = h('p', { class: 'err', role: 'alert' });
+  tx.value = pre ? pre.text : '';
+  var sel = h('select', { class: 'in', id: 'tk-site' }, h('option', { value: '' }, 'Ninguno en particular'), d.sites.map(function (s) { return h('option', { value: s.id }, s.host); }));
+  root.appendChild(h('form', { class: 'card', novalidate: true, on: { submit: async function (e) { e.preventDefault(); err.textContent = ''; try { var r = await api('POST', '/api/tickets', { subject: sub.value, text: tx.value, siteId: sel.value }); toast('Solicitud enviada.'); go('soporte/' + r.ticket.id); } catch (x) { err.textContent = x.message; } } } },
+    h('h3', null, 'Nueva solicitud'), h('div', { class: 'row2' }, h('div', { class: 'fld' }, h('label', { for: 'tk-s' }, 'Asunto'), sub), h('div', { class: 'fld' }, h('label', { for: 'tk-site' }, 'Sitio relacionado'), sel)),
+    h('div', { class: 'fld' }, h('label', { for: 'tk-t' }, 'Mensaje'), tx), h('div', { class: 'banner info', style: 'margin-bottom:8px' }, ico('info'), h('div', null, 'Por seguridad, no escribas contraseñas aquí. Si necesitamos acceso a tu sitio, te pediremos un usuario temporal por un canal seguro.')), err,
+    h('button', { class: 'btn btn-y', type: 'submit' }, 'Enviar solicitud')));
+  root.appendChild(h('h3', { style: 'margin:22px 0 12px;font-size:1rem' }, 'Tus solicitudes'));
+  root.appendChild(d.tickets.length ? table(['Asunto', 'Estado', 'Prioridad', 'Actualizado'], d.tickets.map(function (t) { return { id: t.id, cells: [t.subject, pill(TK[t.status]), t.priority === 'priority' ? h('span', { class: 'pill pri' }, 'Prioritario') : 'Normal', fmtDT(t.updatedAt)] }; }), function (r) { go('soporte/' + r.id); }) : h('div', { class: 'empty' }, 'Todavía no tienes solicitudes.'));
+  return root;
+};
+
+CV.pagos = async function () {
+  var d = await loadDash(), root = h('div', null);
+  root.appendChild(head('Plan y pagos', 'Tus pedidos, pagos registrados y opciones de plan.'));
+  root.appendChild(h('h3', { style: 'margin-bottom:12px;font-size:1rem' }, 'Pedidos'));
+  var detailCell = function (o) {
+    if (o.status === 'pending_payment') {
+      return h('button', { class: 'btn btn-y sm', type: 'button', on: { click: function () {
+        var el = document.getElementById('pay-' + o.id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        else { S.prefill = { subject: 'Quiero pagar mi plan ' + o.planName, text: 'Hola, quiero activar mi plan ' + o.planName + '. ¿Cómo realizo el pago?' }; go('soporte'); }
+      } } }, 'Pagar');
+    }
+    return o.type === 'subscription' ? (o.nextBilling ? 'Próximo cobro: ' + fmtDate(o.nextBilling) : '—') : (o.accessUntil ? 'Acceso hasta: ' + fmtDate(o.accessUntil) : '—');
+  };
+  root.appendChild(d.orders.length ? table(['Plan', 'Estado', 'Monto', 'Fecha', 'Detalle'], d.orders.map(function (o) { return { cells: [o.planName, pill(ORDER_ST[o.status]), money(o.amount, o.currency), fmtDate(o.createdAt), detailCell(o)] }; })) : h('div', { class: 'empty' }, 'Aún no tienes pedidos.'));
+  var pendientes = d.orders.filter(function (o) { return o.status === 'pending_payment'; });
+  pendientes.forEach(function (o) {
+    var card = h('div', { id: 'pay-' + o.id, class: 'card', style: 'margin-top:12px' }, h('h3', null, 'Pagar ' + o.planName));
+    if (S.paypal) card.appendChild(payPalBlock(o.plan));
+    else card.appendChild(h('p', { class: 'hint' }, d.paymentText));
+    root.appendChild(card);
+  });
+  root.appendChild(h('h3', { style: 'margin:22px 0 12px;font-size:1rem' }, 'Pagos registrados'));
+  root.appendChild(d.payments.length ? table(['Fecha', 'Monto', 'Método', 'Referencia'], d.payments.map(function (p) { return { cells: [fmtDate(p.at), money(p.amount, p.currency), p.method, p.reference || '—'] }; })) : h('div', { class: 'empty' }, 'Todavía no hay pagos registrados.'));
+  root.appendChild(h('h3', { style: 'margin:22px 0 12px;font-size:1rem' }, 'Cambiar o renovar plan'));
+  root.appendChild(h('div', { class: 'grid g3' }, S.plans.map(function (p) { return planCard(p, d.current && d.current.plan === p.id && d.level === 'active', async function (pl) { try { await api('POST', '/api/orders', { plan: pl.id }); toast('Solicitud enviada. Te contactaremos para el pago.'); render(); } catch (e) { toast(e.message); } }, 'Solicitar este plan'); })));
+  return root;
+};
+CV.cuenta = async function () { var r = h('div', null); r.appendChild(head('Mi cuenta', 'Tus datos y tu contraseña.')); r.appendChild(accountView()); return r; };
+
+/* ================= VISTAS DEL ADMINISTRADOR ================= */
+var AV = {};
+AV.resumen = async function () {
+  var o = await api('GET', '/api/admin/overview'), k = o.kpis, root = h('div', null);
+  setBadge(k.openTickets);
+  if (S.user.mustChangePassword) root.appendChild(h('div', { class: 'banner warn' }, ico('alert'), h('div', null, 'Estás usando la contraseña inicial. ', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('ajustes'); } } }, 'Cambiarla ahora'))));
+  root.appendChild(head('Resumen', 'Datos reales de tu negocio.'));
+  var kp = function (n, l, cls) { return h('div', { class: 'card kpi ' + (cls || '') }, h('b', null, n), h('span', null, l)); };
+  root.appendChild(h('div', { class: 'grid g4' }, kp(k.clients, 'Clientes'), kp(k.active, 'Planes activos', 'good'), kp(k.pendingPayment, 'Pendientes de pago', k.pendingPayment ? 'bad' : ''), kp(k.openTickets, 'Solicitudes abiertas', k.openTickets ? 'bad' : ''),
+    kp(k.sites, 'Sitios registrados'), kp(k.scansWeek, 'Análisis (7 días)'), kp(money(k.revenueMonth, k.currency), 'Ingresos del mes'), kp(money(k.revenueTotal, k.currency), 'Ingresos registrados')));
+  if (k.overdue) root.appendChild(h('div', { class: 'banner warn', style: 'margin-top:16px' }, ico('alert'), h('div', null, k.overdue + ' suscripción(es) con cobro vencido.')));
+  var tot = Math.max(1, o.byPlan.reduce(function (a, b) { return a + b.count; }, 0));
+  root.appendChild(h('div', { class: 'grid g2', style: 'margin-top:16px' },
+    h('div', { class: 'card' }, h('h3', null, 'Clientes activos por plan'), o.byPlan.map(function (p) { return h('div', { style: 'margin-bottom:12px' }, h('div', { class: 'card-h', style: 'margin-bottom:6px;font-size:.9rem' }, h('span', null, p.name), h('b', null, String(p.count))), h('div', { class: 'bar' }, h('i', { style: 'width:' + Math.round(p.count / tot * 100) + '%' }))); })),
+    h('div', { class: 'card' }, h('h3', null, 'Sitios con alerta'), o.problemSites.length ? table(['Cliente', 'Sitio', 'Estado'], o.problemSites.map(function (s) { return { id: s.userId, cells: [s.client, s.host, pill(VERDICT[s.verdict])] }; }), function (r) { go('clientes/' + r.id); }) : h('div', { class: 'empty' }, 'Ningún sitio con alertas.'))));
+  root.appendChild(h('div', { class: 'grid g2', style: 'margin-top:16px' },
+    h('div', { class: 'card' }, h('h3', null, 'Solicitudes esperando respuesta', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('soporte'); } } }, 'Ver todas')), o.waiting.length ? table(['Cliente', 'Asunto', ''], o.waiting.map(function (t) { return { id: t.id, cells: [t.client, t.subject, t.priority === 'priority' ? h('span', { class: 'pill pri' }, 'Prioritario') : ''] }; }), function (r) { go('soporte/' + r.id); }) : h('div', { class: 'empty' }, 'No hay solicitudes pendientes.')),
+    h('div', { class: 'card' }, h('h3', null, 'Actividad reciente'), o.activity.length ? h('ul', { class: 'list', style: 'max-height:340px;overflow:auto' }, o.activity.map(function (a) { return h('li', null, ico(a.kind === 'alert' ? 'alert' : 'info'), h('span', null, h('b', null, a.actor + ': '), a.text, h('span', { class: 'hint' }, ' · ' + fmtDT(a.at)))); })) : h('div', { class: 'empty' }, 'Sin actividad todavía.'))));
+  return root;
+};
+
+AV.clientes = async function (id) {
+  if (id) return clienteDetalle(id);
+  var root = h('div', null), q = h('input', { class: 'in', placeholder: 'Buscar por nombre o correo', 'aria-label': 'Buscar' }), pl = h('select', { class: 'in', 'aria-label': 'Plan' }, h('option', { value: '' }, 'Todos los planes'), S.plans.map(function (p) { return h('option', { value: p.id }, p.name); })),
+    lv = h('select', { class: 'in', 'aria-label': 'Estado' }, h('option', { value: '' }, 'Todos los estados'), h('option', { value: 'active' }, 'Activos'), h('option', { value: 'pending' }, 'Pendientes de pago'), h('option', { value: 'ended' }, 'Terminados'), h('option', { value: 'none' }, 'Sin plan'));
+  var holder = h('div');
+  async function load() {
+    var r = await api('GET', '/api/admin/clients?q=' + encodeURIComponent(q.value) + '&plan=' + pl.value + '&level=' + lv.value);
+    holder.innerHTML = '';
+    holder.appendChild(r.clients.length ? table(['Cliente', 'Plan', 'Estado', 'Sitios', 'Solicitudes', 'Seguridad', 'Alta'], r.clients.map(function (c) { return { id: c.id, cells: [h('span', null, h('b', null, c.name), h('br'), h('span', { class: 'hint' }, c.email)), c.planName || '—', h('span', null, pill(LEVEL[c.level]), c.overdue ? ' ' : '', c.overdue ? h('span', { class: 'pill warn' }, 'Cobro vencido') : ''), String(c.sites), c.openTickets ? h('span', { class: 'pill warn' }, String(c.openTickets)) : '0', c.health ? pill(VERDICT[c.health]) : '—', fmtDate(c.createdAt)] }; }), function (r) { go('clientes/' + r.id); }) : h('div', { class: 'empty' }, 'No hay clientes con esos filtros.'));
+  }
+  var t; q.addEventListener('input', function () { clearTimeout(t); t = setTimeout(load, 250); }); pl.addEventListener('change', load); lv.addEventListener('change', load);
+  root.appendChild(head('Clientes', 'Cada cliente tiene su propio panel según su plan.', h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' }, h('a', { class: 'btn btn-o', href: '/api/admin/export.csv' }, 'Exportar CSV'), h('button', { class: 'btn btn-y', type: 'button', on: { click: newClient } }, ico('plus'), 'Nuevo cliente'))));
+  root.appendChild(h('div', { class: 'filters' }, q, pl, lv)); root.appendChild(holder); await load(); return root;
+};
+function tempModal(title, pw) {
+  var m = modal(title, h('div', null, h('p', null, 'Entrégala al cliente por un canal seguro. Es temporal: se le pedirá cambiarla al entrar. No se volverá a mostrar.'), h('div', { class: 'tempbox' }, pw), h('div', { class: 'acts' }, h('button', { class: 'btn btn-y', type: 'button', on: { click: function () { m.close(); } } }, 'Listo'))));
+}
+function newClient() {
+  var nm = h('input', { class: 'in', id: 'nc-n' }), em = h('input', { class: 'in', id: 'nc-e', type: 'email' }), ph = h('input', { class: 'in', id: 'nc-t' }), sel = h('select', { class: 'in', id: 'nc-p' }, h('option', { value: '' }, 'Sin plan por ahora'), S.plans.map(function (p) { return h('option', { value: p.id }, p.name); })), err = h('p', { class: 'err', role: 'alert' });
+  var m = modal('Nuevo cliente', h('form', { novalidate: true, on: { submit: async function (e) { e.preventDefault(); err.textContent = ''; try { var r = await api('POST', '/api/admin/clients', { name: nm.value, email: em.value, phone: ph.value, plan: sel.value }); m.close(); tempModal('Cliente creado', r.tempPassword); go('clientes/' + r.client.id); } catch (x) { err.textContent = x.message; } } } },
+    h('div', { class: 'fld' }, h('label', { for: 'nc-n' }, 'Nombre'), nm), h('div', { class: 'row2' }, h('div', { class: 'fld' }, h('label', { for: 'nc-e' }, 'Correo'), em), h('div', { class: 'fld' }, h('label', { for: 'nc-t' }, 'Teléfono'), ph)), h('div', { class: 'fld' }, h('label', { for: 'nc-p' }, 'Plan'), sel), err, h('div', { class: 'acts' }, h('button', { class: 'btn btn-y', type: 'submit' }, 'Crear cliente'))));
+}
+function payModal(o, done) {
+  var amt = h('input', { class: 'in', id: 'py-a', type: 'number', min: '0', step: '0.01', value: String(o.amount) }), met = h('input', { class: 'in', id: 'py-m', placeholder: 'Transferencia, tarjeta, efectivo…' }), ref = h('input', { class: 'in', id: 'py-r' }), err = h('p', { class: 'err', role: 'alert' });
+  var m = modal('Registrar pago · ' + o.planName, h('form', { novalidate: true, on: { submit: async function (e) { e.preventDefault(); err.textContent = ''; try { await api('POST', '/api/admin/orders/' + o.id + '/payments', { amount: amt.value, method: met.value, reference: ref.value }); toast('Pago registrado.'); m.close(); done(); } catch (x) { err.textContent = x.message; } } } },
+    h('div', { class: 'fld' }, h('label', { for: 'py-a' }, 'Monto (' + o.currency + ')'), amt), h('div', { class: 'row2' }, h('div', { class: 'fld' }, h('label', { for: 'py-m' }, 'Método'), met), h('div', { class: 'fld' }, h('label', { for: 'py-r' }, 'Referencia'), ref)),
+    h('p', { class: 'hint' }, o.status === 'pending_payment' ? 'Al registrar el pago, el pedido se activa y el cliente ve su panel completo.' : o.type === 'subscription' ? 'Se extiende el próximo cobro 30 días.' : ''), err, h('div', { class: 'acts' }, h('button', { class: 'btn btn-y', type: 'submit' }, 'Registrar pago'))));
+}
+async function clienteDetalle(id) {
+  var d = await api('GET', '/api/admin/clients/' + id), u = d.user, root = h('div', null), sum = d.summary;
+  var refresh = function () { render(); };
+  root.appendChild(head(u.name, u.email + (u.phone ? ' · ' + u.phone : ''), h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap;align-items:center' }, pill(LEVEL[sum.level]), u.active ? null : pill(['Cuenta desactivada', 'crit']), h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('clientes'); } } }, '← Clientes'))));
+  // Pedidos
+  var ordersBox = h('div', { class: 'stack' });
+  d.orders.forEach(function (o) {
+    var isSub = o.type === 'subscription', sts = isSub ? ['pending_payment', 'active', 'cancelled'] : ['pending_payment', 'in_progress', 'delivered', 'cancelled'];
+    var st = h('select', { class: 'in', 'aria-label': 'Estado del pedido' }, sts.map(function (s) { return h('option', { value: s, selected: s === o.status }, ORDER_ST[s][0]); }));
+    var sg = isSub ? null : h('select', { class: 'in', 'aria-label': 'Avance' }, [0, 1, 2, 3, 4].map(function (n) { return h('option', { value: String(n), selected: n === o.stage }, n === 0 ? 'Avance: sin iniciar' : n === 4 ? 'Avance: completado' : 'Avance: ' + n + ' de 4 (' + d.stages[n - 1] + ')'); }));
+    var nt = h('input', { class: 'in', value: o.notes || '', placeholder: 'Nota interna (solo la ves tú)', 'aria-label': 'Nota' });
+    var pays = d.payments.filter(function (p) { return p.orderId === o.id; });
+    ordersBox.appendChild(h('div', { class: 'card' }, h('h3', null, o.planName + ' · ' + money(o.amount, o.currency), pill(ORDER_ST[o.status])),
+      h('div', { class: 'grid ' + (isSub ? 'g2' : 'g3') }, st, sg, nt),
+      h('p', { class: 'hint', style: 'margin-top:8px' }, 'Creado: ' + fmtDate(o.createdAt) + (o.paidAt ? ' · Pagado: ' + fmtDate(o.paidAt) : '') + (o.nextBilling ? ' · Próximo cobro: ' + fmtDate(o.nextBilling) : '') + (o.accessUntil ? ' · Acceso hasta: ' + fmtDate(o.accessUntil) : '')),
+      pays.length ? h('p', { class: 'hint' }, 'Pagos: ' + pays.map(function (p) { return money(p.amount, p.currency) + ' (' + fmtDate(p.at) + ')'; }).join(', ')) : null,
+      h('div', { class: 'acts', style: 'justify-content:flex-start' },
+        h('button', { class: 'btn btn-y sm', type: 'button', on: { click: async function () { try { var body = { status: st.value, notes: nt.value }; if (sg) body.stage = sg.value; await api('PATCH', '/api/admin/orders/' + o.id, body); toast('Pedido actualizado.'); refresh(); } catch (e) { toast(e.message); } } } }, 'Guardar cambios'),
+        h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { payModal(o, refresh); } } }, ico('card'), 'Registrar pago'))));
+  });
+  if (!d.orders.length) ordersBox.appendChild(h('div', { class: 'empty' }, 'Este cliente todavía no tiene pedidos.'));
+  var addSel = h('select', { class: 'in', style: 'width:auto', 'aria-label': 'Plan' }, S.plans.map(function (p) { return h('option', { value: p.id }, p.name); }));
+  root.appendChild(h('div', { class: 'card-h', style: 'margin-bottom:12px' }, h('h3', { style: 'margin:0' }, 'Plan y pedidos'), h('span', { style: 'display:flex;gap:8px' }, addSel, h('button', { class: 'btn btn-o sm', type: 'button', on: { click: async function () { try { await api('POST', '/api/admin/clients/' + id + '/orders', { plan: addSel.value }); toast('Pedido creado.'); refresh(); } catch (e) { toast(e.message); } } } }, ico('plus'), 'Agregar pedido'))));
+  root.appendChild(ordersBox);
+  // Sitios y análisis
+  root.appendChild(h('h3', { style: 'margin:24px 0 12px;font-size:1rem' }, 'Sitios y análisis'));
+  root.appendChild(d.sites.length ? table(['Sitio', 'Monitoreo', 'Último análisis', 'Resultado'], d.sites.map(function (s) { return { id: s.lastScan && s.lastScan.id, cells: [s.host, s.monitoring ? 'Activo' : 'Desactivado', s.lastScan ? fmtDT(s.lastScan.at) : '—', s.lastScan ? pill(VERDICT[s.lastScan.verdict]) : '—'] }; }), function (r) { if (r.id) go('analisis/' + r.id); }) : h('div', { class: 'empty' }, 'Sin sitios registrados.'));
+  // Soporte
+  root.appendChild(h('h3', { style: 'margin:24px 0 12px;font-size:1rem' }, 'Solicitudes de soporte'));
+  root.appendChild(d.tickets.length ? table(['Asunto', 'Estado', 'Prioridad', 'Actualizado'], d.tickets.map(function (t) { return { id: t.id, cells: [t.subject, pill(TK[t.status]), t.priority === 'priority' ? h('span', { class: 'pill pri' }, 'Prioritario') : 'Normal', fmtDT(t.updatedAt)] }; }), function (r) { go('soporte/' + r.id); }) : h('div', { class: 'empty' }, 'Sin solicitudes.'));
+  // Perfil y acciones
+  var nm = h('input', { class: 'in', id: 'cl-n', value: u.name }), ph = h('input', { class: 'in', id: 'cl-t', value: u.phone || '' }), co = h('input', { class: 'in', id: 'cl-c', value: u.company || '' }), nt = h('textarea', { class: 'in', id: 'cl-x', style: 'min-height:80px' });
+  nt.value = d.notes || '';
+  root.appendChild(h('div', { class: 'grid g2', style: 'margin-top:24px' },
+    h('form', { class: 'card', novalidate: true, on: { submit: async function (e) { e.preventDefault(); try { await api('PATCH', '/api/admin/clients/' + id, { name: nm.value, phone: ph.value, company: co.value, notes: nt.value }); toast('Datos guardados.'); refresh(); } catch (x) { toast(x.message); } } } },
+      h('h3', null, 'Datos y notas'), h('div', { class: 'fld' }, h('label', { for: 'cl-n' }, 'Nombre'), nm), h('div', { class: 'row2' }, h('div', { class: 'fld' }, h('label', { for: 'cl-t' }, 'Teléfono'), ph), h('div', { class: 'fld' }, h('label', { for: 'cl-c' }, 'Empresa'), co)),
+      h('div', { class: 'fld' }, h('label', { for: 'cl-x' }, 'Notas internas (el cliente no las ve)'), nt), h('button', { class: 'btn btn-y', type: 'submit' }, 'Guardar')),
+    h('div', { class: 'card' }, h('h3', null, 'Acciones de la cuenta'),
+      h('div', { class: 'stack' },
+        h('button', { class: 'btn btn-o', type: 'button', on: { click: async function () { if (!confirm('Se generará una contraseña temporal y se cerrarán sus sesiones. ¿Continuar?')) return; try { var r = await api('POST', '/api/admin/clients/' + id + '/reset-password', {}); tempModal('Contraseña restablecida', r.tempPassword); } catch (e) { toast(e.message); } } } }, 'Restablecer contraseña'),
+        h('button', { class: 'btn btn-o', type: 'button', on: { click: async function () { try { await api('PATCH', '/api/admin/clients/' + id, { active: !u.active }); toast(u.active ? 'Cuenta desactivada.' : 'Cuenta reactivada.'); refresh(); } catch (e) { toast(e.message); } } } }, u.active ? 'Desactivar cuenta' : 'Reactivar cuenta'),
+        h('button', { class: 'btn btn-r', type: 'button', on: { click: async function () { var c = prompt('Esto borra al cliente y TODOS sus datos (sitios, análisis, solicitudes, pagos). Para confirmar, escribe su correo:\n' + u.email); if (c === null) return; try { await api('DELETE', '/api/admin/clients/' + id, { confirm: c.trim() }); toast('Cliente eliminado.'); go('clientes'); } catch (e) { toast(e.message); } } } }, 'Eliminar cliente y sus datos')))));
+  // Actividad
+  root.appendChild(h('div', { class: 'card', style: 'margin-top:16px' }, h('h3', null, 'Actividad del cliente'), d.activity.length ? h('ul', { class: 'list' }, d.activity.map(function (a) { return h('li', null, ico(a.kind === 'alert' ? 'alert' : 'info'), h('span', null, a.text, h('span', { class: 'hint' }, ' · ' + a.actor + ' · ' + fmtDT(a.at)))); })) : h('div', { class: 'empty' }, 'Sin actividad.')));
+  return root;
+}
+
+AV.soporte = async function (id) {
+  var root = h('div', null);
+  if (id) { var t = (await api('GET', '/api/admin/tickets/' + id)).ticket; root.appendChild(head('Solicitud', null, h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('soporte'); } } }, '← Volver'))); root.appendChild(threadView(t, true, function () { render(); })); return root; }
+  var f = h('select', { class: 'in', style: 'width:auto', 'aria-label': 'Estado' }, h('option', { value: '' }, 'Todas'), h('option', { value: 'open' }, 'Abiertas (esperan respuesta)'), h('option', { value: 'answered' }, 'Respondidas'), h('option', { value: 'closed' }, 'Cerradas')), holder = h('div');
+  async function load() { var r = await api('GET', '/api/admin/tickets?status=' + f.value); holder.innerHTML = ''; holder.appendChild(r.tickets.length ? table(['Cliente', 'Asunto', 'Estado', 'Prioridad', 'Actualizado'], r.tickets.map(function (t) { return { id: t.id, cells: [t.client, t.subject, pill(TK[t.status]), t.priority === 'priority' ? h('span', { class: 'pill pri' }, 'Prioritario') : 'Normal', fmtDT(t.updatedAt)] }; }), function (r2) { go('soporte/' + r2.id); }) : h('div', { class: 'empty' }, 'No hay solicitudes.')); }
+  f.addEventListener('change', load); f.value = 'open';
+  root.appendChild(head('Soporte', 'Los planes con soporte prioritario aparecen primero.')); root.appendChild(h('div', { class: 'filters' }, f)); root.appendChild(holder); await load(); return root;
+};
+
+AV.analisis = async function (id) {
+  var root = h('div', null);
+  if (id) {
+    var s = await api('GET', '/api/admin/scans/' + id);
+    root.appendChild(head(s.host, 'Análisis del ' + fmtDT(s.at) + (s.trigger === 'auto' ? ' · automático' : ' · manual'), h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { history.back(); } } }, '← Volver')));
+    root.appendChild(h('div', { class: 'banner info' }, ico('shield'), h('div', null, h('b', null, 'Resultado: '), pill(VERDICT[s.verdict]), ' ' + s.counts.crit + ' graves · ' + s.counts.warn + ' avisos · ' + s.counts.info + ' informativos.'))); root.appendChild(findingsBox(s.findings)); return root;
+  }
+  var f = h('select', { class: 'in', style: 'width:auto', 'aria-label': 'Resultado' }, h('option', { value: '' }, 'Todos'), Object.keys(VERDICT).map(function (k) { return h('option', { value: k }, VERDICT[k][0]); })), holder = h('div');
+  async function load() { var r = await api('GET', '/api/admin/scans?verdict=' + f.value); holder.innerHTML = ''; holder.appendChild(scanTable(r.scans, true, function (i) { go('analisis/' + i); })); }
+  f.addEventListener('change', load); root.appendChild(head('Análisis', 'Los análisis más recientes de todos los clientes.')); root.appendChild(h('div', { class: 'filters' }, f)); root.appendChild(holder); await load(); return root;
+};
+
+AV.ajustes = async function () {
+  var s = await api('GET', '/api/admin/settings'), root = h('div', null), tx = h('textarea', { class: 'in', id: 'st-p' });
+  tx.value = s.paymentInstructions;
+  root.appendChild(head('Ajustes', 'Instrucciones de pago, planes y tu cuenta.'));
+  root.appendChild(h('div', { class: 'stack' },
+    h('div', { class: 'card' }, h('h3', null, 'Instrucciones de pago'), h('p', { class: 'hint', style: 'margin-bottom:10px' }, 'Este texto lo ven los clientes con un plan pendiente de pago. Incluye cómo pagarte (cuenta, enlace de pago, WhatsApp…).'),
+      h('div', { class: 'fld' }, h('label', { for: 'st-p' }, 'Texto'), tx), h('button', { class: 'btn btn-y', type: 'button', on: { click: async function () { try { await api('PATCH', '/api/admin/settings', { paymentInstructions: tx.value }); toast('Guardado.'); } catch (e) { toast(e.message); } } } }, 'Guardar')),
+    h('div', { class: 'card' }, h('h3', null, 'Planes y límites'), h('p', { class: 'hint', style: 'margin-bottom:10px' }, 'Se definen en el archivo app.js (constante PLANS). Aquí los ves como los aplica el sistema.'),
+      table(['Plan', 'Precio', 'Sitios', 'Análisis/mes', 'Monitoreo', 'Soporte'], s.plans.map(function (p) { return { cells: [p.name, money(p.price, p.currency) + ' · ' + p.period, String(p.sites), p.scansPerMonth === null ? 'Ilimitados' : String(p.scansPerMonth), p.scheduled ? 'Diario' : 'No', p.priority ? 'Prioritario · ' + p.response : 'Estándar · ' + p.response] }; }))),
+    h('div', null, h('h3', { style: 'margin:6px 0 12px;font-size:1rem' }, 'Mi cuenta'), accountView())));
+  return root;
+};
+
+/* ================= Arranque ================= */
+if (!location.hash) history.replaceState(null, '', location.pathname + location.search + '#/resumen');
+boot().catch(function (e) { $('#app').appendChild(h('div', { class: 'auth' }, h('div', { class: 'auth-box' }, h('h1', null, 'No se pudo cargar el panel'), h('p', { class: 'sub' }, 'Comprueba que el servidor esté en marcha. ' + e.message)))); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NexaGuard | Reparación de WordPress hackeado y errores críticos</title>
+<meta name="description" content="Limpiamos malware, backdoors y spam SEO de sitios WordPress hackeados, reparamos errores críticos y los dejamos blindados. Diagnóstico gratis.">
+<meta name="theme-color" content="#070c22">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%230b1235%22/%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%2210%22 y1=%224%22 x2=%2254%22 y2=%2260%22 gradientUnits=%22userSpaceOnUse%22%3E%3Cstop offset=%220%22 stop-color=%22%23ffcf33%22/%3E%3Cstop offset=%221%22 stop-color=%22%236b8cff%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d=%22M32 8L50 14.5V31C50 43 42.5 51.5 32 56C21.5 51.5 14 43 14 31V14.5Z%22 fill=%22%2315214f%22 stroke=%22url(%23g)%22 stroke-width=%223.4%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M24 41V23L40 41V23%22 fill=%22none%22 stroke=%22%23ffcf33%22 stroke-width=%225.4%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<script>document.documentElement.classList.add('js')</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070c22;--bg2:#0d1538;--panel:rgba(17,28,70,.62);
+  --line:rgba(150,175,255,.16);--line2:rgba(170,195,255,.32);
+  --text:#eaf0ff;--muted:#a0acd2;
+  --yellow:#ffcf33;--yellow-ink:#1a1400;--blue:#6b8cff;--red:#ff4560;--green:#3de8a4;--amber:#ffb020;
+  --H:calc(var(--vh,1vh)*100);
+  --fd:'Unbounded','Segoe UI',system-ui,sans-serif;
+  --fb:'Schibsted Grotesk','Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  --fm:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --hazard:repeating-linear-gradient(-45deg,#ffcf33 0 10px,#0b1030 10px 20px);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:17px;line-height:1.6;overflow-x:clip;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+h1,h2,h3,h4{font-family:var(--fd);font-weight:600;line-height:1.14;letter-spacing:-.012em;text-wrap:balance}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:3px;border-radius:4px}
+.ic{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- Canvas 3D y ruido ---------- */
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.noise{position:fixed;inset:0;z-index:40;pointer-events:none;opacity:.05;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+
+/* ---------- Navegación ---------- */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:calc(env(safe-area-inset-top,0px) + 12px) max(18px,4vw) 12px;background:rgba(7,12,34,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav::after{content:"";position:absolute;left:0;bottom:-1px;height:2px;width:100%;background:var(--pcol,var(--red));transform-origin:left;transform:scaleX(var(--prog,0))}
+.logo{display:flex;align-items:center;line-height:0}
+.logo svg{height:36px;width:auto;display:block}
+.nav-links{display:flex;gap:26px;font-size:.95rem;color:var(--muted)}
+.nav-links a{transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-r{display:flex;align-items:center;gap:16px}
+.health{white-space:nowrap;display:flex;align-items:center;gap:10px;font-family:var(--fm);font-size:.7rem;color:var(--muted);padding:7px 12px;border:1px solid var(--line);border-radius:999px}
+.hbar{width:76px;height:5px;background:var(--line);border-radius:5px;overflow:hidden}
+.hbar i{display:block;height:100%;width:8%;background:var(--red);border-radius:5px}
+.health b{color:var(--text);min-width:3.2ch;text-align:right}
+.health em{font-style:normal;min-width:9ch}
+
+/* ---------- Botones ---------- */
+a[data-go],a[data-act]{cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.6em;padding:.95em 1.5em;border-radius:12px;font-weight:700;font-size:.98rem;border:1px solid transparent;transition:transform .2s,background .2s,border-color .2s,box-shadow .2s;white-space:nowrap;line-height:1.2}
+.btn-y{background:var(--yellow);color:var(--yellow-ink);box-shadow:0 8px 28px -10px rgba(255,207,51,.6)}
+.btn-y:hover{transform:translateY(-2px);box-shadow:0 14px 32px -10px rgba(255,207,51,.75)}
+.btn-y:active{transform:none}
+.btn-o{border-color:var(--line2);background:rgba(255,255,255,.03)}
+.btn-o:hover{border-color:var(--text);background:rgba(255,255,255,.08)}
+.btn.sm{padding:.62em 1.1em;font-size:.88rem}
+.btn[disabled]{opacity:.5;pointer-events:none}
+
+/* ---------- Estructura común ---------- */
+.wrap{max-width:1240px;margin:0 auto}
+.sec-h{max-width:740px;margin-bottom:clamp(30px,5vw,54px)}
+.sec-h h2,.h2{font-size:clamp(1.55rem,3.1vw,2.55rem)}
+.lead{font-size:clamp(1.02rem,1.3vw,1.16rem);color:var(--muted);max-width:58ch;margin-top:14px}
+.grid-bg{position:absolute;inset:0;pointer-events:none;opacity:.55;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(ellipse 70% 60% at 30% 45%,#000,transparent);mask-image:radial-gradient(ellipse 70% 60% at 30% 45%,#000,transparent)}
+.js [data-reveal]{opacity:0;transform:translateY(22px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+.js [data-reveal].in{opacity:1;transform:none}
+
+/* ---------- Hero (queda fijo y la siguiente sección lo cubre) ---------- */
+.hero-wrap{position:relative;z-index:1;height:calc(var(--H)*2)}
+.hero{position:sticky;top:0;height:var(--H);overflow:hidden;display:flex;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 84px) max(20px,5vw) 70px}
+.hero-inner{position:relative;width:100%;max-width:1320px;margin:0 auto;will-change:transform,opacity}
+.hero-copy{max-width:min(700px,100%)}
+.pill{display:inline-flex;align-items:center;gap:.65em;padding:.45em .95em;border:1px solid rgba(255,69,96,.5);background:rgba(255,69,96,.1);color:#ffc0c9;border-radius:999px;font-size:.86rem;font-weight:600}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--red);animation:ping 1.8s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,69,96,.7)}70%,100%{box-shadow:0 0 0 9px rgba(255,69,96,0)}}
+.hero h1{font-size:clamp(1.95rem,4.1vw,3.6rem);font-weight:600;margin:22px 0 4px}
+.glitch{position:relative;display:inline-block;color:var(--red)}
+.glitch::before,.glitch::after{content:attr(data-text);position:absolute;inset:0;overflow:hidden;clip-path:inset(0 0 100% 0)}
+.glitch::before{color:#3ff0ff;animation:gl1 3.4s infinite steps(1)}
+.glitch::after{color:#ff3dd0;animation:gl2 4.1s infinite steps(1)}
+@keyframes gl1{0%,86%,100%{clip-path:inset(0 0 100% 0);transform:none}88%{clip-path:inset(8% 0 58% 0);transform:translate(-4px,0)}92%{clip-path:inset(46% 0 22% 0);transform:translate(3px,0)}96%{clip-path:inset(0 0 100% 0)}}
+@keyframes gl2{0%,78%,100%{clip-path:inset(0 0 100% 0);transform:none}80%{clip-path:inset(60% 0 8% 0);transform:translate(4px,0)}84%{clip-path:inset(20% 0 52% 0);transform:translate(-3px,0)}88%{clip-path:inset(0 0 100% 0)}}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 26px}
+.ticks{list-style:none;display:grid;gap:8px;font-size:.95rem;color:#cdd6f5}
+.ticks li{display:flex;gap:10px;align-items:center}
+.ticks .ic{color:var(--green)}
+.term{position:absolute;right:max(20px,4vw);bottom:clamp(24px,7vh,70px);width:min(380px,42vw);border:1px solid var(--line2);border-radius:12px;background:rgba(5,9,26,.84);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-family:var(--fm);font-size:.72rem;overflow:hidden;box-shadow:0 30px 60px -24px rgba(0,0,0,.7)}
+.term-bar{display:flex;gap:6px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);color:var(--muted)}
+.term-bar i{width:9px;height:9px;border-radius:50%;background:#34417a}
+.term-bar span{margin-left:8px}
+.term-body{padding:12px 14px;height:184px;display:flex;flex-direction:column;justify-content:flex-end;gap:3px}
+.tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:tl .35s ease both}
+@keyframes tl{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.tl.c{color:#c8d4ff}.tl.i{color:var(--muted)}.tl.e{color:#ff8ba0}.tl.w{color:var(--amber)}.tl.o{color:var(--green)}
+.cue{position:absolute;left:max(20px,5vw);bottom:26px;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:.86rem}
+.cue i{width:1px;height:38px;background:linear-gradient(var(--yellow),transparent);animation:cue 2s ease-in-out infinite;transform-origin:top}
+@keyframes cue{0%{transform:scaleY(0)}50%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}
+
+/* ---------- Síntomas (cubre el hero al bajar) ---------- */
+.cover{position:relative;z-index:2;margin-top:calc(var(--H)*-1);border-radius:34px 34px 0 0;background:rgba(7,12,34,.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line2);padding:clamp(70px,9vw,120px) max(20px,5vw) clamp(60px,8vw,100px)}
+.cover::before{content:"";position:absolute;top:14px;left:50%;width:56px;height:4px;border-radius:4px;background:var(--line2);transform:translateX(-50%)}
+.sym-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.cellw{height:100%}
+.sym{position:relative;overflow:hidden;padding:32px 24px 22px;background:var(--panel);border:1px solid var(--line);border-radius:8px;cursor:pointer;height:100%;display:flex;flex-direction:column;gap:12px;transition:transform .25s ease,border-color .25s,background .25s;transform-style:preserve-3d;user-select:none;-webkit-user-select:none}
+.sym::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:var(--hazard);opacity:.85}
+.sym::after{content:"";position:absolute;inset:0;background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),rgba(255,207,51,.11),transparent 45%);opacity:0;transition:opacity .3s;pointer-events:none}
+.sym:hover::after{opacity:1}
+.sym .ico{width:46px;height:46px;border:1px solid var(--line2);border-radius:10px;display:grid;place-items:center;font-size:1.4rem;color:var(--yellow)}
+.sym h3{font-size:1.02rem}
+.sym p{color:var(--muted);font-size:.95rem}
+.sym .hint{margin-top:auto;padding-top:6px;font-size:.88rem;color:var(--yellow);font-weight:600}
+.sym .hint .on{display:none}
+.sym[aria-pressed=true] .hint .on{display:inline}
+.sym[aria-pressed=true] .hint .off{display:none}
+.sym .stamp{position:absolute;right:16px;top:28px;padding:.28em .7em;border:2px solid var(--yellow);color:var(--yellow);border-radius:6px;font-family:var(--fd);font-size:.66rem;font-weight:700;letter-spacing:.04em;transform:rotate(-8deg) scale(1.9);opacity:0;transition:transform .38s cubic-bezier(.2,1.6,.4,1),opacity .2s}
+.sym[aria-pressed=true]{border-color:var(--yellow);background:rgba(255,207,51,.07)}
+.sym[aria-pressed=true] .stamp{opacity:1;transform:rotate(-8deg) scale(1)}
+.pick{position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:5;margin-top:26px;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 14px 12px 20px;background:var(--yellow);color:var(--yellow-ink);border-radius:14px;font-weight:700;transform:translateY(160%);opacity:0;transition:transform .5s cubic-bezier(.2,.9,.3,1.15),opacity .3s;pointer-events:none;box-shadow:0 18px 40px -14px rgba(255,207,51,.6)}
+.pick.show{transform:none;opacity:1;pointer-events:auto}
+.pick a{background:#0b1030;color:var(--yellow);padding:.65em 1.1em;border-radius:10px;font-size:.9rem}
+
+/* ---------- Cinta de peligro ---------- */
+.tape-wrap{position:relative;z-index:2;overflow:hidden;padding:34px 0}
+.tape-rot{transform:rotate(-1.6deg) scale(1.06);background:var(--yellow);color:var(--yellow-ink);overflow:hidden;box-shadow:0 14px 40px -12px rgba(0,0,0,.7)}
+.tape{display:flex;width:max-content;padding:12px 0;font-family:var(--fd);font-weight:700;font-size:.85rem;animation:mq 42s linear infinite}
+.tape span{display:flex;align-items:center;gap:3rem;padding-right:3rem;white-space:nowrap}
+.tape span::after{content:"";width:9px;height:9px;background:var(--yellow-ink);transform:rotate(45deg)}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* ---------- Servicios (scroll horizontal fijado) ---------- */
+.hs{position:relative;z-index:2}
+.hs-pin{position:sticky;top:0;height:var(--H);overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,4vh,38px);padding-top:calc(env(safe-area-inset-top,0px) + 70px);perspective:1600px}
+.hs-head{padding:0 max(20px,5vw);max-width:calc(760px + 10vw)}
+.hs-head h2{font-size:clamp(1.5rem,3vw,2.4rem)}
+.hs-track{position:relative;display:flex;gap:24px;padding:0 max(20px,5vw);width:max-content;transform-style:preserve-3d;will-change:transform}
+.pnl{position:relative;flex:none;width:min(390px,80vw);height:min(50vh,430px);padding:28px 26px;background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;gap:12px;overflow:hidden;will-change:transform,opacity;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.pnl::before,.pnl::after{content:"";position:absolute;width:16px;height:16px;border:2px solid var(--yellow);opacity:.85}
+.pnl::before{top:10px;left:10px;border-right:0;border-bottom:0}
+.pnl::after{bottom:10px;right:10px;border-left:0;border-top:0}
+.pnl .ico{font-size:2.1rem;color:var(--yellow);margin-top:6px}
+.pnl h3{font-size:1.12rem}
+.pnl p{color:var(--muted);font-size:.95rem}
+.pnl ul{margin-top:auto;list-style:none;display:grid;gap:7px;font-size:.92rem}
+.pnl li{display:flex;gap:10px;align-items:flex-start}
+.pnl li .ic{color:var(--green);margin-top:.3em}
+.hs-prog{margin:0 max(20px,5vw);height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.hs-prog i{display:block;height:100%;background:var(--yellow);transform-origin:left;transform:scaleX(0)}
+@media (max-height:720px){.pnl{height:min(60vh,420px)}.pnl li:nth-child(3){display:none}}
+
+/* ---------- Proceso (pasos que cambian al bajar) ---------- */
+.steps{position:relative;z-index:2}
+.st-pin{position:sticky;top:0;height:var(--H);display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(20px,4vw,60px);align-items:center;padding:calc(env(safe-area-inset-top,0px) + 76px) max(20px,5vw) 40px;overflow:hidden}
+.st-left h2{font-size:clamp(1.5rem,3vw,2.4rem);margin-bottom:clamp(14px,3vh,30px)}
+.st-list{list-style:none;display:grid;gap:2px}
+.st-item{display:grid;grid-template-columns:auto 1fr;gap:18px;padding:10px 0;opacity:.4;transition:opacity .5s}
+.st-item.on{opacity:1}
+.st-n{font-family:var(--fd);font-weight:700;font-size:1rem;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line2);display:grid;place-items:center;transition:background .4s,color .4s,border-color .4s,transform .4s}
+.st-item.on .st-n{background:var(--yellow);color:var(--yellow-ink);border-color:var(--yellow);transform:scale(1.1)}
+.st-item.done .st-n{border-color:var(--green);color:var(--green)}
+.st-item h3{font-size:1.08rem;padding-top:8px}
+.st-d{display:grid;grid-template-rows:0fr;transition:grid-template-rows .55s cubic-bezier(.3,.8,.3,1)}
+.st-item.on .st-d{grid-template-rows:1fr}
+.st-d>div{overflow:hidden}
+.st-d p{color:var(--muted);padding-top:6px;font-size:.98rem;max-width:52ch}
+.st-time{display:inline-block;margin-top:8px;font-size:.84rem;color:var(--yellow);font-weight:600}
+.st-right{display:flex;flex-direction:column;justify-content:flex-end;height:100%;padding-top:6vh}
+.hud{border:1px solid var(--line2);border-radius:12px;background:rgba(5,9,26,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-family:var(--fm);font-size:.78rem;overflow:hidden;box-shadow:0 30px 60px -26px rgba(0,0,0,.7)}
+.hud-h{display:flex;align-items:center;gap:6px;padding:9px 12px;border-bottom:1px solid var(--line);color:var(--muted)}
+.hud-h i{width:9px;height:9px;border-radius:50%;background:#34417a}
+.hud-h span{margin-left:8px}
+.hud-b{position:relative;height:196px}
+.hp{position:absolute;inset:0;padding:14px 16px;display:flex;flex-direction:column;gap:7px;opacity:0;pointer-events:none;transition:opacity .35s}
+.hp.on{opacity:1}
+.hp .ln{opacity:0;transform:translateX(-10px);transition:opacity .35s,transform .35s}
+.hp.on .ln{opacity:1;transform:none;transition-delay:calc(var(--i)*.13s + .15s)}
+.k-m{color:var(--muted)}.k-e{color:#ff8ba0}.k-o{color:var(--green)}.k-w{color:var(--amber)}
+.df-r{color:#ff8ba0;background:rgba(255,69,96,.11);padding:1px 6px;border-radius:4px}
+.df-a{color:var(--green);background:rgba(61,232,164,.09);padding:1px 6px;border-radius:4px}
+.hp .bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:3px}
+.hp .bar i{display:block;height:100%;width:0;background:var(--yellow);border-radius:6px;transition:width 1.4s .3s cubic-bezier(.3,.8,.3,1)}
+.hp.on .bar i{width:var(--w)}
+.st-bar{position:absolute;left:max(20px,5vw);right:max(20px,5vw);bottom:22px;height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.st-bar i{display:block;height:100%;background:var(--yellow);transform-origin:left;transform:scaleX(0)}
+
+/* ---------- Antes / después ---------- */
+.sec{position:relative;z-index:2;padding:clamp(72px,9vw,130px) max(20px,5vw);background:rgba(7,12,34,.6)}
+.cmp{position:relative;border:1px solid var(--line2);border-radius:14px;overflow:hidden;aspect-ratio:16/9;max-height:72vh;width:100%;margin:0 auto;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:ew-resize;background:#0b1030;box-shadow:0 40px 80px -30px rgba(0,0,0,.7)}
+.pane{position:absolute;inset:0;display:flex;flex-direction:column}
+.pane.hacked{clip-path:inset(0 calc(100% - var(--pos,90%)) 0 0)}
+.chrome{display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:.72rem;background:#141c40;border-bottom:1px solid var(--line)}
+.chrome .url{flex:1;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.07);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.chrome .lk{font-weight:700}
+.lk.bad{color:#ff8ba0}.lk.ok{color:var(--green)}
+.hk{flex:1;background:#14040b;color:var(--red);position:relative;padding:4% 6%;display:flex;flex-direction:column;gap:3%;overflow:hidden;font-family:var(--fm)}
+.hk::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,69,96,.08) 0 2px,transparent 2px 5px);pointer-events:none}
+.hk-warn{background:#b3122a;color:#fff;padding:.5em .8em;font-family:var(--fb);font-weight:600;font-size:clamp(.55rem,1.4vw,.85rem)}
+.hk-t{font-family:var(--fm);font-weight:700;font-size:clamp(.95rem,3.6vw,2.6rem);text-shadow:2px 0 #00f0ff,-2px 0 #ff00c8;line-height:1.1}
+.hk p{color:#ff9aa9;font-size:clamp(.55rem,1.4vw,.9rem)}
+.hk-ads{display:flex;gap:2%;flex-wrap:wrap}
+.hk-ads span{background:#ffe600;color:#000;padding:.3em .7em;font-weight:700;font-size:clamp(.5rem,1.3vw,.8rem)}
+.hk-bars i{display:block;height:6px;background:rgba(255,69,96,.35);margin-top:6px}
+.hk-bars i:nth-child(2){width:70%}.hk-bars i:nth-child(3){width:45%}
+/* Página "después": un sitio real de ejemplo (todo en em: escala con el ancho del contenedor) */
+.cmp{container-type:inline-size}
+.site{flex:1;min-height:0;font-size:1.15vw;font-size:1.15cqw;background:#f6faf4;color:#173a26;display:flex;flex-direction:column;overflow:hidden;font-family:var(--fb);line-height:1.45}
+.site span,.site b{font-family:inherit}
+.s-top{display:flex;justify-content:space-between;gap:2em;background:#173a26;color:#cfe8d6;padding:.65em 4em;font-size:.8em;white-space:nowrap}
+.s-nav{display:flex;align-items:center;gap:3em;padding:1em 4em;background:#fff;border-bottom:1px solid #e2ece2}
+.s-logo{display:flex;align-items:center;gap:.55em;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:1.45em;color:#12301f;letter-spacing:-.01em;white-space:nowrap}
+.s-logo svg{width:1.5em;height:1.5em;flex:none}
+.s-nav nav{display:flex;gap:2.2em;margin-left:auto;font-weight:600;font-size:.98em;color:#3d5a48;white-space:nowrap}
+.s-nav nav .on{color:#1f7a45;border-bottom:.16em solid #2f9e5b;padding-bottom:.15em}
+.s-cta{display:inline-block;background:#f28c28;color:#fff;font-weight:700;padding:.75em 1.4em;border-radius:.6em;font-size:.95em;white-space:nowrap;box-shadow:0 .5em 1em -.4em rgba(242,140,40,.7)}
+.s-hero{display:grid;grid-template-columns:1.05fr .95fr;gap:3.5em;align-items:center;padding:2.8em 4em 2.2em}
+.s-badge{display:inline-block;background:#dff3e5;color:#1f7a45;font-weight:700;font-size:.85em;padding:.35em 1em;border-radius:999px}
+.s-hero h4{font-family:Georgia,'Times New Roman',serif;font-size:2.7em;line-height:1.1;margin:.45em 0 .45em;font-weight:700;color:#12301f;letter-spacing:-.02em;text-wrap:balance}
+.s-hero p{color:#4a6455;font-size:1.05em;max-width:30em}
+.s-btns{display:flex;gap:1em;margin:1.4em 0 1.2em;align-items:center}
+.s-ghost{border:.13em solid #173a26;color:#173a26;font-weight:700;padding:.62em 1.3em;border-radius:.6em;font-size:.95em;white-space:nowrap}
+.s-rate{font-size:.9em;color:#4a6455}
+.s-rate i{font-style:normal;color:#f2a41d;letter-spacing:.12em;margin-right:.4em}
+.s-art{position:relative}
+.s-art>svg{width:100%;display:block;border-radius:1.5em;box-shadow:0 1.8em 3em -1.6em rgba(23,58,38,.55)}
+.s-float{position:absolute;left:-1.6em;bottom:2.2em;display:flex;align-items:center;gap:.7em;background:#fff;padding:.7em 1.1em;border-radius:.9em;box-shadow:0 1em 2em -.9em rgba(23,58,38,.55);font-weight:700;font-size:.85em;color:#173a26;white-space:nowrap}
+.s-float i{width:1.9em;height:1.9em;border-radius:50%;background:#dff3e5;color:#1f7a45;display:grid;place-items:center;font-style:normal}
+.s-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:2em;padding:.6em 4em 2em}
+.s-card{background:#fff;border-radius:1em;overflow:hidden;box-shadow:0 .7em 1.6em -1.1em rgba(23,58,38,.5)}
+.s-card svg{width:100%;display:block}
+.s-card div{padding:1em 1.2em 1.3em}
+.s-card b{display:block;font-family:Georgia,'Times New Roman',serif;font-size:1.2em;margin-bottom:.25em;color:#12301f}
+.s-card span{color:#5a7565;font-size:.92em;display:block}
+.s-burger{display:none;margin-left:auto;width:1.9em;height:1.4em;flex-direction:column;justify-content:space-between}
+.s-burger i{display:block;height:.2em;background:#173a26;border-radius:.2em}
+@container (max-width:600px){
+  .site{font-size:3.5cqw}
+  .s-top{padding:.6em 1.4em}
+  .s-top span:nth-child(n+2){display:none}
+  .s-nav{padding:.9em 1.4em}
+  .s-nav nav,.s-nav>.s-cta{display:none}
+  .s-burger{display:flex}
+  .s-hero{grid-template-columns:1fr;gap:1.6em;padding:1.6em 1.4em 1.2em}
+  .s-hero h4{font-size:2.05em}
+  .s-btns{flex-wrap:wrap}
+  .s-float{left:.8em;bottom:.8em}
+  .s-cards{grid-template-columns:1fr;padding:.4em 1.4em 1.6em;gap:1.2em}
+}
+.lbl{position:absolute;bottom:14px;padding:4px 12px;border-radius:999px;font-weight:700;font-size:.78rem;z-index:3;pointer-events:none}
+.lbl.b{left:14px;background:var(--red);color:#fff}
+.lbl.a{right:14px;background:var(--green);color:#03271a}
+.hdl{position:absolute;top:0;bottom:0;left:var(--pos,90%);width:2px;margin-left:-1px;background:var(--yellow);z-index:4}
+.hdl b{position:absolute;top:50%;left:50%;width:46px;height:46px;border-radius:50%;background:var(--yellow);color:var(--yellow-ink);display:grid;place-items:center;transform:translate(-50%,-50%);font-size:1.35rem;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.cmp-hint{margin-top:12px;color:var(--muted);font-size:.9rem;text-align:center}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);margin-top:clamp(30px,4vw,50px);border-top:1px solid var(--line)}
+.stat{padding:22px 20px 0 0}
+.stat+.stat{padding-left:22px;border-left:1px solid var(--line)}
+.stat b{display:block;font-family:var(--fd);font-size:clamp(1.3rem,2.4vw,1.9rem);font-weight:600}
+.stat span{color:var(--muted);font-size:.92rem}
+
+/* ---------- Precios ---------- */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--panel)}
+.plan{padding:34px 28px 30px;display:flex;flex-direction:column;gap:16px;border-right:1px solid var(--line)}
+.plan:last-child{border-right:0}
+.plan h3{font-size:1.1rem}
+.plan .d{color:var(--muted);font-size:.95rem;min-height:3em}
+.plan .price{font-family:var(--fd);font-size:2.3rem;font-weight:700;line-height:1}
+.plan .price small{font-family:var(--fb);font-size:.9rem;font-weight:500;color:var(--muted);margin-left:6px}
+.plan ul{list-style:none;display:grid;gap:9px;font-size:.94rem;margin:6px 0 10px}
+.plan li{display:flex;gap:10px;align-items:flex-start}
+.plan li .ic{color:var(--green);margin-top:.3em}
+.plan .btn{margin-top:auto}
+.plan.feat{background:var(--yellow);color:var(--yellow-ink)}
+.plan.feat .d,.plan.feat .price small{color:rgba(26,20,0,.75)}
+.plan.feat li .ic{color:#0b6b46}
+.plan.feat .btn{background:#0b1030;color:var(--yellow)}
+.plan.feat .btn:hover{background:#000}
+.plan .tag{align-self:flex-start;background:#0b1030;color:var(--yellow);font-size:.78rem;font-weight:700;padding:.3em .8em;border-radius:999px}
+.note{color:var(--muted);font-size:.88rem;margin-top:14px}
+
+/* ---------- FAQ ---------- */
+.faq{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(24px,5vw,80px);margin-top:clamp(60px,8vw,110px)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq details:first-child{border-top:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;padding:20px 0;display:flex;justify-content:space-between;align-items:center;gap:20px;font-weight:600;font-size:1.05rem}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .ic{transition:transform .3s;color:var(--yellow)}
+.faq details[open] summary .ic{transform:rotate(45deg)}
+.faq p{color:var(--muted);padding:0 0 22px;max-width:64ch}
+
+/* ---------- Orden de servicio (formulario) ---------- */
+.contact{position:relative;z-index:2;padding:clamp(72px,9vw,120px) max(20px,5vw) clamp(60px,8vw,110px);background:rgba(7,12,34,.4)}
+.ct-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,4vw,64px);align-items:stretch}
+.ct-left{display:flex;flex-direction:column;gap:14px;min-height:340px}
+.ct-left .h2{max-width:14em}
+.ct-pts{list-style:none;display:grid;gap:8px;margin-top:8px;color:#cdd6f5;font-size:.95rem}
+.ct-pts li{display:flex;gap:10px;align-items:center}
+.ct-pts .ic{color:var(--green)}
+.console{position:relative;border-radius:17px;padding:1.5px;background:conic-gradient(from var(--ang),transparent 0 72%,var(--yellow) 88%,transparent 100%),var(--line);animation:spin 7s linear infinite}
+@keyframes spin{to{--ang:360deg}}
+.con-in{background:#0a1133;border-radius:15.5px;overflow:hidden}
+.con-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);font-size:.85rem;color:var(--muted)}
+.con-head b{color:var(--text);font-weight:700}
+.segs{display:flex;gap:6px}
+.segs i{display:block;width:32px;height:4px;border-radius:4px;background:var(--line2);transition:background .3s}
+.segs i.on{background:var(--yellow)}
+.con-body{padding:24px;min-height:440px;position:relative}
+.fs{display:none}
+.fs.active{display:block;animation:fin .45s cubic-bezier(.2,.7,.2,1)}
+@keyframes fin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.fs h3{font-size:1.15rem;margin-bottom:6px}
+.fs .sub{color:var(--muted);font-size:.95rem;margin-bottom:18px}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chip{position:relative;display:block}
+.chip input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;margin:0}
+.chip span{display:flex;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line2);border-radius:10px;font-size:.92rem;transition:border-color .2s,background .2s;height:100%}
+.chip span::before{content:"";width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line2);flex:none;display:grid;place-items:center;font-size:.7rem;font-weight:800;transition:background .2s,border-color .2s}
+.chip input:checked+span{border-color:var(--yellow);background:rgba(255,207,51,.1)}
+.chip input:checked+span::before{content:"✓";background:var(--yellow);border-color:var(--yellow);color:var(--yellow-ink)}
+.chip input:focus-visible+span{outline:2px solid var(--yellow);outline-offset:2px}
+.fld{display:grid;gap:6px;margin-bottom:16px}
+.fld>label,.fld>.lb{font-size:.88rem;font-weight:600;color:#cdd6f5}
+.in{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:10px;padding:.8em 1em;transition:border-color .2s,background .2s}
+.in::placeholder{color:#6f7ba6}
+.in:focus{outline:none;border-color:var(--yellow);background:rgba(255,207,51,.05)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}
+.seg label{position:relative;display:block}
+.seg input{position:absolute;inset:0;opacity:0;cursor:pointer;margin:0;width:100%;height:100%}
+.seg span{display:block;text-align:center;padding:.65em .4em;border:1px solid var(--line2);border-radius:10px;font-size:.88rem;transition:background .2s,border-color .2s,color .2s}
+.seg input:checked+span{background:var(--yellow);border-color:var(--yellow);color:var(--yellow-ink);font-weight:700}
+.seg input:focus-visible+span{outline:2px solid var(--yellow);outline-offset:2px}
+.sw{display:flex;align-items:center;gap:12px;cursor:pointer;font-size:.95rem}
+.sw input{position:absolute;opacity:0}
+.sw i{position:relative;width:46px;height:26px;border-radius:26px;background:var(--line2);flex:none;transition:background .25s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .25s}
+.sw input:checked+i{background:var(--red)}
+.sw input:checked+i::after{transform:translateX(20px)}
+.sw input:focus-visible+i{outline:2px solid var(--yellow);outline-offset:3px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.acts{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px}
+.err{color:#ff8ba0;font-size:.88rem;min-height:1.4em;margin-top:10px}
+.plan-chip{display:inline-flex;align-items:center;gap:8px;margin-bottom:16px;padding:.35em .5em .35em .9em;border:1px solid var(--yellow);border-radius:999px;font-size:.85rem;color:var(--yellow);font-weight:600}
+.plan-chip button{background:none;border:0;color:inherit;display:grid;place-items:center;padding:2px;border-radius:50%}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.scan{text-align:center}
+.radar{width:104px;height:104px;margin:6px auto 18px;border-radius:50%;border:1px solid var(--line2);position:relative;background:radial-gradient(circle,var(--yellow) 0 2px,transparent 3px),radial-gradient(circle,transparent 0 30%,var(--line2) 31% 32%,transparent 33% 62%,var(--line2) 63% 64%,transparent 65%)}
+.radar::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,207,51,.6),transparent 28%);animation:rot 1.3s linear infinite}
+.radar i{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red);animation:blip 1.3s infinite}
+.radar i:nth-child(1){top:22%;left:64%}
+.radar i:nth-child(2){top:66%;left:30%;animation-delay:.5s}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes blip{0%,100%{opacity:.15}50%{opacity:1}}
+.log{font-family:var(--fm);font-size:.78rem;background:#050a20;border:1px solid var(--line);border-radius:10px;padding:14px;height:190px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-align:left}
+.prog{height:6px;background:var(--line);border-radius:6px;margin:16px 0 8px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--yellow);transition:width .5s}
+.small{color:var(--muted);font-size:.86rem}
+.res-top{display:grid;grid-template-columns:210px 1fr;gap:22px;align-items:center}
+.gauge{width:100%;display:block}
+.gauge path{fill:none;stroke-width:14;stroke-linecap:round}
+.gauge .g-t{stroke:var(--line2)}
+.gauge .g-f{stroke:var(--green);stroke-dasharray:100;stroke-dashoffset:100;transition:stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1),stroke .4s}
+.gauge text{fill:var(--text);font-family:var(--fd);font-weight:700;font-size:34px;text-anchor:middle}
+.gauge .g-s{font-family:var(--fb);font-size:11px;font-weight:500;fill:var(--muted)}
+.res-info{display:grid;gap:10px}
+.res-info h3{font-size:1.25rem}
+.kv{display:flex;gap:10px;align-items:center;font-size:.95rem;color:#cdd6f5}
+.kv .ic{color:var(--yellow)}
+.summary{margin:18px 0 6px;padding:14px 16px;background:rgba(255,255,255,.04);border:1px dashed var(--line2);border-radius:10px;font-size:.86rem;color:var(--muted);white-space:pre-wrap;max-height:150px;overflow:auto}
+.res-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-size:.9rem;padding:.4em}
+
+
+/* ---------- Escáner en vivo ---------- */
+.scanner{padding-bottom:clamp(30px,5vw,60px)}
+.scan-box{position:relative;border:1px solid var(--line2);border-radius:16px;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:clamp(22px,3vw,34px);overflow:hidden;box-shadow:0 40px 80px -36px rgba(0,0,0,.7)}
+.scan-box::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:var(--hazard);opacity:.85}
+.sc-row{display:flex;gap:12px;margin-top:6px}
+.sc-row .in{flex:1;font-size:1.05rem;padding:.95em 1.1em}
+.sc-consent{display:flex;gap:12px;align-items:flex-start;margin-top:16px;color:#cdd6f5;font-size:.92rem;cursor:pointer}
+.sc-consent input{margin-top:.28em;accent-color:var(--yellow);width:18px;height:18px;flex:none}
+.sc-head{display:flex;justify-content:space-between;gap:12px;font-family:var(--fm);font-size:.85rem;color:var(--muted);margin:6px 0 8px}
+.sc-head b{color:var(--yellow)}
+.sc-head span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:18px;margin-top:20px}
+.sc-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{position:relative;border:1px solid var(--line2);border-radius:10px;padding:12px 12px 12px;display:flex;flex-direction:column;gap:6px;min-height:96px;overflow:hidden;transition:border-color .3s,background .3s,opacity .3s}
+.tile .ic{font-size:1.35rem;color:var(--muted);transition:color .3s}
+.tile b{font-size:.84rem;line-height:1.25;font-weight:700}
+.tile small{font-size:.76rem;color:var(--muted);margin-top:auto}
+.tile[data-s=pending]{opacity:.55}
+.tile[data-s=running]{border-color:var(--yellow);background:rgba(255,207,51,.06)}
+.tile[data-s=running] .ic{color:var(--yellow)}
+.tile[data-s=running]::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:38%;background:var(--yellow);animation:scanbar 1s ease-in-out infinite alternate}
+@keyframes scanbar{from{transform:translateX(0)}to{transform:translateX(163%)}}
+.tile[data-s=ok]{border-color:rgba(61,232,164,.6);background:rgba(61,232,164,.07)}
+.tile[data-s=ok] .ic,.tile[data-s=ok] small{color:var(--green)}
+.tile[data-s=info]{border-color:rgba(107,140,255,.6);background:rgba(107,140,255,.08)}
+.tile[data-s=info] .ic,.tile[data-s=info] small{color:#9fb3ff}
+.tile[data-s=warn]{border-color:rgba(255,176,32,.7);background:rgba(255,176,32,.08)}
+.tile[data-s=warn] .ic,.tile[data-s=warn] small{color:var(--amber)}
+.tile[data-s=crit]{border-color:var(--red);background:rgba(255,69,96,.1)}
+.tile[data-s=crit] .ic,.tile[data-s=crit] small{color:#ff8ba0}
+.tile[data-s=skipped]{border-style:dashed;opacity:.6}
+.sc-log{height:auto;min-height:290px;max-height:390px;justify-content:flex-start;overflow-y:auto}
+.log .tl{flex:none}
+.sc-verdict{margin-top:18px;padding:18px 20px;border-radius:12px;border:1px solid var(--line2);display:grid;gap:6px;animation:fin .5s}
+.sc-verdict h3{font-size:1.2rem}
+.sc-verdict p{color:#cdd6f5;font-size:.95rem}
+.sc-verdict .scope{color:var(--muted);font-size:.86rem}
+.sc-verdict[data-v=infected]{border-color:var(--red);background:rgba(255,69,96,.1)}
+.sc-verdict[data-v=suspicious],.sc-verdict[data-v=risk]{border-color:var(--amber);background:rgba(255,176,32,.08)}
+.sc-verdict[data-v=clean]{border-color:var(--green);background:rgba(61,232,164,.08)}
+.sc-verdict[data-v=limited]{border-color:var(--blue);background:rgba(107,140,255,.08)}
+.sc-counts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.sc-counts span{font-size:.82rem;font-weight:700;padding:.25em .8em;border-radius:999px;border:1px solid var(--line2)}
+.sc-find{margin-top:26px;display:grid;gap:10px}
+.sc-find>h3{font-size:1.05rem;margin-bottom:2px}
+.fd{border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:14px 16px;background:rgba(255,255,255,.03);animation:fin .4s}
+.fd.crit{border-left-color:var(--red)}.fd.warn{border-left-color:var(--amber)}.fd.info{border-left-color:var(--blue)}.fd.ok{border-left-color:var(--green)}
+.fd h4{font-family:var(--fb);font-size:1rem;font-weight:700;letter-spacing:0;display:flex;gap:10px;align-items:flex-start;text-wrap:pretty}
+.badge{flex:none;font-size:.68rem;font-weight:800;padding:.2em .6em;border-radius:6px;letter-spacing:.04em;margin-top:.25em}
+.badge.crit{background:var(--red);color:#fff}.badge.warn{background:var(--amber);color:#1a1200}.badge.info{background:var(--blue);color:#06112e}.badge.ok{background:var(--green);color:#032b1a}
+.fd p{color:var(--muted);font-size:.92rem;margin-top:6px;white-space:pre-line;overflow-wrap:anywhere}
+.fd code{display:block;margin-top:8px;padding:8px 10px;background:#050a20;border:1px solid var(--line);border-radius:8px;font-family:var(--fm);font-size:.75rem;color:#ff9fb0;white-space:pre-wrap;overflow-wrap:anywhere}
+.fd .fix{margin-top:8px;font-size:.9rem;color:#dbe4ff}
+.fd .fix b{color:var(--yellow)}
+.fd-ok{border:1px dashed var(--line2);border-radius:10px;padding:0 16px}
+.fd-ok summary{cursor:pointer;list-style:none;padding:14px 0;font-weight:600;color:var(--muted)}
+.fd-ok summary::-webkit-details-marker{display:none}
+.fd-ok[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+.fd-ok .fd{margin-bottom:10px}
+#scActions{margin-top:22px}
+
+
+/* ---------- Cuentas: ventana de registro / ingreso ---------- */
+.after-plan{list-style:none;counter-reset:ap;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.after-plan li{counter-increment:ap;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03)}
+.after-plan li::before{content:counter(ap);grid-row:span 2;width:30px;height:30px;border-radius:50%;background:var(--yellow);color:var(--yellow-ink);display:grid;place-items:center;font-family:var(--fd);font-weight:700;font-size:.85rem}
+.after-plan b{font-size:.98rem}
+.after-plan span{color:var(--muted);font-size:.9rem}
+
+.pp-wrap{margin:6px 0 4px}
+.pp-box{min-height:44px}
+.ad-alt{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:14px 0 4px;font-size:.88rem}
+.ad-alt-sep{color:var(--muted)}
+.linklike{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-size:.88rem;padding:.2em}
+.linklike:hover{color:var(--text)}
+.ad-temp{font-family:var(--fm);font-size:1.1rem;background:#050a20;border:1px dashed var(--yellow);border-radius:10px;padding:12px;text-align:center;letter-spacing:.06em;user-select:all;margin:10px 0 4px}
+
+#authDlg{background:#0a1133;color:var(--text);border:1px solid var(--line2);border-radius:16px;padding:0;width:min(520px,94vw);max-height:92vh;overflow:auto;margin:auto}
+#authDlg::backdrop{background:rgba(3,6,20,.8);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.ad-in{position:relative;padding:30px 26px 24px}
+.ad-in::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:var(--hazard)}
+.ad-x{position:absolute;top:14px;right:14px;background:none;border:0;color:var(--muted);font-size:1.6rem;line-height:1;padding:4px 8px;border-radius:8px}
+.ad-x:hover{color:var(--text)}
+.ad-t{font-size:1.2rem;margin:4px 30px 6px 0}
+.ad-sub{color:var(--muted);font-size:.93rem;margin-bottom:6px}
+.ad-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:16px 0}
+.ad-tabs button{padding:.6em;border:1px solid var(--line2);border-radius:10px;background:none;font-weight:700;font-size:.9rem}
+.ad-tabs button[aria-selected=true]{background:var(--yellow);border-color:var(--yellow);color:var(--yellow-ink)}
+.ad-plan{border:1px solid var(--yellow);background:rgba(255,207,51,.07);border-radius:12px;padding:12px 14px;margin:0 0 16px}
+.ad-plan strong{display:flex;justify-content:space-between;gap:10px;font-size:1rem}
+.ad-plan ul{list-style:none;margin-top:8px;display:grid;gap:4px;font-size:.86rem;color:#cdd6f5}
+.ad-plan li::before{content:"✓ ";color:var(--green);font-weight:800}
+.ad-pw{display:grid;grid-template-columns:1fr auto;gap:8px}
+.ad-pw button{border:1px solid var(--line2);background:none;border-radius:10px;padding:0 .9em;font-size:.82rem;font-weight:600}
+.ad-acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.ad-acts .btn{flex:1;min-width:150px}
+.ad-steps{list-style:none;counter-reset:st;display:grid;gap:12px;margin:16px 0 4px}
+.ad-steps li{counter-increment:st;display:grid;grid-template-columns:auto 1fr;gap:12px;font-size:.93rem}
+.ad-steps li::before{content:counter(st);width:26px;height:26px;border-radius:50%;background:var(--yellow);color:var(--yellow-ink);display:grid;place-items:center;font-weight:800;font-size:.8rem;margin-top:.1em}
+.ad-pay{margin:8px 0 0;padding:12px 14px;border:1px dashed var(--yellow);border-radius:10px;background:rgba(255,207,51,.06);white-space:pre-line;font-size:.9rem}
+.ad-note{margin-top:14px;padding:12px 14px;border-radius:10px;border:1px solid rgba(107,140,255,.5);background:rgba(107,140,255,.08);font-size:.9rem;color:#cdd6f5}
+
+/* ---------- Pie ---------- */
+.foot{position:relative;z-index:2;border-top:1px solid var(--line);background:rgba(7,12,34,.92);padding:30px max(20px,5vw) calc(env(safe-area-inset-bottom,0px) + 30px);color:var(--muted);font-size:.88rem;display:flex;flex-wrap:wrap;justify-content:center;text-align:center;gap:12px 30px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translate(-50%,30px);background:var(--text);color:#0a1030;padding:.8em 1.2em;border-radius:12px;font-weight:600;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .35s,transform .35s;z-index:80;max-width:min(92vw,460px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1260px){
+  .health{display:none}
+}
+@media (max-width:1080px){
+  .nav-links{display:none}
+  .health{display:none}
+  .term{display:none}
+}
+@media (max-width:980px){
+  .sym-grid{grid-template-columns:repeat(2,1fr)}
+  .st-pin{grid-template-columns:1fr}
+  .st-right{display:none}
+  .plans{grid-template-columns:1fr}
+  .plan{border-right:0;border-bottom:1px solid var(--line)}
+  .plan:last-child{border-bottom:0}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat:nth-child(3){padding-left:0;border-left:0}
+  .stat:nth-child(n+3){margin-top:22px}
+  .faq{grid-template-columns:1fr}
+  .ct-grid{grid-template-columns:1fr}
+  .ct-left{min-height:0}
+}
+@media (max-width:620px){
+  body{font-size:16px}
+  .sym-grid{grid-template-columns:1fr}
+  .chips,.row2{grid-template-columns:1fr}
+  .hero{align-items:flex-end;padding-bottom:54px}
+  .hero .ticks{display:none}
+  .cue{display:none}
+  .res-top{grid-template-columns:1fr}
+  .gauge{max-width:230px;margin:0 auto}
+  .con-body{padding:20px 16px}
+  .cta-row .btn{flex:1}
+  #gl{opacity:.55}
+}
+@media (max-width:980px){
+  .after-plan{grid-template-columns:1fr}
+  .sc-grid{grid-template-columns:1fr}
+  .sc-tiles{grid-template-columns:repeat(3,1fr)}
+  .sc-log{min-height:200px;max-height:260px}
+}
+@media (max-width:620px){
+  .logo svg{height:28px}
+  .nav-r{gap:8px}
+  .nav-r .btn.sm{padding:.5em .75em;font-size:.8rem}
+  .cmp{aspect-ratio:3/4;max-height:none}
+  .lbl{font-size:.7rem;padding:3px 9px;bottom:10px}
+  .hdl b{width:40px;height:40px;font-size:1.1rem}
+  .sc-row{flex-direction:column}
+  .sc-tiles{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:380px){
+  .nav{padding-left:12px;padding-right:12px}
+  .logo svg{height:23px}
+  .nav-r{gap:6px}
+  .nav-r .btn.sm{padding:.48em .6em;font-size:.74rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffcf33"/><stop offset="1" stop-color="#6b8cff"/></linearGradient>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-redirect" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-shield-alert" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-user-x" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+    <symbol id="i-bug" viewBox="0 0 24 24"><path d="m8 2 1.9 1.9M14.1 3.9 16 2M9 7.1V6a3 3 0 0 1 6 0v1.1"/><path d="M12 20a6 6 0 0 1-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3a6 6 0 0 1-6 6zM12 20v-9M6.5 13H2M17.5 13H22M3 21c0-2.1 1.7-3.9 3.8-4M20.9 21c0-2.1-1.7-3.9-3.8-4M6 9C4.2 8.8 3 7.6 3 6M18 9c1.8-.2 3-1.4 3-3"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-arrows" viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.8 7L3 21l2-6.1A8 8 0 1 1 21 12z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  </defs>
+</svg>
+
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="noise" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <a class="logo" href="#inicio" aria-label="NexaGuard, ir al inicio"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64" aria-hidden="true"><defs><linearGradient id="nxgn" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffcf33"/><stop offset="1" stop-color="#6b8cff"/></linearGradient><linearGradient id="nxfn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#15214f"/><stop offset="1" stop-color="#0b1235"/></linearGradient></defs><path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="url(#nxfn)" stroke="url(#nxgn)" stroke-width="3.2" stroke-linejoin="round"/><path d="M22 42V22L42 42V22" fill="none" stroke="#eaf0ff" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="22" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><circle cx="22" cy="42" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><circle cx="42" cy="42" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><circle cx="42" cy="22" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/><defs><clipPath id="nxcn"><rect x="-2" y="0" width="240" height="20"/></clipPath></defs><g transform="translate(78.0 19.0) scale(1.3)"><g clip-path="url(#nxcn)"><path d="M 2.1 20V 0M 2.1 0L 14.9 20M 14.9 20V 0 M 23.1 0V 20M 21 2.1H 35.5M 21 10H 33.5M 21 17.9H 35.5 M 40 0L 58 20M 58 0L 40 20 M 62 20L 72 0L 82 20M 66.6 14.2H 77.4" fill="none" stroke="#eaf0ff" stroke-width="4.2" stroke-linejoin="miter" stroke-miterlimit="10"/><path d="M 102.05 4.92A 7.9 7.9 0 1 0 103.9 10H 96.5 M 112.1 0V 11A 6.9 6.9 0 0 0 125.9 11V 0 M 132 20L 142 0L 152 20M 136.6 14.2H 147.4 M 158.1 20V 0M 156 2.1H 165.6A 3.9 3.9 0 0 1 165.6 9.9H 158.1M 164 9.9L 171.5 20 M 179.1 0V 20M 177 2.1H 184.6A 7.9 7.9 0 0 1 184.6 17.9H 177" fill="none" stroke="#ffcf33" stroke-width="4.2" stroke-linejoin="miter" stroke-miterlimit="10"/></g></g></svg></a>
+  <nav class="nav-links" aria-label="Principal">
+    <a href="#sintomas">Síntomas</a>
+    <a href="#servicios">Servicios</a>
+    <a href="#proceso">Proceso</a>
+    <a href="#escaner">Escáner</a>
+    <a href="#resultados">Resultados</a>
+    <a href="#planes">Precios</a>
+  </nav>
+  <div class="nav-r">
+    <div class="health" aria-hidden="true"><span>Salud del sitio</span><div class="hbar"><i id="hFill"></i></div><b id="hPct">8%</b><em id="hState">Infectado</em></div>
+    <button type="button" class="btn btn-o sm" id="navPanel">Ingresar</button>
+    <a class="btn btn-y sm" href="#contacto">Pedir ayuda</a>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ HERO ============ -->
+<div class="hero-wrap" id="inicio" data-obj="virus" data-x="2.75" data-y=".5" data-s="1">
+  <section class="hero" aria-label="Portada">
+    <div class="grid-bg" aria-hidden="true"></div>
+    <div class="hero-inner" data-hfade>
+      <div class="hero-copy">
+        <span class="pill"><i></i>Atendemos emergencias 24/7</span>
+        <h1>¿Tu WordPress fue <span class="glitch" data-text="hackeado">hackeado</span>? Lo dejamos limpio hoy.</h1>
+        <p class="lead">Eliminamos malware y backdoors, arreglamos errores críticos y cerramos la puerta para que no vuelva a entrar. Sin perder tu contenido ni tu posicionamiento en Google.</p>
+        <div class="cta-row">
+          <a class="btn btn-y" href="#contacto">Pedir diagnóstico gratis</a>
+          <a class="btn btn-o" href="#escaner">Escanear mi sitio gratis</a>
+        </div>
+        <ul class="ticks">
+          <li><svg class="ic"><use href="#i-check"/></svg>Primera respuesta en menos de 1 hora</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Garantía de 30 días sobre la limpieza</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Retiramos la alerta de "sitio engañoso"</li>
+        </ul>
+      </div>
+    </div>
+    <aside class="term" data-hfade aria-hidden="true">
+      <div class="term-bar"><i></i><i></i><i></i><span>triage · tu-sitio.com</span></div>
+      <div class="term-body" id="termBody"></div>
+    </aside>
+    <div class="cue" data-hfade aria-hidden="true"><i></i><span>Baja para ver cómo lo curamos</span></div>
+  </section>
+</div>
+
+<!-- ============ SÍNTOMAS ============ -->
+<section class="cover" id="sintomas" data-obj="virus" data-x="3.5" data-y="1.7" data-s=".55" aria-labelledby="t-sint">
+  <div class="wrap">
+    <div class="sec-h">
+      <h2 id="t-sint">¿Qué le pasa a tu sitio?</h2>
+      <p class="lead">Marca lo que estás viendo. Lo pasamos directo a tu orden de servicio para que no tengas que explicarlo de nuevo.</p>
+    </div>
+    <div class="sym-grid" id="symGrid">
+      <div class="cellw" data-reveal style="--d:0s"><article class="sym tilt" data-key="redirect" role="button" tabindex="0" aria-pressed="false">
+        <div class="ico"><svg class="ic"><use href="#i-redirect"/></svg></div>
+        <h3>Te redirige a otras webs</h3>
+        <p>Tus visitantes terminan en casinos, farmacias online o páginas de estafa.</p>
+        <span class="stamp">ANOTADO</span>
+        <span class="hint"><span class="off">Toca si te pasa</span><span class="on">Agregado a tu orden</span></span>
+      </article></div>
+      <div class="cellw" data-reveal style="--d:.06s"><article class="sym tilt" data-key="white" role="button" tabindex="0" aria-pressed="false">
+        <div class="ico"><svg class="ic"><use href="#i-alert"/></svg></div>
+        <h3>Pantalla blanca o error crítico</h3>
+        <p>"Ha habido un error crítico en este sitio", error 500 o la web en blanco tras actualizar.</p>
+        <span class="stamp">ANOTADO</span>
+        <span class="hint"><span class="off">Toca si te pasa</span><span class="on">Agregado a tu orden</span></span>
+      </article></div>
+      <div class="cellw" data-reveal style="--d:.12s"><article class="sym tilt" data-key="seo" role="button" tabindex="0" aria-pressed="false">
+        <div class="ico"><svg class="ic"><use href="#i-search"/></svg></div>
+        <h3>Spam en Google</h3>
+        <p>Aparecen páginas en japonés, casinos o pastillas con tu dominio en los resultados.</p>
+        <span class="stamp">ANOTADO</span>
+        <span class="hint"><span class="off">Toca si te pasa</span><span class="on">Agregado a tu orden</span></span>
+      </article></div>
+      <div class="cellw" data-reveal style="--d:0s"><article class="sym tilt" data-key="blocked" role="button" tabindex="0" aria-pressed="false">
+        <div class="ico"><svg class="ic"><use href="#i-shield-alert"/></svg></div>
+        <h3>Alerta de "sitio engañoso"</h3>
+        <p>Chrome o Google muestran una advertencia de seguridad al entrar a tu web.</p>
+        <span class="stamp">ANOTADO</span>
+        <span class="hint"><span class="off">Toca si te pasa</span><span class="on">Agregado a tu orden</span></span>
+      </article></div>
+      <div class="cellw" data-reveal style="--d:.06s"><article class="sym tilt" data-key="admin" role="button" tabindex="0" aria-pressed="false">
+        <div class="ico"><svg class="ic"><use href="#i-user-x"/></svg></div>
+        <h3>Usuarios que no creaste</h3>
+        <p>Aparecen administradores desconocidos o ya no puedes entrar a wp-admin.</p>
+        <span class="stamp">ANOTADO</span>
+        <span class="hint"><span class="off">Toca si te pasa</span><span class="on">Agregado a tu orden</span></span>
+      </article></div>
+      <div class="cellw" data-reveal style="--d:.12s"><article class="sym tilt" data-key="odd" role="button" tabindex="0" aria-pressed="false">
+        <div class="ico"><svg class="ic"><use href="#i-activity"/></svg></div>
+        <h3>Archivos raros y web lenta</h3>
+        <p>Archivos PHP que no reconoces, picos de CPU o plugins que se reinstalan solos.</p>
+        <span class="stamp">ANOTADO</span>
+        <span class="hint"><span class="off">Toca si te pasa</span><span class="on">Agregado a tu orden</span></span>
+      </article></div>
+    </div>
+    <div class="pick" id="pickBar" role="status" aria-live="polite">
+      <span id="pickN">0 síntomas anotados</span>
+      <a href="#contacto">Continuar con mi orden</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CINTA ============ -->
+<div class="tape-wrap" aria-hidden="true">
+  <div class="tape-rot">
+    <div class="tape">
+      <span>Malware</span><span>Backdoors</span><span>Redirecciones</span><span>SEO spam</span><span>Defacement</span><span>Cryptominers</span><span>Phishing</span><span>Pharma hack</span><span>Inyección SQL</span>
+      <span>Malware</span><span>Backdoors</span><span>Redirecciones</span><span>SEO spam</span><span>Defacement</span><span>Cryptominers</span><span>Phishing</span><span>Pharma hack</span><span>Inyección SQL</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SERVICIOS (scroll horizontal) ============ -->
+<section class="hs" id="servicios" data-obj="wrench" data-x="2.9" data-y="1.5" data-s=".72" aria-labelledby="t-serv">
+  <div class="hs-pin">
+    <div class="hs-head">
+      <h2 id="t-serv">Del error más simple al ataque más complejo</h2>
+      <p class="lead">Sigue bajando: las herramientas van pasando frente a ti.</p>
+    </div>
+    <div class="hs-track" id="hsTrack">
+      <article class="pnl"><div class="ico"><svg class="ic"><use href="#i-bug"/></svg></div><h3>Limpieza de malware y backdoors</h3><p>Encontramos y eliminamos todo el código malicioso, incluso el que se esconde para reinfectar.</p><ul><li><svg class="ic"><use href="#i-check"/></svg>Escaneo de archivos y base de datos</li><li><svg class="ic"><use href="#i-check"/></svg>Webshells y tareas ocultas fuera</li><li><svg class="ic"><use href="#i-check"/></svg>Núcleo y plugins reemplazados</li></ul></article>
+      <article class="pnl"><div class="ico"><svg class="ic"><use href="#i-refresh"/></svg></div><h3>Recuperación de sitios hackeados</h3><p>Devolvemos tu web a un estado limpio y funcional, eliminando lo que la dañó.</p><ul><li><svg class="ic"><use href="#i-check"/></svg>Restauración desde copias limpias</li><li><svg class="ic"><use href="#i-check"/></svg>Páginas alteradas y defacement</li><li><svg class="ic"><use href="#i-check"/></svg>Verificación final tras la limpieza</li></ul></article>
+      <article class="pnl"><div class="ico"><svg class="ic"><use href="#i-wrench"/></svg></div><h3>Reparación de errores</h3><p>Pantalla blanca, error crítico, 500, bucles de redirección y conflictos entre plugins o tema.</p><ul><li><svg class="ic"><use href="#i-check"/></svg>Diagnóstico con logs reales</li><li><svg class="ic"><use href="#i-check"/></svg>Compatibilidad con PHP</li><li><svg class="ic"><use href="#i-check"/></svg>Base de datos dañada</li></ul></article>
+      <article class="pnl"><div class="ico"><svg class="ic"><use href="#i-search"/></svg></div><h3>SEO spam y alertas de Google</h3><p>Borramos las páginas basura indexadas y pedimos la revisión para quitar "Sitio engañoso".</p><ul><li><svg class="ic"><use href="#i-check"/></svg>Revisión en Search Console</li><li><svg class="ic"><use href="#i-check"/></svg>Sitemaps y URLs limpios</li><li><svg class="ic"><use href="#i-check"/></svg>Recuperación de tráfico</li></ul></article>
+      <article class="pnl"><div class="ico"><svg class="ic"><use href="#i-lock"/></svg></div><h3>Blindaje del sitio</h3><p>Cerramos las puertas por las que entraron para que no vuelva a pasar.</p><ul><li><svg class="ic"><use href="#i-check"/></svg>Firewall y límite de intentos</li><li><svg class="ic"><use href="#i-check"/></svg>2FA y permisos correctos</li><li><svg class="ic"><use href="#i-check"/></svg>wp-config endurecido</li></ul></article>
+      <article class="pnl"><div class="ico"><svg class="ic"><use href="#i-eye"/></svg></div><h3>Monitoreo y mantenimiento</h3><p>Vigilamos tu sitio las 24 horas, actualizamos y respaldamos todos los días.</p><ul><li><svg class="ic"><use href="#i-check"/></svg>Alertas en tiempo real</li><li><svg class="ic"><use href="#i-check"/></svg>Copias fuera del servidor</li><li><svg class="ic"><use href="#i-check"/></svg>Actualizaciones probadas</li></ul></article>
+    </div>
+    <div class="hs-prog" aria-hidden="true"><i id="hsProg"></i></div>
+  </div>
+</section>
+
+<!-- ============ PROCESO ============ -->
+<section class="steps" id="proceso" data-obj="lock" data-x="2.9" data-y="1.2" data-s=".95" aria-labelledby="t-proc">
+  <div class="st-pin">
+    <div class="st-left">
+      <h2 id="t-proc">Así atendemos una emergencia</h2>
+      <ol class="st-list" id="stList">
+        <li class="st-item on"><span class="st-n">1</span><div><h3>Triage y diagnóstico</h3><div class="st-d"><div><p>Escaneamos archivos, base de datos y usuarios. Sabemos qué pasó y por dónde entraron antes de tocar nada.</p><span class="st-time">Primeros 30 minutos</span></div></div></div></li>
+        <li class="st-item"><span class="st-n">2</span><div><h3>Copia y aislamiento</h3><div class="st-d"><div><p>Hacemos un respaldo forense y activamos el modo mantenimiento para que tus visitantes no vean nada raro.</p><span class="st-time">Antes de cualquier cambio</span></div></div></div></li>
+        <li class="st-item"><span class="st-n">3</span><div><h3>Limpieza quirúrgica</h3><div class="st-d"><div><p>Quitamos backdoors, código inyectado, usuarios falsos y spam. Reinstalamos el núcleo y los plugins desde fuentes oficiales.</p><span class="st-time">De 2 a 24 horas según el caso</span></div></div></div></li>
+        <li class="st-item"><span class="st-n">4</span><div><h3>Blindaje y garantía</h3><div class="st-d"><div><p>Cerramos la vulnerabilidad, activamos firewall y 2FA, pedimos la revisión a Google y monitoreamos 30 días.</p><span class="st-time">Garantía de 30 días</span></div></div></div></li>
+      </ol>
+    </div>
+    <div class="st-right" aria-hidden="true">
+      <div class="hud">
+        <div class="hud-h"><i></i><i></i><i></i><span id="hudTitle">triage.log</span></div>
+        <div class="hud-b">
+          <div class="hp on">
+            <div class="ln k-m" style="--i:0">$ triage --profundo tu-sitio.com</div>
+            <div class="ln k-e" style="--i:1">! núcleo: 3 archivos alterados</div>
+            <div class="ln k-e" style="--i:2">! uploads/2024/.cache.php → webshell</div>
+            <div class="ln k-e" style="--i:3">! footer.php → iframe inyectado</div>
+            <div class="ln k-e" style="--i:4">! usuario desconocido: wp_support_9</div>
+            <div class="ln k-o" style="--i:5">✓ vector de entrada: plugin sin actualizar</div>
+          </div>
+          <div class="hp">
+            <div class="ln k-m" style="--i:0">$ respaldo --forense</div>
+            <div class="ln" style="--i:1">Archivos<div class="bar" style="--w:100%"><i></i></div></div>
+            <div class="ln" style="--i:2">Base de datos<div class="bar" style="--w:100%"><i></i></div></div>
+            <div class="ln k-o" style="--i:3">✓ Copia guardada fuera del servidor</div>
+            <div class="ln k-w" style="--i:4">~ Modo mantenimiento activo</div>
+          </div>
+          <div class="hp">
+            <div class="ln df-r" style="--i:0">- eval(base64_decode('QkFDS0RPT1I='));</div>
+            <div class="ln df-r" style="--i:1">- &lt;iframe src="//spam.invalid" hidden&gt;</div>
+            <div class="ln df-r" style="--i:2">- usuario wp_support_9</div>
+            <div class="ln df-a" style="--i:3">+ núcleo restaurado desde wordpress.org</div>
+            <div class="ln df-a" style="--i:4">+ plugins reinstalados (repositorio oficial)</div>
+            <div class="ln k-o" style="--i:5">✓ 0 amenazas encontradas</div>
+          </div>
+          <div class="hp">
+            <div class="ln k-o" style="--i:0">✓ Firewall (WAF) activo</div>
+            <div class="ln k-o" style="--i:1">✓ 2FA para administradores</div>
+            <div class="ln k-o" style="--i:2">✓ Permisos y wp-config endurecidos</div>
+            <div class="ln k-o" style="--i:3">✓ Backups diarios fuera del servidor</div>
+            <div class="ln k-o" style="--i:4">✓ Revisión enviada a Google</div>
+            <div class="ln k-o" style="--i:5">✓ Monitoreo activo por 30 días</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="st-bar" aria-hidden="true"><i id="stBar"></i></div>
+  </div>
+</section>
+
+<!-- ============ ESCÁNER EN VIVO ============ -->
+<section class="sec scanner" id="escaner" data-obj="none" aria-labelledby="t-scan">
+  <div class="wrap">
+    <div class="sec-h">
+      <h2 id="t-scan">Escanea tu sitio ahora</h2>
+      <p class="lead">Lo revisamos en tiempo real desde fuera: código malicioso, redirecciones, spam en Google, archivos expuestos, plugins desactualizados y más. Cada resultado sale de una revisión real de tu sitio, sin valores inventados.</p>
+    </div>
+    <div class="scan-box">
+      <form id="scForm" novalidate>
+        <div class="sc-row">
+          <input class="in" id="sc-url" type="text" inputmode="url" autocomplete="url" placeholder="tusitio.com" aria-label="Dirección de tu sitio">
+          <button type="submit" class="btn btn-y" id="scGo">Escanear ahora</button>
+        </div>
+        <label class="sc-consent"><input type="checkbox" id="sc-ok"><span>Confirmo que soy el propietario de este sitio o que tengo autorización para analizarlo.</span></label>
+        <p class="err" id="scErr" role="alert"></p>
+      </form>
+
+      <div class="sc-run" id="scRun" hidden>
+        <div class="sc-head"><span id="scTarget">…</span><b id="scPct">0%</b></div>
+        <div class="prog"><i id="scBar"></i></div>
+        <div class="sc-verdict" id="scVerdict" hidden></div>
+        <div class="sc-grid">
+          <div class="sc-tiles" id="scTiles"></div>
+          <div class="log sc-log" id="scLog" aria-hidden="true"></div>
+        </div>
+        <div class="sc-find" id="scFind" aria-live="polite"></div>
+        <div class="res-acts" id="scActions" hidden>
+          <button type="button" class="btn btn-y" id="scToForm">Pedir limpieza o revisión a fondo</button>
+          <button type="button" class="btn btn-o" id="scCopy"><svg class="ic"><use href="#i-copy"/></svg>Copiar informe</button>
+          <button type="button" class="btn btn-o" id="scAgain">Escanear otro sitio</button>
+        </div>
+      </div>
+    </div>
+    <p class="note">Análisis externo y de solo lectura: solo consulta páginas públicas, no modifica nada, no prueba contraseñas y no ejecuta ataques. No puede leer los archivos internos del servidor ni la base de datos; para eso hace falta acceso, y lo hacemos en la revisión a fondo.</p>
+  </div>
+</section>
+
+<!-- ============ ANTES / DESPUÉS ============ -->
+<section class="sec" id="resultados" data-obj="none" aria-labelledby="t-res">
+  <div class="wrap">
+    <div class="sec-h">
+      <h2 id="t-res">Antes y después de una limpieza</h2>
+      <p class="lead">Mientras bajas, la web se va limpiando. Cuando termine, arrastra el control para comparar.</p>
+    </div>
+    <div data-reveal>
+      <div class="cmp" id="cmp" style="--pos:94%">
+        <div class="pane clean" aria-hidden="true">
+          <div class="chrome"><b class="lk ok">Seguro</b><span class="url">https://verdevivo.com</span></div>
+          <div class="site">
+            <div class="s-top"><span>Tel. +52 55 1234 5678</span><span>Lunes a sábado, de 8:00 a 19:00</span><span>hola@verdevivo.com</span></div>
+            <div class="s-nav">
+              <div class="s-logo"><svg viewBox="0 0 32 32"><path d="M5 27C5 12 14 4 28 4c0 14-8 23-21 23z" fill="#2f9e5b"/><path d="M8 25c5-8 10-12 16-16" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Verde Vivo</div>
+              <nav><span class="on">Inicio</span><span>Servicios</span><span>Proyectos</span><span>Nosotros</span><span>Contacto</span></nav>
+              <span class="s-cta">Pedir presupuesto</span>
+              <span class="s-burger"><i></i><i></i><i></i></span>
+            </div>
+            <div class="s-hero">
+              <div>
+                <span class="s-badge">Jardinería y paisajismo</span>
+                <h4>Diseñamos y cuidamos el jardín que siempre quisiste</h4>
+                <p>Más de 12 años transformando patios, terrazas y jardines. Presupuesto gratis en 24 horas y mantenimiento sin sorpresas.</p>
+                <div class="s-btns"><span class="s-cta">Solicitar presupuesto</span><span class="s-ghost">Ver proyectos</span></div>
+                <div class="s-rate"><i>★★★★★</i>4,9 de 5 · más de 350 jardines</div>
+              </div>
+              <div class="s-art">
+                <svg viewBox="0 0 600 440" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Ilustración de un jardín">
+                  <defs>
+                    <linearGradient id="vvSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#86cfff"/><stop offset="1" stop-color="#eaf8ff"/></linearGradient>
+                    <radialGradient id="vvSun"><stop offset="0" stop-color="#fff2b0"/><stop offset="1" stop-color="#ffd66b" stop-opacity="0"/></radialGradient>
+                  </defs>
+                  <rect width="600" height="440" fill="url(#vvSky)"/>
+                  <circle cx="470" cy="100" r="96" fill="url(#vvSun)"/><circle cx="470" cy="100" r="34" fill="#ffd96b"/>
+                  <g fill="#fff" opacity=".92"><ellipse cx="150" cy="92" rx="62" ry="16"/><ellipse cx="188" cy="78" rx="38" ry="14"/><ellipse cx="335" cy="150" rx="48" ry="12"/></g>
+                  <path d="M0 250Q120 170 260 235T600 205V440H0Z" fill="#a9dcb3"/>
+                  <path d="M0 292Q160 222 320 286T600 262V440H0Z" fill="#70c486"/>
+                  <path d="M0 342Q200 292 400 342T600 322V440H0Z" fill="#3f9d5f"/>
+                  <path d="M250 440L352 440Q338 386 376 348Q404 318 374 298L338 298Q370 322 338 354Q298 388 250 440Z" fill="#efdcb6"/>
+                  <rect x="86" y="228" width="15" height="118" rx="6" fill="#7a5230"/>
+                  <circle cx="93" cy="212" r="54" fill="#2f8f57"/><circle cx="60" cy="240" r="35" fill="#37a066"/><circle cx="128" cy="240" r="37" fill="#2b8450"/><circle cx="102" cy="184" r="29" fill="#45b476"/>
+                  <rect x="486" y="266" width="10" height="72" rx="4" fill="#7a5230"/><circle cx="491" cy="256" r="35" fill="#2f8f57"/><circle cx="471" cy="274" r="23" fill="#37a066"/>
+                  <ellipse cx="205" cy="348" rx="48" ry="27" fill="#2a7d4b"/><ellipse cx="558" cy="350" rx="52" ry="29" fill="#2a7d4b"/><ellipse cx="200" cy="340" rx="30" ry="16" fill="#35995f"/>
+                  <g><circle cx="38" cy="384" r="7" fill="#ff6f91"/><circle cx="66" cy="404" r="7" fill="#ffd23f"/><circle cx="104" cy="386" r="7" fill="#ffffff"/><circle cx="140" cy="410" r="7" fill="#ff6f91"/><circle cx="176" cy="392" r="7" fill="#b388ff"/><circle cx="424" cy="392" r="7" fill="#ffd23f"/><circle cx="462" cy="412" r="7" fill="#ff6f91"/><circle cx="504" cy="390" r="7" fill="#ffffff"/><circle cx="546" cy="408" r="7" fill="#b388ff"/><circle cx="584" cy="386" r="7" fill="#ffd23f"/></g>
+                </svg>
+                <span class="s-float"><i>✓</i>Presupuesto en 24 horas</span>
+              </div>
+            </div>
+            <div class="s-cards">
+              <div class="s-card">
+                <svg viewBox="0 0 240 130" preserveAspectRatio="xMidYMid slice"><rect width="240" height="130" fill="#d6f0dd"/><rect y="70" width="240" height="60" fill="#8a5d3b"/><g stroke="#3f9d5f" stroke-width="3" stroke-linecap="round"><path d="M30 100V70M70 100V64M110 100V72M150 100V62M190 100V70"/></g><circle cx="30" cy="66" r="9" fill="#ff6f91"/><circle cx="70" cy="60" r="9" fill="#ffd23f"/><circle cx="110" cy="68" r="9" fill="#ff6f91"/><circle cx="150" cy="58" r="9" fill="#b388ff"/><circle cx="190" cy="66" r="9" fill="#ffd23f"/><ellipse cx="120" cy="24" rx="46" ry="11" fill="#fff" opacity=".8"/></svg>
+                <div><b>Diseño de jardines</b><span>Proyectos a medida para patios, terrazas y espacios pequeños.</span></div>
+              </div>
+              <div class="s-card">
+                <svg viewBox="0 0 240 130" preserveAspectRatio="xMidYMid slice"><rect width="240" height="130" fill="#e1f2ff"/><rect y="98" width="240" height="32" fill="#5fb877"/><rect x="56" y="62" width="8" height="40" fill="#7a5230"/><circle cx="60" cy="50" r="24" fill="#2f8f57"/><rect x="116" y="62" width="8" height="40" fill="#7a5230"/><circle cx="120" cy="50" r="24" fill="#37a066"/><rect x="176" y="62" width="8" height="40" fill="#7a5230"/><circle cx="180" cy="50" r="24" fill="#2b8450"/><circle cx="210" cy="24" r="12" fill="#ffd96b"/></svg>
+                <div><b>Poda y mantenimiento</b><span>Cuidado periódico para que tu jardín luzca siempre impecable.</span></div>
+              </div>
+              <div class="s-card">
+                <svg viewBox="0 0 240 130" preserveAspectRatio="xMidYMid slice"><rect width="240" height="130" fill="#d9f1f7"/><rect y="98" width="240" height="32" fill="#5fb877"/><rect x="114" y="84" width="12" height="18" rx="3" fill="#4a5568"/><g fill="none" stroke="#3fa9e0" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 8"><path d="M120 82Q80 20 40 96"/><path d="M120 82Q100 10 76 96"/><path d="M120 82Q140 10 164 96"/><path d="M120 82Q160 20 200 96"/></g></svg>
+                <div><b>Riego automático</b><span>Instalamos sistemas eficientes que ahorran agua y tiempo.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pane hacked" aria-hidden="true">
+          <div class="chrome"><b class="lk bad">No seguro</b><span class="url">https://verdevivo.com</span></div>
+          <div class="hk">
+            <div class="hk-warn">Sitio engañoso delante. Chrome bloqueó esta página.</div>
+            <div class="hk-t">HACKED BY xX_Sh4d0w_Xx</div>
+            <p>Your website has been owned. Contact us to get it back.</p>
+            <div class="hk-ads"><span>CASINO ONLINE +200%</span><span>PILLS CHEAP NOW</span><span>FREE COINS</span></div>
+            <div class="hk-bars"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <span class="lbl b">Antes</span><span class="lbl a">Después</span>
+        <div class="hdl" id="hdl" role="slider" tabindex="0" aria-label="Comparar antes y después" aria-valuemin="0" aria-valuemax="100" aria-valuenow="94"><b><svg class="ic"><use href="#i-arrows"/></svg></b></div>
+      </div>
+      <p class="cmp-hint">Arrastra el control amarillo o usa las flechas del teclado.</p>
+    </div>
+    <div class="stats" id="stats">
+      <div class="stat"><b data-count="1200" data-pre="+">0</b><span>sitios recuperados</span></div>
+      <div class="stat"><b data-count="45" data-suf=" min">0</b><span>para la primera respuesta</span></div>
+      <div class="stat"><b data-count="98" data-suf=" %">0</b><span>sin reinfección a 90 días</span></div>
+      <div class="stat"><b data-count="30" data-suf=" días">0</b><span>de garantía</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRECIOS ============ -->
+<section class="sec" id="planes" data-obj="none" aria-labelledby="t-plan" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-h">
+      <h2 id="t-plan">Precios claros, sin letra chica</h2>
+      <p class="lead">Elige un punto de partida. El diagnóstico es gratis y la cotización final se confirma antes de tocar nada.</p>
+    </div>
+    <div class="plans">
+      <article class="plan">
+        <h3>Rescate</h3>
+        <p class="d">Para sitios con síntomas puntuales que necesitan arreglo ya.</p>
+        <div class="price">$99<small>pago único</small></div>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Escaneo completo de archivos y base de datos</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Limpieza de malware y backdoors</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Reparación de errores del sitio</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Informe de lo encontrado</li>
+        </ul>
+        <a class="btn btn-o" href="#contacto" data-plan="Rescate" data-pid="rescate">Elegir Rescate</a>
+      </article>
+      <article class="plan feat">
+        <span class="tag">El más elegido</span>
+        <h3>Rescate + Blindaje</h3>
+        <p class="d">Limpiamos y protegemos para que no se repita.</p>
+        <div class="price">$199<small>pago único</small></div>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Todo lo del plan Rescate</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Firewall (WAF) y 2FA</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>wp-config y permisos endurecidos</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Revisión de Google incluida</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Garantía de 30 días y atención prioritaria</li>
+        </ul>
+        <a class="btn" href="#contacto" data-plan="Rescate + Blindaje" data-pid="blindaje">Elegir Rescate + Blindaje</a>
+      </article>
+      <article class="plan">
+        <h3>Guardián</h3>
+        <p class="d">Vigilancia continua para no volver a pasar por esto.</p>
+        <div class="price">$39<small>al mes</small></div>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Monitoreo 24/7 con alertas</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Backups diarios fuera del servidor</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Actualizaciones probadas</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Limpiezas incluidas</li>
+        </ul>
+        <a class="btn btn-o" href="#contacto" data-plan="Guardián" data-pid="guardian">Elegir Guardián</a>
+      </article>
+    </div>
+    <ol class="after-plan" aria-label="Qué pasa después de elegir tu plan">
+      <li><b>Crea tu cuenta</b><span>Elige tu plan y regístrate en un minuto, sin salir de esta página.</span></li>
+      <li><b>Paga y activamos tu panel</b><span>Te indicamos cómo pagar. Al registrar tu pago, tu plan queda activo.</span></li>
+      <li><b>Sigue tu servicio</b><span>Ve el avance, analiza tu sitio con el escáner y escríbenos desde tu panel.</span></li>
+    </ol>
+    <p class="note">Precios de referencia por sitio, en USD. Sitios muy grandes o con varias instalaciones se cotizan aparte.</p>
+
+    <div class="faq">
+      <h2 class="h2">Lo que más nos preguntan</h2>
+      <div>
+        <details><summary>¿Voy a perder mi contenido?<svg class="ic"><use href="#i-plus"/></svg></summary><p>No. Antes de tocar nada hacemos un respaldo forense y luego restauramos solo lo que está limpio. Tus entradas, páginas, productos y usuarios legítimos se conservan.</p></details>
+        <details><summary>¿Cuánto tarda?<svg class="ic"><use href="#i-plus"/></svg></summary><p>Una limpieza típica toma entre 2 y 24 horas, según el tamaño del sitio y el grado de infección. En emergencias empezamos en minutos.</p></details>
+        <details><summary>¿Cómo evitan que vuelva a pasar?<svg class="ic"><use href="#i-plus"/></svg></summary><p>Cerramos la vulnerabilidad por la que entraron (un plugin, una contraseña débil, un archivo con permisos abiertos) y agregamos firewall, 2FA, actualizaciones y copias de seguridad.</p></details>
+        <details><summary>¿Qué acceso necesitan?<svg class="ic"><use href="#i-plus"/></svg></summary><p>Lo ideal es un usuario temporal de wp-admin y acceso al hosting o FTP. Si no los tienes, te guiamos para crearlos. Al terminar rotamos todas las credenciales.</p></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ORDEN DE SERVICIO ============ -->
+<section class="contact" id="contacto" data-obj="shield" data-x="-3" data-y="-.75" data-s="1.1" aria-labelledby="t-ct">
+  <div class="wrap">
+    <div class="ct-grid">
+      <div class="ct-left">
+        <h2 class="h2" id="t-ct">Abre tu orden de servicio</h2>
+        <p class="lead">Cuéntanos qué pasó. En un par de minutos te damos una estimación de gravedad y el plan recomendado. Sin compromiso.</p>
+        <ul class="ct-pts">
+          <li><svg class="ic"><use href="#i-check"/></svg>El diagnóstico no tiene costo</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Respondemos por WhatsApp o correo</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>No tocamos nada sin tu aprobación</li>
+        </ul>
+      </div>
+
+      <div class="console" id="console">
+        <div class="con-in">
+          <div class="con-head">
+            <span>Orden de servicio <b id="ordId">NXG-0000</b></span>
+            <span id="stepLbl">Síntomas</span>
+            <div class="segs" id="segs" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+          </div>
+          <div class="con-body">
+
+            <form id="triage" novalidate>
+              <div class="fs active" data-step="1">
+                <div id="planChip" class="plan-chip" hidden><span id="planTxt"></span><button type="button" id="planX" aria-label="Quitar plan elegido"><svg class="ic"><use href="#i-x"/></svg></button></div>
+                <h3>¿Qué está pasando?</h3>
+                <p class="sub">Marca todo lo que aplique.</p>
+                <div class="chips" role="group" aria-label="Síntomas">
+                  <label class="chip" style="grid-column:1/-1"><input type="checkbox" value="hacked"><span>Mi sitio fue hackeado o tiene virus / malware</span></label>
+                  <label class="chip"><input type="checkbox" value="redirect"><span>Redirecciones a otras webs</span></label>
+                  <label class="chip"><input type="checkbox" value="white"><span>Pantalla blanca o error crítico</span></label>
+                  <label class="chip"><input type="checkbox" value="seo"><span>Spam en Google</span></label>
+                  <label class="chip"><input type="checkbox" value="blocked"><span>Alerta de sitio engañoso</span></label>
+                  <label class="chip"><input type="checkbox" value="admin"><span>Usuarios admin desconocidos</span></label>
+                  <label class="chip"><input type="checkbox" value="odd"><span>Archivos raros o web lenta</span></label>
+                  <label class="chip" style="grid-column:1/-1"><input type="checkbox" value="unknown"><span>No estoy seguro, solo sé que algo anda mal</span></label>
+                </div>
+                <p class="err" id="err1" role="alert"></p>
+                <div class="acts"><span></span><button type="button" class="btn btn-y" data-next="2">Siguiente</button></div>
+              </div>
+
+              <div class="fs" data-step="2">
+                <h3>Cuéntanos de tu sitio</h3>
+                <p class="sub">Con esto priorizamos tu caso.</p>
+                <div class="fld"><label for="f-url">Dirección de tu web</label><input class="in" id="f-url" name="url" type="text" inputmode="url" autocomplete="url" placeholder="tusitio.com"></div>
+                <div class="fld"><span class="lb" id="lb-dur">¿Desde cuándo pasa?</span>
+                  <div class="seg" role="radiogroup" aria-labelledby="lb-dur">
+                    <label><input type="radio" name="dur" value="hoy" checked><span>Desde hoy</span></label>
+                    <label><input type="radio" name="dur" value="semana"><span>Esta semana</span></label>
+                    <label><input type="radio" name="dur" value="mes"><span>Más de un mes</span></label>
+                  </div>
+                </div>
+                <div class="fld"><span class="lb" id="lb-acc">¿Puedes entrar a wp-admin?</span>
+                  <div class="seg" role="radiogroup" aria-labelledby="lb-acc">
+                    <label><input type="radio" name="acc" value="si" checked><span>Sí</span></label>
+                    <label><input type="radio" name="acc" value="no"><span>No</span></label>
+                    <label><input type="radio" name="acc" value="ns"><span>No sé</span></label>
+                  </div>
+                </div>
+                <p class="err" id="err2" role="alert"></p>
+                <div class="acts"><button type="button" class="btn btn-o" data-prev="1">Atrás</button><button type="button" class="btn btn-y" data-next="3">Siguiente</button></div>
+              </div>
+
+              <div class="fs" data-step="3">
+                <h3>¿A quién le respondemos?</h3>
+                <p class="sub">Usaremos estos datos solo para contactarte sobre tu caso.</p>
+                <div class="row2">
+                  <div class="fld"><label for="f-name">Tu nombre</label><input class="in" id="f-name" name="name" type="text" autocomplete="name" placeholder="Ana Pérez"></div>
+                  <div class="fld"><label for="f-contact">WhatsApp o correo</label><input class="in" id="f-contact" name="contact" type="text" autocomplete="email" placeholder="+52 55 1234 5678"></div>
+                </div>
+                <div class="fld"><label class="sw"><input type="checkbox" id="f-urg"><i></i><span>Es una emergencia: necesito respuesta en menos de 1 hora</span></label></div>
+                <p class="err" id="err3" role="alert"></p>
+                <div class="acts"><button type="button" class="btn btn-o" data-prev="2">Atrás</button><button type="submit" class="btn btn-y">Analizar mi caso</button></div>
+              </div>
+            </form>
+
+            <div class="scan" id="scanView" hidden>
+              <div class="radar" aria-hidden="true"><i></i><i></i></div>
+              <h3 id="scanTitle">Analizando tu orden</h3>
+              <p class="sub small" style="margin:6px 0 16px">Estamos cruzando tus respuestas con casos parecidos.</p>
+              <div class="log" id="scanLog" aria-live="polite"></div>
+              <div class="prog"><i id="scanBar"></i></div>
+              <p class="small">Estimación preliminar basada en lo que nos contaste. El diagnóstico real se hace con acceso a tu sitio.</p>
+            </div>
+
+            <div id="resView" hidden>
+              <div class="res-top">
+                <svg class="gauge" viewBox="0 0 200 120" role="img" aria-label="Índice de gravedad">
+                  <path class="g-t" d="M20 105 A80 80 0 0 1 180 105" pathLength="100"/>
+                  <path class="g-f" id="gFill" d="M20 105 A80 80 0 0 1 180 105" pathLength="100"/>
+                  <text id="gNum" x="100" y="92">0</text>
+                  <text class="g-s" x="100" y="112">de 100</text>
+                </svg>
+                <div class="res-info">
+                  <h3 id="resLevel">Gravedad alta</h3>
+                  <div class="kv"><svg class="ic"><use href="#i-clock"/></svg><span id="resEta">Tiempo estimado: 1 a 3 horas</span></div>
+                  <div class="kv"><svg class="ic"><use href="#i-shield-check"/></svg><span id="resPlan">Plan recomendado: Rescate</span></div>
+                </div>
+              </div>
+              <div class="summary" id="resSummary"></div>
+              <div class="res-acts">
+                <a class="btn btn-y" id="btnWa" data-act target="_blank" rel="noopener" role="button" tabindex="0"><svg class="ic"><use href="#i-chat"/></svg>Enviar por WhatsApp</a>
+                <a class="btn btn-o" id="btnMail" data-act role="button" tabindex="0"><svg class="ic"><use href="#i-mail"/></svg>Enviar por correo</a>
+                <button type="button" class="btn btn-o" id="btnCopy"><svg class="ic"><use href="#i-copy"/></svg>Copiar resumen</button>
+              </div>
+              <button type="button" class="linkbtn" id="btnReset">Abrir otra orden</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>© 2026 NexaGuard. Servicio independiente de reparación y seguridad para sitios WordPress.</span>
+</footer>
+
+<dialog id="authDlg" aria-label="Cuenta">
+  <div class="ad-in">
+    <button type="button" class="ad-x" id="adClose" aria-label="Cerrar">×</button>
+    <div id="adBody"></div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* =====================================================
+   CONFIGURACIÓN (cambia estos datos por los tuyos)
+   ===================================================== */
+var CONFIG = {
+  whatsapp: '',              // Ej: '5215512345678' (código de país + número, solo dígitos)
+  email: '',                 // Ej: 'hola@tudominio.com'
+  scanEndpoint: '/scan',     // Dirección del servidor del escáner (scanner/server.js). Ej: 'https://scan.tudominio.com/scan'
+  brand: 'NexaGuard'
+};
+
+/* =====================================================
+   Utilidades
+   ===================================================== */
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var clamp = function (v, a, b) { a = a === undefined ? 0 : a; b = b === undefined ? 1 : b; return Math.min(b, Math.max(a, v)); };
+var lerp = function (a, b, t) { return a + (b - a) * t; };
+var ease = function (t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+var root = document.documentElement;
+
+var toastEl = $('#toast'), toastT;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(function () { toastEl.classList.remove('show'); }, 3600);
+}
+function copyText(txt) {
+  return new Promise(function (res) {
+    function fallback() {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = txt; ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+        document.body.appendChild(ta); ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta); res(ok);
+      } catch (e) { res(false); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function () { res(true); }, fallback);
+    } else fallback();
+  });
+}
+
+/* =====================================================
+   Estado de scroll y layout
+   ===================================================== */
+var VW = innerWidth, VH = innerHeight, y = 0, lastY = 0, vel = 0;
+var L = { secs: [], hs: { top: 0, h: 1, dist: 0 }, st: { top: 0, h: 1 }, cmp: { top: 0 }, docH: 1 };
+var mouse = { x: 0, y: 0 };
+
+var heroFade = $$('[data-hfade]');
+var nav = $('#nav'), hFill = $('#hFill'), hPct = $('#hPct'), hState = $('#hState');
+var hs = $('#servicios'), hsTrack = $('#hsTrack'), hsProg = $('#hsProg'), pnls = $$('.pnl'), pnlC = [];
+var st = $('#proceso'), stItems = $$('.st-item'), hps = $$('.hp'), stBar = $('#stBar'), hudTitle = $('#hudTitle');
+var HUD = ['triage.log', 'respaldo.log', 'limpieza.diff', 'blindaje.log'];
+var stIdx = -1;
+var cmp = $('#cmp'), hdl = $('#hdl'), cmpTouched = false, cmpPos = 94;
+
+function pageTop(el) { return el.getBoundingClientRect().top + (window.scrollY || 0); }
+
+function layout() {
+  VW = innerWidth; VH = innerHeight;
+  root.style.setProperty('--vh', (VH / 100) + 'px');
+
+  var dist = Math.max(0, hsTrack.offsetWidth - VW);
+  var hsH = Math.round(VH + dist + VH * .15);
+  var stH = Math.round(VH * 4.4);
+  if (hs.style.height !== hsH + 'px') hs.style.height = hsH + 'px';
+  if (st.style.height !== stH + 'px') st.style.height = stH + 'px';
+
+  pnlC = pnls.map(function (p) { return p.offsetLeft + p.offsetWidth / 2; });
+  L.hs = { top: pageTop(hs), h: hs.offsetHeight, dist: dist };
+  L.st = { top: pageTop(st), h: st.offsetHeight };
+  L.cmp = { top: pageTop(cmp) };
+  L.docH = Math.max(1, root.scrollHeight - VH);
+  L.secs = $$('[data-obj]').map(function (el) {
+    return {
+      top: pageTop(el), obj: el.dataset.obj,
+      x: parseFloat(el.dataset.x) || 0, y: parseFloat(el.dataset.y) || 0, s: parseFloat(el.dataset.s) || 1
+    };
+  }).sort(function (a, b) { return a.top - b.top; });
+  if (scene) scene.resize(VW, VH);
+}
+
+function curSec() {
+  var pick = L.secs[0] || null, probe = y + VH * .5;
+  for (var i = 0; i < L.secs.length; i++) { if (L.secs[i].top <= probe) pick = L.secs[i]; }
+  return pick;
+}
+
+/* =====================================================
+   Escena 3D (Three.js)
+   ===================================================== */
+function makeScene() {
+  var T = window.THREE;
+  if (!T) return null;
+  var canvas = $('#gl'), renderer;
+  try {
+    renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  } catch (e) { return null; }
+  renderer.setClearColor(0x000000, 0);
+
+  var scene = new T.Scene();
+  var cam = new T.PerspectiveCamera(42, 1, .1, 120);
+  cam.position.set(0, 0, 8.6);
+
+  var RED = 0xff4560, YEL = 0xffcf33, BLU = 0x7d9dff, GRN = 0x3de8a4;
+  scene.add(new T.AmbientLight(0x9fb2ff, .75));
+  var keyL = new T.PointLight(0xbfd0ff, 2.4, 40); keyL.position.set(4, 4, 7); scene.add(keyL);
+  var rimL = new T.PointLight(RED, 2.8, 40); rimL.position.set(-5, -2, 3); scene.add(rimL);
+  var fillL = new T.DirectionalLight(0x6b8cff, .7); fillL.position.set(0, -3, 4); scene.add(fillL);
+
+  /* Aspecto "holograma": cuerpo oscuro + aristas luminosas + malla tenue */
+  function holo(geo, col, o) {
+    o = o || {};
+    var g = new T.Group();
+    var body = new T.Mesh(geo, new T.MeshStandardMaterial({
+      color: o.body || 0x0b1233, metalness: .55, roughness: .38, flatShading: true,
+      emissive: col, emissiveIntensity: o.em !== undefined ? o.em : .1,
+      polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
+    }));
+    var edges = new T.LineSegments(new T.EdgesGeometry(geo, o.thr || 20), new T.LineBasicMaterial({ color: col, transparent: true, opacity: .95 }));
+    var wire = new T.Mesh(geo, new T.MeshBasicMaterial({ color: col, wireframe: true, transparent: true, opacity: o.wire !== undefined ? o.wire : .09, depthWrite: false }));
+    g.add(body); g.add(edges); g.add(wire);
+    return g;
+  }
+  function rr(w, h, r) {
+    var s = new T.Shape(), x = -w / 2, yy = -h / 2;
+    s.moveTo(x + r, yy); s.lineTo(x + w - r, yy); s.quadraticCurveTo(x + w, yy, x + w, yy + r);
+    s.lineTo(x + w, yy + h - r); s.quadraticCurveTo(x + w, yy + h, x + w - r, yy + h);
+    s.lineTo(x + r, yy + h); s.quadraticCurveTo(x, yy + h, x, yy + h - r);
+    s.lineTo(x, yy + r); s.quadraticCurveTo(x, yy, x + r, yy);
+    return s;
+  }
+  function gearGeo(teeth, ro, ri, hole, depth) {
+    var s = new T.Shape(), step = Math.PI * 2 / teeth;
+    function p(a, r) { return [Math.cos(a) * r, Math.sin(a) * r]; }
+    for (var i = 0; i < teeth; i++) {
+      var a = i * step;
+      var q = [p(a - step * .28, ri), p(a - step * .15, ro), p(a + step * .15, ro), p(a + step * .28, ri)];
+      if (i === 0) s.moveTo(q[0][0], q[0][1]); else s.lineTo(q[0][0], q[0][1]);
+      s.lineTo(q[1][0], q[1][1]); s.lineTo(q[2][0], q[2][1]); s.lineTo(q[3][0], q[3][1]);
+    }
+    s.closePath();
+    var h = new T.Path(); h.absarc(0, 0, hole, 0, Math.PI * 2, true); s.holes.push(h);
+    var g = new T.ExtrudeGeometry(s, { depth: depth, bevelEnabled: true, bevelThickness: .03, bevelSize: .03, bevelSegments: 1, curveSegments: 24 });
+    g.center();
+    return g;
+  }
+
+  /* ---- VIRUS (infección) ---- */
+  var virus = new T.Group();
+  virus.add(holo(new T.IcosahedronGeometry(1.05, 1), RED, { body: 0x1c0811, em: .18, thr: 5 }));
+  var ico = new T.IcosahedronGeometry(1.05, 1), pa = ico.attributes.position, seen = {}, vs = [];
+  for (var i = 0; i < pa.count; i++) {
+    var v = new T.Vector3().fromBufferAttribute(pa, i);
+    var k = v.x.toFixed(3) + '|' + v.y.toFixed(3) + '|' + v.z.toFixed(3);
+    if (!seen[k]) { seen[k] = 1; vs.push(v); }
+  }
+  var spGeo = new T.CylinderGeometry(.018, .055, .55, 6); spGeo.translate(0, .275, 0);
+  var spikes = new T.InstancedMesh(spGeo, new T.MeshStandardMaterial({ color: 0x2a0c16, metalness: .4, roughness: .5, emissive: RED, emissiveIntensity: .3 }), vs.length);
+  var tips = new T.InstancedMesh(new T.SphereGeometry(.085, 10, 10), new T.MeshBasicMaterial({ color: RED }), vs.length);
+  var m4 = new T.Matrix4(), qq = new T.Quaternion(), up = new T.Vector3(0, 1, 0), one = new T.Vector3(1, 1, 1), tp = new T.Vector3();
+  vs.forEach(function (vv, idx) {
+    var n = vv.clone().normalize(); qq.setFromUnitVectors(up, n);
+    var sy = .8 + ((idx * 37) % 10) / 25;
+    m4.compose(vv.clone().multiplyScalar(.97), qq, new T.Vector3(1, sy, 1)); spikes.setMatrixAt(idx, m4);
+    tp.copy(n).multiplyScalar(1.05 * .97 + .55 * sy); m4.compose(tp, qq, one); tips.setMatrixAt(idx, m4);
+  });
+  virus.add(spikes); virus.add(tips);
+  var orbit = new T.Group();
+  for (var b = 0; b < 7; b++) {
+    var bug = holo(new T.OctahedronGeometry(.12), RED, { body: 0x200a10, em: .3, thr: 5 });
+    var an = b / 7 * Math.PI * 2; bug.position.set(Math.cos(an) * 2.05, Math.sin(an * 2) * .25, Math.sin(an) * 2.05);
+    orbit.add(bug);
+  }
+  orbit.rotation.z = .35; virus.add(orbit);
+
+  /* ---- LLAVE INGLESA + ENGRANAJES (reparación) ---- */
+  var wrench = new T.Group();
+  wrench.add(holo(new T.CylinderGeometry(.17, .21, 2.3, 20), YEL, { thr: 6, wire: .16 }));
+  var head = holo(new T.TorusGeometry(.56, .24, 12, 30, Math.PI * 2 - 1.05), YEL, { thr: 6, wire: .16 });
+  head.position.y = 1.5; head.rotation.z = Math.PI / 2 + .525; wrench.add(head);
+  var tail = holo(new T.TorusGeometry(.44, .2, 12, 26), YEL, { thr: 6, wire: .16 });
+  tail.position.y = -1.5; wrench.add(tail);
+  var gearA = holo(gearGeo(10, .62, .5, .2, .22), BLU, { thr: 15, body: 0x0c1640, wire: .12 });
+  gearA.position.set(-1.7, -1.0, .4); wrench.add(gearA);
+  var gearB = holo(gearGeo(8, .46, .36, .14, .18), BLU, { thr: 15, body: 0x0c1640, wire: .12 });
+  gearB.position.set(1.6, 1.15, -.2); wrench.add(gearB);
+  wrench.rotation.z = -.55;
+
+  /* ---- CANDADO (bloqueo) ---- */
+  var lock = new T.Group();
+  lock.add(holo(new T.ExtrudeGeometry(rr(1.9, 1.5, .28), { depth: .6, bevelEnabled: true, bevelSize: .05, bevelThickness: .05, bevelSegments: 2, curveSegments: 10 }).center(), BLU, { thr: 25 }));
+  var shackle = new T.Group();
+  shackle.add(holo(new T.TorusGeometry(.5, .11, 12, 28, Math.PI), BLU, { thr: 6, wire: .16 }));
+  var legL = holo(new T.CylinderGeometry(.11, .11, .5, 12), BLU, { thr: 6, wire: .16 }); legL.position.set(-.5, -.25, 0);
+  var legR = holo(new T.CylinderGeometry(.11, .11, .5, 12), BLU, { thr: 6, wire: .16 }); legR.position.set(.5, -.25, 0);
+  shackle.add(legL); shackle.add(legR); shackle.position.y = 1.45; lock.add(shackle);
+  var khMat = new T.MeshBasicMaterial({ color: GRN });
+  var kh = new T.Mesh(new T.CircleGeometry(.13, 20), khMat); kh.position.set(0, .12, .37); lock.add(kh);
+  var slot = new T.Mesh(new T.PlaneGeometry(.07, .32), khMat); slot.position.set(0, -.12, .37); lock.add(slot);
+  lock.position.y = -.45;
+
+  /* ---- ESCUDO (protegido) ---- */
+  var sh = new T.Shape();
+  sh.moveTo(0, 1.5);
+  sh.bezierCurveTo(.35, 1.25, .85, 1.15, 1.25, 1.15);
+  sh.lineTo(1.25, .25);
+  sh.bezierCurveTo(1.25, -.6, .7, -1.15, 0, -1.55);
+  sh.bezierCurveTo(-.7, -1.15, -1.25, -.6, -1.25, .25);
+  sh.lineTo(-1.25, 1.15);
+  sh.bezierCurveTo(-.85, 1.15, -.35, 1.25, 0, 1.5);
+  var shield = new T.Group();
+  shield.add(holo(new T.ExtrudeGeometry(sh, { depth: .32, bevelEnabled: true, bevelSize: .07, bevelThickness: .06, bevelSegments: 2, curveSegments: 24 }).center(), GRN, { thr: 14, wire: .06, em: .16 }));
+  var ckM = new T.MeshBasicMaterial({ color: GRN });
+  var c1 = new T.Mesh(new T.BoxGeometry(.44, .17, .1), ckM); c1.position.set(-.3, -.12, .28); c1.rotation.z = -Math.PI / 4;
+  var c2 = new T.Mesh(new T.BoxGeometry(.95, .17, .1), ckM); c2.position.set(.18, .06, .28); c2.rotation.z = .808;
+  shield.add(c1); shield.add(c2);
+  var ring1 = new T.Mesh(new T.TorusGeometry(2.05, .012, 8, 90), new T.MeshBasicMaterial({ color: GRN, transparent: true, opacity: .6 }));
+  var ring2 = new T.Mesh(new T.TorusGeometry(2.4, .008, 8, 90), new T.MeshBasicMaterial({ color: BLU, transparent: true, opacity: .45 }));
+  ring2.rotation.x = 1.1; shield.add(ring1); shield.add(ring2);
+
+  /* Registro de objetos: g = posición/escala, m = rotación */
+  var defs = { virus: virus, wrench: wrench, lock: lock, shield: shield };
+  var objs = {};
+  Object.keys(defs).forEach(function (key) {
+    var g = new T.Group(), m = new T.Group();
+    m.add(defs[key]); g.add(m); g.visible = false; g.scale.setScalar(1e-4);
+    scene.add(g);
+    objs[key] = { g: g, m: m, s: 1e-4 };
+  });
+
+  /* Partículas */
+  var N = 1100, pg = new T.BufferGeometry(), arr = new Float32Array(N * 3);
+  for (var n = 0; n < N; n++) {
+    var r = 5 + Math.random() * 16, th = Math.random() * 6.283, ph = Math.acos(2 * Math.random() - 1);
+    arr[n * 3] = r * Math.sin(ph) * Math.cos(th);
+    arr[n * 3 + 1] = r * Math.sin(ph) * Math.sin(th) * .7;
+    arr[n * 3 + 2] = r * Math.cos(ph) - 6;
+  }
+  pg.setAttribute('position', new T.BufferAttribute(arr, 3));
+  var pm = new T.PointsMaterial({ color: BLU, size: .045, transparent: true, opacity: .75, depthWrite: false, blending: T.AdditiveBlending });
+  var pts = new T.Points(pg, pm); scene.add(pts);
+
+  var themes = { virus: [RED, RED], wrench: [YEL, BLU], lock: [BLU, BLU], shield: [GRN, BLU] };
+  var tmp = new T.Color();
+  var cur = null, burst = 0, boost = 0, glitchT = 2, glitchFor = 0, shackleY = 1.45, shieldSpin = 0;
+
+  function resize(w, h) {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, w < 820 ? 1.5 : 1.75));
+    renderer.setSize(w, h, false);
+    cam.aspect = w / h; cam.updateProjectionMatrix();
+  }
+
+  function render(dt, s, vl, ms, vw, vh) {
+    if (!s) return;
+    var mobile = vw < 820, aspect = vw / vh;
+    var key = objs[s.obj] ? s.obj : null;
+    if (key !== cur) { cur = key; burst = 1; }
+    var t = performance.now() * .001;
+    var ax = clamp(aspect / 1.78, .55, 1.15);
+
+    Object.keys(objs).forEach(function (k) {
+      var o = objs[k], on = k === key;
+      var tx = mobile ? 0 : s.x * ax, ty = mobile ? 1.5 : s.y, tsc = on ? s.s * (mobile ? .55 : 1) : 1e-4;
+      if (on && o.s < .03) o.g.position.set(tx, ty, 0);
+      o.s += (tsc - o.s) * Math.min(1, dt * (on ? 4 : 6));
+      if (on) {
+        o.g.position.x += (tx - o.g.position.x) * Math.min(1, dt * 3);
+        o.g.position.y += (ty - o.g.position.y) * Math.min(1, dt * 3);
+      }
+      o.g.visible = o.s > .02;
+      o.g.scale.setScalar(Math.max(o.s, 1e-4));
+    });
+
+    var spin = boost * 4 + Math.abs(vl) * .03;
+    boost *= Math.max(0, 1 - dt * 1.4);
+    var mx = ms.x, my = ms.y;
+
+    if (objs.virus.g.visible) {
+      var vm = objs.virus.m;
+      vm.rotation.y += dt * (.28 + spin);
+      vm.rotation.x = Math.sin(t * .4) * .25 + my * .25;
+      vm.scale.setScalar(1 + Math.sin(t * 3) * .03);
+      orbit.rotation.y += dt * .9;
+      glitchT -= dt;
+      if (glitchT < 0) { glitchT = 1.6 + Math.random() * 2.6; glitchFor = .1; }
+      if (glitchFor > 0) { glitchFor -= dt; vm.position.set((Math.random() - .5) * .3, (Math.random() - .5) * .1, 0); }
+      else vm.position.set(0, 0, 0);
+    }
+    if (objs.wrench.g.visible) {
+      var wm = objs.wrench.m;
+      wm.rotation.y += dt * (.35 + spin);
+      wm.rotation.x = my * .2;
+      wrench.rotation.z = -.55 + Math.sin(t * 1.6) * .22;
+      gearA.rotation.z += dt * (.9 + spin);
+      gearB.rotation.z -= dt * (1.3 + spin);
+    }
+    if (objs.lock.g.visible) {
+      var lm = objs.lock.m;
+      lm.rotation.y = Math.sin(t * .6) * .55 + mx * .4;
+      lm.rotation.x = my * .15;
+      shackleY += ((key === 'lock' ? 1.1 : 1.45) - shackleY) * Math.min(1, dt * 2.2);
+      shackle.position.y = shackleY;
+    }
+    if (objs.shield.g.visible) {
+      var sm = objs.shield.m;
+      shieldSpin += dt * boost * 6;
+      sm.rotation.y = Math.sin(t * .55) * .6 + mx * .4 + shieldSpin;
+      sm.rotation.x = my * .15;
+      ring1.rotation.z += dt * .5; ring2.rotation.z -= dt * .35;
+    }
+
+    var th2 = themes[key] || [BLU, BLU], k2 = Math.min(1, dt * 2.5);
+    tmp.setHex(th2[0]); pm.color.lerp(tmp, k2);
+    tmp.setHex(th2[1]); rimL.color.lerp(tmp, k2);
+    burst *= Math.max(0, 1 - dt * 2.2);
+    pts.scale.setScalar(1 + burst * .35);
+    pts.rotation.y += dt * .02 + vl * .0006;
+    pts.rotation.x = Math.sin(t * .1) * .05;
+
+    cam.position.x += (mx * .35 - cam.position.x) * Math.min(1, dt * 2);
+    cam.position.y += (-my * .25 - cam.position.y) * Math.min(1, dt * 2);
+    cam.lookAt(0, 0, 0);
+    renderer.render(scene, cam);
+  }
+
+  return { render: render, resize: resize, boost: function (v) { boost = Math.max(boost, v); } };
+}
+
+var scene = null;
+try { scene = makeScene(); } catch (e) { scene = null; }
+if (!scene) { var cv = $('#gl'); if (cv) cv.style.display = 'none'; }
+
+/* =====================================================
+   Bucle principal (scroll + render)
+   ===================================================== */
+var tPrev = performance.now(), lastPct = -1, lastHero = -1, lastHsP = -1, lastStP = -1;
+
+function frame(now) {
+  var dt = Math.min(.05, (now - tPrev) / 1000 || .016); tPrev = now;
+  y = window.scrollY || 0;
+  vel += ((y - lastY) - vel) * .25; lastY = y;
+
+  /* Salud del sitio: pasa de infectado a protegido según el scroll */
+  var gp = clamp(y / L.docH);
+  var pct = Math.round(8 + gp * 92);
+  if (pct !== lastPct) {
+    lastPct = pct;
+    var col = 'hsl(' + Math.round(gp * 128) + ' 90% 58%)';
+    hFill.style.width = pct + '%'; hFill.style.background = col;
+    hPct.textContent = pct + '%';
+    hState.textContent = gp < .3 ? 'Infectado' : gp < .75 ? 'Reparando' : 'Protegido';
+    nav.style.setProperty('--prog', gp.toFixed(3));
+    nav.style.setProperty('--pcol', col);
+  }
+
+  /* Hero: se desvanece mientras la siguiente sección lo cubre */
+  var hp = clamp(y / (VH * .6));
+  if (hp !== lastHero) {
+    lastHero = hp;
+    heroFade.forEach(function (el) {
+      el.style.opacity = (1 - hp).toFixed(3);
+      el.style.transform = 'translate3d(0,' + (-hp * 40).toFixed(1) + 'px,0) scale(' + (1 - hp * .04).toFixed(3) + ')';
+      el.style.pointerEvents = hp > .8 ? 'none' : '';
+    });
+  }
+
+  /* Servicios: scroll horizontal con efecto 3D en las tarjetas */
+  if (y > L.hs.top - VH && y < L.hs.top + L.hs.h + VH) {
+    var span = L.hs.h - VH;
+    var p = span > 0 ? clamp((y - L.hs.top) / span) : 0;
+    if (Math.abs(p - lastHsP) > .0003) {
+      lastHsP = p;
+      hsTrack.style.transform = 'translate3d(' + (-p * L.hs.dist).toFixed(1) + 'px,0,0)';
+      hsProg.style.transform = 'scaleX(' + p.toFixed(3) + ')';
+      for (var i = 0; i < pnls.length; i++) {
+        var cx = pnlC[i] - p * L.hs.dist, d = (cx - VW / 2) / VW, ad = Math.abs(d);
+        pnls[i].style.transform = 'translate3d(0,0,' + (-ad * 140).toFixed(0) + 'px) rotateY(' + (clamp(d, -1, 1) * -14).toFixed(1) + 'deg)';
+        pnls[i].style.opacity = (1 - Math.min(.55, ad * .5)).toFixed(2);
+      }
+    }
+  }
+
+  /* Proceso: cambia de paso al bajar */
+  if (y > L.st.top - VH && y < L.st.top + L.st.h + VH) {
+    var sp = clamp((y - L.st.top) / Math.max(1, L.st.h - VH));
+    var idx = Math.min(3, Math.floor(sp * 4));
+    if (idx !== stIdx) {
+      stIdx = idx;
+      stItems.forEach(function (li, n) { li.classList.toggle('on', n === idx); li.classList.toggle('done', n < idx); });
+      hps.forEach(function (h, n) { h.classList.toggle('on', n === idx); });
+      hudTitle.textContent = HUD[idx];
+    }
+    if (Math.abs(sp - lastStP) > .0005) { lastStP = sp; stBar.style.transform = 'scaleX(' + sp.toFixed(3) + ')'; }
+  }
+
+  /* Antes/después: el barrido se controla con el scroll hasta que lo tocas */
+  if (!cmpTouched) {
+    var cp = clamp((y - (L.cmp.top - VH * .75)) / (VH * .7));
+    setPos(lerp(94, 20, ease(cp)), true);
+  }
+
+  if (scene) {
+    try { scene.render(dt, curSec(), vel, mouse, VW, VH); } catch (e) { scene = null; var c = $('#gl'); if (c) c.style.display = 'none'; }
+  }
+  requestAnimationFrame(frame);
+}
+
+function setPos(v, silent) {
+  v = clamp(v, 0, 100);
+  if (Math.abs(v - cmpPos) < .05 && silent) return;
+  cmpPos = v;
+  cmp.style.setProperty('--pos', v.toFixed(2) + '%');
+  hdl.setAttribute('aria-valuenow', Math.round(v));
+}
+
+/* Control deslizante */
+(function () {
+  var dragging = false;
+  function move(e) {
+    var r = cmp.getBoundingClientRect();
+    setPos((e.clientX - r.left) / r.width * 100);
+  }
+  cmp.addEventListener('pointerdown', function (e) {
+    dragging = true; cmpTouched = true;
+    try { cmp.setPointerCapture(e.pointerId); } catch (x) {}
+    move(e);
+  });
+  cmp.addEventListener('pointermove', function (e) { if (dragging) move(e); });
+  cmp.addEventListener('pointerup', function () { dragging = false; });
+  cmp.addEventListener('pointercancel', function () { dragging = false; });
+  hdl.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault(); cmpTouched = true;
+      setPos(cmpPos + (e.key === 'ArrowRight' ? 5 : -5));
+    }
+  });
+})();
+
+window.addEventListener('pointermove', function (e) {
+  mouse.x = (e.clientX / VW - .5) * 2;
+  mouse.y = (e.clientY / VH - .5) * 2;
+}, { passive: true });
+
+var rzT;
+window.addEventListener('resize', function () { clearTimeout(rzT); rzT = setTimeout(layout, 120); });
+window.addEventListener('load', layout);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+if (window.ResizeObserver) { try { new ResizeObserver(function () { clearTimeout(rzT); rzT = setTimeout(layout, 60); }).observe($('main')); } catch (e) {} }
+
+/* =====================================================
+   Terminal del hero
+   ===================================================== */
+(function () {
+  var body = $('#termBody');
+  if (!body) return;
+  var lines = [
+    ['c', '$ wpscan --deep tu-sitio.com'],
+    ['i', 'Analizando 2.314 archivos…'],
+    ['e', '[!] uploads/2024/.cache.php → webshell'],
+    ['e', '[!] footer.php → iframe inyectado'],
+    ['e', '[!] admin desconocido: wp_support_9'],
+    ['w', '[~] aislando sitio · modo mantenimiento'],
+    ['o', '[✓] backdoors eliminados (3)'],
+    ['o', '[✓] núcleo y plugins restaurados'],
+    ['o', '[✓] sitio limpio · alerta de Google retirada']
+  ];
+  var ti = 0;
+  function step() {
+    if (ti >= lines.length) { setTimeout(function () { body.innerHTML = ''; ti = 0; step(); }, 3400); return; }
+    var l = lines[ti++], d = document.createElement('div');
+    d.className = 'tl ' + l[0]; d.textContent = l[1]; body.appendChild(d);
+    while (body.children.length > 8) body.removeChild(body.firstChild);
+    setTimeout(step, l[0] === 'c' ? 900 : l[0] === 'i' ? 750 : 640);
+  }
+  step();
+})();
+
+/* =====================================================
+   Revelado, contadores y tarjetas con inclinación
+   ===================================================== */
+(function () {
+  if (!('IntersectionObserver' in window)) { $$('[data-reveal]').forEach(function (e) { e.classList.add('in'); }); return; }
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: .15 });
+  $$('[data-reveal]').forEach(function (el) { io.observe(el); });
+
+  var cio = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      cio.unobserve(e.target);
+      var el = e.target, end = parseFloat(el.dataset.count), pre = el.dataset.pre || '', suf = el.dataset.suf || '', t0 = performance.now(), dur = 1600;
+      (function tick(now) {
+        var k = clamp((now - t0) / dur), v = Math.round(end * (1 - Math.pow(1 - k, 3)));
+        el.textContent = pre + v.toLocaleString('es') + suf;
+        if (k < 1) requestAnimationFrame(tick);
+      })(t0);
+    });
+  }, { threshold: .6 });
+  $$('[data-count]').forEach(function (el) { cio.observe(el); });
+})();
+
+$$('.tilt').forEach(function (el) {
+  el.addEventListener('pointermove', function (e) {
+    var r = el.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+    el.style.setProperty('--mx', (px * 100) + '%'); el.style.setProperty('--my', (py * 100) + '%');
+    if (e.pointerType === 'mouse') el.style.transform = 'perspective(900px) rotateX(' + ((.5 - py) * 8) + 'deg) rotateY(' + ((px - .5) * 10) + 'deg)';
+  });
+  el.addEventListener('pointerleave', function () { el.style.transform = ''; });
+});
+
+/* =====================================================
+   Síntomas ⇄ formulario
+   ===================================================== */
+var SYM = {
+  hacked: { t: 'Sitio hackeado o con virus/malware', w: 26, scan: 'Buscando malware, backdoors y archivos infectados…' },
+  redirect: { t: 'Redirecciones a otras webs', w: 20, scan: 'Buscando redirecciones en .htaccess, wp-config y base de datos…' },
+  white: { t: 'Pantalla blanca o error crítico', w: 10, scan: 'Revisando logs de PHP y conflictos de plugins…' },
+  seo: { t: 'Spam en Google', w: 18, scan: 'Buscando páginas basura indexadas y sitemaps alterados…' },
+  blocked: { t: 'Alerta de sitio engañoso', w: 22, scan: 'Consultando el estado del sitio en Safe Browsing…' },
+  admin: { t: 'Usuarios admin desconocidos', w: 24, scan: 'Auditando usuarios, roles y sesiones activas…' },
+  odd: { t: 'Archivos raros o web lenta', w: 14, scan: 'Buscando archivos PHP sospechosos y procesos costosos…' },
+  unknown: { t: 'No está seguro de qué pasa', w: 6, scan: 'Preparando escaneo general de archivos y base de datos…' }
+};
+var S = { sym: new Set(), plan: '', step: 1 };
+var pickBar = $('#pickBar'), pickN = $('#pickN');
+
+function syncSym() {
+  $$('.sym').forEach(function (el) { el.setAttribute('aria-pressed', S.sym.has(el.dataset.key) ? 'true' : 'false'); });
+  $$('.chip input').forEach(function (i) { i.checked = S.sym.has(i.value); });
+  var n = S.sym.size;
+  pickBar.classList.toggle('show', n > 0);
+  pickN.textContent = n === 1 ? '1 síntoma anotado' : n + ' síntomas anotados';
+}
+function toggleSym(k, on) { if (on === undefined) on = !S.sym.has(k); if (on) S.sym.add(k); else S.sym.delete(k); syncSym(); }
+
+$$('.sym').forEach(function (el) {
+  el.addEventListener('click', function () { toggleSym(el.dataset.key); });
+  el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSym(el.dataset.key); } });
+});
+$$('.chip input').forEach(function (i) { i.addEventListener('change', function () { toggleSym(i.value, i.checked); }); });
+
+/* =====================================================
+   Cuentas: ventana de registro / ingreso al elegir un plan
+   Todo esto solo se activa si el servidor de cuentas responde
+   (en la vista previa de Claude no hay servidor, así que se avisa).
+   ===================================================== */
+var ACCOUNTS = { ok: false, user: null, plans: [], paymentText: '', paypal: null };
+var PLAN_BY_ID = {};
+
+async function acFetch(url, opts) {
+  var o = Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'parche' } }, opts || {});
+  var r = await fetch(url, o);
+  var ct = r.headers.get('content-type') || '';
+  if (ct.indexOf('json') < 0) { var e = new Error('El servidor de cuentas no respondió correctamente.'); e.notConnected = true; throw e; }
+  var d = await r.json();
+  if (!r.ok) { var e2 = new Error(d.error || 'Ocurrió un error. Inténtalo de nuevo.'); e2.status = r.status; throw e2; }
+  return d;
+}
+
+(async function () {
+  try {
+    var pl = await acFetch('/api/plans');
+    ACCOUNTS.plans = pl.plans || []; ACCOUNTS.paymentText = pl.paymentText || '';
+    ACCOUNTS.plans.forEach(function (p) { PLAN_BY_ID[p.id] = p; });
+    var me = await acFetch('/api/me');
+    ACCOUNTS.ok = true; ACCOUNTS.user = me.user;
+    try { var pc = await acFetch('/api/payment/config'); ACCOUNTS.paypal = pc.paypal || null; } catch (e2) { ACCOUNTS.paypal = null; }
+  } catch (e) { ACCOUNTS.ok = false; }
+  var b = $('#navPanel');
+  b.textContent = ACCOUNTS.ok && ACCOUNTS.user ? 'Mi panel' : 'Ingresar';
+  b.addEventListener('click', function () { location.href = ACCOUNTS.ok ? '/panel' : '#contacto'; if (!ACCOUNTS.ok) goTo('contacto'); });
+})();
+
+/* ---------- Ventana modal ---------- */
+var authDlg = $('#authDlg'), authBody = $('#adBody');
+$('#adClose').addEventListener('click', function () { authDlg.close(); });
+authDlg.addEventListener('click', function (e) { if (e.target === authDlg) authDlg.close(); });
+function acEl(tag, props) {
+  var e = document.createElement(tag), kids = Array.prototype.slice.call(arguments, 2);
+  Object.keys(props || {}).forEach(function (k) {
+    var v = props[k]; if (v == null || v === false) return;
+    if (k === 'class') e.className = v; else if (k === 'on') Object.keys(v).forEach(function (ev) { e.addEventListener(ev, v[ev]); });
+    else if (k === 'for') e.htmlFor = v; else if (k in e) e[k] = v; else e.setAttribute(k, v === true ? '' : v);
+  });
+  (function add(list) { list.forEach(function (c) { if (c == null || c === false) return; if (Array.isArray(c)) return add(c); e.appendChild(c.nodeType ? c : document.createTextNode(String(c))); }); })(kids);
+  return e;
+}
+function acMoney(n, c) { try { return new Intl.NumberFormat('es', { style: 'currency', currency: c || 'USD' }).format(n); } catch (e) { return (c || '') + ' ' + n; } }
+
+function openAuth(planId) {
+  if (!ACCOUNTS.ok) { return notConnectedNotice(planId); }
+  authBody.innerHTML = '';
+  if (ACCOUNTS.paypal) authBody.appendChild(checkoutScreen(planId));
+  else if (ACCOUNTS.user) authBody.appendChild(confirmPlanScreen(planId));
+  else authBody.appendChild(authScreen(planId, 'reg'));
+  if (!authDlg.open) authDlg.showModal();
+}
+function notConnectedNotice(planId) {
+  toast('El registro en línea no está disponible en esta vista previa. Escríbenos por el formulario y te ayudamos a activar tu plan.');
+  var plan = PLAN_BY_ID[planId];
+  if (plan) { S.plan = plan.name; syncPlan(); }
+  goTo('contacto');
+}
+
+function planSummary(plan) {
+  return acEl('div', { class: 'ad-plan' },
+    acEl('strong', null, acEl('span', null, plan.name), acEl('span', null, acMoney(plan.price, plan.currency) + ' · ' + plan.period)),
+    acEl('ul', null, plan.features.slice(0, 4).map(function (f) { return acEl('li', null, f); })));
+}
+
+/* Pide (o reutiliza) el pedido de un plan para el usuario ya identificado. */
+async function requestPlanForUser(planId) {
+  if (!planId) return;
+  try { await acFetch('/api/orders', { method: 'POST', body: JSON.stringify({ plan: planId }) }); }
+  catch (x) { if (x.status !== 409) throw x; } // 409 = ya lo tenía pendiente: no es un error para el usuario
+}
+
+/* ---------- Pago con PayPal (solo si el servidor lo tiene configurado) ---------- */
+var ppSdkPromise = null;
+function ensurePayPalSdk() {
+  if (!ACCOUNTS.paypal) return Promise.reject(new Error('PayPal no está configurado.'));
+  if (ppSdkPromise) return ppSdkPromise;
+  ppSdkPromise = new Promise(function (resolve, reject) {
+    if (window.paypal) return resolve(window.paypal);
+    var done = false;
+    var s = document.createElement('script');
+    s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(ACCOUNTS.paypal.clientId) + '&currency=USD&intent=capture';
+    s.onload = function () { if (done) return; done = true; window.paypal ? resolve(window.paypal) : reject(new Error('El SDK de PayPal no se inicializó.')); };
+    s.onerror = function () { if (done) return; done = true; reject(new Error('No se pudo cargar el módulo de pago de PayPal.')); };
+    document.head.appendChild(s);
+    setTimeout(function () { if (done) return; done = true; reject(new Error('El módulo de pago tardó demasiado en cargar.')); }, 9000);
+  });
+  return ppSdkPromise;
+}
+
+/* Pantalla: pagar con PayPal (o elegir otra vía) */
+function checkoutScreen(planId) {
+  var plan = PLAN_BY_ID[planId], wrap = acEl('div', null), err = acEl('p', { class: 'err', role: 'alert' });
+  wrap.appendChild(acEl('h3', { class: 'ad-t' }, 'Paga tu plan'));
+  wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Estás por contratar ' + plan.name + '. Al confirmar el pago, tu panel se activa al instante.' : ''));
+  if (plan) wrap.appendChild(planSummary(plan));
+  var ppMsg = acEl('p', { class: 'hint', style: 'text-align:center;margin:14px 0' }, 'Cargando el módulo de pago…');
+  var ppBox = acEl('div', { class: 'pp-box' });
+  wrap.appendChild(acEl('div', { class: 'pp-wrap' }, ppMsg, ppBox));
+  wrap.appendChild(err);
+  var alt = acEl('div', { class: 'ad-alt' });
+  if (ACCOUNTS.user) {
+    alt.appendChild(acEl('button', { type: 'button', class: 'linklike', on: { click: async function () {
+      err.textContent = '';
+      try { await requestPlanForUser(planId); afterAuth(planId, false); } catch (x) { err.textContent = x.message; }
+    } } }, 'Prefiero coordinar el pago después'));
+  } else {
+    alt.appendChild(acEl('button', { type: 'button', class: 'linklike', on: { click: function () { authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'login')); } } }, '¿Ya tienes cuenta? Ingresa'));
+    alt.appendChild(acEl('span', { class: 'ad-alt-sep' }, '·'));
+    alt.appendChild(acEl('button', { type: 'button', class: 'linklike', on: { click: function () { authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'reg')); } } }, 'Crear cuenta y pagar después'));
+  }
+  wrap.appendChild(alt);
+
+  ensurePayPalSdk().then(function (sdk) {
+    ppMsg.remove();
+    try {
+      sdk.Buttons({
+        style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal' },
+        createOrder: function () {
+          err.textContent = '';
+          return acFetch('/api/checkout/paypal/orders', { method: 'POST', body: JSON.stringify({ plan: planId }) })
+            .then(function (r) { return r.id; })
+            .catch(function (x) { err.textContent = x.message; throw x; });
+        },
+        onApprove: function (data) {
+          return acFetch('/api/checkout/paypal/orders/' + data.orderID + '/capture', { method: 'POST' })
+            .then(function (r) {
+              ACCOUNTS.user = r.user; $('#navPanel').textContent = 'Mi panel';
+              paidSuccessScreen(planId, r.tempPassword || null);
+            })
+            .catch(function (x) { err.textContent = x.message; });
+        },
+        onError: function () { err.textContent = 'Hubo un problema con PayPal. Puedes reintentar o coordinar el pago por otra vía.'; }
+      }).render(ppBox);
+    } catch (e) { ppMsg.textContent = 'No se pudo mostrar el botón de pago.'; ppMsg.style.display = ''; }
+  }).catch(function () {
+    ppMsg.textContent = 'No se pudo cargar el módulo de pago en este momento. Usa una de las opciones de abajo.';
+  });
+  return wrap;
+}
+
+/* Pantalla: crear cuenta / ingresar (vía manual, sin pagar en el momento) */
+function authScreen(planId, mode) {
+  var plan = PLAN_BY_ID[planId] || null, wrap = acEl('div', null), err = acEl('p', { class: 'err', role: 'alert' });
+  function draw() {
+    wrap.innerHTML = '';
+    wrap.appendChild(acEl('h3', { class: 'ad-t' }, mode === 'reg' ? 'Crea tu cuenta' : 'Ingresa a tu cuenta'));
+    wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Para el plan ' + plan.name + '. Con tu cuenta sigues el avance de tu servicio desde tu panel.' : 'Entra para elegir tu plan y ver tu panel.'));
+    if (plan) wrap.appendChild(planSummary(plan));
+    wrap.appendChild(acEl('div', { class: 'ad-tabs', role: 'tablist' },
+      acEl('button', { type: 'button', role: 'tab', 'aria-selected': mode === 'reg', on: { click: function () { mode = 'reg'; draw(); } } }, 'Crear cuenta'),
+      acEl('button', { type: 'button', role: 'tab', 'aria-selected': mode === 'login', on: { click: function () { mode = 'login'; draw(); } } }, 'Ya tengo cuenta')));
+    err.textContent = '';
+    if (mode === 'reg') {
+      var nm = acEl('input', { class: 'in', autocomplete: 'name', placeholder: 'Tu nombre' }), em = acEl('input', { class: 'in', type: 'email', autocomplete: 'email', placeholder: 'tucorreo@ejemplo.com' });
+      var ph = acEl('input', { class: 'in', type: 'tel', autocomplete: 'tel', placeholder: 'Opcional' }), pw = acEl('input', { class: 'in', type: 'password', autocomplete: 'new-password', placeholder: 'Mínimo 8 caracteres' });
+      var pwWrap = acEl('div', { class: 'ad-pw' }, pw, acEl('button', { type: 'button', on: { click: function () { pw.type = pw.type === 'password' ? 'text' : 'password'; } } }, 'Ver'));
+      var ac = acEl('input', { type: 'checkbox' });
+      wrap.appendChild(acEl('form', { novalidate: true, on: { submit: async function (e) {
+        e.preventDefault(); err.textContent = '';
+        try {
+          var d = await acFetch('/api/register', { method: 'POST', body: JSON.stringify({ name: nm.value, email: em.value, phone: ph.value, password: pw.value, plan: planId || '', accept: ac.checked }) });
+          ACCOUNTS.user = d.user; $('#navPanel').textContent = 'Mi panel';
+          if (ACCOUNTS.paypal) { authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId)); } else afterAuth(planId, true);
+        } catch (x) { err.textContent = x.message; }
+      } } },
+        acEl('div', { class: 'fld' }, acEl('label', null, 'Nombre'), nm),
+        acEl('div', { class: 'row2' }, acEl('div', { class: 'fld' }, acEl('label', null, 'Correo'), em), acEl('div', { class: 'fld' }, acEl('label', null, 'Teléfono'), ph)),
+        acEl('div', { class: 'fld' }, acEl('label', null, 'Contraseña'), pwWrap),
+        acEl('label', { class: 'chk' }, ac, acEl('span', null, 'Acepto que guarden mis datos para prestarme el servicio.')), err,
+        acEl('div', { class: 'ad-acts' }, acEl('button', { class: 'btn btn-y', type: 'submit' }, 'Crear cuenta y continuar'))));
+    } else {
+      var em2 = acEl('input', { class: 'in', type: 'email', autocomplete: 'email', placeholder: 'tucorreo@ejemplo.com' }), pw2 = acEl('input', { class: 'in', type: 'password', autocomplete: 'current-password' });
+      wrap.appendChild(acEl('form', { novalidate: true, on: { submit: async function (e) {
+        e.preventDefault(); err.textContent = '';
+        try {
+          var d = await acFetch('/api/login', { method: 'POST', body: JSON.stringify({ email: em2.value, password: pw2.value }) });
+          ACCOUNTS.user = d.user; $('#navPanel').textContent = 'Mi panel';
+          if (ACCOUNTS.paypal) { authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId)); return; }
+          await requestPlanForUser(planId); afterAuth(planId, false);
+        } catch (x) { err.textContent = x.message; }
+      } } },
+        acEl('div', { class: 'fld' }, acEl('label', null, 'Correo'), em2), acEl('div', { class: 'fld' }, acEl('label', null, 'Contraseña'), pw2), err,
+        acEl('div', { class: 'ad-acts' }, acEl('button', { class: 'btn btn-y', type: 'submit' }, 'Ingresar'))));
+    }
+  }
+  draw(); return wrap;
+}
+
+/* Pantalla: usuario ya tiene sesión y no hay PayPal configurado: confirma el plan a mano */
+function confirmPlanScreen(planId) {
+  var plan = PLAN_BY_ID[planId], wrap = acEl('div', null), err = acEl('p', { class: 'err', role: 'alert' });
+  wrap.appendChild(acEl('h3', { class: 'ad-t' }, 'Hola de nuevo, ' + ACCOUNTS.user.name.split(' ')[0]));
+  wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? '¿Quieres solicitar el plan ' + plan.name + '?' : 'Ya tienes una sesión abierta.'));
+  if (plan) wrap.appendChild(planSummary(plan));
+  wrap.appendChild(err);
+  wrap.appendChild(acEl('div', { class: 'ad-acts' },
+    plan ? acEl('button', { class: 'btn btn-y', type: 'button', on: { click: async function () {
+      err.textContent = '';
+      try { await requestPlanForUser(planId); afterAuth(planId, false); } catch (x) { err.textContent = x.message; }
+    } } }, 'Solicitar este plan') : null,
+    acEl('a', { class: 'btn btn-o', href: '/panel' }, 'Ir a mi panel')));
+  return wrap;
+}
+
+/* Pantalla final tras pagar con PayPal: ya no hace falta "realizar el pago" */
+function paidSuccessScreen(planId, tempPassword) {
+  var plan = PLAN_BY_ID[planId];
+  authBody.innerHTML = '';
+  authBody.appendChild(acEl('h3', { class: 'ad-t' }, '¡Pago recibido! Tu plan ya está activo'));
+  authBody.appendChild(acEl('p', { class: 'ad-sub' }, plan ? plan.name + ' · ' + acMoney(plan.price, plan.currency) + ' · ' + plan.period : ''));
+  authBody.appendChild(acEl('ol', { class: 'ad-steps' },
+    acEl('li', null, acEl('span', null, acEl('b', null, 'Registra tu sitio. '), 'Desde tu panel, agrega la dirección del sitio que necesitas reparar.')),
+    acEl('li', null, acEl('span', null, acEl('b', null, 'Sigue el avance. '), 'Verás cada etapa del servicio y podrás escribirnos desde tu panel.'))));
+  if (tempPassword) {
+    authBody.appendChild(acEl('div', { class: 'ad-note' }, acEl('b', null, 'Creamos tu cuenta automáticamente. '), 'Usa esta contraseña temporal para entrar. Podrás cambiarla desde "Mi cuenta".'));
+    authBody.appendChild(acEl('div', { class: 'ad-temp' }, tempPassword));
+  }
+  authBody.appendChild(acEl('div', { class: 'ad-acts' }, acEl('a', { class: 'btn btn-y', href: '/panel' }, 'Ir a mi panel')));
+}
+
+/* Pantalla final: próximos pasos + instrucciones de pago (cuando se coordina el pago después) */
+function afterAuth(planId, isNew) {
+  var plan = PLAN_BY_ID[planId];
+  authBody.innerHTML = '';
+  authBody.appendChild(acEl('h3', { class: 'ad-t' }, isNew ? '¡Listo! Tu cuenta está activa' : 'Plan solicitado'));
+  authBody.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Elegiste ' + plan.name + '. Esto es lo que sigue:' : 'Esto es lo que sigue:'));
+  authBody.appendChild(acEl('ol', { class: 'ad-steps' },
+    acEl('li', null, acEl('span', null, acEl('b', null, 'Registra tu sitio. '), 'Desde tu panel, agrega la dirección del sitio que necesitas reparar.')),
+    acEl('li', null, acEl('span', null, acEl('b', null, 'Realiza el pago. '), 'Con las instrucciones de abajo. En cuanto lo confirmemos, tu plan queda activo.')),
+    acEl('li', null, acEl('span', null, acEl('b', null, 'Sigue el avance. '), 'Verás cada etapa del servicio y podrás escribirnos desde tu panel.'))));
+  if (ACCOUNTS.paymentText) authBody.appendChild(acEl('div', { class: 'ad-pay' }, ACCOUNTS.paymentText));
+  authBody.appendChild(acEl('div', { class: 'ad-note' }, 'También puedes escribirnos ahora mismo si prefieres coordinar el pago por WhatsApp.'));
+  authBody.appendChild(acEl('div', { class: 'ad-acts' },
+    acEl('a', { class: 'btn btn-y', href: '/panel' }, 'Ir a mi panel'),
+    acEl('button', { class: 'btn btn-o', type: 'button', on: { click: function () { authDlg.close(); S.plan = plan ? plan.name : ''; syncPlan(); goTo('contacto'); } } }, 'Prefiero escribir ahora')));
+  var navBtn = $('#navPanel'); navBtn.textContent = 'Mi panel';
+}
+
+$$('[data-plan]').forEach(function (a) {
+  a.addEventListener('click', function (e) {
+    e.preventDefault(); e.stopPropagation();
+    openAuth(a.dataset.pid || '');
+  });
+});
+
+function syncPlan() {
+  $('#planChip').hidden = !S.plan;
+  $('#planTxt').textContent = 'Plan de interés: ' + S.plan;
+}
+$('#planX').addEventListener('click', function () { S.plan = ''; syncPlan(); });
+
+/* =====================================================
+   Orden de servicio (3 pasos + análisis + informe)
+   ===================================================== */
+var form = $('#triage'), con = $('#console');
+$('#ordId').textContent = 'NXG-' + (1000 + Math.floor(Math.random() * 9000));
+
+function shake(msgId, msg) {
+  $(msgId).textContent = msg;
+  con.classList.remove('shake'); void con.offsetWidth; con.classList.add('shake');
+}
+function goStep(n) {
+  S.step = n;
+  $$('.fs').forEach(function (f) { f.classList.toggle('active', +f.dataset.step === n); });
+  $$('#segs i').forEach(function (i, idx) { i.classList.toggle('on', idx < n); });
+  $('#stepLbl').textContent = ['Síntomas', 'Tu sitio', 'Contacto'][n - 1];
+  ['#err1', '#err2', '#err3'].forEach(function (s) { $(s).textContent = ''; });
+  if (scene) scene.boost(.5);
+}
+function validUrl(v) { return /^(https?:\/\/)?(?:(?:[a-z0-9-]+\.)+[a-z]{2,}|localhost|\d{1,3}(?:\.\d{1,3}){3})(?::\d{2,5})?(?:\/.*)?$/i.test(v.trim()); }
+function validContact(v) { v = v.trim(); return /^\S+@\S+\.\S+$/.test(v) || v.replace(/\D/g, '').length >= 7; }
+
+$$('[data-next]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var to = +b.dataset.next;
+    if (to === 2 && S.sym.size === 0) return shake('#err1', 'Marca al menos un síntoma para continuar.');
+    if (to === 3 && !validUrl($('#f-url').value)) return shake('#err2', 'Escribe la dirección de tu web, por ejemplo tusitio.com.');
+    goStep(to);
+  });
+});
+$$('[data-prev]').forEach(function (b) { b.addEventListener('click', function () { goStep(+b.dataset.prev); }); });
+
+form.addEventListener('submit', function (e) {
+  e.preventDefault();
+  var name = $('#f-name').value.trim();
+  if (!name) return shake('#err3', 'Dinos tu nombre para saber a quién responder.');
+  if (!validContact($('#f-contact').value)) return shake('#err3', 'Escribe un correo válido o un número de WhatsApp.');
+  runScan();
+});
+
+function readForm() {
+  return {
+    url: $('#f-url').value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, ''),
+    dur: (form.elements.dur.value) || 'hoy',
+    acc: (form.elements.acc.value) || 'si',
+    urg: $('#f-urg').checked,
+    name: $('#f-name').value.trim(),
+    contact: $('#f-contact').value.trim()
+  };
+}
+function showView(v) {
+  form.hidden = v !== 'form';
+  $('#scanView').hidden = v !== 'scan';
+  $('#resView').hidden = v !== 'res';
+}
+
+function runScan() {
+  var f = readForm();
+  showView('scan');
+  $('#stepLbl').textContent = 'Analizando';
+  if (scene) scene.boost(1.6);
+  var lines = [['c', '$ triage --sitio ' + f.url]];
+  S.sym.forEach(function (k) { lines.push(['i', SYM[k].scan]); });
+  lines.push(['i', 'Cruzando síntomas con patrones conocidos…'], ['w', 'Calculando gravedad y tiempo de trabajo…'], ['o', 'Orden lista.']);
+  var log = $('#scanLog'), bar = $('#scanBar'), i = 0;
+  log.innerHTML = ''; bar.style.width = '0%';
+  (function tick() {
+    if (i < lines.length) {
+      var d = document.createElement('div'); d.className = 'tl ' + lines[i][0]; d.textContent = lines[i][1]; log.appendChild(d);
+      i++; bar.style.width = Math.round(i / lines.length * 100) + '%';
+      setTimeout(tick, 560);
+    } else setTimeout(function () { showResult(f); }, 700);
+  })();
+}
+
+function showResult(f) {
+  var base = 8;
+  S.sym.forEach(function (k) { base += SYM[k].w; });
+  base += { hoy: 0, semana: 6, mes: 12 }[f.dur] || 0;
+  if (f.acc === 'no') base += 6;
+  if (f.urg) base += 5;
+  var score = Math.min(98, Math.round(base));
+  var lvl = score >= 65 ? { t: 'Gravedad crítica', c: 'var(--red)', eta: '2 a 6 horas' }
+    : score >= 35 ? { t: 'Gravedad alta', c: 'var(--amber)', eta: '1 a 3 horas' }
+    : { t: 'Gravedad moderada', c: 'var(--green)', eta: '30 a 90 minutos' };
+  var plan = S.plan || (score >= 35 ? 'Rescate + Blindaje' : 'Rescate');
+  var durTxt = { hoy: 'desde hoy', semana: 'esta semana', mes: 'hace más de un mes' }[f.dur];
+  var accTxt = { si: 'sí', no: 'no', ns: 'no sabe' }[f.acc];
+  var syms = Array.from(S.sym).map(function (k) { return SYM[k].t; }).join(', ');
+
+  var summary = [
+    'Hola, necesito ayuda con mi WordPress.',
+    'Sitio: ' + f.url,
+    'Síntomas: ' + syms,
+    'Empezó: ' + durTxt,
+    'Acceso a wp-admin: ' + accTxt,
+    'Urgencia: ' + (f.urg ? 'emergencia (respuesta en menos de 1 hora)' : 'normal'),
+    'Gravedad estimada: ' + score + '/100 (' + lvl.t.replace('Gravedad ', '') + ')',
+    'Plan de interés: ' + plan,
+    S.scanLine || '',
+    'Nombre: ' + f.name + ' | Contacto: ' + f.contact
+  ].filter(Boolean).join('\n');
+
+  $('#resLevel').textContent = lvl.t;
+  $('#resEta').textContent = 'Tiempo estimado: ' + lvl.eta;
+  $('#resPlan').textContent = 'Plan recomendado: ' + plan;
+  $('#resSummary').textContent = summary;
+  var gf = $('#gFill'); gf.style.stroke = lvl.c;
+  showView('res');
+  $('#stepLbl').textContent = 'Informe listo';
+  gf.style.strokeDashoffset = 100;
+  requestAnimationFrame(function () { requestAnimationFrame(function () { gf.style.strokeDashoffset = 100 - score; }); });
+  var gn = $('#gNum'), t0 = performance.now();
+  (function cnt(now) {
+    var k = clamp((now - t0) / 1500);
+    gn.textContent = Math.round(score * (1 - Math.pow(1 - k, 3)));
+    if (k < 1) requestAnimationFrame(cnt);
+  })(t0);
+  if (scene) scene.boost(.9);
+
+  var subj = 'Orden de servicio: ' + f.url;
+  var wa = $('#btnWa'), ml = $('#btnMail');
+  if (CONFIG.whatsapp) wa.href = 'https://wa.me/' + CONFIG.whatsapp.replace(/\D/g, '') + '?text=' + encodeURIComponent(summary); else wa.removeAttribute('href');
+  if (CONFIG.email) ml.href = 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(summary); else ml.removeAttribute('href');
+  wa.onclick = function (e) {
+    if (CONFIG.whatsapp) return;
+    e.preventDefault();
+    copyText(summary).then(function () { toast('Copiamos tu resumen. Pégalo en WhatsApp para enviarlo.'); });
+  };
+  ml.onclick = function (e) {
+    if (CONFIG.email) return;
+    e.preventDefault();
+    copyText(summary).then(function () { toast('Copiamos tu resumen. Pégalo en un correo para enviarlo.'); });
+  };
+  $('#btnCopy').onclick = function () {
+    copyText(summary).then(function (ok) { toast(ok ? 'Resumen copiado.' : 'No pudimos copiarlo. Selecciona el texto manualmente.'); });
+  };
+}
+
+$('#btnReset').addEventListener('click', function () {
+  S.sym.clear(); syncSym();
+  form.reset();
+  showView('form'); goStep(1);
+  $('#ordId').textContent = 'NXG-' + (1000 + Math.floor(Math.random() * 9000));
+});
+
+/* =====================================================
+   Escáner en vivo (habla con scanner/server.js)
+   Todo lo que se muestra viene del servidor: aquí no hay valores simulados.
+   ===================================================== */
+var SC_STAGES = [
+  ['reach', 'Conexión y respuesta', '#i-activity'], ['tls', 'HTTPS y certificado', '#i-lock'], ['wp', 'WordPress y versión', '#i-search'],
+  ['plugins', 'Plugins y temas', '#i-refresh'], ['malware', 'Código malicioso', '#i-bug'], ['seo', 'SEO spam y cloaking', '#i-eye'],
+  ['exposed', 'Archivos expuestos', '#i-alert'], ['headers', 'Cabeceras de seguridad', '#i-shield-check'], ['rep', 'Listas de reputación', '#i-shield-alert']
+];
+var SC_STATE = { pending: 'En espera', running: 'Analizando…', ok: 'Sin problemas', info: 'Informativo', warn: 'Revisar', crit: 'Grave', skipped: 'No verificado' };
+var SC_BADGE = { crit: 'GRAVE', warn: 'AVISO', info: 'INFO', ok: 'OK' };
+var SC_ORDER = { crit: 0, warn: 1, info: 2, ok: 3 };
+var SC_VERDICT = {
+  infected: ['Detectamos indicadores de infección', 'Encontramos señales claras de código malicioso, spam o archivos comprometidos. Tu sitio necesita una limpieza.'],
+  suspicious: ['Hay señales sospechosas', 'Encontramos elementos que suelen aparecer en sitios infectados. Conviene revisarlos a fondo.'],
+  risk: ['Sin infección visible, pero con riesgos', 'No vimos código malicioso desde fuera, pero hay puntos débiles que un atacante podría aprovechar.'],
+  clean: ['No detectamos problemas visibles desde fuera', 'Es una buena señal, pero solo cubre lo que se ve públicamente.'],
+  limited: ['Análisis limitado', 'El sitio bloqueó parte de las revisiones (probablemente un firewall), así que el resultado es incompleto.']
+};
+var SC = { busy: false, ctrl: null, findings: [], doneStages: 0, running: 0, host: '', done: null };
+
+function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+var scErr = $('#scErr'), scLog = $('#scLog'), scTiles = $('#scTiles');
+
+function scBuildTiles() {
+  scTiles.innerHTML = '';
+  SC_STAGES.forEach(function (st) {
+    var t = el('div', 'tile'); t.dataset.id = st[0]; t.dataset.s = 'pending';
+    t.innerHTML = '<svg class="ic" aria-hidden="true"><use href="' + st[2] + '"/></svg>';
+    t.appendChild(el('b', '', st[1])); t.appendChild(el('small', '', SC_STATE.pending));
+    scTiles.appendChild(t);
+  });
+}
+function scTile(id, state) {
+  var t = scTiles.querySelector('[data-id="' + id + '"]'); if (!t) return;
+  t.dataset.s = state; t.querySelector('small').textContent = SC_STATE[state] || state;
+}
+function scLine(cls, msg) {
+  var d = el('div', 'tl ' + cls, msg); scLog.appendChild(d);
+  while (scLog.children.length > 220) scLog.removeChild(scLog.firstChild);
+  scLog.scrollTop = scLog.scrollHeight;
+}
+function scProgress() {
+  var pct = Math.min(100, Math.round((SC.doneStages + (SC.running ? .5 : 0)) / SC_STAGES.length * 100));
+  $('#scBar').style.width = pct + '%'; $('#scPct').textContent = pct + '%';
+}
+function scFindEl(f) {
+  var a = el('article', 'fd ' + f.sev), h = el('h4');
+  h.appendChild(el('span', 'badge ' + f.sev, SC_BADGE[f.sev] || f.sev)); h.appendChild(el('span', '', f.title)); a.appendChild(h);
+  if (f.detail) a.appendChild(el('p', '', f.detail));
+  if (f.evidence) a.appendChild(el('code', '', f.evidence));
+  if (f.fix) { var fx = el('div', 'fix'); fx.appendChild(el('b', '', 'Qué hacer: ')); fx.appendChild(document.createTextNode(f.fix)); a.appendChild(fx); }
+  return a;
+}
+function scRenderFindings() {
+  var box = $('#scFind'); box.innerHTML = '';
+  if (!SC.findings.length) return;
+  var list = SC.findings.slice().sort(function (a, b) { return SC_ORDER[a.sev] - SC_ORDER[b.sev]; });
+  var issues = list.filter(function (f) { return f.sev !== 'ok'; }), oks = list.filter(function (f) { return f.sev === 'ok'; });
+  box.appendChild(el('h3', '', 'Hallazgos (' + issues.length + ')'));
+  issues.forEach(function (f) { box.appendChild(scFindEl(f)); });
+  if (oks.length) {
+    var d = el('details', 'fd-ok'); d.appendChild(el('summary', '', 'Comprobaciones superadas (' + oks.length + ')'));
+    oks.forEach(function (f) { d.appendChild(scFindEl(f)); }); box.appendChild(d);
+  }
+}
+function scReset() {
+  SC.findings = []; SC.doneStages = 0; SC.running = 0; SC.done = null; S.scanLine = '';
+  scLog.innerHTML = ''; $('#scFind').innerHTML = ''; $('#scVerdict').hidden = true; $('#scActions').hidden = true;
+  $('#scBar').style.width = '0%'; $('#scPct').textContent = '0%'; scBuildTiles();
+}
+function scSetBusy(b) {
+  SC.busy = b;
+  $('#scGo').textContent = b ? 'Cancelar análisis' : 'Escanear ahora';
+  $('#sc-url').disabled = b; $('#sc-ok').disabled = b;
+}
+function scFail(msg) { scErr.textContent = msg; $('#scRun').hidden = true; scSetBusy(false); }
+function scNotConnected() {
+  scFail('El escáner todavía no está conectado a un servidor de análisis, así que no podemos mostrarte resultados reales. Si eres el administrador: inicia scanner/server.js y define CONFIG.scanEndpoint (instrucciones en el archivo LEEME).');
+}
+
+function scHandle(ev) {
+  switch (ev.t) {
+    case 'hello': $('#scTarget').textContent = 'Analizando ' + ev.target; break;
+    case 'stage': SC.running = 1; scTile(ev.id, 'running'); scLine('c', '▶ ' + ev.label); scProgress(); if (scene) scene.boost(.35); break;
+    case 'log': scLine(/^GET /.test(ev.msg) ? 'c' : 'i', ev.msg); break;
+    case 'finding':
+      SC.findings.push(ev); scRenderFindings();
+      scLine(ev.sev === 'crit' ? 'e' : ev.sev === 'warn' ? 'w' : ev.sev === 'ok' ? 'o' : 'i', (ev.sev === 'crit' ? '[!] ' : ev.sev === 'warn' ? '[~] ' : ev.sev === 'ok' ? '[✓] ' : '[i] ') + ev.title);
+      break;
+    case 'stage_done': SC.running = 0; SC.doneStages++; scTile(ev.id, ev.state); scProgress(); break;
+    case 'done': scFinish(ev); break;
+    case 'error': scFail(ev.message || 'No se pudo completar el análisis.'); break;
+  }
+}
+
+function scFinish(ev) {
+  SC.done = ev; scSetBusy(false); SC.running = 0; SC.doneStages = SC_STAGES.length; scProgress();
+  var v = SC_VERDICT[ev.verdict] || SC_VERDICT.risk, box = $('#scVerdict');
+  box.innerHTML = ''; box.dataset.v = ev.verdict;
+  box.appendChild(el('h3', '', v[0])); box.appendChild(el('p', '', v[1]));
+  var c = el('div', 'sc-counts');
+  [['crit', 'graves'], ['warn', 'avisos'], ['info', 'informativos'], ['ok', 'superados']].forEach(function (x) { c.appendChild(el('span', '', (ev.counts[x[0]] || 0) + ' ' + x[1])); });
+  box.appendChild(c);
+  var secs = ev.meta && ev.meta.duration_ms ? ' Duración del análisis: ' + (ev.meta.duration_ms / 1000).toFixed(1) + ' s.' : '';
+  box.appendChild(el('p', 'scope', 'Análisis externo: solo ve lo público. No revisa archivos dentro del servidor ni la base de datos.' + secs));
+  box.hidden = false; $('#scActions').hidden = false;
+  box.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  var vt = (SC_VERDICT[ev.verdict] || ['', ''])[0];
+  S.scanLine = 'Escáner web (' + new Date().toISOString().slice(0, 10) + '): ' + vt + ' · ' + (ev.counts.crit || 0) + ' graves, ' + (ev.counts.warn || 0) + ' avisos';
+  if (scene) scene.boost(.8);
+}
+
+function scReport() {
+  var d = SC.done, out = ['Informe del escáner de ' + CONFIG.brand, 'Sitio: ' + SC.host, 'Fecha: ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC'];
+  if (d) out.push('Resultado: ' + (SC_VERDICT[d.verdict] || ['?'])[0], d.counts.crit + ' graves · ' + d.counts.warn + ' avisos · ' + d.counts.info + ' informativos · ' + d.counts.ok + ' superados');
+  out.push('Alcance: análisis externo (no revisa archivos internos del servidor).', '');
+  SC.findings.slice().sort(function (a, b) { return SC_ORDER[a.sev] - SC_ORDER[b.sev]; }).forEach(function (f) {
+    out.push('[' + (SC_BADGE[f.sev] || f.sev) + '] ' + f.title);
+    if (f.detail) out.push('    ' + f.detail.replace(/\n/g, '\n    '));
+    if (f.fix) out.push('    Qué hacer: ' + f.fix);
+  });
+  return out.join('\n');
+}
+
+async function scStart() {
+  scErr.textContent = '';
+  var url = $('#sc-url').value.trim();
+  if (!url || !validUrl(url)) return scErr.textContent = 'Escribe la dirección de tu web, por ejemplo tusitio.com.';
+  if (!$('#sc-ok').checked) return scErr.textContent = 'Confirma que eres el propietario del sitio o que tienes autorización para analizarlo.';
+  SC.host = url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+  scReset(); $('#scRun').hidden = false; $('#scTarget').textContent = 'Conectando con ' + SC.host + '…'; scSetBusy(true);
+  SC.ctrl = window.AbortController ? new AbortController() : null;
+  var res;
+  try {
+    res = await fetch(CONFIG.scanEndpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'nexaguard' },
+      body: JSON.stringify({ url: url, consent: true }), signal: SC.ctrl ? SC.ctrl.signal : undefined
+    });
+  } catch (e) { if (e && e.name === 'AbortError') return; return scNotConnected(); }
+  var ct = res.headers.get('content-type') || '';
+  if (!res.ok || ct.indexOf('json') < 0) {
+    var msg = ''; try { msg = (await res.json()).message || ''; } catch (e) {}
+    return msg ? scFail(msg) : scNotConnected();
+  }
+  try {
+    if (res.body && res.body.getReader) {
+      var reader = res.body.getReader(), dec = new TextDecoder(), buf = '';
+      while (true) {
+        var r = await reader.read(); if (r.done) break;
+        buf += dec.decode(r.value, { stream: true });
+        var lines = buf.split('\n'); buf = lines.pop();
+        lines.forEach(function (l) { if (l.trim()) { try { scHandle(JSON.parse(l)); } catch (e) {} } });
+      }
+      if (buf.trim()) { try { scHandle(JSON.parse(buf)); } catch (e) {} }
+    } else {
+      (await res.text()).split('\n').forEach(function (l) { if (l.trim()) { try { scHandle(JSON.parse(l)); } catch (e) {} } });
+    }
+  } catch (e) { if (!(e && e.name === 'AbortError')) scFail('Se interrumpió la conexión con el escáner. Inténtalo de nuevo.'); return; }
+  if (SC.busy) scFail('El análisis terminó sin devolver un resultado. Inténtalo de nuevo.');
+}
+
+$('#scForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (SC.busy) { if (SC.ctrl) SC.ctrl.abort(); scSetBusy(false); scLine('w', 'Análisis cancelado.'); return; }
+  scStart();
+});
+$('#scAgain').addEventListener('click', function () { $('#scRun').hidden = true; scReset(); $('#sc-url').value = ''; $('#sc-url').focus(); });
+$('#scCopy').addEventListener('click', function () { copyText(scReport()).then(function (ok) { toast(ok ? 'Informe copiado.' : 'No pudimos copiarlo. Selecciona el texto manualmente.'); }); });
+$('#scToForm').addEventListener('click', function () {
+  $('#f-url').value = SC.host;
+  var v = SC.done && SC.done.verdict;
+  if (v === 'infected' || v === 'suspicious') { S.sym.add('hacked'); syncSym(); }
+  goTo('contacto');
+});
+scBuildTiles();
+
+/* =====================================================
+   Navegación interna: menú, botones y enlaces #sección
+   (no depende de la navegación nativa por ancla)
+   ===================================================== */
+var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function goTo(id) {
+  var el = document.getElementById(id);
+  if (!el) return false;
+  var ty = id === 'inicio' ? 0 : pageTop(el);
+  window.scrollTo({ top: Math.max(0, Math.round(ty)), behavior: reduceMotion ? 'auto' : 'smooth' });
+  return true;
+}
+/* Los enlaces #sección pasan a ser "botones-enlace" sin href: así el navegador
+   (o el visor donde se muestre) no los trata como una navegación externa. */
+$$('a[href^="#"]').forEach(function (a) {
+  var id = (a.getAttribute('href') || '').slice(1);
+  a.setAttribute('data-go', id);
+  a.setAttribute('role', 'link');
+  a.setAttribute('tabindex', '0');
+  a.removeAttribute('href');
+});
+document.addEventListener('click', function (e) {
+  var a = e.target.closest ? e.target.closest('[data-go]') : null;
+  if (!a) return;
+  e.preventDefault();
+  goTo(a.getAttribute('data-go'));
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter') return;
+  var a = e.target.closest ? e.target.closest('[data-go],[data-act]') : null;
+  if (!a) return;
+  e.preventDefault();
+  if (a.hasAttribute('data-go')) goTo(a.getAttribute('data-go')); else a.click();
+});
+
+/* =====================================================
+   Arranque
+   ===================================================== */
+layout();
+requestAnimationFrame(function (t) { tPrev = t; frame(t); });
+
+})();
+</script>
+</body>
+</html>
