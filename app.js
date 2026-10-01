@@ -2,6 +2,7 @@
 /* Cuentas, roles (administrador / cliente), planes y API de los paneles. Sin dependencias. */
 const crypto = require('crypto');
 const { createPayPalClient } = require('./paypal.js');
+const { createMailer } = require('./mailer.js');
 
 const DAY = 864e5;
 
@@ -44,6 +45,7 @@ function createApp({ store, scanner, config }) {
   const cfg = Object.assign({ trustProxy: false, secureCookie: null, maxConcurrent: 4, schedulerMs: 15 * 60e3, cooldownMs: 45e3 }, config || {});
   let running = 0, dummy = null;
   const pp = createPayPalClient(cfg.paypal || {});
+  const mailer = createMailer(cfg.mailer || {});
 
   const buckets = new Map();   // límites de intentos
 
@@ -252,6 +254,35 @@ function createApp({ store, scanner, config }) {
   route('GET', '/api/me', null, (ctx) => {
     if (!ctx.user) return send(ctx.res, 200, { user: null });
     send(ctx.res, 200, { user: publicUser(ctx.user) });
+  });
+  // Formulario de contacto seguro con notificación al correo corporativo / Gmail
+  route('POST', '/api/contact', null, async (ctx) => {
+    const { req, res, body } = ctx, ip = clientIp(req);
+    if (limited('contact|' + ip, 6, 10 * 60e3)) {
+      return fail(res, 429, 'Has enviado varios mensajes recientemente. Por favor espera unos minutos antes de intentar de nuevo.');
+    }
+    const nombre = clean(body.nombre, 80);
+    const apellido = clean(body.apellido, 80);
+    const telefono = clean(body.telefono, 35);
+    const correo = clean(body.correo, 254).toLowerCase();
+    const asunto = clean(body.asunto, 150);
+    const mensaje = clean(body.mensaje, 4000);
+
+    if (!nombre || nombre.length < 2) return fail(res, 400, 'Por favor escribe tu nombre.');
+    if (!correo || !isEmail(correo)) return fail(res, 400, 'Por favor escribe un correo electrónico válido.');
+    if (!asunto || asunto.length < 3) return fail(res, 400, 'Por favor escribe el asunto de tu consulta.');
+    if (!mensaje || mensaje.length < 5) return fail(res, 400, 'Por favor escribe tu mensaje o consulta.');
+
+    hit('contact|' + ip);
+    try {
+      await mailer.sendContactEmail({ nombre, apellido, telefono, correo, asunto, mensaje, ip });
+      record(nombre, null, 'Mensaje de contacto recibido de ' + nombre + (apellido ? ' ' + apellido : '') + ' (' + correo + '): ' + asunto);
+      save();
+      send(res, 200, { ok: true, message: '¡Mensaje enviado con éxito! Te responderemos muy pronto a tu correo.' });
+    } catch (err) {
+      console.error('Error al enviar correo de contacto:', err.message);
+      return fail(res, 500, err.message || 'No se pudo enviar el correo en este momento. Inténtalo de nuevo.');
+    }
   });
   route('POST', '/api/register', null, async (ctx) => {
     const { req, res, body } = ctx, ip = clientIp(req);

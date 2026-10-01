@@ -44,6 +44,13 @@ function createServer(opts = {}) {
       paypal: opts.paypal || {
         clientId: process.env.PAYPAL_CLIENT_ID || '', clientSecret: process.env.PAYPAL_CLIENT_SECRET || '',
         mode: process.env.PAYPAL_MODE || 'sandbox', apiBase: process.env.PAYPAL_API_BASE || ''
+      },
+      mailer: opts.mailer || {
+        host: process.env.SMTP_HOST || 'mail.nexaguards.com',
+        port: process.env.SMTP_PORT || 465,
+        user: process.env.SMTP_USER || 'contacto@nexaguards.com',
+        pass: process.env.SMTP_PASS || process.env.EMAIL_PASS || '',
+        to: process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'contacto@nexaguards.com'
       }
     }
   });
@@ -159,6 +166,11 @@ if (require.main === module) {
       }
       if (s.app.PLANS && process.env.PAYPAL_CLIENT_ID) console.log('  Pago con PayPal: activo (modo ' + (process.env.PAYPAL_MODE || 'sandbox') + ')');
       else console.log('  Pago con PayPal: no configurado (los planes se activan a mano). Ver LEEME.md.');
+      if (process.env.SMTP_PASS || process.env.EMAIL_PASS) {
+        console.log('  Correo corporativo: activo (' + (process.env.SMTP_USER || 'contacto@nexaguards.com') + ' → ' + (process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'admin') + ')');
+      } else {
+        console.log('  Correo corporativo: pendiente (configura SMTP_PASS en variables de entorno)');
+      }
       startHeartbeat(store);
       console.log('');
       s.app.startScheduler();

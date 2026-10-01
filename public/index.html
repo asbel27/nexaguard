@@ -485,6 +485,43 @@ a[data-go],a[data-act]{cursor:pointer}
 .ad-pay{margin:8px 0 0;padding:12px 14px;border:1px dashed var(--yellow);border-radius:10px;background:rgba(255,207,51,.06);white-space:pre-line;font-size:.9rem}
 .ad-note{margin-top:14px;padding:12px 14px;border-radius:10px;border:1px solid rgba(107,140,255,.5);background:rgba(107,140,255,.08);font-size:.9rem;color:#cdd6f5}
 
+/* ---------- Diálogo de Contacto con Escudo Animado ---------- */
+#contactDlg{background:#0a1133;color:var(--text);border:1px solid var(--line2);border-radius:20px;padding:0;width:min(530px,94vw);max-height:94vh;overflow:auto;margin:auto;box-shadow:0 25px 60px -15px rgba(0,0,0,.85),0 0 40px rgba(107,140,255,.18)}
+#contactDlg::backdrop{background:rgba(3,6,20,.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.cd-in{position:relative;padding:28px 24px 24px}
+.cd-x{position:absolute;top:14px;right:14px;background:none;border:0;color:var(--muted);font-size:1.6rem;line-height:1;padding:4px 8px;border-radius:8px;cursor:pointer;transition:color .2s,background .2s}
+.cd-x:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.cd-head{text-align:center;margin-bottom:18px;display:flex;flex-direction:column;align-items:center}
+.cd-shield-wrap{position:relative;width:66px;height:66px;margin-bottom:10px;display:grid;place-items:center}
+.cd-shield-aura{position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle,rgba(255,207,51,.25) 0%,rgba(107,140,255,.15) 55%,transparent 75%);animation:cdPulse 2.8s ease-in-out infinite alternate;pointer-events:none}
+@keyframes cdPulse{0%{transform:scale(.88);opacity:.45}100%{transform:scale(1.18);opacity:.9}}
+.cd-shield-svg{width:56px;height:56px;filter:drop-shadow(0 4px 14px rgba(255,207,51,.35))}
+.cd-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--fm);font-size:.72rem;color:#ffcf33;background:rgba(255,207,51,.1);border:1px solid rgba(255,207,51,.25);padding:3px 10px;border-radius:999px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+.cd-t{font-size:1.35rem;font-weight:700;margin:0 0 6px;letter-spacing:-.01em}
+.cd-sub{color:var(--muted);font-size:.88rem;max-width:38ch;margin:0 auto;line-height:1.4}
+.cd-form{display:grid;gap:12px}
+.cd-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.cd-row2{grid-template-columns:1fr;gap:12px}}
+.cd-form .fld{display:flex;flex-direction:column;gap:5px}
+.cd-form label{font-size:.82rem;font-weight:600;color:#c9d5f7}
+.cd-form label span{color:var(--red)}
+.cd-form .in{background:#060b22;border:1px solid var(--line2);border-radius:10px;padding:10px 14px;color:var(--text);font-size:.92rem;font-family:inherit;transition:border-color .2s,box-shadow .2s}
+.cd-form .in:focus{outline:none;border-color:#6b8cff;box-shadow:0 0 0 3px rgba(107,140,255,.2)}
+.cd-form textarea.in{resize:vertical;min-height:75px;line-height:1.45}
+.cd-err{color:var(--red);font-size:.84rem;min-height:1.2em;margin:0;display:none}
+.cd-err.show{display:block;animation:cdShake .3s ease}
+@keyframes cdShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.cd-btn{width:100%;margin-top:6px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+.cd-btn .spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(11,18,53,.3);border-top-color:#0b1235;border-radius:50%;animation:cdSpin .7s linear infinite}
+@keyframes cdSpin{to{transform:rotate(360deg)}}
+.cd-success{text-align:center;padding:24px 12px 12px;display:none}
+.cd-success.show{display:block;animation:cdFadeIn .4s ease}
+@keyframes cdFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.cd-success-icon{width:72px;height:72px;margin:0 auto 16px}
+.cd-success-t{font-size:1.35rem;font-weight:700;color:#fff;margin-bottom:8px}
+.cd-success-p{color:var(--muted);font-size:.93rem;line-height:1.5;margin-bottom:22px}
+.cd-success-p strong{color:var(--text)}
+
 /* ---------- Pie ---------- */
 .foot{position:relative;z-index:2;border-top:1px solid var(--line);background:rgba(7,12,34,.92);padding:30px max(20px,5vw) calc(env(safe-area-inset-bottom,0px) + 30px);color:var(--muted);font-size:.88rem;display:flex;flex-wrap:wrap;justify-content:center;text-align:center;gap:12px 30px}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translate(-50%,30px);background:var(--text);color:#0a1030;padding:.8em 1.2em;border-radius:12px;font-weight:600;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .35s,transform .35s;z-index:80;max-width:min(92vw,460px);text-align:center}
@@ -596,6 +633,7 @@ a[data-go],a[data-act]{cursor:pointer}
   </nav>
   <div class="nav-r">
     <div class="health" aria-hidden="true"><span>Salud del sitio</span><div class="hbar"><i id="hFill"></i></div><b id="hPct">8%</b><em id="hState">Infectado</em></div>
+    <button type="button" class="btn btn-o sm" id="navOpenMail" title="Escríbenos directamente"><svg class="ic" style="width:14px;height:14px;margin-right:4px;vertical-align:-2px"><use href="#i-mail"/></svg>Enviar correo</button>
     <button type="button" class="btn btn-o sm" id="navPanel">Ingresar</button>
     <a class="btn btn-y sm" href="#contacto">Pedir ayuda</a>
   </div>
@@ -976,6 +1014,11 @@ a[data-go],a[data-act]{cursor:pointer}
           <li><svg class="ic"><use href="#i-check"/></svg>Respondemos por WhatsApp o correo</li>
           <li><svg class="ic"><use href="#i-check"/></svg>No tocamos nada sin tu aprobación</li>
         </ul>
+        <div style="margin-top:22px">
+          <button type="button" class="btn btn-o sm" id="btnContactDirectMail" style="font-size:.86rem;gap:8px">
+            <svg class="ic" style="width:15px;height:15px"><use href="#i-mail"/></svg>¿Prefieres escribirnos? Enviar correo
+          </button>
+        </div>
       </div>
 
       <div class="console" id="console">
@@ -1093,6 +1136,91 @@ a[data-go],a[data-act]{cursor:pointer}
   </div>
 </dialog>
 
+<dialog id="contactDlg" aria-label="Enviar correo de contacto">
+  <div class="cd-in">
+    <button type="button" class="cd-x" id="cdClose" aria-label="Cerrar ventana">×</button>
+
+    <div id="cdFormView">
+      <div class="cd-head">
+        <div class="cd-shield-wrap" aria-hidden="true">
+          <div class="cd-shield-aura"></div>
+          <svg class="cd-shield-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="cdGrad" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#ffcf33"/>
+                <stop offset="1" stop-color="#6b8cff"/>
+              </linearGradient>
+              <linearGradient id="cdFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#15214f"/>
+                <stop offset="1" stop-color="#0b1235"/>
+              </linearGradient>
+            </defs>
+            <path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="url(#cdFill)" stroke="url(#cdGrad)" stroke-width="2.8" stroke-linejoin="round"/>
+            <path d="M22 32L29 39L43 23" fill="none" stroke="#ffcf33" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="cd-tag">🛡️ Canal Directo y Cifrado</span>
+        <h3 class="cd-t">Envíanos un correo</h3>
+        <p class="cd-sub">Completa el formulario y te responderemos de inmediato a tu bandeja de correo.</p>
+      </div>
+
+      <form id="contactForm" class="cd-form" novalidate>
+        <div class="cd-row2">
+          <div class="fld">
+            <label for="cd-nombre">Nombre <span>*</span></label>
+            <input class="in" id="cd-nombre" name="nombre" type="text" autocomplete="given-name" placeholder="Ej: Carlos" required>
+          </div>
+          <div class="fld">
+            <label for="cd-apellido">Apellido</label>
+            <input class="in" id="cd-apellido" name="apellido" type="text" autocomplete="family-name" placeholder="Ej: Gómez">
+          </div>
+        </div>
+
+        <div class="cd-row2">
+          <div class="fld">
+            <label for="cd-telefono">Teléfono / WhatsApp</label>
+            <input class="in" id="cd-telefono" name="telefono" type="tel" autocomplete="tel" placeholder="+52 55 1234 5678">
+          </div>
+          <div class="fld">
+            <label for="cd-correo">Correo electrónico <span>*</span></label>
+            <input class="in" id="cd-correo" name="correo" type="email" autocomplete="email" placeholder="tu@correo.com" required>
+          </div>
+        </div>
+
+        <div class="fld">
+          <label for="cd-asunto">Asunto <span>*</span></label>
+          <input class="in" id="cd-asunto" name="asunto" type="text" placeholder="Ej: Reparación urgente de mi WordPress" required>
+        </div>
+
+        <div class="fld">
+          <label for="cd-mensaje">Mensaje / Consulta <span>*</span></label>
+          <textarea class="in" id="cd-mensaje" name="mensaje" rows="3" placeholder="Cuéntanos con detalle qué ocurre en tu sitio o qué duda tienes..." required></textarea>
+        </div>
+
+        <p class="cd-err" id="cdErr" role="alert"></p>
+
+        <button type="submit" class="btn btn-y cd-btn" id="cdSubmit">
+          <svg class="ic" style="width:16px;height:16px"><use href="#i-mail"/></svg>
+          <span id="cdBtnText">Enviar mensaje seguro</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Vista de éxito -->
+    <div class="cd-success" id="cdSuccessView">
+      <div class="cd-success-icon" aria-hidden="true">
+        <svg viewBox="0 0 64 64" fill="none" style="width:100%;height:100%">
+          <circle cx="32" cy="32" r="30" fill="rgba(10,186,115,0.12)" stroke="#0aba73" stroke-width="2.5"/>
+          <path d="M20 33L28 41L45 23" fill="none" stroke="#0aba73" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3 class="cd-success-t">¡Mensaje enviado con éxito!</h3>
+      <p class="cd-success-p">Hemos recibido tu mensaje correctamente en nuestra bandeja. Te responderemos cuanto antes al correo <strong id="cdSuccessEmail"></strong>.</p>
+      <button type="button" class="btn btn-y" id="cdSuccessClose" style="min-width:180px">Entendido</button>
+    </div>
+  </div>
+</dialog>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -1104,7 +1232,7 @@ a[data-go],a[data-act]{cursor:pointer}
    ===================================================== */
 var CONFIG = {
   whatsapp: '',              // Ej: '5215512345678' (código de país + número, solo dígitos)
-  email: '',                 // Ej: 'hola@tudominio.com'
+  email: 'contacto@nexaguards.com', // Correo corporativo de NexaGuard
   scanEndpoint: '/scan',     // Dirección del servidor del escáner (scanner/server.js). Ej: 'https://scan.tudominio.com/scan'
   brand: 'NexaGuard'
 };
@@ -2031,9 +2159,16 @@ function showResult(f) {
     copyText(summary).then(function () { toast('Copiamos tu resumen. Pégalo en WhatsApp para enviarlo.'); });
   };
   ml.onclick = function (e) {
-    if (CONFIG.email) return;
     e.preventDefault();
-    copyText(summary).then(function () { toast('Copiamos tu resumen. Pégalo en un correo para enviarlo.'); });
+    var parts = (f.name || '').trim().split(/\s+/);
+    openContactDialog({
+      nombre: parts[0] || '',
+      apellido: parts.slice(1).join(' ') || '',
+      correo: (f.contact && f.contact.indexOf('@') >= 0) ? f.contact : '',
+      telefono: (f.contact && f.contact.indexOf('@') < 0) ? f.contact : '',
+      asunto: 'Diagnóstico de seguridad: ' + (f.url || 'mi sitio'),
+      mensaje: summary
+    });
   };
   $('#btnCopy').onclick = function () {
     copyText(summary).then(function (ok) { toast(ok ? 'Resumen copiado.' : 'No pudimos copiarlo. Selecciona el texto manualmente.'); });
@@ -2046,6 +2181,140 @@ $('#btnReset').addEventListener('click', function () {
   showView('form'); goStep(1);
   $('#ordId').textContent = 'NXG-' + (1000 + Math.floor(Math.random() * 9000));
 });
+
+/* ---------- Controlador del Formulario de Contacto Seguro ---------- */
+var contactDlg = $('#contactDlg');
+var contactForm = $('#contactForm');
+var cdErr = $('#cdErr');
+var cdSubmit = $('#cdSubmit');
+var cdBtnText = $('#cdBtnText');
+var cdFormView = $('#cdFormView');
+var cdSuccessView = $('#cdSuccessView');
+var cdSuccessEmail = $('#cdSuccessEmail');
+
+function openContactDialog(data) {
+  data = data || {};
+  if (!contactDlg) return;
+  if (cdFormView) cdFormView.style.display = 'block';
+  if (cdSuccessView) {
+    cdSuccessView.classList.remove('show');
+    cdSuccessView.style.display = 'none';
+  }
+  if (cdErr) {
+    cdErr.textContent = '';
+    cdErr.classList.remove('show');
+  }
+  if (cdSubmit) cdSubmit.disabled = false;
+  if (cdBtnText) cdBtnText.textContent = 'Enviar mensaje seguro';
+
+  if (contactForm) {
+    contactForm.reset();
+    if (data.nombre) $('#cd-nombre').value = data.nombre;
+    if (data.apellido) $('#cd-apellido').value = data.apellido;
+    if (data.telefono) $('#cd-telefono').value = data.telefono;
+    if (data.correo) $('#cd-correo').value = data.correo;
+    if (data.asunto) $('#cd-asunto').value = data.asunto;
+    if (data.mensaje) $('#cd-mensaje').value = data.mensaje;
+  }
+
+  if (contactDlg.showModal) contactDlg.showModal();
+  else contactDlg.setAttribute('open', '');
+}
+
+function closeContactDialog() {
+  if (!contactDlg) return;
+  if (contactDlg.close) contactDlg.close();
+  else contactDlg.removeAttribute('open');
+}
+
+var cdCloseBtn = $('#cdClose');
+if (cdCloseBtn) cdCloseBtn.addEventListener('click', closeContactDialog);
+var cdSuccessCloseBtn = $('#cdSuccessClose');
+if (cdSuccessCloseBtn) cdSuccessCloseBtn.addEventListener('click', closeContactDialog);
+
+if (contactDlg) {
+  contactDlg.addEventListener('click', function (e) {
+    if (e.target === contactDlg) closeContactDialog();
+  });
+}
+
+// Botones directos para abrir contacto
+var navOpenMail = $('#navOpenMail');
+if (navOpenMail) navOpenMail.addEventListener('click', function () { openContactDialog(); });
+var btnContactDirectMail = $('#btnContactDirectMail');
+if (btnContactDirectMail) btnContactDirectMail.addEventListener('click', function () { openContactDialog(); });
+
+if (contactForm) {
+  contactForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    if (cdErr) {
+      cdErr.textContent = '';
+      cdErr.classList.remove('show');
+    }
+
+    var nombre = ($('#cd-nombre').value || '').trim();
+    var apellido = ($('#cd-apellido').value || '').trim();
+    var telefono = ($('#cd-telefono').value || '').trim();
+    var correo = ($('#cd-correo').value || '').trim().toLowerCase();
+    var asunto = ($('#cd-asunto').value || '').trim();
+    var mensaje = ($('#cd-mensaje').value || '').trim();
+
+    if (!nombre) {
+      cdErr.textContent = 'Por favor escribe tu nombre.';
+      cdErr.classList.add('show');
+      $('#cd-nombre').focus();
+      return;
+    }
+    if (!correo || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      cdErr.textContent = 'Por favor escribe un correo electrónico válido.';
+      cdErr.classList.add('show');
+      $('#cd-correo').focus();
+      return;
+    }
+    if (!asunto) {
+      cdErr.textContent = 'Por favor escribe el asunto de tu consulta.';
+      cdErr.classList.add('show');
+      $('#cd-asunto').focus();
+      return;
+    }
+    if (!mensaje) {
+      cdErr.textContent = 'Por favor escribe tu mensaje o consulta.';
+      cdErr.classList.add('show');
+      $('#cd-mensaje').focus();
+      return;
+    }
+
+    cdSubmit.disabled = true;
+    cdBtnText.innerHTML = '<span class="spin"></span> Enviando mensaje...';
+
+    try {
+      await acFetch('/api/contact', {
+        method: 'POST',
+        body: JSON.stringify({
+          nombre: nombre,
+          apellido: apellido,
+          telefono: telefono,
+          correo: correo,
+          asunto: asunto,
+          mensaje: mensaje
+        })
+      });
+
+      if (cdFormView) cdFormView.style.display = 'none';
+      if (cdSuccessEmail) cdSuccessEmail.textContent = correo;
+      if (cdSuccessView) {
+        cdSuccessView.style.display = 'block';
+        cdSuccessView.classList.add('show');
+      }
+      toast('Mensaje enviado a nuestro equipo.');
+    } catch (err) {
+      cdSubmit.disabled = false;
+      cdBtnText.textContent = 'Enviar mensaje seguro';
+      cdErr.textContent = err.message || 'No se pudo enviar el correo en este momento. Inténtalo de nuevo.';
+      cdErr.classList.add('show');
+    }
+  });
+}
 
 /* =====================================================
    Escáner en vivo (habla con scanner/server.js)

@@ -4,6 +4,13 @@
   "description": "Web de reparación de WordPress con escáner en vivo, cuentas, paneles y pago con PayPal",
   "main": "server.js",
   "private": true,
-  "scripts": { "start": "node server.js" },
-  "engines": { "node": ">=18" }
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "nodemailer": "^10.0.13"
+  }
 }
