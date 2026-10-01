@@ -46,11 +46,11 @@ function createServer(opts = {}) {
         mode: process.env.PAYPAL_MODE || 'sandbox', apiBase: process.env.PAYPAL_API_BASE || ''
       },
       mailer: opts.mailer || {
-        host: process.env.SMTP_HOST || 'mail.nexaguards.com',
+        host: process.env.SMTP_HOST || 'smtp.titan.email',
         port: process.env.SMTP_PORT || 465,
         user: process.env.SMTP_USER || 'contacto@nexaguards.com',
         pass: process.env.SMTP_PASS || process.env.EMAIL_PASS || '',
-        to: process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'contacto@nexaguards.com'
+        to: process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'asbeldev8@gmail.com'
       }
     }
   });

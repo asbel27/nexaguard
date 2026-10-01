@@ -7,7 +7,7 @@
 const nodemailer = require('nodemailer');
 
 function createMailer(options = {}) {
-  const host = options.host || process.env.SMTP_HOST || 'mail.nexaguards.com';
+  const host = options.host || process.env.SMTP_HOST || 'smtp.titan.email';
   const port = Number(options.port || process.env.SMTP_PORT || 465);
   const secureEnv = process.env.SMTP_SECURE;
   const secure = options.secure !== undefined
@@ -15,7 +15,7 @@ function createMailer(options = {}) {
     : (secureEnv !== undefined ? (secureEnv === '1' || secureEnv === 'true') : (port === 465));
   const user = options.user || process.env.SMTP_USER || 'contacto@nexaguards.com';
   const pass = options.pass || process.env.SMTP_PASS || process.env.EMAIL_PASS || '';
-  const toEmail = options.to || process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || user;
+  const toEmail = options.to || process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'asbeldev8@gmail.com';
   const resendApiKey = options.resendKey || process.env.RESEND_API_KEY || '';
 
   const isConfigured = !!resendApiKey || !!(host && user && pass);
