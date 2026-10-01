@@ -50,7 +50,8 @@ function createServer(opts = {}) {
         port: process.env.SMTP_PORT || 465,
         user: process.env.SMTP_USER || 'contacto@nexaguards.com',
         pass: process.env.SMTP_PASS || process.env.EMAIL_PASS || '',
-        to: process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'asbeldev8@gmail.com'
+        to: process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'asbeldev8@gmail.com',
+        resendKey: process.env.RESEND_API_KEY || ''
       }
     }
   });
@@ -166,10 +167,12 @@ if (require.main === module) {
       }
       if (s.app.PLANS && process.env.PAYPAL_CLIENT_ID) console.log('  Pago con PayPal: activo (modo ' + (process.env.PAYPAL_MODE || 'sandbox') + ')');
       else console.log('  Pago con PayPal: no configurado (los planes se activan a mano). Ver LEEME.md.');
-      if (process.env.SMTP_PASS || process.env.EMAIL_PASS) {
-        console.log('  Correo corporativo: activo (' + (process.env.SMTP_USER || 'contacto@nexaguards.com') + ' → ' + (process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'admin') + ')');
+      if (process.env.RESEND_API_KEY) {
+        console.log('  Envío de correos: activo vía Resend HTTPS API (→ ' + (process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'asbeldev8@gmail.com') + ')');
+      } else if (process.env.SMTP_PASS || process.env.EMAIL_PASS) {
+        console.log('  Envío de correos: activo vía SMTP (' + (process.env.SMTP_USER || 'contacto@nexaguards.com') + ' → ' + (process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'asbeldev8@gmail.com') + ')');
       } else {
-        console.log('  Correo corporativo: pendiente (configura SMTP_PASS en variables de entorno)');
+        console.log('  Envío de correos: pendiente (configura RESEND_API_KEY en variables de entorno)');
       }
       startHeartbeat(store);
       console.log('');

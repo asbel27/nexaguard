@@ -150,6 +150,7 @@ Puedes responder directamente a este correo para escribirle a ${correo}.
     `;
 
     if (resendApiKey) {
+      const fromAddr = process.env.RESEND_FROM || 'NexaGuard <onboarding@resend.dev>';
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -157,7 +158,7 @@ Puedes responder directamente a este correo para escribirle a ${correo}.
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: `NexaGuard <${user}>`,
+          from: fromAddr,
           to: [toEmail],
           reply_to: correo,
           subject: emailSubject,
