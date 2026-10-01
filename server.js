@@ -31,9 +31,9 @@ const PANEL_CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' https:/
   "frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
 
 function createServer(opts = {}) {
-  const dataDir = opts.dataDir || process.env.DATA_DIR || path.join(__dirname, 'data');
   const staticDir = opts.staticDir || CFG.staticDir;
-  const store = createStore(path.join(dataDir, 'db.json'));
+  const store = opts.store;
+  if (!store) throw new Error('Falta opts.store. Usa createStore() + await store.load() antes de crear el servidor.');
   const app = createApp({
     store, scanner,
     config: {
@@ -114,12 +114,37 @@ function createServer(opts = {}) {
   return { server, app, store };
 }
 
+/* ---- Latido (keep-alive) ---- */
+function startHeartbeat(store) {
+  // Render: auto-ping cada 14 min para evitar que el servicio se duerma
+  const selfUrl = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL;
+  if (selfUrl) {
+    const url = selfUrl.replace(/\/$/, '') + '/health';
+    setInterval(async () => { try { await fetch(url); } catch {} }, 14 * 60 * 1000).unref();
+    console.log('  Latido Render:   cada 14 min → ' + url);
+  } else {
+    console.log('  Latido Render:   inactivo (define RENDER_EXTERNAL_URL o SELF_URL)');
+  }
+  // Supabase: ping cada 4 h para evitar pausa por inactividad (free tier)
+  setInterval(() => { store.ping().catch(() => {}); }, 4 * 3600 * 1000).unref();
+  console.log('  Latido Supabase: cada 4 h');
+}
+
 if (require.main === module) {
   process.on('uncaughtException', e => console.error('uncaught:', e));
   process.on('unhandledRejection', e => console.error('unhandled:', e));
   (async () => {
+    /* ---- Conectar a Supabase y cargar datos ---- */
+    let store;
+    try {
+      store = createStore();
+      console.log('Conectando con Supabase…');
+      await store.load();
+      console.log('  Datos cargados (' + store.db.users.length + ' usuarios, ' + store.db.sites.length + ' sitios).\n');
+    } catch (e) { console.error('\n✗ ' + e.message + '\n'); process.exit(1); }
+
     let s;
-    try { s = createServer(); } catch (e) { console.error('\n✗ ' + e.message + '\n'); process.exit(1); }
+    try { s = createServer({ store }); } catch (e) { console.error('\n✗ ' + e.message + '\n'); process.exit(1); }
     const created = await s.app.ensureAdmin();
     s.server.listen(CFG.port, CFG.host, () => {
       console.log('NexaGuard escuchando en http://' + CFG.host + ':' + CFG.port);
@@ -132,11 +157,23 @@ if (require.main === module) {
         if (created.password) console.log('  │  Guárdala ahora: no se volverá a mostrar. Cámbiala al entrar.');
         console.log('  └───────────────────────────────────────────────────────────\n');
       }
-      if (s.app.PLANS && process.env.PAYPAL_CLIENT_ID) console.log('  Pago con PayPal: activo (modo ' + (process.env.PAYPAL_MODE || 'sandbox') + ')\n');
-      else console.log('  Pago con PayPal: no configurado (los planes se activan a mano). Ver LEEME.md.\n');
+      if (s.app.PLANS && process.env.PAYPAL_CLIENT_ID) console.log('  Pago con PayPal: activo (modo ' + (process.env.PAYPAL_MODE || 'sandbox') + ')');
+      else console.log('  Pago con PayPal: no configurado (los planes se activan a mano). Ver LEEME.md.');
+      startHeartbeat(store);
+      console.log('');
       s.app.startScheduler();
     });
+
+    /* ---- Cierre limpio: guardar en Supabase antes de salir ---- */
+    const onShutdown = async (sig) => {
+      console.log('\n' + sig + ': guardando datos en Supabase…');
+      try { await store.shutdown(); } catch (e) { console.error('Error al guardar:', e.message); }
+      process.exit(0);
+    };
+    process.on('SIGTERM', () => onShutdown('SIGTERM'));
+    process.on('SIGINT', () => onShutdown('SIGINT'));
   })();
 } else {
   module.exports = { createServer };
 }
+

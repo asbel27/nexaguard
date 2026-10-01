@@ -239,7 +239,7 @@ function createApp({ store, scanner, config }) {
     const pw = cfg.adminPassword || tempPassword() + 'A1';
     db.users.push({ id: id('usr'), email, name: 'Administrador', role: 'admin', pass: await hashPw(pw), createdAt: T(), active: true, mustChangePassword: !cfg.adminPassword });
     record('sistema', null, 'Cuenta de administrador creada: ' + email);
-    save(); store.flush();
+    save(); await store.flush();
     return { email, password: cfg.adminPassword ? null : pw };
   }
 
