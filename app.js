@@ -9,7 +9,7 @@ const DAY = 864e5;
 /* ---------- Planes: aquí defines qué incluye cada uno ---------- */
 const PLANS = {
   rescate: {
-    id: 'rescate', tier: 1, name: 'Rescate', price: 0.1, currency: 'USD', period: 'pago único', type: 'oneoff',
+    id: 'rescate', tier: 1, name: 'Rescate', price: 99, currency: 'USD', period: 'pago único', type: 'oneoff',
     sites: 1, scansPerMonth: 3, scheduled: false, priority: false, afterDeliveryDays: 14, response: '24 a 48 horas',
     features: ['Escaneo completo de archivos y base de datos', 'Limpieza de malware y backdoors', 'Reparación de errores del sitio', 'Informe de lo encontrado', '3 análisis del escáner por mes']
   },
