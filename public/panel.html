@@ -115,12 +115,41 @@ td.wrap{white-space:normal;min-width:180px}
 .filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
 .filters .in{width:auto;min-width:160px}
 
-/* Avance del servicio */
-.stepper{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.st{border:1px solid var(--line2);border-radius:12px;padding:12px;font-size:.86rem;color:var(--muted);position:relative}
-.st b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line2);margin-bottom:8px;font-family:var(--fd);font-size:.8rem}
-.st.done{border-color:rgba(61,232,164,.5);color:var(--text)}.st.done b{background:var(--green);color:#032b1a;border-color:var(--green)}
-.st.now{border-color:var(--yellow);color:var(--text);background:rgba(255,207,51,.07)}.st.now b{background:var(--yellow);color:var(--yellow-ink);border-color:var(--yellow)}
+/* Avance del servicio mejorado */
+.st-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.st-bar-wrap{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.st-bar{flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+.st-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--yellow));border-radius:999px;transition:width .5s ease}
+.st-pct{font-family:var(--fm);font-size:.84rem;font-weight:700;color:var(--yellow);white-space:nowrap}
+
+.st-hud{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;border-radius:12px;background:rgba(255,207,51,.08);border:1px solid rgba(255,207,51,.35);margin-bottom:16px}
+.st-hud.done{background:rgba(61,232,164,.08);border-color:rgba(61,232,164,.4)}
+.st-hud-ic{width:36px;height:36px;border-radius:50%;background:rgba(255,207,51,.2);color:var(--yellow);display:grid;place-items:center;font-size:1.15rem;flex-shrink:0;font-weight:900}
+.st-hud.done .st-hud-ic{background:rgba(61,232,164,.2);color:var(--green)}
+.st-hud-txt{flex:1;min-width:0}
+.st-hud-tag{font-size:.7rem;font-weight:800;letter-spacing:.08em;color:var(--yellow);text-transform:uppercase;margin-bottom:3px}
+.st-hud.done .st-hud-tag{color:var(--green)}
+.st-hud-txt b{display:block;font-size:1rem;color:var(--text);margin-bottom:4px}
+.st-hud-txt p{font-size:.88rem;color:var(--muted);line-height:1.45;margin:0}
+
+.stepper{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.st{border:1px solid var(--line2);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.02);transition:border-color .2s}
+.st-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.st b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line2);font-family:var(--fd);font-size:.8rem;color:var(--muted);flex-shrink:0}
+.st-state{font-size:.7rem;font-weight:700;padding:.15em .55em;border-radius:999px;border:1px solid transparent}
+.st-state.done{color:var(--green);background:rgba(61,232,164,.12);border-color:rgba(61,232,164,.35)}
+.st-state.now{color:var(--yellow);background:rgba(255,207,51,.15);border-color:rgba(255,207,51,.45)}
+.st-state.pending{color:var(--muted);background:rgba(255,255,255,.04);border-color:var(--line)}
+
+.st.done{border-color:rgba(61,232,164,.4);background:rgba(61,232,164,.03)}
+.st.done b{background:var(--green);color:#032b1a;border-color:var(--green)}
+.st.now{border-color:var(--yellow);background:rgba(255,207,51,.06);box-shadow:0 0 16px rgba(255,207,51,.08)}
+.st.now b{background:var(--yellow);color:var(--yellow-ink);border-color:var(--yellow)}
+
+.st-title{font-size:.92rem;font-weight:700;color:var(--text);line-height:1.3}
+.st.done .st-title{color:#c4f5df}
+.st.now .st-title{color:var(--yellow)}
+.st-desc{font-size:.8rem;color:var(--muted);line-height:1.45;margin-top:auto}
 .bar{height:8px;border-radius:8px;background:var(--line);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--yellow);border-radius:8px}
 
@@ -212,9 +241,11 @@ dialog::backdrop{background:rgba(3,6,20,.75);backdrop-filter:blur(3px)}
   .tiles{grid-template-columns:repeat(2,1fr)}
   .filters{gap:8px}
   .filters .in{width:100%;min-width:0}
-  .stepper{grid-template-columns:1fr;gap:6px}
-  .st{display:flex;align-items:center;gap:10px;padding:10px 12px}
-  .st b{margin-bottom:0;flex-shrink:0}
+  .stepper{grid-template-columns:1fr;gap:8px}
+  .st{padding:12px;flex-direction:row;align-items:flex-start;gap:12px}
+  .st-head{flex-direction:column;align-items:center;gap:4px;flex-shrink:0}
+  .st-info{flex:1;min-width:0}
+  .st-hud{flex-direction:column;gap:10px}
 }
 @media (max-width:520px){
   .side{padding:6px 8px;gap:6px}
@@ -231,6 +262,10 @@ dialog::backdrop{background:rgba(3,6,20,.75);backdrop-filter:blur(3px)}
   .side-foot .btn{padding:6px 9px}
   .main{padding:14px 10px 50px}
   .card{padding:14px 12px}
+  .st{padding:10px;gap:10px}
+  .st-hud{padding:12px 10px}
+  .st-title{font-size:.88rem}
+  .st-desc{font-size:.76rem}
   .kv{grid-template-columns:1fr;gap:3px}
   .kv dt{font-size:.8rem;margin-top:5px}
   .kv dd{font-size:.92rem;margin-bottom:3px}
@@ -586,6 +621,108 @@ function liveScan(site, after) {
 }
 
 /* ================= VISTAS DEL CLIENTE ================= */
+var RESCUE_STAGES = [
+  {
+    name: 'Triage y diagnóstico',
+    desc: 'Análisis forense de archivos infectados, detección de puertas traseras y origen de la brecha.',
+    activeMsg: 'Analizando archivos, inyecciones de código y determinando el origen del ataque en tu WordPress.',
+    tag: 'Fase 1 de 4 · Diagnóstico inicial'
+  },
+  {
+    name: 'Copia y aislamiento',
+    desc: 'Respaldo íntegro y aislamiento preventivo para operar con total seguridad sobre la base de datos.',
+    activeMsg: 'Generando respaldo de seguridad y aislando el entorno para limpiar los archivos sin afectar a tus visitantes.',
+    tag: 'Fase 2 de 4 · Entorno seguro'
+  },
+  {
+    name: 'Limpieza quirúrgica',
+    desc: 'Erradicación de malware, scripts maliciosos, spam SEO y reemplazo de archivos dañados.',
+    activeMsg: 'Eliminando código malicioso, scripts inyectados y reemplazando archivos dañados del núcleo y plugins.',
+    tag: 'Fase 3 de 4 · Erradicación'
+  },
+  {
+    name: 'Blindaje y garantía',
+    desc: 'Endurecimiento de accesos, cambio de llaves, verificación final y activación de garantía de 30 días.',
+    activeMsg: 'Aplicando reglas de seguridad avanzadas, bloqueo perimetral y verificando que el sitio no esté en listas negras.',
+    tag: 'Fase 4 de 4 · Cierre y protección'
+  }
+];
+
+function rescueProgressCard(cur, d) {
+  var stg = Math.max(0, Math.min(4, cur.stage || 0));
+  var isDone = stg >= 4;
+  var pct = isDone ? 100 : (stg === 0 ? 15 : (stg === 1 ? 35 : (stg === 2 ? 65 : 85)));
+
+  var statusPill = isDone
+    ? h('span', { class: 'pill ok' }, '✓ 100% · Sitio limpio y blindado')
+    : stg === 0
+      ? h('span', { class: 'pill info' }, 'Iniciando servicio')
+      : h('span', { class: 'pill warn' }, 'Fase ' + (stg + 1) + ' de 4 (' + pct + '%) · En proceso');
+
+  var top = h('div', { class: 'st-top' },
+    h('div', null,
+      h('h3', { style: 'margin-bottom:4px' }, 'Estado de recuperación y desinfección'),
+      h('p', { class: 'hint' }, 'Seguimiento en tiempo real del rescate de tu sitio web.')),
+    statusPill
+  );
+
+  var bar = h('div', { class: 'st-bar-wrap' },
+    h('div', { class: 'st-bar' }, h('i', { style: 'width:' + pct + '%' })),
+    h('span', { class: 'st-pct' }, pct + '% completado')
+  );
+
+  var activeStage = RESCUE_STAGES[Math.min(stg, 3)];
+  var hud;
+  if (isDone) {
+    hud = h('div', { class: 'st-hud done' },
+      h('div', { class: 'st-hud-ic' }, '✓'),
+      h('div', { class: 'st-hud-txt' },
+        h('div', { class: 'st-hud-tag' }, 'OBJETIVO CUMPLIDO · SITIO SEGURO'),
+        h('b', null, '¡Tu sitio web ha sido desinfectado y blindado con éxito!'),
+        h('p', null, 'Todas las amenazas y backdoors fueron erradicados. Tu garantía de rescate de 30 días está activa. Puedes solicitar un análisis en cualquier momento.')
+      ),
+      h('button', { class: 'btn btn-o sm', type: 'button', style: 'align-self:center', on: { click: function () { go('analisis'); } } }, 'Ver análisis')
+    );
+  } else if (stg === 0) {
+    hud = h('div', { class: 'st-hud' },
+      h('div', { class: 'st-hud-ic' }, '⚡'),
+      h('div', { class: 'st-hud-txt' },
+        h('div', { class: 'st-hud-tag' }, 'PREPARANDO INTERVENCIÓN'),
+        h('b', null, 'Iniciando el protocolo de rescate'),
+        h('p', null, 'Nuestro equipo está preparando el acceso seguro para iniciar el diagnóstico forense.')
+      ),
+      h('button', { class: 'btn btn-o sm', type: 'button', style: 'align-self:center', on: { click: function () { go('soporte'); } } }, 'Hablar con el técnico')
+    );
+  } else {
+    hud = h('div', { class: 'st-hud' },
+      h('div', { class: 'st-hud-ic' }, '⚡'),
+      h('div', { class: 'st-hud-txt' },
+        h('div', { class: 'st-hud-tag' }, 'TRABAJANDO AHORA MISMO · ' + activeStage.tag.toUpperCase()),
+        h('b', null, activeStage.name),
+        h('p', null, activeStage.activeMsg)
+      ),
+      h('button', { class: 'btn btn-o sm', type: 'button', style: 'align-self:center', on: { click: function () { go('soporte'); } } }, 'Hablar con el técnico')
+    );
+  }
+
+  var steps = h('div', { class: 'stepper' }, RESCUE_STAGES.map(function (s, i) {
+    var state = i < stg ? 'done' : i === stg ? 'now' : 'pending';
+    var stateLabel = i < stg ? 'Completado ✓' : i === stg ? 'En curso ⚡' : 'Pendiente';
+    return h('div', { class: 'st ' + state },
+      h('div', { class: 'st-head' },
+        h('b', null, i < stg ? '✓' : String(i + 1)),
+        h('span', { class: 'st-state ' + state }, stateLabel)
+      ),
+      h('div', { class: 'st-info' },
+        h('div', { class: 'st-title' }, s.name),
+        h('div', { class: 'st-desc' }, s.desc)
+      )
+    );
+  }));
+
+  return h('div', { class: 'card st-card', style: 'margin-top:16px' }, top, bar, hud, steps);
+}
+
 var CV = {};
 CV.resumen = async function () {
   var d = await loadDash(), u = d.user, root = h('div', null);
@@ -618,9 +755,7 @@ CV.resumen = async function () {
     h('p', { style: 'margin-bottom:12px;white-space:pre-line' }, d.paymentText),
     h('button', { class: 'btn ' + (S.paypal ? 'btn-o' : 'btn-y'), type: 'button', on: { click: function () { S.prefill = { subject: 'Quiero pagar mi plan ' + p.name, text: 'Hola, quiero activar mi plan ' + p.name + '. ¿Cómo realizo el pago?' }; go('soporte'); } } }, 'Preguntar por el pago')));
   if (cur.type === 'oneoff' && d.level === 'active') {
-    var stg = cur.stage || 0;
-    root.appendChild(h('div', { class: 'card', style: 'margin-top:16px' }, h('h3', null, 'Avance de tu servicio', h('span', { class: 'pill ' + (stg >= 4 ? 'ok' : 'info') }, stg >= 4 ? 'Completado' : stg + ' de 4')),
-      h('div', { class: 'stepper' }, d.stages.map(function (s, i) { return h('div', { class: 'st ' + (i < stg ? 'done' : i === stg ? 'now' : '') }, h('b', null, i < stg ? '✓' : String(i + 1)), s); }))));
+    root.appendChild(rescueProgressCard(cur, d));
   }
   var rowsS = d.sites.map(function (s) { return { cells: [s.host, s.lastScan ? pill(VERDICT[s.lastScan.verdict]) : pill(null, 'Sin analizar'), s.lastScan ? fmtDT(s.lastScan.at) : '—'] }; });
   root.appendChild(h('div', { class: 'grid g2', style: 'margin-top:16px' },
