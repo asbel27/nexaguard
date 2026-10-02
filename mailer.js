@@ -192,6 +192,7 @@ Puedes responder directamente a este correo para escribirle a ${correo}.
   }
 
   /* ---- Plantilla 2: Bienvenida y Copia del Caso para el Cliente ---- */
+  /* ---- Plantilla 2: Bienvenida y Copia del Caso para el Cliente ---- */
   function buildClientEmail({ fullName, cleanSubject, dateStr, correo, telefono, mensaje }) {
     const html = `
 <!DOCTYPE html>
@@ -199,26 +200,28 @@ Puedes responder directamente a este correo para escribirle a ${correo}.
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #080d24; color: #eaf0ff; margin: 0; padding: 24px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #080d24; color: #ffffff; margin: 0; padding: 24px; -webkit-text-size-adjust: 100%; }
     .card { max-width: 600px; margin: 0 auto; background: #0e173e; border: 1px solid #233575; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .header { background: linear-gradient(135deg, #15214f 0%, #0b1235 100%); border-bottom: 2px solid #ffcf33; padding: 26px 28px; text-align: center; }
-    .header h1 { margin: 0 0 6px 0; color: #ffffff; font-size: 21px; font-weight: 700; }
-    .header p { margin: 0; color: #ffcf33; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .content { padding: 28px; }
-    .intro { font-size: 15px; line-height: 1.6; color: #d7e2ff; margin-bottom: 22px; }
+    .header h1 { margin: 0 0 6px 0; color: #ffffff !important; font-size: 21px; font-weight: 700; }
+    .header p { margin: 0; color: #ffcf33 !important; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .content { padding: 28px; color: #ffffff !important; }
+    .intro { font-size: 15px; line-height: 1.6; color: #ffffff !important; margin-bottom: 22px; font-weight: normal; }
     .badge-wrap { margin-bottom: 16px; }
-    .badge { display: inline-block; background: rgba(10, 186, 115, 0.15); color: #0aba73; font-weight: 600; font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(10, 186, 115, 0.3); }
-    .section-title { font-size: 13px; font-weight: 700; color: #8e9ec9; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
+    .badge { display: inline-block; background: rgba(10, 186, 115, 0.15); color: #0aba73 !important; font-weight: 600; font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(10, 186, 115, 0.3); }
+    .section-title { font-size: 13px; font-weight: 700; color: #ffcf33 !important; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
     .field-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     .field-table td { padding: 10px 12px; border-bottom: 1px solid #1a275a; font-size: 14px; }
-    .field-label { color: #8e9ec9; width: 130px; font-weight: 600; }
-    .field-value { color: #ffffff; }
-    .msg-box { background: #070c22; border: 1px solid #1f2e67; border-radius: 8px; padding: 18px; color: #e1e7fa; font-size: 14px; line-height: 1.6; white-space: pre-wrap; margin-bottom: 24px; }
+    .field-label { color: #8e9ec9 !important; width: 130px; font-weight: 600; }
+    .field-value { color: #ffffff !important; font-weight: normal !important; }
+    .field-value a, .field-value span, .field-value strong { color: #ffffff !important; font-weight: normal !important; text-decoration: none !important; }
+    .msg-box { background: #070c22; border: 1px solid #1f2e67; border-radius: 8px; padding: 18px; color: #ffffff !important; font-size: 14px; font-weight: normal !important; line-height: 1.6; white-space: pre-wrap; margin-bottom: 24px; }
     .steps { list-style: none; padding: 0; margin: 16px 0 24px; display: grid; gap: 10px; }
-    .step-item { background: #070c22; border: 1px solid #1c2a5e; border-radius: 8px; padding: 12px 16px; display: flex; align-items: flex-start; gap: 12px; font-size: 13px; color: #c4d3fa; line-height: 1.4; }
-    .step-num { background: #ffcf33; color: #0b1235; font-weight: 800; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; margin-top: 1px; }
-    .footer { background: #070b1e; padding: 20px 28px; font-size: 12px; color: #6a79a3; text-align: center; border-top: 1px solid #151e44; line-height: 1.5; }
-    .footer a { color: #6b8cff; text-decoration: none; }
+    .step-item { background: #070c22; border: 1px solid #1c2a5e; border-radius: 8px; padding: 12px 16px; display: flex; align-items: flex-start; gap: 12px; font-size: 13px; color: #ffffff !important; line-height: 1.4; }
+    .step-num { background: #ffcf33; color: #0b1235 !important; font-weight: 800; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; margin-top: 1px; }
+    .footer { background: #070b1e; padding: 20px 28px; font-size: 12px; color: #8e9ec9 !important; text-align: center; border-top: 1px solid #151e44; line-height: 1.5; }
+    .footer a { color: #ffcf33 !important; text-decoration: none; }
+    a, a:link, a:visited { color: #ffffff !important; text-decoration: none !important; }
   </style>
 </head>
 <body>
@@ -234,52 +237,60 @@ Puedes responder directamente a este correo para escribirle a ${correo}.
       </div>
 
       <p class="intro">
-        Gracias por contactar con <strong>NexaGuard</strong>. Nuestro equipo de respuesta en ciberseguridad ya ha recibido la información de tu caso y está analizando los síntomas de tu sitio web para brindarte la mejor solución.
+        Gracias por ponerte en contacto con <strong>NexaGuard</strong>. Nuestro equipo técnico ya ha recibido los detalles de tu solicitud y está revisando tu caso para responderte con la mejor alternativa de solución.
       </p>
 
       <div class="section-title">📋 Resumen de tu solicitud / servicio:</div>
       <table class="field-table">
         <tr>
           <td class="field-label">Servicio / Asunto:</td>
-          <td class="field-value"><strong>${escapeHtml(cleanSubject)}</strong></td>
+          <td class="field-value" style="color:#ffffff !important; font-weight:normal !important;">
+            <span style="color:#ffffff !important; font-weight:normal !important; text-decoration:none !important;">${escapeHtml(cleanSubject)}</span>
+          </td>
         </tr>
         <tr>
-          <td class="field-label">Fecha de apertura:</td>
-          <td class="field-value">${escapeHtml(dateStr)}</td>
+          <td class="field-label">Fecha de registro:</td>
+          <td class="field-value" style="color:#ffffff !important; font-weight:normal !important;">
+            <span style="color:#ffffff !important; font-weight:normal !important; text-decoration:none !important;">${escapeHtml(dateStr)}</span>
+          </td>
         </tr>
         <tr>
           <td class="field-label">Tu correo:</td>
-          <td class="field-value">${escapeHtml(correo)}</td>
+          <td class="field-value" style="color:#ffffff !important; font-weight:normal !important;">
+            <span style="color:#ffffff !important; font-weight:normal !important; text-decoration:none !important;">${escapeHtml(correo)}</span>
+          </td>
         </tr>
         <tr>
           <td class="field-label">Tu teléfono:</td>
-          <td class="field-value">${escapeHtml(telefono || 'No especificado')}</td>
+          <td class="field-value" style="color:#ffffff !important; font-weight:normal !important;">
+            <span style="color:#ffffff !important; font-weight:normal !important; text-decoration:none !important;">${escapeHtml(telefono || 'No especificado')}</span>
+          </td>
         </tr>
       </table>
 
-      <div class="section-title">Detalles o síntomas enviados:</div>
-      <div class="msg-box">${escapeHtml(mensaje || 'Sin detalles adicionales.')}</div>
+      <div class="section-title">Detalles proporcionados:</div>
+      <div class="msg-box" style="color:#ffffff !important; font-weight:normal !important;">${escapeHtml(mensaje || 'Sin detalles adicionales.')}</div>
 
-      <div class="section-title">⚡ ¿Qué sigue ahora?</div>
+      <div class="section-title">⚡ Próximos pasos:</div>
       <div class="steps">
         <div class="step-item">
           <div class="step-num">1</div>
-          <div><strong>Diagnóstico y Triage:</strong> Un ingeniero revisa el estado de tu WordPress y determina el vector de ataque o falla técnica.</div>
+          <div><span style="color:#ffcf33; font-weight:700;">Revisión técnica:</span> Evaluamos los requerimientos y el estado de tu sitio web.</div>
         </div>
         <div class="step-item">
           <div class="step-num">2</div>
-          <div><strong>Contacto directo:</strong> Te responderemos por este correo (o vía WhatsApp si es una urgencia) con el plan de limpieza o reparación.</div>
+          <div><span style="color:#ffcf33; font-weight:700;">Contacto directo:</span> Nos pondremos en contacto contigo por este medio o por WhatsApp con la propuesta de trabajo.</div>
         </div>
         <div class="step-item">
           <div class="step-num">3</div>
-          <div><strong>Garantía y Blindaje:</strong> Toda reparación de NexaGuard incluye garantía de 30 días y configuración de firewall.</div>
+          <div><span style="color:#ffcf33; font-weight:700;">Garantía de servicio:</span> Todo trabajo realizado incluye garantía de 30 días y soporte técnico.</div>
         </div>
       </div>
     </div>
     <div class="footer">
-      <strong>NexaGuard</strong> · Reparación quirúrgica y blindaje para WordPress.<br>
-      Si tienes dudas adicionales, puedes responder directamente a este correo.<br>
-      <a href="https://nexaguards.com">nexaguards.com</a> · contacto@nexaguards.com
+      <strong>NexaGuard</strong> · Servicio profesional para sitios WordPress.<br>
+      Puedes responder directamente a este correo si deseas agregar algún dato a tu caso.<br>
+      <a href="https://nexaguards.com" style="color:#ffcf33 !important;">nexaguards.com</a> · contacto@nexaguards.com
     </div>
   </div>
 </body>
@@ -342,7 +353,7 @@ contacto@nexaguards.com
     if (correo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo) && correo.toLowerCase() !== toEmail.toLowerCase()) {
       try {
         const clientEmailData = buildClientEmail({ fullName, cleanSubject, dateStr, correo, telefono, mensaje });
-        const clientSubject = `🛡️ ¡Hemos recibido tu solicitud de servicio! — NexaGuard`;
+        const clientSubject = `Confirmación de solicitud de servicio — NexaGuard`;
 
         await dispatchEmail({
           to: correo,
