@@ -621,6 +621,94 @@ function liveScan(site, after) {
 }
 
 /* ================= VISTAS DEL CLIENTE ================= */
+/* Animación de confeti de celebración en canvas estilo Canva (sin dependencias externas) */
+function launchConfetti() {
+  var canvas = document.getElementById('confetti-cvs');
+  if (canvas) { try { canvas.remove(); } catch (e) {} }
+  canvas = document.createElement('canvas');
+  canvas.id = 'confetti-cvs';
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;';
+  document.body.appendChild(canvas);
+
+  var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var w = window.innerWidth, h = window.innerHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+
+  var colors = ['#ffcf33', '#3de8a4', '#6b8cff', '#ff4560', '#ff9fb0', '#9fb3ff', '#a855f7', '#06b6d4', '#f59e0b', '#ec4899', '#10b981'];
+  var count = Math.min(160, Math.max(80, Math.floor(w / 8)));
+  var pieces = [];
+
+  for (var i = 0; i < count; i++) {
+    var fromLeft = i % 2 === 0;
+    var startX = fromLeft ? w * 0.12 + (Math.random() * w * 0.08) : w * 0.88 - (Math.random() * w * 0.08);
+    var startY = h * 0.82;
+    var angle = fromLeft ? -(Math.random() * 0.35 + 0.95) : -(Math.random() * 0.35 + 1.85);
+    var speed = Math.random() * 12 + 14;
+
+    pieces.push({
+      x: startX, y: startY,
+      vx: Math.cos(angle) * speed + (Math.random() - 0.5) * 3,
+      vy: Math.sin(angle) * speed,
+      sizeW: Math.random() * 11 + 7,
+      sizeH: Math.random() * 7 + 5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10,
+      shape: Math.random() > 0.3 ? 'rect' : 'circle',
+      opacity: 1,
+      wobble: Math.random() * 10,
+      wobbleSpeed: Math.random() * 0.12 + 0.05
+    });
+  }
+
+  var start = Date.now(), duration = 4500;
+  function frame() {
+    var elapsed = Date.now() - start;
+    if (elapsed > duration || !canvas.parentNode) {
+      if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+      return;
+    }
+    ctx.clearRect(0, 0, w, h);
+    var progress = elapsed / duration;
+
+    for (var i = 0; i < pieces.length; i++) {
+      var p = pieces[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.38; // gravedad
+      p.vx *= 0.985; // resistencia del aire
+      p.rotation += p.rotSpeed;
+      p.wobble += p.wobbleSpeed;
+      p.x += Math.sin(p.wobble) * 0.8;
+
+      if (progress > 0.65) p.opacity = Math.max(0, 1 - (progress - 0.65) / 0.35);
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rotation * Math.PI) / 180);
+      ctx.globalAlpha = p.opacity;
+      ctx.fillStyle = p.color;
+
+      var scaleX = Math.cos(p.wobble); // volteo 3D de papelillo
+      ctx.scale(scaleX, 1);
+
+      if (p.shape === 'rect') {
+        ctx.fillRect(-p.sizeW / 2, -p.sizeH / 2, p.sizeW, p.sizeH);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.sizeW / 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
 var RESCUE_STAGES = [
   {
     name: 'Triage y diagnóstico',
@@ -681,8 +769,12 @@ function rescueProgressCard(cur, d) {
         h('b', null, '¡Tu sitio web ha sido desinfectado y blindado con éxito!'),
         h('p', null, 'Todas las amenazas y backdoors fueron erradicados. Tu garantía de rescate de 30 días está activa. Puedes solicitar un análisis en cualquier momento.')
       ),
-      h('button', { class: 'btn btn-o sm', type: 'button', style: 'align-self:center', on: { click: function () { go('analisis'); } } }, 'Ver análisis')
+      h('div', { style: 'display:flex;gap:8px;align-self:center;flex-wrap:wrap' },
+        h('button', { class: 'btn btn-y sm', type: 'button', on: { click: function () { launchConfetti(); } } }, '🎉 ¡Celebrar!'),
+        h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('analisis'); } } }, 'Ver análisis')
+      )
     );
+    setTimeout(function () { launchConfetti(); }, 400);
   } else if (stg === 0) {
     hud = h('div', { class: 'st-hud' },
       h('div', { class: 'st-hud-ic' }, '⚡'),
