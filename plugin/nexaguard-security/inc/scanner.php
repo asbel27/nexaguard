@@ -27,7 +27,7 @@ class NexaGuard_Scanner {
             'type'     => 'etherhiding'
         ),
         'fake_captcha_turnstile' => array(
-            'regex'    => '/(turnstile\.render|cf-turnstile-wrapper|challenge-platform|verify_you_are_human|clickfix)/i',
+            'regex'    => '/(cf-turnstile-wrapper|challenge-platform|verify_you_are_human|fake-turnstile|verify-turnstile-overlay)/i',
             'title'    => 'Falso Captcha Cloudflare Turnstile / Phishing',
             'desc'     => 'Superposición fraudulenta que simula verificación humana para engañar a los visitantes.',
             'severity' => 'crit',
@@ -188,6 +188,7 @@ class NexaGuard_Scanner {
                     $is_redux_or_theme_cache = (
                         strpos($rel, 'uploads/redux/') !== false ||
                         strpos($rel, 'uploads/elementor/') !== false ||
+                        strpos($rel, 'uploads/elementor-widget/') !== false ||
                         strpos($rel, 'uploads/et-cache/') !== false ||
                         strpos($rel, 'uploads/astra-addon/') !== false
                     );
@@ -388,6 +389,17 @@ class NexaGuard_Scanner {
         }
 
         foreach ($this->patterns as $key => $p) {
+            // Omitir iframes legítimos de descarga en librerías estándar de archivos / transporte
+            if ($key === 'hidden_iframe') {
+                if (strpos($rel, 'wp-file-manager') !== false ||
+                    strpos($rel, 'elfinder') !== false ||
+                    strpos($rel, 'jQuery-File-Upload') !== false ||
+                    strpos($rel, 'copy-paste-cross-domain') !== false ||
+                    strpos($rel, 'elementskit') !== false) {
+                    continue;
+                }
+            }
+
             if (preg_match($p['regex'], $content, $matches, PREG_OFFSET_CAPTURE)) {
                 $offset = $matches[0][1];
                 $line = substr_count(substr($content, 0, $offset), "\n") + 1;
