@@ -1,8 +1,9 @@
 'use strict';
 /* =====================================================================
-   NexaGuard · Servicio de Correo Electrónico (SMTP con Nodemailer)
-   Envía correos desde el correo corporativo (ej: contacto@nexaguards.com)
-   usando el servidor SMTP de HostGator hacia la bandeja de Gmail del admin.
+   NexaGuard · Servicio de Correo Electrónico
+   - Notificación de nuevo caso al Administrador (Gmail)
+   - Copia de seguridad y bienvenida automática al Cliente
+   - Compatible con Resend HTTPS API (Render Free) y SMTP con Nodemailer
    ===================================================================== */
 const nodemailer = require('nodemailer');
 
@@ -45,18 +46,56 @@ function createMailer(options = {}) {
       .replace(/'/g, '&#39;');
   }
 
-  async function sendContactEmail({ nombre, apellido, telefono, correo, asunto, mensaje, ip }) {
-    if (!isConfigured) {
-      console.warn('⚠️ SMTP no configurado: falta SMTP_PASS. Configura la contraseña en Render para enviar correos.');
-      throw new Error('El servicio de correo aún no está configurado en el servidor (falta SMTP_PASS).');
+  /* ---- Despacho común de correo (vía Resend HTTPS o SMTP Nodemailer) ---- */
+  async function dispatchEmail({ to, replyTo, subject, html, text }) {
+    if (resendApiKey) {
+      const fromAddr = process.env.RESEND_FROM || 'NexaGuard <onboarding@resend.dev>';
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + resendApiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: fromAddr,
+          to: Array.isArray(to) ? to : [to],
+          reply_to: replyTo,
+          subject,
+          html,
+          text
+        })
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || ('Error al enviar con servicio de correo: HTTP ' + res.status));
+      }
+      return await res.json();
     }
 
-    const fullName = [nombre, apellido].filter(Boolean).join(' ').trim() || 'Cliente';
-    const cleanSubject = asunto ? asunto.trim() : 'Consulta desde la web';
-    const emailSubject = `🛡️ [NexaGuard] ${cleanSubject} — ${fullName}`;
-    const dateStr = new Date().toLocaleString('es-ES', { timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'short' });
+    if (transporter) {
+      try {
+        return await transporter.sendMail({
+          from: `"NexaGuard" <${user}>`,
+          to,
+          replyTo,
+          subject,
+          text,
+          html
+        });
+      } catch (err) {
+        if (err.code === 'ETIMEDOUT' || (err.message && /timeout|ETIMEDOUT/i.test(err.message))) {
+          throw new Error(`Tiempo de espera agotado al conectar a ${host}:${port}. El puerto SMTP está bloqueado o inaccesible desde Render.`);
+        }
+        throw err;
+      }
+    }
 
-    const htmlContent = `
+    throw new Error('Servicio de correo no configurado.');
+  }
+
+  /* ---- Plantilla 1: Notificación para el Administrador ---- */
+  function buildAdminEmail({ fullName, cleanSubject, dateStr, correo, telefono, mensaje, ip }) {
+    const html = `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -89,7 +128,7 @@ function createMailer(options = {}) {
       <p>Recibido desde la web oficial de NexaGuard</p>
     </div>
     <div class="content">
-      <span class="badge">NUEVO CONTACTO</span>
+      <span class="badge">NUEVO CASO RECIBIDO</span>
       <table class="field-table">
         <tr>
           <td class="field-label">Nombre:</td>
@@ -114,25 +153,25 @@ function createMailer(options = {}) {
         ${ip ? `<tr><td class="field-label">IP Origen:</td><td class="field-value" style="font-family:monospace;font-size:12px;color:#8e9ec9;">${escapeHtml(ip)}</td></tr>` : ''}
       </table>
 
-      <div style="font-size:13px; font-weight:600; color:#8e9ec9; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Mensaje del cliente:</div>
+      <div style="font-size:13px; font-weight:600; color:#8e9ec9; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Mensaje / Diagnóstico del cliente:</div>
       <div class="msg-box">${escapeHtml(mensaje || 'Sin mensaje adicional.')}</div>
 
       <div class="btn-wrap">
         <a class="reply-btn" href="mailto:${encodeURIComponent(correo)}?subject=${encodeURIComponent('Re: ' + cleanSubject + ' - NexaGuard')}">
-          ↩️ Responder directamente a ${escapeHtml(nombre || 'este cliente')}
+          ↩️ Responder directamente a ${escapeHtml(fullName)}
         </a>
       </div>
     </div>
     <div class="footer">
       Este correo fue generado por el formulario seguro de NexaGuard.<br>
-      Remitente autenticado con DKIM vía ${escapeHtml(user)}.
+      Puedes responder directamente a este correo para escribirle al cliente.
     </div>
   </div>
 </body>
 </html>
     `;
 
-    const textContent = `
+    const text = `
 🛡️ NUEVO MENSAJE DE CONTACTO (NexaGuard)
 --------------------------------------------------
 Nombre:   ${fullName}
@@ -142,53 +181,184 @@ Asunto:   ${cleanSubject}
 Fecha:    ${dateStr}
 ${ip ? 'IP:       ' + ip : ''}
 
-MENSAJE:
+MENSAJE / DIAGNÓSTICO:
 --------------------------------------------------
 ${mensaje || 'Sin mensaje adicional.'}
 --------------------------------------------------
 Puedes responder directamente a este correo para escribirle a ${correo}.
     `;
 
-    if (resendApiKey) {
-      const fromAddr = process.env.RESEND_FROM || 'NexaGuard <onboarding@resend.dev>';
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + resendApiKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: fromAddr,
-          to: [toEmail],
-          reply_to: correo,
-          subject: emailSubject,
-          html: htmlContent,
-          text: textContent
-        })
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || ('Error al enviar con servicio de correo: HTTP ' + res.status));
-      }
-      return await res.json();
+    return { html, text };
+  }
+
+  /* ---- Plantilla 2: Bienvenida y Copia del Caso para el Cliente ---- */
+  function buildClientEmail({ fullName, cleanSubject, dateStr, correo, telefono, mensaje }) {
+    const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #080d24; color: #eaf0ff; margin: 0; padding: 24px; }
+    .card { max-width: 600px; margin: 0 auto; background: #0e173e; border: 1px solid #233575; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .header { background: linear-gradient(135deg, #15214f 0%, #0b1235 100%); border-bottom: 2px solid #ffcf33; padding: 26px 28px; text-align: center; }
+    .header h1 { margin: 0 0 6px 0; color: #ffffff; font-size: 21px; font-weight: 700; }
+    .header p { margin: 0; color: #ffcf33; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .content { padding: 28px; }
+    .intro { font-size: 15px; line-height: 1.6; color: #d7e2ff; margin-bottom: 22px; }
+    .badge-wrap { margin-bottom: 16px; }
+    .badge { display: inline-block; background: rgba(10, 186, 115, 0.15); color: #0aba73; font-weight: 600; font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(10, 186, 115, 0.3); }
+    .section-title { font-size: 13px; font-weight: 700; color: #8e9ec9; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
+    .field-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .field-table td { padding: 10px 12px; border-bottom: 1px solid #1a275a; font-size: 14px; }
+    .field-label { color: #8e9ec9; width: 130px; font-weight: 600; }
+    .field-value { color: #ffffff; }
+    .msg-box { background: #070c22; border: 1px solid #1f2e67; border-radius: 8px; padding: 18px; color: #e1e7fa; font-size: 14px; line-height: 1.6; white-space: pre-wrap; margin-bottom: 24px; }
+    .steps { list-style: none; padding: 0; margin: 16px 0 24px; display: grid; gap: 10px; }
+    .step-item { background: #070c22; border: 1px solid #1c2a5e; border-radius: 8px; padding: 12px 16px; display: flex; align-items: flex-start; gap: 12px; font-size: 13px; color: #c4d3fa; line-height: 1.4; }
+    .step-num { background: #ffcf33; color: #0b1235; font-weight: 800; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; margin-top: 1px; }
+    .footer { background: #070b1e; padding: 20px 28px; font-size: 12px; color: #6a79a3; text-align: center; border-top: 1px solid #151e44; line-height: 1.5; }
+    .footer a { color: #6b8cff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div style="font-size: 36px; margin-bottom: 8px;">🛡️</div>
+      <h1>¡Hola, ${escapeHtml(fullName)}!</h1>
+      <p>Hemos recibido tu solicitud correctamente</p>
+    </div>
+    <div class="content">
+      <div class="badge-wrap">
+        <span class="badge">✓ CASO REGISTRADO EN NUESTRO SISTEMA</span>
+      </div>
+
+      <p class="intro">
+        Gracias por contactar con <strong>NexaGuard</strong>. Nuestro equipo de respuesta en ciberseguridad ya ha recibido la información de tu caso y está analizando los síntomas de tu sitio web para brindarte la mejor solución.
+      </p>
+
+      <div class="section-title">📋 Resumen de tu solicitud / servicio:</div>
+      <table class="field-table">
+        <tr>
+          <td class="field-label">Servicio / Asunto:</td>
+          <td class="field-value"><strong>${escapeHtml(cleanSubject)}</strong></td>
+        </tr>
+        <tr>
+          <td class="field-label">Fecha de apertura:</td>
+          <td class="field-value">${escapeHtml(dateStr)}</td>
+        </tr>
+        <tr>
+          <td class="field-label">Tu correo:</td>
+          <td class="field-value">${escapeHtml(correo)}</td>
+        </tr>
+        <tr>
+          <td class="field-label">Tu teléfono:</td>
+          <td class="field-value">${escapeHtml(telefono || 'No especificado')}</td>
+        </tr>
+      </table>
+
+      <div class="section-title">Detalles o síntomas enviados:</div>
+      <div class="msg-box">${escapeHtml(mensaje || 'Sin detalles adicionales.')}</div>
+
+      <div class="section-title">⚡ ¿Qué sigue ahora?</div>
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div><strong>Diagnóstico y Triage:</strong> Un ingeniero revisa el estado de tu WordPress y determina el vector de ataque o falla técnica.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div><strong>Contacto directo:</strong> Te responderemos por este correo (o vía WhatsApp si es una urgencia) con el plan de limpieza o reparación.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div><strong>Garantía y Blindaje:</strong> Toda reparación de NexaGuard incluye garantía de 30 días y configuración de firewall.</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <strong>NexaGuard</strong> · Reparación quirúrgica y blindaje para WordPress.<br>
+      Si tienes dudas adicionales, puedes responder directamente a este correo.<br>
+      <a href="https://nexaguards.com">nexaguards.com</a> · contacto@nexaguards.com
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const text = `
+🛡️ ¡HOLA, ${fullName}! - HEMOS RECIBIDO TU SOLICITUD
+--------------------------------------------------
+Gracias por contactar con NexaGuard. Nuestro equipo ya recibió tu caso y está analizando la información de tu sitio web.
+
+RESUMEN DE TU CASO:
+--------------------------------------------------
+Servicio / Asunto: ${cleanSubject}
+Fecha de apertura: ${dateStr}
+Tu correo:         ${correo}
+Tu teléfono:       ${telefono || 'No especificado'}
+
+DETALLES O SÍNTOMAS ENVIADOS:
+--------------------------------------------------
+${mensaje || 'Sin detalles adicionales.'}
+--------------------------------------------------
+
+¿QUÉ SIGUE AHORA?
+1. Diagnóstico: Un ingeniero revisa los síntomas de tu WordPress.
+2. Contacto directo: Te responderemos con la solución recomendada.
+3. Garantía y Blindaje: Todo servicio incluye 30 días de garantía.
+
+NexaGuard · Reparación y blindaje para WordPress
+contacto@nexaguards.com
+    `;
+
+    return { html, text };
+  }
+
+  /* ---- Envío Principal: Notificación al Admin + Copia al Cliente ---- */
+  async function sendContactEmail({ nombre, apellido, telefono, correo, asunto, mensaje, ip }) {
+    if (!isConfigured) {
+      console.warn('⚠️ Servicio de correo no configurado (falta RESEND_API_KEY o SMTP_PASS).');
+      throw new Error('El servicio de correo aún no está configurado en el servidor.');
     }
 
-    try {
-      const info = await transporter.sendMail({
-        from: `"NexaGuard" <${user}>`,
-        to: toEmail,
-        replyTo: `"${fullName.replace(/["\r\n]/g, '')}" <${correo}>`,
-        subject: emailSubject,
-        text: textContent,
-        html: htmlContent
-      });
-      return info;
-    } catch (err) {
-      if (err.code === 'ETIMEDOUT' || (err.message && /timeout|ETIMEDOUT/i.test(err.message))) {
-        throw new Error(`Tiempo de espera agotado al conectar a ${host}:${port}. El puerto SMTP está bloqueado o inaccesible desde Render.`);
+    const fullName = [nombre, apellido].filter(Boolean).join(' ').trim() || 'Cliente';
+    const cleanSubject = asunto ? asunto.trim() : 'Consulta desde la web';
+    const dateStr = new Date().toLocaleString('es-ES', { timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'short' });
+
+    // 1. Notificación para el Administrador (tu Gmail)
+    const adminEmailData = buildAdminEmail({ fullName, cleanSubject, dateStr, correo, telefono, mensaje, ip });
+    const adminSubject = `🛡️ [NexaGuard] ${cleanSubject} — ${fullName}`;
+
+    const adminResult = await dispatchEmail({
+      to: toEmail,
+      replyTo: `"${fullName.replace(/["\r\n]/g, '')}" <${correo}>`,
+      subject: adminSubject,
+      html: adminEmailData.html,
+      text: adminEmailData.text
+    });
+
+    // 2. Copia de Bienvenida para el Cliente
+    if (correo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo) && correo.toLowerCase() !== toEmail.toLowerCase()) {
+      try {
+        const clientEmailData = buildClientEmail({ fullName, cleanSubject, dateStr, correo, telefono, mensaje });
+        const clientSubject = `🛡️ ¡Hemos recibido tu solicitud de servicio! — NexaGuard`;
+
+        await dispatchEmail({
+          to: correo,
+          replyTo: `"NexaGuard Soporte" <${user}>`,
+          subject: clientSubject,
+          html: clientEmailData.html,
+          text: clientEmailData.text
+        });
+      } catch (clientErr) {
+        // En modo de prueba de Resend (sin dominio verificado), Resend no deja enviar a correos ajenos.
+        // Capturamos el aviso para que la solicitud del cliente no se interrumpa.
+        console.warn('Aviso: No se pudo enviar la copia al cliente (requiere verificar dominio en resend.com/domains):', clientErr.message);
       }
-      throw err;
     }
+
+    return adminResult;
   }
 
   return {
