@@ -191,9 +191,22 @@ Puedes responder directamente a este correo para escribirle a ${correo}.
     return { html, text };
   }
 
-  /* ---- Plantilla 2: Bienvenida y Copia del Caso para el Cliente ---- */
+  function defangText(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/(https?:\/\/|www\.)/gi, '')
+      .replace(/\.([a-zA-Z]{2,})/g, '&#8203;.$1');
+  }
+
   /* ---- Plantilla 2: Bienvenida y Copia del Caso para el Cliente ---- */
   function buildClientEmail({ fullName, cleanSubject, dateStr, correo, telefono, mensaje }) {
+    const safeSubject = defangText(cleanSubject);
+    const safeMessage = defangText(mensaje || 'Sin detalles adicionales.');
+
     const html = `
 <!DOCTYPE html>
 <html lang="es">
@@ -214,14 +227,12 @@ Puedes responder directamente a este correo para escribirle a ${correo}.
     .field-table td { padding: 10px 12px; border-bottom: 1px solid #1a275a; font-size: 14px; }
     .field-label { color: #8e9ec9 !important; width: 130px; font-weight: 600; }
     .field-value { color: #ffffff !important; font-weight: normal !important; }
-    .field-value a, .field-value span, .field-value strong { color: #ffffff !important; font-weight: normal !important; text-decoration: none !important; }
+    .field-value span { color: #ffffff !important; font-weight: normal !important; }
     .msg-box { background: #070c22; border: 1px solid #1f2e67; border-radius: 8px; padding: 18px; color: #ffffff !important; font-size: 14px; font-weight: normal !important; line-height: 1.6; white-space: pre-wrap; margin-bottom: 24px; }
     .steps { list-style: none; padding: 0; margin: 16px 0 24px; display: grid; gap: 10px; }
     .step-item { background: #070c22; border: 1px solid #1c2a5e; border-radius: 8px; padding: 12px 16px; display: flex; align-items: flex-start; gap: 12px; font-size: 13px; color: #ffffff !important; line-height: 1.4; }
     .step-num { background: #ffcf33; color: #0b1235 !important; font-weight: 800; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; margin-top: 1px; }
     .footer { background: #070b1e; padding: 20px 28px; font-size: 12px; color: #8e9ec9 !important; text-align: center; border-top: 1px solid #151e44; line-height: 1.5; }
-    .footer a { color: #ffcf33 !important; text-decoration: none; }
-    a, a:link, a:visited { color: #ffffff !important; text-decoration: none !important; }
   </style>
 </head>
 <body>
@@ -245,31 +256,31 @@ Puedes responder directamente a este correo para escribirle a ${correo}.
         <tr>
           <td class="field-label">Servicio / Asunto:</td>
           <td class="field-value" style="color:#ffffff !important; font-weight:normal !important;">
-            <span style="color:#ffffff !important; font-weight:normal !important; text-decoration:none !important;">${escapeHtml(cleanSubject)}</span>
+            <span>${safeSubject}</span>
           </td>
         </tr>
         <tr>
           <td class="field-label">Fecha de registro:</td>
           <td class="field-value" style="color:#ffffff !important; font-weight:normal !important;">
-            <span style="color:#ffffff !important; font-weight:normal !important; text-decoration:none !important;">${escapeHtml(dateStr)}</span>
+            <span>${escapeHtml(dateStr)}</span>
           </td>
         </tr>
         <tr>
           <td class="field-label">Tu correo:</td>
           <td class="field-value" style="color:#ffffff !important; font-weight:normal !important;">
-            <span style="color:#ffffff !important; font-weight:normal !important; text-decoration:none !important;">${escapeHtml(correo)}</span>
+            <span>${escapeHtml(correo)}</span>
           </td>
         </tr>
         <tr>
           <td class="field-label">Tu teléfono:</td>
           <td class="field-value" style="color:#ffffff !important; font-weight:normal !important;">
-            <span style="color:#ffffff !important; font-weight:normal !important; text-decoration:none !important;">${escapeHtml(telefono || 'No especificado')}</span>
+            <span>${escapeHtml(telefono || 'No especificado')}</span>
           </td>
         </tr>
       </table>
 
       <div class="section-title">Detalles proporcionados:</div>
-      <div class="msg-box" style="color:#ffffff !important; font-weight:normal !important;">${escapeHtml(mensaje || 'Sin detalles adicionales.')}</div>
+      <div class="msg-box" style="color:#ffffff !important; font-weight:normal !important;">${safeMessage}</div>
 
       <div class="section-title">⚡ Próximos pasos:</div>
       <div class="steps">
@@ -290,7 +301,7 @@ Puedes responder directamente a este correo para escribirle a ${correo}.
     <div class="footer">
       <strong>NexaGuard</strong> · Servicio profesional para sitios WordPress.<br>
       Puedes responder directamente a este correo si deseas agregar algún dato a tu caso.<br>
-      <a href="https://nexaguards.com" style="color:#ffcf33 !important;">nexaguards.com</a> · contacto@nexaguards.com
+      nexaguards.com · contacto@nexaguards.com
     </div>
   </div>
 </body>
