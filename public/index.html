@@ -69,6 +69,21 @@ a[data-go],a[data-act]{cursor:pointer}
 .btn-o:hover{border-color:var(--text);background:rgba(255,255,255,.08)}
 .btn.sm{padding:.62em 1.1em;font-size:.88rem}
 .btn[disabled]{opacity:.5;pointer-events:none}
+.nav-burger{display:none;align-items:center;justify-content:center;padding:0;width:34px;height:34px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid var(--line2);color:var(--text);flex-shrink:0;transition:border-color .2s,color .2s,background .2s}
+.nav-burger:hover{border-color:var(--yellow);color:var(--yellow);background:rgba(255,207,51,.08)}
+.ic-burger{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;fill:none;display:block}
+.ic-burger line{transition:transform .25s cubic-bezier(.3,.8,.3,1),opacity .2s ease;transform-origin:12px 12px}
+.nav-burger.open .b-top{transform:translateY(6px) rotate(45deg)}
+.nav-burger.open .b-mid{opacity:0;transform:scaleX(0)}
+.nav-burger.open .b-bot{transform:translateY(-6px) rotate(-45deg)}
+.nav-drawer{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(6,10,28,.96);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);z-index:48;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 84px) max(20px,6vw) calc(env(safe-area-inset-bottom,0px) + 26px);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-14px);transition:opacity .25s ease,transform .25s cubic-bezier(.2,.8,.2,1),visibility .25s;overflow-y:auto}
+.nav-drawer.open{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}
+.drawer-links{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.d-link{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:12px;font-size:1.02rem;font-weight:600;color:var(--text);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);transition:background .2s,border-color .2s,color .2s,transform .2s}
+.d-link:hover,.d-link:active{background:rgba(255,207,51,.1);border-color:rgba(255,207,51,.4);color:var(--yellow);transform:translateX(5px)}
+.d-link .ic{width:18px;height:18px;color:var(--yellow);flex-shrink:0}
+.drawer-foot{margin-top:auto;padding-top:22px;display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line)}
+.drawer-foot .d-btn{width:100%;padding:.85em 1.2em;font-size:.95rem;justify-content:center}
 
 /* ---------- Estructura común ---------- */
 .wrap{max-width:1240px;margin:0 auto}
@@ -571,6 +586,7 @@ a[data-go],a[data-act]{cursor:pointer}
   .logo svg{height:28px}
   .nav-r{order:2;margin-left:auto;gap:6px;flex-shrink:0;justify-content:flex-end}
   .nav-r .nav-btn-txt{display:none}
+  .nav-burger{display:inline-flex}
   .nav-r #navOpenMail{padding:.48em .62em;min-width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center}
   .nav-r #navOpenMail svg{margin-right:0!important;width:16px!important;height:16px!important}
   .nav-r .btn.sm{padding:.46em .72em;font-size:.82rem;height:34px}
@@ -587,6 +603,9 @@ a[data-go],a[data-act]{cursor:pointer}
   .sc-row{flex-direction:column}
   .sc-tiles{grid-template-columns:repeat(2,1fr)}
 }
+@media (max-width:480px){
+  .nav-r #navPanel{display:none}
+}
 @media (max-width:420px){
   .nav{padding-left:10px;padding-right:10px;gap:6px 6px}
   .logo svg{height:24px}
@@ -594,6 +613,8 @@ a[data-go],a[data-act]{cursor:pointer}
   .nav-r #navOpenMail{padding:.42em .52em;min-width:30px;height:31px}
   .nav-r #navOpenMail svg{width:14px!important;height:14px!important}
   .nav-r .btn.sm{padding:.42em .58em;font-size:.76rem;height:31px}
+  .nav-burger{width:31px;height:31px}
+  .ic-burger{width:16px;height:16px}
   .health{font-size:.62rem;padding:2px 8px;gap:6px}
   .hbar{width:50px}
 }
@@ -602,6 +623,7 @@ a[data-go],a[data-act]{cursor:pointer}
   .logo svg{height:21px}
   .nav-r{gap:4px}
   .nav-r .btn.sm{padding:.36em .46em;font-size:.71rem;height:29px}
+  .nav-burger{width:29px;height:29px}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}
@@ -654,8 +676,30 @@ a[data-go],a[data-act]{cursor:pointer}
     <button type="button" class="btn btn-o sm" id="navOpenMail" title="Escríbenos directamente" aria-label="Enviar correo"><svg class="ic" style="width:14px;height:14px;margin-right:4px;vertical-align:-2px"><use href="#i-mail"/></svg><span class="nav-btn-txt">Enviar correo</span></button>
     <button type="button" class="btn btn-o sm" id="navPanel">Ingresar</button>
     <a class="btn btn-y sm" href="#contacto">Pedir ayuda</a>
+    <button type="button" class="btn btn-o sm nav-burger" id="navBurger" aria-label="Abrir menú" aria-expanded="false" title="Menú">
+      <svg class="ic-burger" viewBox="0 0 24 24" aria-hidden="true">
+        <line class="b-line b-top" x1="4" y1="6" x2="20" y2="6"/>
+        <line class="b-line b-mid" x1="4" y1="12" x2="20" y2="12"/>
+        <line class="b-line b-bot" x1="4" y1="18" x2="20" y2="18"/>
+      </svg>
+    </button>
   </div>
 </header>
+
+<nav class="nav-drawer" id="navDrawer" aria-label="Menú de navegación móvil" aria-hidden="true">
+  <div class="drawer-links">
+    <a href="#sintomas" class="d-link"><svg class="ic"><use href="#i-alert"/></svg><span>Síntomas de infección</span></a>
+    <a href="#servicios" class="d-link"><svg class="ic"><use href="#i-wrench"/></svg><span>Servicios y soluciones</span></a>
+    <a href="#proceso" class="d-link"><svg class="ic"><use href="#i-refresh"/></svg><span>Proceso de rescate</span></a>
+    <a href="#escaner" class="d-link"><svg class="ic"><use href="#i-search"/></svg><span>Escáner web en vivo</span></a>
+    <a href="#resultados" class="d-link"><svg class="ic"><use href="#i-shield-check"/></svg><span>Resultados y garantías</span></a>
+    <a href="#planes" class="d-link"><svg class="ic"><use href="#i-check"/></svg><span>Planes y precios</span></a>
+  </div>
+  <div class="drawer-foot">
+    <button type="button" class="btn btn-o d-btn" id="drawerPanel"><svg class="ic"><use href="#i-lock"/></svg><span id="drawerPanelTxt">Ingresar al panel</span></button>
+    <a href="#contacto" class="btn btn-y d-btn" id="drawerHelp">Pedir ayuda inmediata</a>
+  </div>
+</nav>
 
 <main>
 
@@ -1822,6 +1866,37 @@ async function acFetch(url, opts) {
   var b = $('#navPanel');
   b.textContent = ACCOUNTS.ok && ACCOUNTS.user ? 'Mi panel' : 'Ingresar';
   b.addEventListener('click', function () { location.href = ACCOUNTS.ok ? '/panel' : '#contacto'; if (!ACCOUNTS.ok) goTo('contacto'); });
+  var dp = $('#drawerPanelTxt');
+  if (dp) dp.textContent = ACCOUNTS.ok && ACCOUNTS.user ? 'Mi panel de control' : 'Ingresar al panel';
+})();
+
+/* ---------- Menú móvil (hamburguesa) ---------- */
+(function () {
+  var burger = $('#navBurger'), drawer = $('#navDrawer');
+  if (!burger || !drawer) return;
+  function toggleDrawer(open) {
+    var isOpen = open !== undefined ? open : !drawer.classList.contains('open');
+    burger.classList.toggle('open', isOpen);
+    drawer.classList.toggle('open', isOpen);
+    burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    drawer.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  }
+  burger.addEventListener('click', function () { toggleDrawer(); });
+  drawer.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', function () { toggleDrawer(false); });
+  });
+  var drawerPanel = $('#drawerPanel');
+  if (drawerPanel) {
+    drawerPanel.addEventListener('click', function () {
+      toggleDrawer(false);
+      location.href = ACCOUNTS.ok ? '/panel' : '#contacto';
+      if (!ACCOUNTS.ok) goTo('contacto');
+    });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && drawer.classList.contains('open')) toggleDrawer(false);
+  });
 })();
 
 /* ---------- Ventana modal ---------- */
