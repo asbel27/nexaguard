@@ -52,8 +52,8 @@ h1,h2,h3,h4{font-family:var(--fd);font-weight:600;line-height:1.14;letter-spacin
 .nav-links{display:flex;gap:26px;font-size:.95rem;color:var(--muted)}
 .nav-links a{transition:color .2s}
 .nav-links a:hover{color:var(--text)}
-.nav-r{display:flex;align-items:center;gap:16px}
-.health{white-space:nowrap;display:flex;align-items:center;gap:10px;font-family:var(--fm);font-size:.7rem;color:var(--muted);padding:7px 12px;border:1px solid var(--line);border-radius:999px}
+.nav-r{display:flex;align-items:center;gap:12px}
+.health{white-space:nowrap;display:flex;align-items:center;gap:10px;font-family:var(--fm);font-size:.7rem;color:var(--muted);padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(5,9,26,.45);margin-left:auto}
 .hbar{width:76px;height:5px;background:var(--line);border-radius:5px;overflow:hidden}
 .hbar i{display:block;height:100%;width:8%;background:var(--red);border-radius:5px}
 .health b{color:var(--text);min-width:3.2ch;text-align:right}
@@ -528,12 +528,8 @@ a[data-go],a[data-act]{cursor:pointer}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 /* ---------- Responsive ---------- */
-@media (max-width:1260px){
-  .health{display:none}
-}
 @media (max-width:1080px){
   .nav-links{display:none}
-  .health{display:none}
   .term{display:none}
 }
 @media (max-width:980px){
@@ -569,21 +565,43 @@ a[data-go],a[data-act]{cursor:pointer}
   .sc-tiles{grid-template-columns:repeat(3,1fr)}
   .sc-log{min-height:200px;max-height:260px}
 }
-@media (max-width:620px){
+@media (max-width:860px){
+  .nav{flex-wrap:wrap;padding:calc(env(safe-area-inset-top,0px) + 8px) max(14px,3.5vw) 8px;gap:7px 10px;justify-content:space-between}
+  .logo{order:1;flex-shrink:0}
   .logo svg{height:28px}
-  .nav-r{gap:8px}
-  .nav-r .btn.sm{padding:.5em .75em;font-size:.8rem}
+  .nav-r{order:2;margin-left:auto;gap:6px;flex-shrink:0;justify-content:flex-end}
+  .nav-r .nav-btn-txt{display:none}
+  .nav-r #navOpenMail{padding:.48em .62em;min-width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center}
+  .nav-r #navOpenMail svg{margin-right:0!important;width:16px!important;height:16px!important}
+  .nav-r .btn.sm{padding:.46em .72em;font-size:.82rem;height:34px}
+  .nav-r .btn-y{flex-shrink:0;font-weight:700;box-shadow:0 4px 14px -3px rgba(255,207,51,.65)}
+  .health{order:3;width:100%;margin:2px auto 0;padding:3px 10px;font-size:.67rem;gap:8px;justify-content:center;background:rgba(5,9,26,.72);border:1px solid var(--line);border-radius:999px}
+  .hbar{width:64px;height:4px}
+  .health b{min-width:3ch}
+  .health em{min-width:7.5ch}
+}
+@media (max-width:620px){
   .cmp{aspect-ratio:3/4;max-height:none}
   .lbl{font-size:.7rem;padding:3px 9px;bottom:10px}
   .hdl b{width:40px;height:40px;font-size:1.1rem}
   .sc-row{flex-direction:column}
   .sc-tiles{grid-template-columns:repeat(2,1fr)}
 }
-@media (max-width:380px){
-  .nav{padding-left:12px;padding-right:12px}
-  .logo svg{height:23px}
-  .nav-r{gap:6px}
-  .nav-r .btn.sm{padding:.48em .6em;font-size:.74rem}
+@media (max-width:420px){
+  .nav{padding-left:10px;padding-right:10px;gap:6px 6px}
+  .logo svg{height:24px}
+  .nav-r{gap:5px}
+  .nav-r #navOpenMail{padding:.42em .52em;min-width:30px;height:31px}
+  .nav-r #navOpenMail svg{width:14px!important;height:14px!important}
+  .nav-r .btn.sm{padding:.42em .58em;font-size:.76rem;height:31px}
+  .health{font-size:.62rem;padding:2px 8px;gap:6px}
+  .hbar{width:50px}
+}
+@media (max-width:350px){
+  .nav{padding-left:7px;padding-right:7px}
+  .logo svg{height:21px}
+  .nav-r{gap:4px}
+  .nav-r .btn.sm{padding:.36em .46em;font-size:.71rem;height:29px}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}
@@ -631,9 +649,9 @@ a[data-go],a[data-act]{cursor:pointer}
     <a href="#resultados">Resultados</a>
     <a href="#planes">Precios</a>
   </nav>
+  <div class="health" aria-hidden="true"><span>Salud del sitio</span><div class="hbar"><i id="hFill"></i></div><b id="hPct">8%</b><em id="hState">Infectado</em></div>
   <div class="nav-r">
-    <div class="health" aria-hidden="true"><span>Salud del sitio</span><div class="hbar"><i id="hFill"></i></div><b id="hPct">8%</b><em id="hState">Infectado</em></div>
-    <button type="button" class="btn btn-o sm" id="navOpenMail" title="Escríbenos directamente"><svg class="ic" style="width:14px;height:14px;margin-right:4px;vertical-align:-2px"><use href="#i-mail"/></svg>Enviar correo</button>
+    <button type="button" class="btn btn-o sm" id="navOpenMail" title="Escríbenos directamente" aria-label="Enviar correo"><svg class="ic" style="width:14px;height:14px;margin-right:4px;vertical-align:-2px"><use href="#i-mail"/></svg><span class="nav-btn-txt">Enviar correo</span></button>
     <button type="button" class="btn btn-o sm" id="navPanel">Ingresar</button>
     <a class="btn btn-y sm" href="#contacto">Pedir ayuda</a>
   </div>
