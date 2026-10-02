@@ -5,7 +5,11 @@ jQuery(document).ready(function ($) {
     // 1. Iniciar Escaneo Forense
     $('#btn-start-scan').on('click', function () {
         var $btn = $(this);
-        $btn.prop('disabled', true).text('⏳ Analizando archivos y base de datos…');
+        $btn.prop('disabled', true).text('⏳ Analizando en tiempo real…');
+
+        // Limpiar inmediatamente la lista previa para no mostrar el análisis anterior mientras escanea
+        $('#threats-list').html('<div class="empty-state"><p>⏳ Realizando análisis forense en vivo y consultando base de amenazas en tiempo real…</p></div>');
+        $('#threats-badge').text('Analizando…');
 
         var $progBox = $('#scan-progress-box').slideDown();
         var $progBar = $('#scan-progress-bar');
@@ -53,6 +57,37 @@ jQuery(document).ready(function ($) {
         });
     });
 
+    // 2. Resetear Escaneo / Limpiar Historial Anterior
+    $('#btn-reset-scan').on('click', function () {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Limpiando…');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_reset_scan',
+                nonce: nexaguardData.nonce
+            },
+            success: function (res) {
+                $btn.prop('disabled', false).text('🔄 Limpiar Vista / Resetear');
+                $('#kpi-threats').text('0');
+                $('#kpi-files').text('0');
+                $('#scan-status-card').removeClass('status-danger').addClass('status-clean');
+                $('#status-icon').text('✓');
+                $('#status-heading').text('Listo para Iniciar Análisis en Tiempo Real');
+                $('#status-desc').html('Haz clic en <strong>"Iniciar Análisis Forense"</strong> para auditar plugins, temas, Core y base de datos con la base de firmas en tiempo real.');
+                $('#threats-badge').removeClass('danger').addClass('ok').text('0 hallazgos');
+                $('#threats-list').html('<div class="empty-state"><p>🛡️ No hay amenazas activas detectadas en este momento.</p><small class="ng-hint" style="color: #9cb1e6;">Pulsa "Iniciar Análisis Forense" para auditar en tiempo real.</small></div>');
+            },
+            error: function () {
+                $btn.prop('disabled', false).text('🔄 Limpiar Vista / Resetear');
+                alert('No se pudo resetear el historial.');
+            }
+        });
+    });
+
     function renderScanResults(d) {
         $('#kpi-threats').text(d.threats_count);
         $('#kpi-files').text(d.scanned_files);
@@ -70,11 +105,12 @@ jQuery(document).ready(function ($) {
             $('#threats-badge').removeClass('danger').addClass('ok').text('0 hallazgos');
         }
 
-        $('#status-desc').text('Último análisis: ahora mismo · ' + d.scanned_files + ' archivos auditados en ' + d.elapsed + 's.');
+        // Actualizar texto descriptivo con alto contraste
+        $('#status-desc').html('Último análisis: <span class="status-highlight">ahora mismo</span> · <span class="status-highlight">' + d.scanned_files + ' archivos</span> auditados en <span class="status-highlight">' + d.elapsed + 's</span>.');
 
         var $list = $('#threats-list').empty();
         if (!d.threats || d.threats.length === 0) {
-            $list.append('<div class="empty-state"><p>🛡️ No se encontraron amenazas. Tu instalación de WordPress está limpia.</p><small class="ng-hint">Mantén activo el Cortafuegos WAF para bloquear intrusiones en tiempo real.</small></div>');
+            $list.append('<div class="empty-state"><p>🛡️ No se encontraron amenazas. Tu instalación de WordPress está limpia.</p><small class="ng-hint" style="color: #9cb1e6;">Mantén activo el Cortafuegos WAF para bloquear intrusiones en tiempo real.</small></div>');
             return;
         }
 
@@ -82,17 +118,29 @@ jQuery(document).ready(function ($) {
             var sevClass = t.severity === 'crit' ? 'crit' : 'warn';
             var sevLabel = t.severity === 'crit' ? 'CRÍTICO' : 'ADVERTENCIA';
 
+            var isHseo = (t.file && t.file.indexOf('plugins/hseo') !== -1) || (t.full_path && t.full_path.indexOf('plugins/hseo') !== -1);
+            var delFolderBtn = '';
+            if (isHseo) {
+                delFolderBtn = '<button type="button" class="btn-ng btn-ng-danger btn-delete-plugin-folder" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Destruir la carpeta completa de este plugin troyano">💥 Destruir Carpeta del Plugin (HSEO)</button>';
+            }
+
             var actBtn = '';
             if (t.clean_action === 'sanitize_injection') {
                 actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '">🧹 Erradicar Inyección y Reparar</button>';
-            } else if (t.clean_action === 'quarantine') {
-                actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-quarantine-file" data-file="' + t.full_path + '" data-id="' + t.id + '">🔒 Mover a Cuarentena Segura</button>';
             } else if (t.clean_action === 'clean_db_option') {
-                actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="' + t.full_path + '" data-id="' + t.id + '">🗄️ Limpiar Opción de Base de Datos</button>';
+                actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="' + t.full_path + '" data-id="' + t.id + '">🗄️ Limpiar Opción en BD</button>';
             } else if (t.clean_action === 'clean_post_injection') {
-                actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_post_injection" data-target="' + t.full_path + '" data-id="' + t.id + '">📝 Limpiar Entrada/Plantilla</button>';
+                actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_post_injection" data-target="' + t.full_path + '" data-id="' + t.id + '">📝 Limpiar Publicación en BD</button>';
             } else if (t.clean_action === 'remove_cron_hook') {
                 actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="remove_cron_hook" data-target="' + t.full_path + '" data-id="' + t.id + '">⏱️ Eliminar Tarea Cron</button>';
+            }
+
+            // Botón de forzar eliminación superando restricciones de permisos
+            var forceDelBtn = '<button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Forzar eliminación superando permisos de solo lectura">💥 Forzar Eliminación (Desbloqueo)</button>';
+
+            var quarantineBtn = '';
+            if (t.clean_action === 'quarantine') {
+                quarantineBtn = '<button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="' + t.full_path + '" data-id="' + t.id + '">🔒 Mover a Cuarentena</button>';
             }
 
             var whitelistBtn = '<button type="button" class="btn-ng btn-ng-outline btn-whitelist-item" data-target="' + t.file + '" data-id="' + t.id + '" title="Omitir en futuros escaneos">✓ Permitir / Falso Positivo</button>';
@@ -105,14 +153,97 @@ jQuery(document).ready(function ($) {
                 '<p class="threat-desc">' + escapeHtml(t.desc) + '</p>' +
                 '<div class="threat-loc"><code>' + escapeHtml(t.file) + (t.line > 0 ? ' : Línea ' + t.line : '') + '</code></div>' +
                 (t.code ? '<pre class="threat-snippet"><code>' + escapeHtml(t.code) + '</code></pre>' : '') +
-                '<div class="threat-actions">' + actBtn + ' ' + whitelistBtn + '</div>' +
+                '<div class="threat-actions">' + delFolderBtn + ' ' + actBtn + ' ' + forceDelBtn + ' ' + quarantineBtn + ' ' + whitelistBtn + '</div>' +
             '</div>');
 
             $list.append(item);
         });
     }
 
-    // 2. Limpiar / Erradicar Amenaza
+    // 3. Forzar Eliminación Superando Restricciones de Permisos
+    $(document).on('click', '.btn-force-delete', function () {
+        var $btn = $(this);
+        var target = $btn.data('target');
+        var id = $btn.data('id');
+
+        if (!confirm('¿Forzar la eliminación definitiva de esta amenaza? NexaGuard desbloqueará permisos y destruirá el archivo.')) {
+            return;
+        }
+
+        $btn.prop('disabled', true).text('Destruyendo…');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_force_delete',
+                nonce: nexaguardData.nonce,
+                target: target,
+                mode: 'file'
+            },
+            success: function (res) {
+                if (res.success) {
+                    $('#threat-' + id).fadeOut(350, function () {
+                        $(this).remove();
+                        updateThreatCounts();
+                    });
+                } else {
+                    $btn.prop('disabled', false).text('Reintentar');
+                    alert(res.data && res.data.message ? res.data.message : 'Error al eliminar.');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).text('Reintentar');
+                alert('Error de conexión.');
+            }
+        });
+    });
+
+    // 4. Destruir Carpeta Completa del Plugin Malicioso
+    $(document).on('click', '.btn-delete-plugin-folder', function () {
+        var $btn = $(this);
+        var target = $btn.data('target');
+
+        if (!confirm('¿Estás seguro de destruir la carpeta completa del plugin malicioso? Esta acción eliminará todo el plugin troyano.')) {
+            return;
+        }
+
+        $btn.prop('disabled', true).text('Destruyendo plugin…');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_force_delete',
+                nonce: nexaguardData.nonce,
+                target: target,
+                mode: 'plugin_folder'
+            },
+            success: function (res) {
+                if (res.success) {
+                    // Remover todas las amenazas pertenecientes a ese plugin
+                    $('.threat-item').each(function () {
+                        var text = $(this).text();
+                        if (text.indexOf('hseo') !== -1) {
+                            $(this).fadeOut(350, function () { $(this).remove(); updateThreatCounts(); });
+                        }
+                    });
+                    alert(res.data && res.data.message ? res.data.message : 'Plugin destruido con éxito.');
+                } else {
+                    $btn.prop('disabled', false).text('Reintentar');
+                    alert(res.data && res.data.message ? res.data.message : 'Error al eliminar carpeta.');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).text('Reintentar');
+                alert('Error de conexión.');
+            }
+        });
+    });
+
+    // 5. Limpiar / Erradicar Amenaza
     $(document).on('click', '.btn-clean-threat', function () {
         var $btn = $(this);
         var type = $btn.data('type');
@@ -137,7 +268,7 @@ jQuery(document).ready(function ($) {
             },
             success: function (res) {
                 if (res.success) {
-                    $('#threat-' + id).css('border-left-color', '#3de8a4').find('.threat-actions').html('<span style="color:#3de8a4;font-weight:700">✓ Amenaza erradicada con éxito</span>');
+                    $('#threat-' + id).css('border-left-color', '#3de8a4').find('.threat-actions').html('<span style="color:#3de8a4;font-weight:700">✓ Infección erradicada con éxito</span>');
                 } else {
                     $btn.prop('disabled', false).text('Reintentar limpieza');
                     alert(res.data && res.data.message ? res.data.message : 'Error al limpiar.');
@@ -150,7 +281,7 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    // 3. Mover a Cuarentena
+    // 6. Mover a Cuarentena
     $(document).on('click', '.btn-quarantine-file', function () {
         var $btn = $(this);
         var file = $btn.data('file');
@@ -173,7 +304,10 @@ jQuery(document).ready(function ($) {
             },
             success: function (res) {
                 if (res.success) {
-                    $('#threat-' + id).fadeOut(400, function () { $(this).remove(); });
+                    $('#threat-' + id).fadeOut(400, function () { 
+                        $(this).remove(); 
+                        updateThreatCounts();
+                    });
                     var qCount = parseInt($('#kpi-quarantine').text() || '0', 10);
                     $('#kpi-quarantine').text(qCount + 1);
                 } else {
@@ -188,7 +322,42 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    // 4. Restaurar de Cuarentena
+    // 7. Marcar como Falso Positivo / Permitir
+    $(document).on('click', '.btn-whitelist-item', function () {
+        var $btn = $(this);
+        var target = $btn.data('target');
+        var id = $btn.data('id');
+
+        $btn.prop('disabled', true).text('Guardando…');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_whitelist_item',
+                nonce: nexaguardData.nonce,
+                target: target
+            },
+            success: function (res) {
+                if (res.success) {
+                    $('#threat-' + id).fadeOut(350, function () {
+                        $(this).remove();
+                        updateThreatCounts();
+                    });
+                } else {
+                    $btn.prop('disabled', false).text('Reintentar');
+                    alert('No se pudo añadir a la lista de permitidos.');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).text('Reintentar');
+                alert('Error de conexión.');
+            }
+        });
+    });
+
+    // 8. Restaurar de Cuarentena
     $(document).on('click', '.btn-restore-file', function () {
         var $btn = $(this);
         var qid = $btn.data('id');
@@ -219,51 +388,7 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    // 5. Marcar como Falso Positivo / Permitir
-    $(document).on('click', '.btn-whitelist-item', function () {
-        var $btn = $(this);
-        var target = $btn.data('target');
-        var id = $btn.data('id');
-
-        $btn.prop('disabled', true).text('Guardando…');
-
-        $.ajax({
-            url: nexaguardData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'nexaguard_whitelist_item',
-                nonce: nexaguardData.nonce,
-                target: target
-            },
-            success: function (res) {
-                if (res.success) {
-                    $('#threat-' + id).fadeOut(350, function () {
-                        $(this).remove();
-                        var count = $('#threats-list .threat-item').length;
-                        $('#kpi-threats').text(count);
-                        $('#threats-badge').text(count + ' hallazgos');
-                        if (count === 0) {
-                            $('#scan-status-card').removeClass('status-danger').addClass('status-clean');
-                            $('#status-icon').text('✓');
-                            $('#status-heading').text('Sistema 100% limpio y protegido');
-                            $('#threats-badge').removeClass('danger').addClass('ok');
-                            $('#threats-list').html('<div class="empty-state"><p>🛡️ No hay amenazas activas detectadas en este momento.</p></div>');
-                        }
-                    });
-                } else {
-                    $btn.prop('disabled', false).text('Reintentar');
-                    alert('No se pudo añadir a la lista de permitidos.');
-                }
-            },
-            error: function () {
-                $btn.prop('disabled', false).text('Reintentar');
-                alert('Error de conexión.');
-            }
-        });
-    });
-
-    // 5. Guardar Configuración WAF
+    // 9. Guardar Configuración WAF
     $('#form-waf-settings').on('submit', function (e) {
         e.preventDefault();
         var $form = $(this);
@@ -291,6 +416,19 @@ jQuery(document).ready(function ($) {
             }
         });
     });
+
+    function updateThreatCounts() {
+        var count = $('#threats-list .threat-item').length;
+        $('#kpi-threats').text(count);
+        $('#threats-badge').text(count + ' hallazgos');
+        if (count === 0) {
+            $('#scan-status-card').removeClass('status-danger').addClass('status-clean');
+            $('#status-icon').text('✓');
+            $('#status-heading').text('Sistema 100% limpio y protegido');
+            $('#threats-badge').removeClass('danger').addClass('ok');
+            $('#threats-list').html('<div class="empty-state"><p>🛡️ No hay amenazas activas detectadas en este momento.</p><small class="ng-hint" style="color: #9cb1e6;">Mantén activo el Cortafuegos WAF para bloquear intrusiones en tiempo real.</small></div>');
+        }
+    }
 
     function escapeHtml(str) {
         if (!str) return '';

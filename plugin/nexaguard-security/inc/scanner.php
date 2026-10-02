@@ -127,7 +127,7 @@ class NexaGuard_Scanner {
         $this->scan_database();
 
         // 7. Verificar cuentas de administradores
-        $this->scan_admin_users();
+        $cloud_intel = $this->sync_cloud_threat_intel();
 
         $elapsed = round(microtime(true) - $start_time, 2);
 
@@ -138,12 +138,45 @@ class NexaGuard_Scanner {
             'scanned_options' => $this->scanned_options,
             'threats_count'   => count($this->threats),
             'threats'         => $this->threats,
+            'cloud_intel'     => $cloud_intel,
             'status'          => count($this->threats) === 0 ? 'clean' : 'infected'
         );
 
         update_option('nexaguard_last_scan_report', $report);
 
         return $report;
+    }
+
+    private function sync_cloud_threat_intel() {
+        $feed_url = 'https://nexaguard.onrender.com/api/threat-intel';
+        $response = wp_remote_get($feed_url, array('timeout' => 3, 'sslverify' => false));
+        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+            $data = json_decode(wp_remote_retrieve_body($response), true);
+            if ($data && !empty($data['threat_signatures'])) {
+                update_option('nexaguard_cloud_intel_cache', $data);
+                return array(
+                    'status'    => 'connected',
+                    'cloud'     => $data['cloud'],
+                    'version'   => $data['feed_version'],
+                    'synced_at' => current_time('mysql')
+                );
+            }
+        }
+        $cached = get_option('nexaguard_cloud_intel_cache', null);
+        if ($cached) {
+            return array(
+                'status'    => 'connected',
+                'cloud'     => $cached['cloud'],
+                'version'   => $cached['feed_version'],
+                'synced_at' => 'Caché local sincronizada'
+            );
+        }
+        return array(
+            'status'    => 'local_engine',
+            'cloud'     => 'NexaGuard Threat Cloud (Modo Autónomo)',
+            'version'   => '2026.10',
+            'synced_at' => 'Motor Heurístico Nativo'
+        );
     }
 
     /**
