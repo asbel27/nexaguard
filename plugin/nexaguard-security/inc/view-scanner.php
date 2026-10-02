@@ -140,33 +140,44 @@ $cloud_ver = ($cloud_cache && !empty($cloud_cache['feed_version'])) ? $cloud_cac
                                 </button>
                             <?php endif; ?>
 
-                            <?php if ($t['clean_action'] === 'sanitize_injection'): ?>
-                                <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                    🧹 Erradicar Inyección y Reparar
-                                </button>
-                            <?php endif; ?>
+                            <?php if (empty($t['is_db'])): ?>
+                                <?php if ($t['clean_action'] === 'sanitize_injection'): ?>
+                                    <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                        🧹 Erradicar Inyección y Reparar
+                                    </button>
+                                <?php endif; ?>
 
-                            <!-- Botón de eliminación forzada sin restricciones de permisos -->
-                            <button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Forzar eliminación superando permisos de solo lectura">
-                                💥 Forzar Eliminación (Desbloqueo)
-                            </button>
+                                <!-- Botón de eliminación forzada sin restricciones de permisos (archivos) -->
+                                <button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Forzar eliminación superando permisos de solo lectura">
+                                    💥 Forzar Eliminación (Desbloqueo)
+                                </button>
 
-                            <?php if ($t['clean_action'] === 'quarantine'): ?>
-                                <button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                    🔒 Mover a Cuarentena
-                                </button>
-                            <?php elseif ($t['clean_action'] === 'clean_db_option'): ?>
-                                <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                    🗄️ Limpiar Opción en BD
-                                </button>
-                            <?php elseif ($t['clean_action'] === 'clean_post_injection'): ?>
-                                <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_post_injection" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                    📝 Limpiar Publicación en BD
-                                </button>
-                            <?php elseif ($t['clean_action'] === 'remove_cron_hook'): ?>
-                                <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="remove_cron_hook" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                    ⏱️ Eliminar Tarea Cron
-                                </button>
+                                <?php if ($t['clean_action'] === 'quarantine'): ?>
+                                    <button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                        🔒 Mover a Cuarentena
+                                    </button>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <?php if ($t['clean_action'] === 'clean_db_option'): ?>
+                                    <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Intentar limpiar cadenas maliciosas">
+                                        🧹 Limpiar Inyección en BD
+                                    </button>
+                                    <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="delete_db_option" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Eliminar completamente esta opción de la base de datos">
+                                        💥 Purgar Opción de BD
+                                    </button>
+                                <?php elseif ($t['clean_action'] === 'clean_post_injection'): ?>
+                                    <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_post_injection" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                        📝 Limpiar Publicación en BD
+                                    </button>
+                                <?php elseif ($t['clean_action'] === 'remove_cron_hook'): ?>
+                                    <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="remove_cron_hook" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                        ⏱️ Eliminar Tarea Cron
+                                    </button>
+                                <?php elseif ($t['clean_action'] === 'downgrade_user'): ?>
+                                    <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="downgrade_user" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                        👤 Degradar a Suscriptor
+                                    </button>
+                                <?php endif; ?>
                             <?php endif; ?>
 
                             <button type="button" class="btn-ng btn-ng-outline btn-whitelist-item" data-target="<?php echo esc_attr($t['file']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Omitir en futuros escaneos">

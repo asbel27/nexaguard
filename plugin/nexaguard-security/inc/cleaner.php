@@ -78,6 +78,8 @@ class NexaGuard_Cleaner {
             return $this->delete_plugin_folder($target);
         } elseif ($type === 'clean_db_option') {
             return $this->clean_db_option($target);
+        } elseif ($type === 'delete_db_option') {
+            return $this->delete_db_option($target);
         } elseif ($type === 'clean_post_injection') {
             return $this->clean_post_injection(intval($target));
         } elseif ($type === 'remove_cron_hook') {
@@ -98,6 +100,13 @@ class NexaGuard_Cleaner {
      * Supera permisos estrictos (0444, 0555) forzando chmod y vaciado de contenido.
      */
     public function force_delete($target) {
+        // Salvaguarda: si target es una opción de BD (no tiene barras de ruta de archivo)
+        if (strpos($target, '/') === false && strpos($target, '\\') === false) {
+            if (get_option($target) !== false) {
+                return $this->delete_db_option($target);
+            }
+        }
+
         $full_path = (strpos($target, ABSPATH) === 0) ? $target : (ABSPATH . ltrim($target, '/'));
 
         if (!file_exists($full_path)) {
@@ -219,17 +228,38 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => 'Opción no encontrada en la base de datos.');
         }
 
+        // Si es una opción interna o caché de NexaGuard, purgarla
+        if (stripos($option_name, 'nexaguard') !== false) {
+            delete_option($option_name);
+            return array('success' => true, 'message' => 'Caché de NexaGuard reseteada y limpiada.');
+        }
+
         if (is_string($val)) {
             $cleaned = preg_replace('/<script[^>]*data:text\/javascript;base64,[^>]*><\/script>/i', '', $val);
             $cleaned = preg_replace('/<script[^>]*src=["\']data:text\/javascript;base64,[^>]*><\/script>/i', '', $cleaned);
             $cleaned = preg_replace('/<script[^>]*>[^<]*(bsc-testnet|0xA1decFB|0x46790e2|turnstile|challenge-platform)[^<]*<\/script>/i', '', $cleaned);
+            $cleaned = preg_replace('/<script[^>]*>[^<]*(eval\(|powershell|base64)[^<]*<\/script>/i', '', $cleaned);
             if ($cleaned !== $val) {
                 update_option($option_name, $cleaned);
-                return array('success' => true, 'message' => 'Opción de base de datos desinfectada exitosamente.');
+                return array('success' => true, 'message' => 'Inyección maliciosa erradicada de la opción en base de datos.');
             }
         }
 
-        return array('success' => false, 'message' => 'Revisa la opción manualmente para no perder configuraciones del tema.');
+        return array('success' => false, 'message' => 'No se detectó un script desinfectable automáticamente. Usa el botón "Purgar Opción de BD" para eliminar la clave.');
+    }
+
+    public function delete_db_option($option_name) {
+        if (empty($option_name)) {
+            return array('success' => false, 'message' => 'Nombre de opción no especificado.');
+        }
+
+        $protected_core = array('siteurl', 'home', 'active_plugins', 'blogname', 'admin_email', 'template', 'stylesheet');
+        if (in_array($option_name, $protected_core, true)) {
+            return array('success' => false, 'message' => "La opción '{$option_name}' es vital para WordPress y no debe ser eliminada por completo. Usa 'Limpiar Inyección'.");
+        }
+
+        delete_option($option_name);
+        return array('success' => true, 'message' => "Opción '{$option_name}' eliminada permanentemente de la base de datos.");
     }
 
     private function clean_post_injection($post_id) {

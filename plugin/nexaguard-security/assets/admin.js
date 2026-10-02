@@ -125,22 +125,31 @@ jQuery(document).ready(function ($) {
             }
 
             var actBtn = '';
-            if (t.clean_action === 'sanitize_injection') {
-                actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '">🧹 Erradicar Inyección y Reparar</button>';
-            } else if (t.clean_action === 'clean_db_option') {
-                actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="' + t.full_path + '" data-id="' + t.id + '">🗄️ Limpiar Opción en BD</button>';
-            } else if (t.clean_action === 'clean_post_injection') {
-                actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_post_injection" data-target="' + t.full_path + '" data-id="' + t.id + '">📝 Limpiar Publicación en BD</button>';
-            } else if (t.clean_action === 'remove_cron_hook') {
-                actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="remove_cron_hook" data-target="' + t.full_path + '" data-id="' + t.id + '">⏱️ Eliminar Tarea Cron</button>';
-            }
-
-            // Botón de forzar eliminación superando restricciones de permisos
-            var forceDelBtn = '<button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Forzar eliminación superando permisos de solo lectura">💥 Forzar Eliminación (Desbloqueo)</button>';
-
+            var forceDelBtn = '';
             var quarantineBtn = '';
-            if (t.clean_action === 'quarantine') {
-                quarantineBtn = '<button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="' + t.full_path + '" data-id="' + t.id + '">🔒 Mover a Cuarentena</button>';
+
+            if (!t.is_db) {
+                if (t.clean_action === 'sanitize_injection') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '">🧹 Erradicar Inyección y Reparar</button>';
+                }
+
+                // Botón de forzar eliminación superando restricciones de permisos (archivos)
+                forceDelBtn = '<button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Forzar eliminación superando permisos de solo lectura">💥 Forzar Eliminación (Desbloqueo)</button>';
+
+                if (t.clean_action === 'quarantine') {
+                    quarantineBtn = '<button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="' + t.full_path + '" data-id="' + t.id + '">🔒 Mover a Cuarentena</button>';
+                }
+            } else {
+                if (t.clean_action === 'clean_db_option') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Intentar limpiar script de la opción">🧹 Limpiar Inyección en BD</button> ' +
+                             '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="delete_db_option" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Eliminar completamente esta opción de la base de datos">💥 Purgar Opción de BD</button>';
+                } else if (t.clean_action === 'clean_post_injection') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_post_injection" data-target="' + t.full_path + '" data-id="' + t.id + '">📝 Limpiar Publicación en BD</button>';
+                } else if (t.clean_action === 'remove_cron_hook') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="remove_cron_hook" data-target="' + t.full_path + '" data-id="' + t.id + '">⏱️ Eliminar Tarea Cron</button>';
+                } else if (t.clean_action === 'downgrade_user') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="downgrade_user" data-target="' + t.full_path + '" data-id="' + t.id + '">👤 Degradar a Suscriptor</button>';
+                }
             }
 
             var whitelistBtn = '<button type="button" class="btn-ng btn-ng-outline btn-whitelist-item" data-target="' + t.file + '" data-id="' + t.id + '" title="Omitir en futuros escaneos">✓ Permitir / Falso Positivo</button>';
@@ -250,11 +259,20 @@ jQuery(document).ready(function ($) {
         var target = $btn.data('target');
         var id = $btn.data('id');
 
-        if (!confirm('¿Deseas erradicar esta inyección? Se creará una copia de seguridad automática antes de limpiar.')) {
+        var confirmMsg = '¿Deseas erradicar esta inyección? Se creará una copia de seguridad automática antes de limpiar.';
+        if (type === 'delete_db_option') {
+            confirmMsg = '¿Estás seguro de que deseas purgar y eliminar definitivamente esta clave de la base de datos?';
+        } else if (type === 'remove_cron_hook') {
+            confirmMsg = '¿Deseas remover esta tarea programada (cron) de la base de datos?';
+        } else if (type === 'downgrade_user') {
+            confirmMsg = '¿Deseas degradar los permisos de este usuario sospechoso a suscriptor?';
+        }
+
+        if (!confirm(confirmMsg)) {
             return;
         }
 
-        $btn.prop('disabled', true).text('Limpiando…');
+        $btn.prop('disabled', true).text(type === 'delete_db_option' ? 'Purgando…' : 'Limpiando…');
 
         $.ajax({
             url: nexaguardData.ajax_url,
@@ -268,14 +286,21 @@ jQuery(document).ready(function ($) {
             },
             success: function (res) {
                 if (res.success) {
-                    $('#threat-' + id).css('border-left-color', '#3de8a4').find('.threat-actions').html('<span style="color:#3de8a4;font-weight:700">✓ Infección erradicada con éxito</span>');
+                    if (type === 'delete_db_option' || type === 'remove_cron_hook') {
+                        $('#threat-' + id).fadeOut(350, function () {
+                            $(this).remove();
+                            updateThreatCounts();
+                        });
+                    } else {
+                        $('#threat-' + id).css('border-left-color', '#3de8a4').find('.threat-actions').html('<span style="color:#3de8a4;font-weight:700">✓ Infección erradicada con éxito</span>');
+                    }
                 } else {
-                    $btn.prop('disabled', false).text('Reintentar limpieza');
+                    $btn.prop('disabled', false).text('Reintentar');
                     alert(res.data && res.data.message ? res.data.message : 'Error al limpiar.');
                 }
             },
             error: function () {
-                $btn.prop('disabled', false).text('Reintentar limpieza');
+                $btn.prop('disabled', false).text('Reintentar');
                 alert('Error de conexión.');
             }
         });

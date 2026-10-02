@@ -461,10 +461,11 @@ class NexaGuard_Scanner {
     private function scan_database() {
         global $wpdb;
 
-        // 1. Escanear wp_options buscando inyecciones
+        // 1. Escanear wp_options buscando inyecciones (excluyendo estrictamente opciones internas y cachés de NexaGuard)
         $options = $wpdb->get_results(
             "SELECT option_name, option_value FROM {$wpdb->options} 
-             WHERE option_name IN ('siteurl', 'home', 'active_plugins', 'insert_headers_and_footers', 'header_footer_scripts', 'custom_css_post_id') 
+             WHERE option_name NOT LIKE '%nexaguard%'
+               AND (option_name IN ('siteurl', 'home', 'active_plugins', 'insert_headers_and_footers', 'header_footer_scripts', 'custom_css_post_id') 
                 OR option_name LIKE '%custom_code%'
                 OR option_name LIKE '%theme_mods_%'
                 OR option_value LIKE '%data:text/javascript;base64%' 
@@ -472,21 +473,25 @@ class NexaGuard_Scanner {
                 OR option_value LIKE '%0xA1decFB%'
                 OR option_value LIKE '%0x46790e2%'
                 OR option_value LIKE '%eth_call%'
-                OR option_value LIKE '%turnstile%'
                 OR option_value LIKE '%challenge-platform%'
                 OR option_value LIKE '%eval(base64%'
-                OR option_value LIKE '%String.fromCharCode%'
+                OR option_value LIKE '%String.fromCharCode%')
              LIMIT 250"
         );
 
         if ($options) {
             foreach ($options as $row) {
+                // Doble salvaguarda: ignorar cualquier opción interna o transitorio de NexaGuard
+                if (stripos($row->option_name, 'nexaguard') !== false) {
+                    continue;
+                }
+
                 $this->scanned_options++;
                 $val = $row->option_value;
                 foreach ($this->patterns as $key => $p) {
                     if (preg_match($p['regex'], $val, $matches)) {
                         $this->add_threat(array(
-                            'id'          => md5('db_opt_' . $row->option_name),
+                            'id'          => md5('db_opt_' . $row->option_name . '_' . $key),
                             'category'    => 'db_' . $key,
                             'severity'    => $p['severity'],
                             'title'       => $p['title'] . ' (en Base de Datos)',
@@ -496,8 +501,10 @@ class NexaGuard_Scanner {
                             'line'        => 0,
                             'code'        => htmlspecialchars(substr($matches[0], 0, 160)),
                             'can_clean'   => true,
-                            'clean_action'=> 'clean_db_option'
+                            'clean_action'=> 'clean_db_option',
+                            'is_db'       => true
                         ));
+                        break;
                     }
                 }
             }
@@ -534,7 +541,8 @@ class NexaGuard_Scanner {
                             'line'        => 0,
                             'code'        => htmlspecialchars(substr($matches[0], 0, 160)),
                             'can_clean'   => true,
-                            'clean_action'=> 'clean_post_injection'
+                            'clean_action'=> 'clean_post_injection',
+                            'is_db'       => true
                         ));
                     }
                 }
@@ -559,7 +567,8 @@ class NexaGuard_Scanner {
                             'line'        => 0,
                             'code'        => 'Hook: ' . $hook,
                             'can_clean'   => true,
-                            'clean_action'=> 'remove_cron_hook'
+                            'clean_action'=> 'remove_cron_hook',
+                            'is_db'       => true
                         ));
                     }
                 }
@@ -586,7 +595,8 @@ class NexaGuard_Scanner {
                     'line'        => 0,
                     'code'        => 'Usuario: ' . $admin->user_login . ' | Email: ' . $email . ' | Creado: ' . $admin->user_registered,
                     'can_clean'   => true,
-                    'clean_action'=> 'downgrade_user'
+                    'clean_action'=> 'downgrade_user',
+                    'is_db'       => true
                 ));
             }
         }
