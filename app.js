@@ -117,15 +117,23 @@ function createApp({ store, scanner, config }) {
     if (o.status === 'cancelled') return { access, accessUntil, overdue };
     if (p.type === 'subscription') {
       if (o.status === 'active' && o.nextBilling) { accessUntil = o.nextBilling + 5 * DAY; access = t <= accessUntil; overdue = t > o.nextBilling; }
-    } else if (o.status === 'in_progress') access = true;
-    else if (o.status === 'delivered' && o.deliveredAt) { accessUntil = o.deliveredAt + p.afterDeliveryDays * DAY; access = t <= accessUntil; }
+    } else {
+      if (o.status === 'in_progress') access = true;
+      else if (o.status === 'delivered') {
+        const delAt = o.deliveredAt || o.createdAt || t;
+        accessUntil = delAt + (p.afterDeliveryDays || 30) * DAY;
+        access = t <= accessUntil;
+      } else if (o.stage && o.stage >= 1) {
+        access = true;
+      }
+    }
     return { access, accessUntil, overdue };
   }
   function monthStart() { const d = new Date(); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1); }
   function entitlement(uid) {
     const list = ordersOf(uid).map(o => ({ o, plan: PLANS[o.plan], info: orderInfo(o) }));
     const active = list.filter(x => x.info.access).sort((a, b) => b.plan.tier - a.plan.tier);
-    const pending = list.find(x => x.o.status === 'pending_payment');
+    const pending = list.find(x => x.o.status === 'pending_payment' && (!x.o.stage || x.o.stage < 1));
     const used = db.scans.filter(s => s.userId === uid && s.trigger === 'manual' && s.at >= monthStart()).length;
     let level = 'none', limits = { sites: 0, scans: 0, unlimited: false, scheduled: false, priority: false };
     if (active.length) {
@@ -515,18 +523,44 @@ function createApp({ store, scanner, config }) {
   });
   route('PATCH', '/api/admin/orders/:id', 'admin', (ctx) => {
     const o = db.orders.find(x => x.id === ctx.params[0]); if (!o) return fail(ctx.res, 404, 'Pedido no encontrado.');
-    const p = PLANS[o.plan], b = ctx.body, hasPay = db.payments.some(x => x.orderId === o.id);
+    const p = PLANS[o.plan], b = ctx.body;
+    let hasPay = db.payments.some(x => x.orderId === o.id);
+
+    if (b.stage !== undefined && p.type === 'oneoff') {
+      const s = Math.max(0, Math.min(4, parseInt(b.stage, 10) || 0));
+      if (s !== (o.stage || 0)) record(ctx.user.name, o.userId, 'Avance del servicio: ' + s + ' de 4');
+      o.stage = s;
+      if (s === 4) {
+        o.status = 'delivered';
+        o.deliveredAt = o.deliveredAt || T();
+        if (!hasPay) {
+          applyPayment(o, o.amount, p.currency, 'manual', 'Completado por administrador', ctx.user.name);
+          hasPay = true;
+        }
+      } else if (s >= 1 && o.status === 'pending_payment') {
+        o.status = 'in_progress';
+        if (!hasPay) {
+          applyPayment(o, o.amount, p.currency, 'manual', 'Iniciado por administrador', ctx.user.name);
+          hasPay = true;
+        }
+      }
+    }
+
     if (b.status !== undefined) {
       const allowed = p.type === 'subscription' ? SUB_STATUS : ONEOFF_STATUS;
       if (!allowed.includes(b.status)) return fail(ctx.res, 400, 'Estado no válido para este plan.');
-      if (o.status === 'pending_payment' && b.status !== 'pending_payment' && b.status !== 'cancelled' && !hasPay) return fail(ctx.res, 409, 'Registra primero el pago de este pedido.');
+      if (o.status === 'pending_payment' && (b.status === 'in_progress' || b.status === 'delivered' || b.status === 'active') && !hasPay) {
+        applyPayment(o, o.amount, p.currency, 'manual', 'Confirmado por administrador', ctx.user.name);
+        hasPay = true;
+      }
       const prev = o.status; o.status = b.status;
       if (b.status === 'delivered') { o.deliveredAt = o.deliveredAt || T(); o.stage = 4; }
-      if (b.status === 'in_progress' && prev === 'delivered') o.deliveredAt = null;
+      if (b.status === 'in_progress' && prev === 'delivered') { o.deliveredAt = null; if (o.stage === 4) o.stage = 3; }
+      if (b.status === 'in_progress' && (o.stage === 0 || o.stage === undefined)) o.stage = 1;
       const L = { pending_payment: 'pendiente de pago', in_progress: 'en progreso', delivered: 'entregado', active: 'activo', cancelled: 'cancelado' };
       if (prev !== b.status) record(ctx.user.name, o.userId, 'Pedido ' + p.name + ': ' + L[prev] + ' → ' + L[b.status]);
     }
-    if (b.stage !== undefined && p.type === 'oneoff') { const s = Math.max(0, Math.min(4, parseInt(b.stage, 10) || 0)); if (s !== (o.stage || 0)) record(ctx.user.name, o.userId, 'Avance del servicio: ' + s + ' de 4'); o.stage = s; }
+
     if (b.notes !== undefined) o.notes = clean(b.notes, 1000);
     if (b.nextBilling !== undefined && p.type === 'subscription') { const t = Date.parse(b.nextBilling); if (!isNaN(t)) o.nextBilling = t; }
     save(); send(ctx.res, 200, { order: orderView(o) });

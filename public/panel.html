@@ -627,14 +627,16 @@ function launchConfetti() {
   if (canvas) { try { canvas.remove(); } catch (e) {} }
   canvas = document.createElement('canvas');
   canvas.id = 'confetti-cvs';
-  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;';
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99999;';
   document.body.appendChild(canvas);
 
   var ctx = canvas.getContext('2d');
+  if (!ctx) return;
   var dpr = window.devicePixelRatio || 1;
-  var w = window.innerWidth, h = window.innerHeight;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
+  var w = window.innerWidth || document.documentElement.clientWidth || 360;
+  var h = window.innerHeight || document.documentElement.clientHeight || 640;
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
   ctx.scale(dpr, dpr);
 
   var colors = ['#ffcf33', '#3de8a4', '#6b8cff', '#ff4560', '#ff9fb0', '#9fb3ff', '#a855f7', '#06b6d4', '#f59e0b', '#ec4899', '#10b981'];
@@ -671,7 +673,10 @@ function launchConfetti() {
       if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
       return;
     }
-    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
     var progress = elapsed / duration;
 
     for (var i = 0; i < pieces.length; i++) {
@@ -737,8 +742,9 @@ var RESCUE_STAGES = [
 ];
 
 function rescueProgressCard(cur, d) {
-  var stg = Math.max(0, Math.min(4, cur.stage || 0));
-  var isDone = stg >= 4;
+  var stg = Math.max(0, Math.min(4, cur.stage || (cur.status === 'delivered' ? 4 : 0)));
+  var isDone = stg >= 4 || cur.status === 'delivered';
+  if (isDone) stg = 4;
   var pct = isDone ? 100 : (stg === 0 ? 15 : (stg === 1 ? 35 : (stg === 2 ? 65 : 85)));
 
   var statusPill = isDone
@@ -823,16 +829,30 @@ CV.resumen = async function () {
   var bad = d.sites.filter(function (s) { return s.lastScan && (s.lastScan.verdict === 'infected' || s.lastScan.verdict === 'suspicious'); });
   if (bad.length) root.appendChild(h('div', { class: 'banner crit' }, ico('alert'), h('div', null, h('b', null, 'Atención: '), 'el último análisis de ' + bad.map(function (s) { return s.host; }).join(', ') + ' encontró señales de infección. ', h('button', { class: 'btn btn-y sm', type: 'button', on: { click: function () { go('soporte'); } } }, 'Abrir una solicitud'))));
   var cur = d.current;
-  if (!cur || d.level === 'ended' || d.level === 'none') {
+  var isOneOff = cur && cur.type === 'oneoff';
+  var hasActiveRescue = isOneOff && (cur.stage >= 1 || cur.status === 'in_progress' || cur.status === 'delivered');
+  var isRescueCompleted = isOneOff && (cur.stage >= 4 || cur.status === 'delivered');
+
+  if (!cur || ((d.level === 'ended' || d.level === 'none') && !hasActiveRescue)) {
     root.appendChild(h('div', { class: 'banner info' }, ico('info'), h('div', null, d.level === 'ended' ? 'Tu plan anterior terminó. Elige uno para volver a activar tu panel.' : 'Todavía no tienes un plan. Elige el que mejor se adapte a tu caso.')));
     root.appendChild(h('div', { class: 'grid g3' }, S.plans.map(function (p) { return planCard(p, false, async function (pl) { try { await api('POST', '/api/orders', { plan: pl.id }); toast('Solicitud enviada. Te contactaremos para el pago.'); render(); } catch (e) { toast(e.message); } }, 'Solicitar este plan'); })));
     return root;
   }
+
+  if (isOneOff) {
+    root.appendChild(rescueProgressCard(cur, d));
+  }
+
   var p = d.plan, info = [];
-  info.push(['Estado', pill(LEVEL[d.level])]);
+  var statusBadge = isRescueCompleted
+    ? pill(['Completado · Garantía activa', 'ok'])
+    : (isOneOff && cur.stage >= 1)
+      ? pill(['En desinfección (' + cur.stage + '/4)', 'warn'])
+      : pill(LEVEL[d.level]);
+  info.push(['Estado', statusBadge]);
   info.push(['Precio', money(p.price, p.currency) + ' · ' + p.period]);
   info.push(['Sitios', d.sites.length + ' de ' + d.limits.sites]);
-  info.push(['Análisis este mes', d.level !== 'active' ? 'Se activan con el pago' : d.limits.unlimited ? d.limits.scansUsed + ' (ilimitados)' : d.limits.scansUsed + ' de ' + d.limits.scans]);
+  info.push(['Análisis este mes', (d.level !== 'active' && !hasActiveRescue) ? 'Se activan con el pago' : d.limits.unlimited ? d.limits.scansUsed + ' (ilimitados)' : d.limits.scansUsed + ' de ' + d.limits.scans]);
   info.push(['Monitoreo automático', d.limits.scheduled ? 'Sí, diario' : 'No incluido']);
   info.push(['Soporte', d.limits.priority ? 'Prioritario · ' + p.response : 'Estándar · ' + p.response]);
   if (cur.type === 'subscription' && cur.nextBilling) info.push(['Próximo cobro', fmtDate(cur.nextBilling)]);
@@ -841,14 +861,11 @@ CV.resumen = async function () {
     h('div', { class: 'card' }, h('h3', null, p.name), h('dl', { class: 'kv' }, info.map(function (r) { return [h('dt', null, r[0]), h('dd', null, r[1])]; })),
       cur.overdue ? h('div', { class: 'banner warn', style: 'margin:14px 0 0' }, ico('alert'), h('div', null, 'Tu pago de la suscripción está vencido. Escríbenos para regularizarlo y no perder el monitoreo.')) : null),
     h('div', { class: 'card' }, h('h3', null, 'Qué incluye tu plan'), h('ul', { class: 'list' }, p.features.map(function (f) { return h('li', null, ico('check'), f); })))));
-  if (d.level === 'pending') root.appendChild(h('div', { class: 'card', style: 'margin-top:16px' }, h('h3', null, 'Activa tu plan'),
+  if (d.level === 'pending' && !hasActiveRescue) root.appendChild(h('div', { class: 'card', style: 'margin-top:16px' }, h('h3', null, 'Activa tu plan'),
     S.paypal ? h('div', null, h('p', { style: 'margin-bottom:6px' }, 'Paga ahora con PayPal y tu plan queda activo al instante:'), payPalBlock(cur.plan),
       h('p', { class: 'hint', style: 'margin:12px 0 6px' }, '¿Prefieres otra forma de pago?')) : null,
     h('p', { style: 'margin-bottom:12px;white-space:pre-line' }, d.paymentText),
     h('button', { class: 'btn ' + (S.paypal ? 'btn-o' : 'btn-y'), type: 'button', on: { click: function () { S.prefill = { subject: 'Quiero pagar mi plan ' + p.name, text: 'Hola, quiero activar mi plan ' + p.name + '. ¿Cómo realizo el pago?' }; go('soporte'); } } }, 'Preguntar por el pago')));
-  if (cur.type === 'oneoff' && d.level === 'active') {
-    root.appendChild(rescueProgressCard(cur, d));
-  }
   var rowsS = d.sites.map(function (s) { return { cells: [s.host, s.lastScan ? pill(VERDICT[s.lastScan.verdict]) : pill(null, 'Sin analizar'), s.lastScan ? fmtDT(s.lastScan.at) : '—'] }; });
   root.appendChild(h('div', { class: 'grid g2', style: 'margin-top:16px' },
     h('div', { class: 'card' }, h('h3', null, 'Tus sitios', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('sitios'); } } }, 'Administrar')), rowsS.length ? table(['Sitio', 'Estado', 'Último análisis'], rowsS) : h('div', { class: 'empty' }, 'Agrega tu sitio para poder analizarlo.')),
@@ -923,17 +940,17 @@ CV.pagos = async function () {
   root.appendChild(head('Plan y pagos', 'Tus pedidos, pagos registrados y opciones de plan.'));
   root.appendChild(h('h3', { style: 'margin-bottom:12px;font-size:1rem' }, 'Pedidos'));
   var detailCell = function (o) {
-    if (o.status === 'pending_payment') {
+    if (o.status === 'pending_payment' && (!o.stage || o.stage < 1)) {
       return h('button', { class: 'btn btn-y sm', type: 'button', on: { click: function () {
         var el = document.getElementById('pay-' + o.id);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         else { S.prefill = { subject: 'Quiero pagar mi plan ' + o.planName, text: 'Hola, quiero activar mi plan ' + o.planName + '. ¿Cómo realizo el pago?' }; go('soporte'); }
       } } }, 'Pagar');
     }
-    return o.type === 'subscription' ? (o.nextBilling ? 'Próximo cobro: ' + fmtDate(o.nextBilling) : '—') : (o.accessUntil ? 'Acceso hasta: ' + fmtDate(o.accessUntil) : '—');
+    return o.type === 'subscription' ? (o.nextBilling ? 'Próximo cobro: ' + fmtDate(o.nextBilling) : '—') : (o.accessUntil ? 'Acceso hasta: ' + fmtDate(o.accessUntil) : (o.stage >= 4 || o.status === 'delivered') ? 'Servicio completado' : 'En proceso');
   };
   root.appendChild(d.orders.length ? table(['Plan', 'Estado', 'Monto', 'Fecha', 'Detalle'], d.orders.map(function (o) { return { cells: [o.planName, pill(ORDER_ST[o.status]), money(o.amount, o.currency), fmtDate(o.createdAt), detailCell(o)] }; })) : h('div', { class: 'empty' }, 'Aún no tienes pedidos.'));
-  var pendientes = d.orders.filter(function (o) { return o.status === 'pending_payment'; });
+  var pendientes = d.orders.filter(function (o) { return o.status === 'pending_payment' && (!o.stage || o.stage < 1); });
   pendientes.forEach(function (o) {
     var card = h('div', { id: 'pay-' + o.id, class: 'card', style: 'margin-top:12px' }, h('h3', null, 'Pagar ' + o.planName));
     if (S.paypal) card.appendChild(payPalBlock(o.plan));
@@ -1007,6 +1024,16 @@ async function clienteDetalle(id) {
     var isSub = o.type === 'subscription', sts = isSub ? ['pending_payment', 'active', 'cancelled'] : ['pending_payment', 'in_progress', 'delivered', 'cancelled'];
     var st = h('select', { class: 'in', 'aria-label': 'Estado del pedido' }, sts.map(function (s) { return h('option', { value: s, selected: s === o.status }, ORDER_ST[s][0]); }));
     var sg = isSub ? null : h('select', { class: 'in', 'aria-label': 'Avance' }, [0, 1, 2, 3, 4].map(function (n) { return h('option', { value: String(n), selected: n === o.stage }, n === 0 ? 'Avance: sin iniciar' : n === 4 ? 'Avance: completado' : 'Avance: ' + n + ' de 4 (' + d.stages[n - 1] + ')'); }));
+    if (sg) {
+      sg.addEventListener('change', function () {
+        if (sg.value === '4') st.value = 'delivered';
+        else if (Number(sg.value) >= 1 && (st.value === 'pending_payment' || st.value === 'delivered')) st.value = 'in_progress';
+      });
+      st.addEventListener('change', function () {
+        if (st.value === 'delivered') sg.value = '4';
+        else if (st.value === 'in_progress' && sg.value === '0') sg.value = '1';
+      });
+    }
     var nt = h('input', { class: 'in', value: o.notes || '', placeholder: 'Nota interna (solo la ves tú)', 'aria-label': 'Nota' });
     var pays = d.payments.filter(function (p) { return p.orderId === o.id; });
     ordersBox.appendChild(h('div', { class: 'card' }, h('h3', null, o.planName + ' · ' + money(o.amount, o.currency), pill(ORDER_ST[o.status])),
@@ -1014,7 +1041,19 @@ async function clienteDetalle(id) {
       h('p', { class: 'hint', style: 'margin-top:8px' }, 'Creado: ' + fmtDate(o.createdAt) + (o.paidAt ? ' · Pagado: ' + fmtDate(o.paidAt) : '') + (o.nextBilling ? ' · Próximo cobro: ' + fmtDate(o.nextBilling) : '') + (o.accessUntil ? ' · Acceso hasta: ' + fmtDate(o.accessUntil) : '')),
       pays.length ? h('p', { class: 'hint' }, 'Pagos: ' + pays.map(function (p) { return money(p.amount, p.currency) + ' (' + fmtDate(p.at) + ')'; }).join(', ')) : null,
       h('div', { class: 'acts', style: 'justify-content:flex-start' },
-        h('button', { class: 'btn btn-y sm', type: 'button', on: { click: async function () { try { var body = { status: st.value, notes: nt.value }; if (sg) body.stage = sg.value; await api('PATCH', '/api/admin/orders/' + o.id, body); toast('Pedido actualizado.'); refresh(); } catch (e) { toast(e.message); } } } }, 'Guardar cambios'),
+        h('button', { class: 'btn btn-y sm', type: 'button', on: { click: async function () {
+          try {
+            var body = { status: st.value, notes: nt.value };
+            if (sg) {
+              body.stage = sg.value;
+              if (sg.value === '4') body.status = 'delivered';
+              else if (st.value === 'delivered') body.stage = '4';
+            }
+            await api('PATCH', '/api/admin/orders/' + o.id, body);
+            toast('Pedido actualizado.');
+            refresh();
+          } catch (e) { toast(e.message); }
+        } } }, 'Guardar cambios'),
         h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { payModal(o, refresh); } } }, ico('card'), 'Registrar pago'))));
   });
   if (!d.orders.length) ordersBox.appendChild(h('div', { class: 'empty' }, 'Este cliente todavía no tiene pedidos.'));
