@@ -89,7 +89,13 @@ jQuery(document).ready(function ($) {
                 actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-quarantine-file" data-file="' + t.full_path + '" data-id="' + t.id + '">🔒 Mover a Cuarentena Segura</button>';
             } else if (t.clean_action === 'clean_db_option') {
                 actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="' + t.full_path + '" data-id="' + t.id + '">🗄️ Limpiar Opción de Base de Datos</button>';
+            } else if (t.clean_action === 'clean_post_injection') {
+                actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_post_injection" data-target="' + t.full_path + '" data-id="' + t.id + '">📝 Limpiar Entrada/Plantilla</button>';
+            } else if (t.clean_action === 'remove_cron_hook') {
+                actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="remove_cron_hook" data-target="' + t.full_path + '" data-id="' + t.id + '">⏱️ Eliminar Tarea Cron</button>';
             }
+
+            var whitelistBtn = '<button type="button" class="btn-ng btn-ng-outline btn-whitelist-item" data-target="' + t.file + '" data-id="' + t.id + '" title="Omitir en futuros escaneos">✓ Permitir / Falso Positivo</button>';
 
             var item = $('<div class="threat-item ' + sevClass + '" id="threat-' + t.id + '">' +
                 '<div class="threat-header">' +
@@ -99,7 +105,7 @@ jQuery(document).ready(function ($) {
                 '<p class="threat-desc">' + escapeHtml(t.desc) + '</p>' +
                 '<div class="threat-loc"><code>' + escapeHtml(t.file) + (t.line > 0 ? ' : Línea ' + t.line : '') + '</code></div>' +
                 (t.code ? '<pre class="threat-snippet"><code>' + escapeHtml(t.code) + '</code></pre>' : '') +
-                '<div class="threat-actions">' + actBtn + '</div>' +
+                '<div class="threat-actions">' + actBtn + ' ' + whitelistBtn + '</div>' +
             '</div>');
 
             $list.append(item);
@@ -209,6 +215,50 @@ jQuery(document).ready(function ($) {
                     $btn.prop('disabled', false).text('Restaurar');
                     alert(res.data && res.data.message ? res.data.message : 'Error al restaurar.');
                 }
+            }
+        });
+    });
+
+    // 5. Marcar como Falso Positivo / Permitir
+    $(document).on('click', '.btn-whitelist-item', function () {
+        var $btn = $(this);
+        var target = $btn.data('target');
+        var id = $btn.data('id');
+
+        $btn.prop('disabled', true).text('Guardando…');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_whitelist_item',
+                nonce: nexaguardData.nonce,
+                target: target
+            },
+            success: function (res) {
+                if (res.success) {
+                    $('#threat-' + id).fadeOut(350, function () {
+                        $(this).remove();
+                        var count = $('#threats-list .threat-item').length;
+                        $('#kpi-threats').text(count);
+                        $('#threats-badge').text(count + ' hallazgos');
+                        if (count === 0) {
+                            $('#scan-status-card').removeClass('status-danger').addClass('status-clean');
+                            $('#status-icon').text('✓');
+                            $('#status-heading').text('Sistema 100% limpio y protegido');
+                            $('#threats-badge').removeClass('danger').addClass('ok');
+                            $('#threats-list').html('<div class="empty-state"><p>🛡️ No hay amenazas activas detectadas en este momento.</p></div>');
+                        }
+                    });
+                } else {
+                    $btn.prop('disabled', false).text('Reintentar');
+                    alert('No se pudo añadir a la lista de permitidos.');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).text('Reintentar');
+                alert('Error de conexión.');
             }
         });
     });

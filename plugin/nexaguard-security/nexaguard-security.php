@@ -3,7 +3,7 @@
  * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
  * Plugin URI: https://nexaguards.com
  * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://nexaguards.com
  * License: GPLv2 or later
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.0.0');
+define('NEXAGUARD_VERSION', '1.1.0');
 define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
 define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
 
@@ -45,6 +45,7 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_quarantine_file', array($this, 'ajax_quarantine_file'));
         add_action('wp_ajax_nexaguard_save_settings', array($this, 'ajax_save_settings'));
         add_action('wp_ajax_nexaguard_restore_quarantine', array($this, 'ajax_restore_quarantine'));
+        add_action('wp_ajax_nexaguard_whitelist_item', array($this, 'ajax_whitelist_item'));
 
         // Aviso en el pie de página de administración
         add_filter('admin_footer_text', array($this, 'admin_footer_text'));
@@ -209,6 +210,19 @@ class NexaGuard_Plugin {
         } else {
             wp_send_json_error($result);
         }
+    }
+
+    public function ajax_whitelist_item() {
+        check_ajax_referer('nexaguard_security_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        $target = isset($_POST['target']) ? sanitize_text_field($_POST['target']) : '';
+        $cleaner = new NexaGuard_Cleaner();
+        $result = $cleaner->whitelist_item($target);
+
+        wp_send_json_success($result);
     }
 
     public function admin_footer_text($text) {

@@ -127,7 +127,18 @@ $quarantine_log = get_option('nexaguard_quarantine_log', array());
                                 <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
                                     🗄️ Limpiar Opción de Base de Datos
                                 </button>
+                            <?php elseif ($t['clean_action'] === 'clean_post_injection'): ?>
+                                <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_post_injection" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                    📝 Limpiar Entrada/Plantilla
+                                </button>
+                            <?php elseif ($t['clean_action'] === 'remove_cron_hook'): ?>
+                                <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="remove_cron_hook" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                    ⏱️ Eliminar Tarea Cron
+                                </button>
                             <?php endif; ?>
+                            <button type="button" class="btn-ng btn-ng-outline btn-whitelist-item" data-target="<?php echo esc_attr($t['file']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Omitir en futuros escaneos">
+                                ✓ Permitir / Falso Positivo
+                            </button>
                         </div>
                     </div>
                 <?php endforeach; ?>

@@ -62,14 +62,20 @@ class NexaGuard_Cleaner {
     }
 
     public function clean($type, $target) {
-        if ($type === 'sanitize_injection' || $type === 'clearfake') {
+        if ($type === 'sanitize_injection' || $type === 'clearfake' || $type === 'etherhiding' || $type === 'clickfix') {
             return $this->clean_file_injection($target);
         } elseif ($type === 'clean_db_option') {
             return $this->clean_db_option($target);
+        } elseif ($type === 'clean_post_injection') {
+            return $this->clean_post_injection(intval($target));
+        } elseif ($type === 'remove_cron_hook') {
+            return $this->remove_cron_hook($target);
         } elseif ($type === 'quarantine') {
             return $this->quarantine_file($target);
         } elseif ($type === 'downgrade_user') {
             return $this->downgrade_user(intval($target));
+        } elseif ($type === 'whitelist') {
+            return $this->whitelist_item($target);
         }
 
         return array('success' => false, 'message' => 'Acción de desinfección no reconocida.');
@@ -94,33 +100,71 @@ class NexaGuard_Cleaner {
         $clean_content = preg_replace('/<script[^>]*src=["\']data:text\/javascript;base64,[A-Za-z0-9+\/]+["\'][^>]*><\/script>/i', '', $content);
         $clean_content = preg_replace('/<script[^>]*src=["\']data:text\/javascript;base64,[A-Za-z0-9+\/]+["\'][^>]*\/>/i', '', $clean_content);
 
-        // Limpiar llamadas conocidas de RPC EtherHiding
+        // Limpiar llamadas conocidas de RPC EtherHiding / Blockchain contracts
         $clean_content = preg_replace('/load_\("0x[a-fA-F0-9]{40}"\)[^;]*;/i', '', $clean_content);
+        $clean_content = preg_replace('/<script[^>]*>[^<]*(bsc-testnet|0xA1decFB|0x46790e2|turnstile|challenge-platform)[^<]*<\/script>/i', '', $clean_content);
 
         if ($clean_content !== $content) {
             file_put_contents($full_path, $clean_content);
             return array('success' => true, 'message' => 'Inyección maliciosa erradicada con éxito. Se guardó copia de seguridad.');
         }
 
-        return array('success' => false, 'message' => 'No se pudo limpiar automáticamente el patrón. Te recomendamos aislar el archivo o restaurarlo de un backup limpio.');
+        return array('success' => false, 'message' => 'No se pudo limpiar automáticamente el patrón. Te recomendamos aislar el archivo en cuarentena.');
     }
 
     private function clean_db_option($option_name) {
         $val = get_option($option_name);
-        if (!$val) {
+        if ($val === false) {
             return array('success' => false, 'message' => 'Opción no encontrada en la base de datos.');
         }
 
-        // Si la opción es una cadena con inyección de script, limpiarla
         if (is_string($val)) {
             $cleaned = preg_replace('/<script[^>]*data:text\/javascript;base64,[^>]*><\/script>/i', '', $val);
+            $cleaned = preg_replace('/<script[^>]*src=["\']data:text\/javascript;base64,[^>]*><\/script>/i', '', $cleaned);
+            $cleaned = preg_replace('/<script[^>]*>[^<]*(bsc-testnet|0xA1decFB|0x46790e2|turnstile|challenge-platform)[^<]*<\/script>/i', '', $cleaned);
             if ($cleaned !== $val) {
                 update_option($option_name, $cleaned);
                 return array('success' => true, 'message' => 'Opción de base de datos desinfectada exitosamente.');
             }
         }
 
-        return array('success' => false, 'message' => 'Revisa la opción manualmente en phpMyAdmin para no perder datos legítimos.');
+        return array('success' => false, 'message' => 'Revisa la opción manualmente para no perder configuraciones del tema.');
+    }
+
+    private function clean_post_injection($post_id) {
+        $post = get_post($post_id);
+        if (!$post) {
+            return array('success' => false, 'message' => 'Publicación o plantilla no encontrada.');
+        }
+
+        $content = $post->post_content;
+        $cleaned = preg_replace('/<script[^>]*data:text\/javascript;base64,[^>]*><\/script>/i', '', $content);
+        $cleaned = preg_replace('/<script[^>]*src=["\']data:text\/javascript;base64,[A-Za-z0-9+\/]+["\'][^>]*><\/script>/i', '', $cleaned);
+        $cleaned = preg_replace('/<script[^>]*>[^<]*(bsc-testnet|0xA1decFB|0x46790e2|turnstile|challenge-platform)[^<]*<\/script>/i', '', $cleaned);
+
+        if ($cleaned !== $content) {
+            wp_update_post(array(
+                'ID' => $post_id,
+                'post_content' => $cleaned
+            ));
+            return array('success' => true, 'message' => 'Plantilla/Publicación desinfectada exitosamente.');
+        }
+
+        return array('success' => false, 'message' => 'No se encontraron scripts desinfectables en esta entrada.');
+    }
+
+    private function remove_cron_hook($hook_name) {
+        wp_clear_scheduled_hook($hook_name);
+        return array('success' => true, 'message' => "Tarea programada '{$hook_name}' removida del programador.");
+    }
+
+    public function whitelist_item($target) {
+        $whitelist = get_option('nexaguard_whitelisted_items', array());
+        if (!in_array($target, $whitelist)) {
+            $whitelist[] = $target;
+            update_option('nexaguard_whitelisted_items', $whitelist);
+        }
+        return array('success' => true, 'message' => 'Elemento agregado a la lista blanca de permitidos.');
     }
 
     private function downgrade_user($user_id) {
