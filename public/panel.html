@@ -939,6 +939,33 @@ CV.sitios = async function () {
   });
   if (!d.sites.length) grid.appendChild(h('div', { class: 'empty', style: 'grid-column:1/-1' }, 'Aún no has agregado ningún sitio.'));
   root.appendChild(grid);
+
+  root.appendChild(h('div', { class: 'card', style: 'margin-top:16px;background:linear-gradient(135deg,rgba(255,207,51,.08),rgba(107,140,255,.05));border:1.5px solid rgba(255,207,51,.35)' },
+    h('div', { style: 'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px' },
+      h('div', { style: 'flex:1;min-width:240px' },
+        h('span', { class: 'pill warn', style: 'margin-bottom:8px;display:inline-block' }, '🛡️ Plugin Oficial para WordPress'),
+        h('h3', { style: 'margin:0 0 6px' }, 'NexaGuard Security: Auditoría interna y erradicación'),
+        h('p', { class: 'hint', style: 'margin:0;line-height:1.5' }, 'Instala nuestro plugin en tu WordPress para escanear archivos internos, detectar y eliminar backdoors (ClearFake, webshells, PHP en uploads) y activar blindaje WAF en tiempo real.')
+      ),
+      h('div', { style: 'display:flex;gap:10px;align-items:center;flex-wrap:wrap' },
+        h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip', style: 'text-decoration:none' }, ico('shield'), 'Descargar Plugin (.zip)'),
+        h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () {
+          var m = modal('Instalación de NexaGuard Security', h('div', { class: 'stack' },
+            h('p', null, 'Sigue estos 3 sencillos pasos para proteger tu WordPress:'),
+            h('ol', { style: 'padding-left:20px;line-height:1.7;color:#cdd6f5' },
+              h('li', null, h('b', null, 'Descarga el plugin: '), 'Haz clic en el botón amarillo "Descargar Plugin (.zip)".'),
+              h('li', null, h('b', null, 'Súbelo a tu WordPress: '), 'En tu panel de WordPress ve a ', h('code', null, 'Plugins > Añadir nuevo > Subir plugin'), ' y selecciona el archivo zip.'),
+              h('li', null, h('b', null, 'Activa e inicia el escáner: '), 'Haz clic en ', h('b', null, 'Activar'), ' y luego en el menú ', h('b', null, 'NexaGuard'), ' presiona ', h('b', null, 'Iniciar Análisis Forense'), '.')
+            ),
+            h('div', { class: 'acts' },
+              h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip', style: 'text-decoration:none' }, ico('shield'), 'Descargar ahora'),
+              h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { m.close(); } } }, 'Cerrar')
+            )
+          ));
+        } } }, 'Instrucciones')
+      )
+    )
+  ));
   var url = h('input', { class: 'in', id: 'st-u', placeholder: 'tusitio.com', inputmode: 'url' }), lab = h('input', { class: 'in', id: 'st-l', placeholder: 'Ej: Mi tienda' }), own = h('input', { type: 'checkbox', id: 'st-o' });
   root.appendChild(h('form', { class: 'card', style: 'margin-top:16px', novalidate: true, on: { submit: async function (e) { e.preventDefault(); err.textContent = ''; try { await api('POST', '/api/sites', { url: url.value, label: lab.value, ownership: own.checked }); toast('Sitio agregado.'); render(); } catch (x) { err.textContent = x.message; } } } },
     h('h3', null, 'Agregar un sitio'),

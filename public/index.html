@@ -441,6 +441,12 @@ a[data-go],a[data-act]{cursor:pointer}
 .sc-verdict[data-v=limited]{border-color:var(--blue);background:rgba(107,140,255,.08)}
 .sc-counts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .sc-counts span{font-size:.82rem;font-weight:700;padding:.25em .8em;border-radius:999px;border:1px solid var(--line2)}
+.sc-plugin-callout{margin-top:18px;padding:20px 22px;border-radius:12px;background:linear-gradient(135deg,rgba(255,207,51,.1),rgba(107,140,255,.06));border:1.5px solid rgba(255,207,51,.45);display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;box-shadow:0 12px 30px -10px rgba(0,0,0,.6)}
+.sc-plugin-callout-txt{flex:1;min-width:260px}
+.sc-plugin-badge{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:800;letter-spacing:.06em;color:var(--yellow);text-transform:uppercase;background:rgba(255,207,51,.15);border:1px solid rgba(255,207,51,.3);padding:.25em .65em;border-radius:999px;margin-bottom:8px}
+.sc-plugin-callout-txt h4{font-size:1.05rem;font-weight:700;color:#fff;margin:0 0 6px}
+.sc-plugin-callout-txt p{font-size:.88rem;color:#b6c4eb;line-height:1.5;margin:0}
+.sc-plugin-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .sc-find{margin-top:26px;display:grid;gap:10px}
 .sc-find>h3{font-size:1.05rem;margin-bottom:2px}
 .fd{border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:14px 16px;background:rgba(255,255,255,.03);animation:fin .4s}
@@ -898,6 +904,16 @@ a[data-go],a[data-act]{cursor:pointer}
           <div class="log sc-log" id="scLog" aria-hidden="true"></div>
         </div>
         <div class="sc-find" id="scFind" aria-live="polite"></div>
+        <div class="sc-plugin-callout" id="scPluginCallout" hidden>
+          <div class="sc-plugin-callout-txt">
+            <span class="sc-plugin-badge">🛡️ Plugin Oficial para WordPress</span>
+            <h4>¿Quieres auditar y desinfectar tu web desde adentro?</h4>
+            <p>Descarga <b>NexaGuard Security</b>: analiza todos tus archivos PHP, carpetas <code>uploads/</code>, temas, <code>mu-plugins</code> y base de datos para erradicar ClearFake, backdoors y webshells con un clic.</p>
+          </div>
+          <div class="sc-plugin-acts">
+            <a href="/downloads/nexaguard-security.zip" class="btn btn-y" download style="text-decoration:none"><svg class="ic"><use href="#i-shield"/></svg>Descargar Plugin (.zip)</a>
+          </div>
+        </div>
         <div class="res-acts" id="scActions" hidden>
           <button type="button" class="btn btn-y" id="scToForm">Pedir limpieza o revisión a fondo</button>
           <button type="button" class="btn btn-o" id="scCopy"><svg class="ic"><use href="#i-copy"/></svg>Copiar informe</button>
@@ -2478,6 +2494,7 @@ function scRenderFindings() {
 function scReset() {
   SC.findings = []; SC.doneStages = 0; SC.running = 0; SC.done = null; S.scanLine = '';
   scLog.innerHTML = ''; $('#scFind').innerHTML = ''; $('#scVerdict').hidden = true; $('#scActions').hidden = true;
+  var pc = $('#scPluginCallout'); if (pc) pc.hidden = true;
   $('#scBar').style.width = '0%'; $('#scPct').textContent = '0%'; scBuildTiles();
 }
 function scSetBusy(b) {
@@ -2516,6 +2533,7 @@ function scFinish(ev) {
   var secs = ev.meta && ev.meta.duration_ms ? ' Duración del análisis: ' + (ev.meta.duration_ms / 1000).toFixed(1) + ' s.' : '';
   box.appendChild(el('p', 'scope', 'Análisis externo: solo ve lo público. No revisa archivos dentro del servidor ni la base de datos.' + secs));
   box.hidden = false; $('#scActions').hidden = false;
+  var pc = $('#scPluginCallout'); if (pc) pc.hidden = false;
   box.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
   var vt = (SC_VERDICT[ev.verdict] || ['', ''])[0];
   S.scanLine = 'Escáner web (' + new Date().toISOString().slice(0, 10) + '): ' + vt + ' · ' + (ev.counts.crit || 0) + ' graves, ' + (ev.counts.warn || 0) + ' avisos';
