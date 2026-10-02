@@ -150,6 +150,13 @@ td.wrap{white-space:normal;min-width:180px}
 .st.done .st-title{color:#c4f5df}
 .st.now .st-title{color:var(--yellow)}
 .st-desc{font-size:.8rem;color:var(--muted);line-height:1.45;margin-top:auto}
+.st-visit{margin-top:16px;padding:18px 20px;border-radius:12px;background:linear-gradient(135deg,rgba(61,232,164,.09),rgba(107,140,255,.05));border:1.5px solid rgba(61,232,164,.4);display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;box-shadow:0 12px 28px -12px rgba(0,0,0,.6)}
+.st-visit-txt{flex:1;min-width:240px}
+.st-visit-badge{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:800;letter-spacing:.06em;color:var(--green);text-transform:uppercase;background:rgba(61,232,164,.15);border:1px solid rgba(61,232,164,.3);padding:.25em .65em;border-radius:999px;margin-bottom:8px}
+.st-visit-txt h4{font-size:1.02rem;font-weight:700;color:#fff;margin:0 0 6px}
+.st-visit-txt p{font-size:.88rem;color:#b6c4eb;line-height:1.5;margin:0}
+.st-visit-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.st-visit-acts .btn{white-space:nowrap}
 .bar{height:8px;border-radius:8px;background:var(--line);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--yellow);border-radius:8px}
 
@@ -246,6 +253,8 @@ dialog::backdrop{background:rgba(3,6,20,.75);backdrop-filter:blur(3px)}
   .st-head{flex-direction:column;align-items:center;gap:4px;flex-shrink:0}
   .st-info{flex:1;min-width:0}
   .st-hud{flex-direction:column;gap:10px}
+  .st-visit{flex-direction:column;align-items:flex-start;gap:14px;padding:14px 12px}
+  .st-visit-acts{width:100%;justify-content:flex-start}
 }
 @media (max-width:520px){
   .side{padding:6px 8px;gap:6px}
@@ -818,7 +827,47 @@ function rescueProgressCard(cur, d) {
     );
   }));
 
-  return h('div', { class: 'card st-card', style: 'margin-top:16px' }, top, bar, hud, steps);
+  var visitBlock = null;
+  if (isDone) {
+    var sitesList = (d && d.sites && d.sites.length) ? d.sites : [];
+    var visitActs = h('div', { class: 'st-visit-acts' });
+
+    if (sitesList.length > 0) {
+      sitesList.forEach(function (s) {
+        var rawUrl = s.url || s.host || '';
+        var fullUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : ('https://' + rawUrl);
+        var label = s.label ? (s.label + ' (' + s.host + ')') : s.host;
+        visitActs.appendChild(h('a', {
+          class: 'btn btn-y sm',
+          href: fullUrl,
+          target: '_blank',
+          rel: 'noopener noreferrer'
+        }, ico('globe'), 'Visitar ' + label + ' ↗'));
+      });
+      visitActs.appendChild(h('button', {
+        class: 'btn btn-o sm',
+        type: 'button',
+        on: { click: function () { go('analisis'); } }
+      }, ico('search'), 'Ver reporte de seguridad'));
+    } else {
+      visitActs.appendChild(h('button', {
+        class: 'btn btn-y sm',
+        type: 'button',
+        on: { click: function () { go('sitios'); } }
+      }, ico('globe'), 'Registrar la dirección de mi web'));
+    }
+
+    visitBlock = h('div', { class: 'st-visit' },
+      h('div', { class: 'st-visit-txt' },
+        h('div', { class: 'st-visit-badge' }, '🛡️ Certificado de Desinfección · Sitio 100% Operativo'),
+        h('h4', null, 'Tu sitio web está completamente limpio, seguro y en línea'),
+        h('p', null, 'La erradicación forense de malware y el blindaje perimetral han concluido con éxito. Te invitamos a visitar y navegar por tu web para comprobar que todos tus contenidos, formularios y funciones operan con total normalidad, estabilidad y rapidez.')
+      ),
+      visitActs
+    );
+  }
+
+  return h('div', { class: 'card st-card', style: 'margin-top:16px' }, top, bar, hud, steps, visitBlock);
 }
 
 var CV = {};
