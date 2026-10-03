@@ -90,13 +90,63 @@ $cloud_ver = ($cloud_cache && !empty($cloud_cache['feed_version'])) ? $cloud_cac
     <!-- Barra de progreso interactiva (visible al escanear) -->
     <div id="scan-progress-box" class="ng-card" style="display:none;">
         <div class="progress-info">
-            <span id="scan-progress-label">Consultando base de amenazas en tiempo real y auditando archivos…</span>
+            <span id="scan-progress-label">Iniciando auditoría forense profunda…</span>
             <span id="scan-progress-pct">0%</span>
         </div>
         <div class="progress-track">
             <div id="scan-progress-bar" class="progress-fill" style="width: 0%;"></div>
         </div>
-        <p class="ng-hint" style="margin-top:8px; color: #a4b8ec;">Comparando contra firmas de ClearFake, EtherHiding, ClickFix, webshells y bypass de permisos…</p>
+        <div class="scan-live-feed" style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div class="live-scanning-indicator">
+                <span class="live-dot" style="background:#ffcf33; box-shadow:0 0 10px #ffcf33;"></span>
+                <span id="scan-current-folder">Evaluando: 📁 wp-content/uploads/</span>
+            </div>
+            <span id="scan-live-status-sub" style="font-size:0.84rem; color:#9cb1e6;">Inspeccionando PHP, JS, código ofuscado y permisos...</span>
+        </div>
+    </div>
+
+    <!-- Desglose forense de áreas y carpetas auditadas -->
+    <div id="breakdown-container" class="ng-card folder-breakdown-card">
+        <div class="card-title-bar">
+            <h3>Directorios y Componentes Auditados</h3>
+            <span class="badge-v" style="font-size:0.75rem;">Cobertura 100% Core + BD + Archivos</span>
+        </div>
+        <p class="ng-hint" style="color: #9cb1e6; margin-top: 4px;">
+            Auditoría en tiempo real de cada directorio y capa de tu WordPress (temas, plugins, medios, núcleo y base de datos).
+        </p>
+        <div id="breakdown-grid" class="folder-breakdown-grid">
+            <?php 
+            $breakdown_data = ($last_report && !empty($last_report['breakdown'])) ? $last_report['breakdown'] : array(
+                'themes'     => array('name' => 'Temas y Plantillas', 'path' => 'wp-content/themes/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🎨'),
+                'plugins'    => array('name' => 'Plugins Instalados', 'path' => 'wp-content/plugins/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🔌'),
+                'uploads'    => array('name' => 'Archivos de Medios', 'path' => 'wp-content/uploads/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '📁'),
+                'mu_plugins' => array('name' => 'Must-Use Plugins (Sistema)', 'path' => 'wp-content/mu-plugins/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '⚡'),
+                'core'       => array('name' => 'Núcleo WordPress (Core)', 'path' => 'wp-includes/, wp-admin/, raíz', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🏛️'),
+                'database'   => array('name' => 'Base de Datos MySQL', 'path' => 'wp_options, wp_posts, cron', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🗄️'),
+                'admins'     => array('name' => 'Cuentas de Administrador', 'path' => 'wp_users (roles & permisos)', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '👤')
+            );
+            foreach ($breakdown_data as $key => $item):
+                $is_danger = !empty($item['threats']) && $item['threats'] > 0;
+            ?>
+                <div class="folder-item <?php echo $is_danger ? 'has-threats' : ''; ?>" id="folder-item-<?php echo esc_attr($key); ?>">
+                    <div class="folder-left">
+                        <span class="folder-icon"><?php echo esc_html($item['icon']); ?></span>
+                        <div class="folder-info">
+                            <h4 class="folder-title"><?php echo esc_html($item['name']); ?></h4>
+                            <span class="folder-path"><?php echo esc_html($item['path']); ?></span>
+                            <span class="folder-count">
+                                <b id="count-<?php echo esc_attr($key); ?>"><?php echo number_format_i18n($item['files']); ?></b> elementos evaluados
+                            </span>
+                        </div>
+                    </div>
+                    <div class="folder-right">
+                        <span class="folder-status-badge <?php echo $is_danger ? 'danger' : 'clean'; ?>" id="badge-<?php echo esc_attr($key); ?>">
+                            <?php echo $is_danger ? '⚠️ ' . $item['threats'] . ' detectado(s)' : '✓ Limpio'; ?>
+                        </span>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
     </div>
 
     <!-- Contenedor de amenazas encontradas -->

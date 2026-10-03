@@ -108,6 +108,17 @@ class NexaGuard_Scanner {
         $this->scanned_files = 0;
         $this->scanned_options = 0;
 
+        // Desglose forense de áreas y carpetas auditadas
+        $this->breakdown = array(
+            'themes'     => array('name' => 'Temas y Plantillas', 'path' => 'wp-content/themes/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🎨'),
+            'plugins'    => array('name' => 'Plugins Instalados', 'path' => 'wp-content/plugins/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🔌'),
+            'uploads'    => array('name' => 'Archivos de Medios', 'path' => 'wp-content/uploads/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '📁'),
+            'mu_plugins' => array('name' => 'Must-Use Plugins (Sistema)', 'path' => 'wp-content/mu-plugins/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '⚡'),
+            'core'       => array('name' => 'Núcleo WordPress (Core)', 'path' => 'wp-includes/, wp-admin/, raíz', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🏛️'),
+            'database'   => array('name' => 'Base de Datos MySQL', 'path' => 'wp_options, wp_posts, cron', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🗄️'),
+            'admins'     => array('name' => 'Cuentas de Administrador', 'path' => 'wp_users (roles & permisos)', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '👤')
+        );
+
         // 1. Escanear carpeta de subidas (Uploads) con filtro inteligente de falsos positivos
         $this->scan_uploads();
 
@@ -127,6 +138,8 @@ class NexaGuard_Scanner {
         $this->scan_database();
 
         // 7. Verificar cuentas de administradores
+        $this->scan_admin_users();
+
         $cloud_intel = $this->sync_cloud_threat_intel();
 
         $elapsed = round(microtime(true) - $start_time, 2);
@@ -138,6 +151,7 @@ class NexaGuard_Scanner {
             'scanned_options' => $this->scanned_options,
             'threats_count'   => count($this->threats),
             'threats'         => $this->threats,
+            'breakdown'       => $this->breakdown,
             'cloud_intel'     => $cloud_intel,
             'status'          => count($this->threats) === 0 ? 'clean' : 'infected'
         );
@@ -198,6 +212,7 @@ class NexaGuard_Scanner {
         foreach ($iterator as $item) {
             if ($item->isFile()) {
                 $this->scanned_files++;
+                $this->breakdown['uploads']['files']++;
                 $ext = strtolower($item->getExtension());
                 $filepath = $item->getPathname();
                 $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $filepath);
@@ -247,7 +262,7 @@ class NexaGuard_Scanner {
                                 'code'        => htmlspecialchars($snippet),
                                 'can_clean'   => true,
                                 'clean_action'=> 'quarantine'
-                            ));
+                            ), 'uploads');
                             break;
                         }
                     }
@@ -271,14 +286,14 @@ class NexaGuard_Scanner {
                             'code'        => htmlspecialchars(substr($content, 0, 180)),
                             'can_clean'   => true,
                             'clean_action'=> 'quarantine'
-                        ));
+                        ), 'uploads');
                     }
                     continue;
                 }
 
                 // Escanear contenido de archivos .ico, .txt, .svg, .js por si tienen código PHP/JS embebido o malware
                 if (in_array($ext, array('ico', 'txt', 'svg', 'htm', 'html', 'js')) && $item->getSize() < 500000) {
-                    $this->check_file_content($filepath);
+                    $this->check_file_content($filepath, 'uploads');
                 }
             }
         }
@@ -314,7 +329,8 @@ class NexaGuard_Scanner {
                 $ext = strtolower($item->getExtension());
                 if (in_array($ext, array('php', 'js', 'html', 'htm', 'ico')) && $item->getSize() < 1200000) {
                     $this->scanned_files++;
-                    $this->check_file_content($filepath, 'plugin');
+                    $this->breakdown['plugins']['files']++;
+                    $this->check_file_content($filepath, 'plugins');
                 }
             }
         }
@@ -333,7 +349,8 @@ class NexaGuard_Scanner {
             $filepath = $mu_dir . '/' . $file;
             if (is_file($filepath) && pathinfo($filepath, PATHINFO_EXTENSION) === 'php') {
                 $this->scanned_files++;
-                $this->check_file_content($filepath, 'mu_plugin');
+                $this->breakdown['mu_plugins']['files']++;
+                $this->check_file_content($filepath, 'mu_plugins');
             }
         }
     }
@@ -355,7 +372,8 @@ class NexaGuard_Scanner {
                 $ext = strtolower($item->getExtension());
                 if (in_array($ext, array('php', 'js', 'html', 'htm')) && $item->getSize() < 1200000) {
                     $this->scanned_files++;
-                    $this->check_file_content($item->getPathname(), 'theme');
+                    $this->breakdown['themes']['files']++;
+                    $this->check_file_content($item->getPathname(), 'themes');
                 }
             }
         }
@@ -378,7 +396,8 @@ class NexaGuard_Scanner {
         foreach ($root_files as $filepath) {
             if (file_exists($filepath)) {
                 $this->scanned_files++;
-                $this->check_file_content($filepath, 'core_root');
+                $this->breakdown['core']['files']++;
+                $this->check_file_content($filepath, 'core');
             }
         }
 
@@ -400,7 +419,8 @@ class NexaGuard_Scanner {
             foreach ($critical_includes as $filepath) {
                 if (file_exists($filepath)) {
                     $this->scanned_files++;
-                    $this->check_file_content($filepath, 'core_includes');
+                    $this->breakdown['core']['files']++;
+                    $this->check_file_content($filepath, 'core');
                 }
             }
         }
@@ -450,7 +470,7 @@ class NexaGuard_Scanner {
                     'code'        => htmlspecialchars($snippet),
                     'can_clean'   => true,
                     'clean_action'=> in_array($p['type'], array('clearfake', 'etherhiding', 'clickfix')) ? 'sanitize_injection' : 'quarantine'
-                ));
+                ), $location);
             }
         }
     }
@@ -487,6 +507,7 @@ class NexaGuard_Scanner {
                 }
 
                 $this->scanned_options++;
+                $this->breakdown['database']['files']++;
                 $val = $row->option_value;
                 foreach ($this->patterns as $key => $p) {
                     if (preg_match($p['regex'], $val, $matches)) {
@@ -503,7 +524,7 @@ class NexaGuard_Scanner {
                             'can_clean'   => true,
                             'clean_action'=> 'clean_db_option',
                             'is_db'       => true
-                        ));
+                        ), 'database');
                         break;
                     }
                 }
@@ -528,6 +549,7 @@ class NexaGuard_Scanner {
         if ($posts) {
             foreach ($posts as $post) {
                 $this->scanned_options++;
+                $this->breakdown['database']['files']++;
                 foreach ($this->patterns as $key => $p) {
                     if (preg_match($p['regex'], $post->post_content, $matches)) {
                         $this->add_threat(array(
@@ -543,7 +565,7 @@ class NexaGuard_Scanner {
                             'can_clean'   => true,
                             'clean_action'=> 'clean_post_injection',
                             'is_db'       => true
-                        ));
+                        ), 'database');
                     }
                 }
             }
@@ -555,6 +577,7 @@ class NexaGuard_Scanner {
             foreach ($cron as $timestamp => $cronhooks) {
                 if (!is_array($cronhooks)) continue;
                 foreach ($cronhooks as $hook => $keys) {
+                    $this->breakdown['database']['files']++;
                     if (preg_match('/(eval|base64|system|shell|passthru|exec|assert|backdoor|clearfake)/i', $hook)) {
                         $this->add_threat(array(
                             'id'          => md5('cron_' . $hook),
@@ -569,7 +592,7 @@ class NexaGuard_Scanner {
                             'can_clean'   => true,
                             'clean_action'=> 'remove_cron_hook',
                             'is_db'       => true
-                        ));
+                        ), 'database');
                     }
                 }
             }
@@ -582,6 +605,7 @@ class NexaGuard_Scanner {
     private function scan_admin_users() {
         $admins = get_users(array('role' => 'administrator'));
         foreach ($admins as $admin) {
+            $this->breakdown['admins']['files']++;
             $email = $admin->user_email;
             if (preg_match('/@(tempmail|guerrillamail|10minutemail|sharklasers|mailinator|yopmail|dispostable)\./i', $email)) {
                 $this->add_threat(array(
@@ -597,12 +621,24 @@ class NexaGuard_Scanner {
                     'can_clean'   => true,
                     'clean_action'=> 'downgrade_user',
                     'is_db'       => true
-                ));
+                ), 'admins');
             }
         }
     }
 
-    private function add_threat($threat) {
+    private function add_threat($threat, $module = '') {
         $this->threats[] = $threat;
+        if (!empty($module)) {
+            $norm = $module;
+            if ($norm === 'plugin') $norm = 'plugins';
+            if ($norm === 'theme') $norm = 'themes';
+            if ($norm === 'mu_plugin') $norm = 'mu_plugins';
+            if ($norm === 'core_root' || $norm === 'core_includes') $norm = 'core';
+
+            if (isset($this->breakdown[$norm])) {
+                $this->breakdown[$norm]['threats']++;
+                $this->breakdown[$norm]['status'] = 'infected';
+            }
+        }
     }
 }

@@ -474,3 +474,104 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     font-size: 0.88rem;
 }
+
+/* Desglose de Carpetas y Componentes Auditados */
+.folder-breakdown-card {
+    margin-top: 20px;
+}
+.folder-breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+}
+.folder-item {
+    background: rgba(14, 22, 62, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.25s ease;
+}
+.folder-item:hover {
+    border-color: rgba(255, 207, 51, 0.35);
+    background: rgba(17, 26, 68, 0.95);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+.folder-item.has-threats {
+    border-color: rgba(255, 69, 96, 0.5);
+    background: rgba(45, 12, 24, 0.5);
+}
+.folder-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+.folder-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+.folder-info {
+    min-width: 0;
+}
+.folder-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.folder-path {
+    font-family: monospace;
+    font-size: 0.76rem;
+    color: #ffcf33;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.folder-count {
+    font-size: 0.8rem;
+    color: #9cb1e6;
+    margin-top: 3px;
+    display: block;
+}
+.folder-status-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.folder-status-badge.clean {
+    background: rgba(61, 232, 164, 0.15);
+    color: #3de8a4;
+    border: 1px solid rgba(61, 232, 164, 0.3);
+}
+.folder-status-badge.danger {
+    background: rgba(255, 69, 96, 0.2);
+    color: #ff8ba0;
+    border: 1px solid rgba(255, 69, 96, 0.5);
+}
+.live-scanning-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 207, 51, 0.12);
+    border: 1px solid rgba(255, 207, 51, 0.3);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.84rem;
+    color: #ffcf33;
+    font-family: monospace;
+    font-weight: 600;
+}
+

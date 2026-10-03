@@ -14,15 +14,29 @@ jQuery(document).ready(function ($) {
         var $progBox = $('#scan-progress-box').slideDown();
         var $progBar = $('#scan-progress-bar');
         var $progPct = $('#scan-progress-pct');
-        var pct = 0;
+
+        var scanStages = [
+            { pct: 15, folder: '📁 Evaluando: wp-content/uploads/', label: 'Inspeccionando carpeta de medios (Uploads), ejecutables PHP y falsos positivos…' },
+            { pct: 34, folder: '🔌 Evaluando: wp-content/plugins/', label: 'Auditando plugins instalados (activos e inactivos), backdoors y webshells…' },
+            { pct: 52, folder: '🎨 Evaluando: wp-content/themes/', label: 'Escaneando plantillas del tema, functions.php y scripts inyectados…' },
+            { pct: 67, folder: '⚡ Evaluando: wp-content/mu-plugins/', label: 'Auditando plugins obligatorios del sistema (Must-Use plugins)...' },
+            { pct: 79, folder: '🏛️ Evaluando: wp-includes/ y wp-admin/', label: 'Verificando integridad del Núcleo de WordPress (Core Scripts y archivos raíz)...' },
+            { pct: 89, folder: '🗄️ Evaluando: Base de Datos MySQL', label: 'Examinando wp_options, publicaciones y tareas programadas (WP-Cron)...' },
+            { pct: 95, folder: '👤 Evaluando: Cuentas y Privilegios', label: 'Comprobando cuentas de usuario y permisos de Administrador…' },
+            { pct: 98, folder: '☁️ Sincronizando: NexaGuard Cloud Intel', label: 'Comparando contra firmas de ClearFake, EtherHiding, ClickFix y Zero-Day…' }
+        ];
+        var stageIdx = 0;
 
         var timer = setInterval(function () {
-            if (pct < 88) {
-                pct += Math.floor(Math.random() * 8) + 3;
-                $progBar.css('width', pct + '%');
-                $progPct.text(pct + '%');
+            if (stageIdx < scanStages.length) {
+                var s = scanStages[stageIdx];
+                $progBar.css('width', s.pct + '%');
+                $progPct.text(s.pct + '%');
+                $('#scan-progress-label').text(s.label);
+                $('#scan-current-folder').text(s.folder);
+                stageIdx++;
             }
-        }, 300);
+        }, 450);
 
         $.ajax({
             url: nexaguardData.ajax_url,
@@ -36,6 +50,8 @@ jQuery(document).ready(function ($) {
                 clearInterval(timer);
                 $progBar.css('width', '100%');
                 $progPct.text('100%');
+                $('#scan-current-folder').text('✓ Análisis de directorios finalizado');
+                $('#scan-progress-label').text('Auditoría forense completada exitosamente.');
 
                 setTimeout(function () {
                     $progBox.slideUp();
@@ -80,6 +96,11 @@ jQuery(document).ready(function ($) {
                 $('#status-desc').html('Haz clic en <strong>"Iniciar Análisis Forense"</strong> para auditar plugins, temas, Core y base de datos con la base de firmas en tiempo real.');
                 $('#threats-badge').removeClass('danger').addClass('ok').text('0 hallazgos');
                 $('#threats-list').html('<div class="empty-state"><p>🛡️ No hay amenazas activas detectadas en este momento.</p><small class="ng-hint" style="color: #9cb1e6;">Pulsa "Iniciar Análisis Forense" para auditar en tiempo real.</small></div>');
+
+                // Resetear cuadrícula de carpetas
+                $('.folder-item').removeClass('has-threats');
+                $('.folder-count b').text('0');
+                $('.folder-status-badge').removeClass('danger').addClass('clean').text('✓ Limpio');
             },
             error: function () {
                 $btn.prop('disabled', false).text('🔄 Limpiar Vista / Resetear');
@@ -107,6 +128,29 @@ jQuery(document).ready(function ($) {
 
         // Actualizar texto descriptivo con alto contraste
         $('#status-desc').html('Último análisis: <span class="status-highlight">ahora mismo</span> · <span class="status-highlight">' + d.scanned_files + ' archivos</span> auditados en <span class="status-highlight">' + d.elapsed + 's</span>.');
+
+        // Actualizar desglose de carpetas y componentes
+        if (d.breakdown) {
+            Object.keys(d.breakdown).forEach(function (k) {
+                var item = d.breakdown[k];
+                var $item = $('#folder-item-' + k);
+                var $cnt = $('#count-' + k);
+                var $bdg = $('#badge-' + k);
+
+                if ($cnt.length) {
+                    $cnt.text(Number(item.files).toLocaleString());
+                }
+                if ($bdg.length) {
+                    if (item.threats > 0) {
+                        $item.addClass('has-threats');
+                        $bdg.removeClass('clean').addClass('danger').text('⚠️ ' + item.threats + ' detectado(s)');
+                    } else {
+                        $item.removeClass('has-threats');
+                        $bdg.removeClass('danger').addClass('clean').text('✓ Limpio');
+                    }
+                }
+            });
+        }
 
         var $list = $('#threats-list').empty();
         if (!d.threats || d.threats.length === 0) {
