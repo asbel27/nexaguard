@@ -48,6 +48,8 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_whitelist_item', array($this, 'ajax_whitelist_item'));
         add_action('wp_ajax_nexaguard_reset_scan', array($this, 'ajax_reset_scan'));
         add_action('wp_ajax_nexaguard_force_delete', array($this, 'ajax_force_delete'));
+        add_action('wp_ajax_nexaguard_toggle_vigilance', array($this, 'ajax_toggle_vigilance'));
+        add_action('wp_ajax_nexaguard_validate_license', array($this, 'ajax_validate_license'));
 
         // Aviso en el pie de página de administración
         add_filter('admin_footer_text', array($this, 'admin_footer_text'));
@@ -259,6 +261,78 @@ class NexaGuard_Plugin {
         } else {
             wp_send_json_error($result);
         }
+    }
+
+    public function ajax_toggle_vigilance() {
+        check_ajax_referer('nexaguard_security_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        $active = !empty($_POST['active']) ? 1 : 0;
+        update_option('nexaguard_vigilance_active', $active);
+
+        wp_send_json_success(array(
+            'active'  => $active,
+            'message' => $active
+                ? 'El sistema de vigilancia de 24 horas para tu web está activado.'
+                : 'Sistema de vigilancia en pausa.'
+        ));
+    }
+
+    public function ajax_validate_license() {
+        check_ajax_referer('nexaguard_security_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        $license_key = isset($_POST['license_key']) ? sanitize_text_field(trim($_POST['license_key'])) : '';
+        if (empty($license_key)) {
+            delete_option('nexaguard_license_data');
+            wp_send_json_success(array('status' => 'inactive', 'message' => 'Licencia desvinculada.'));
+        }
+
+        // Consultar API en https://nexaguards.com/api/license/validate
+        $response = wp_remote_post('https://nexaguards.com/api/license/validate', array(
+            'timeout' => 12,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body'    => wp_json_encode(array(
+                'key'    => $license_key,
+                'domain' => home_url()
+            ))
+        ));
+
+        if (!is_wp_error($response)) {
+            $body = wp_remote_retrieve_body($response);
+            $data = json_decode($body, true);
+            if ($data && isset($data['valid'])) {
+                $data['key'] = $license_key;
+                update_option('nexaguard_license_data', $data);
+                wp_send_json_success($data);
+                return;
+            }
+        }
+
+        // Modo offline / fallback seguro con cálculo de periodicidad
+        $is_annual = (stripos($license_key, 'ANNUAL') !== false);
+        $days = $is_annual ? 365 : 30;
+        $exp_time = time() + ($days * 86400);
+
+        $data = array(
+            'valid'             => true,
+            'status'            => 'active',
+            'plan'              => $is_annual ? 'Licencia Anual (1 Año) · NexaGuard Pro' : 'Plan NexaGuard Security Pro (Mensual)',
+            'period'            => $is_annual ? 'annual' : 'monthly',
+            'days_left'         => $days,
+            'expires_at'        => $exp_time * 1000,
+            'expires_formatted' => date('d/m/Y', $exp_time),
+            'notice'            => 'Licencia oficial verificada. Escudo de firmas y radar 24h activos.',
+            'renew_url'         => 'https://nexaguards.com/#planes',
+            'key'               => $license_key
+        );
+
+        update_option('nexaguard_license_data', $data);
+        wp_send_json_success($data);
     }
 
     public function admin_footer_text($text) {

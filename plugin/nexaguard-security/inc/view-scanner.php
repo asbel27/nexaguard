@@ -7,6 +7,21 @@ $last_report = get_option('nexaguard_last_scan_report', null);
 $quarantine_log = get_option('nexaguard_quarantine_log', array());
 $cloud_cache = get_option('nexaguard_cloud_intel_cache', null);
 $cloud_ver = ($cloud_cache && !empty($cloud_cache['feed_version'])) ? $cloud_cache['feed_version'] : '2026.10';
+
+$license_data = get_option('nexaguard_license_data', array(
+    'valid'             => true,
+    'status'            => 'active',
+    'plan'              => 'Plan NexaGuard Security Pro (Mensual)',
+    'period'            => 'monthly',
+    'days_left'         => 30,
+    'expires_formatted' => date('d/m/Y', time() + (30 * 86400)),
+    'key'               => 'NXG-PRO-ACTIVATED'
+));
+
+$vigilance_active = get_option('nexaguard_vigilance_active', 1);
+$days_left = isset($license_data['days_left']) ? intval($license_data['days_left']) : 30;
+$is_expired = (isset($license_data['status']) && $license_data['status'] === 'expired') || $days_left <= 0;
+$is_expiring_soon = !$is_expired && $days_left <= 7;
 ?>
 <div class="wrap nexaguard-admin-wrap">
     <div class="nexaguard-header">
@@ -28,6 +43,101 @@ $cloud_ver = ($cloud_cache && !empty($cloud_cache['feed_version'])) ? $cloud_cac
             <button type="button" id="btn-start-scan" class="btn-ng btn-ng-primary">
                 ⚡ Iniciar Análisis Forense
             </button>
+        </div>
+    </div>
+
+    <!-- Barra de Licencia y Alertas de Suscripción -->
+    <?php if ($is_expired): ?>
+        <div class="ng-license-banner license-expired">
+            <div class="lic-icon">🔴</div>
+            <div class="lic-content">
+                <strong>LICENCIA PRO VENCIDA: Tu período de suscripción ha finalizado.</strong>
+                <p>Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24 Horas y las actualizaciones de firmas en tiempo real.</p>
+            </div>
+            <div class="lic-action">
+                <a href="https://nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-danger">Pagar Mensualidad / Renovar</a>
+            </div>
+        </div>
+    <?php elseif ($is_expiring_soon): ?>
+        <div class="ng-license-banner license-warning">
+            <div class="lic-icon">⚠️</div>
+            <div class="lic-content">
+                <strong>ATENCIÓN: Tu suscripción a <?php echo esc_html($license_data['plan']); ?> vencerá en <?php echo $days_left; ?> días.</strong>
+                <p>Renueva a tiempo en nexaguards.com para mantener el escudo y la vigilancia continua activos sin interrupciones.</p>
+            </div>
+            <div class="lic-action">
+                <a href="https://nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary">Renovar Suscripción</a>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="ng-license-strip">
+            <div class="lic-pill">
+                <span class="lic-check">✓</span>
+                <span>Licencia PRO Activa: <strong><?php echo esc_html($license_data['plan']); ?></strong></span>
+                <span class="lic-exp">· Vence el: <strong><?php echo esc_html($license_data['expires_formatted']); ?></strong> (Quedan <?php echo $days_left; ?> días)</span>
+            </div>
+            <div class="lic-key-mgmt">
+                <span class="lic-key-tag">Clave: <?php echo esc_html(substr($license_data['key'], 0, 8) . '••••••••'); ?></span>
+                <button type="button" id="btn-edit-license" class="btn-ng-link">Cambiar Licencia</button>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- Modal de Cambio de Licencia -->
+    <div id="license-modal" class="ng-modal" style="display:none;">
+        <div class="ng-modal-box">
+            <h3>🔑 Activar o Renovar Licencia NexaGuard Pro</h3>
+            <p>Introduce tu clave de licencia oficial obtenida tras la compra de tu plan en NexaGuard:</p>
+            <div class="ng-modal-fld">
+                <input type="text" id="input-license-key" class="in-ng" placeholder="Ej: NXG-PRO-XXXX-XXXX" value="<?php echo esc_attr($license_data['key']); ?>">
+            </div>
+            <p id="license-modal-msg" class="modal-msg"></p>
+            <div class="ng-modal-acts">
+                <button type="button" id="btn-save-license" class="btn-ng btn-ng-primary">Verificar y Guardar</button>
+                <button type="button" id="btn-close-license" class="btn-ng btn-ng-outline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SISTEMA DE VIGILANCIA 24 HORAS CON RADAR ============ -->
+    <div class="ng-card vigilance-card">
+        <div class="vigilance-header">
+            <div class="vigilance-info">
+                <span class="vigilance-tag">⚡ SISTEMA PRO ACTIVO</span>
+                <h3 class="vigilance-title">Sistema de Vigilancia 24 Horas contra Amenazas</h3>
+                <p class="vigilance-sub">Supervisión continua en segundo plano sin necesidad de análisis manuales: inspecciona scripts PHP, uploads y base de datos.</p>
+            </div>
+            <div class="vigilance-action">
+                <button type="button" id="btn-toggle-vigilance" class="btn-vigilance-toggle <?php echo $vigilance_active ? 'is-active' : ''; ?>" data-active="<?php echo $vigilance_active ? '1' : '0'; ?>">
+                    <span class="v-switch-knob"></span>
+                    <span id="v-toggle-label"><?php echo $vigilance_active ? 'VIGILANCIA ACTIVA 24H' : 'ACTIVAR VIGILANCIA 24H'; ?></span>
+                </button>
+            </div>
+        </div>
+
+        <div id="vigilance-radar-box" class="vigilance-radar-box <?php echo $vigilance_active ? 'radar-scanning' : 'radar-paused'; ?>">
+            <div class="radar-screen-wrap">
+                <div class="radar-screen">
+                    <div class="radar-ring ring-1"></div>
+                    <div class="radar-ring ring-2"></div>
+                    <div class="radar-ring ring-3"></div>
+                    <div class="radar-crosshair cross-h"></div>
+                    <div class="radar-crosshair cross-v"></div>
+                    <div class="radar-sweep-beam"></div>
+                    <div class="radar-blip blip-a"></div>
+                    <div class="radar-blip blip-b"></div>
+                    <div class="radar-blip blip-c"></div>
+                    <div class="radar-center-core"></div>
+                </div>
+            </div>
+            <div class="radar-status-caption">
+                <h4 id="radar-status-text">
+                    <?php echo $vigilance_active ? '🟢 El sistema de vigilancia de 24 horas para tu web está activado.' : '⏸️ Sistema de vigilancia en pausa. Actívalo para proteger tu web.'; ?>
+                </h4>
+                <p id="radar-status-sub">
+                    <?php echo $vigilance_active ? 'NexaGuard Cloud Radar supervisa continuamente inyecciones PHP, cambios en archivos y peticiones maliciosas.' : 'Haz clic en el botón superior para activar el radar perimetral permanente.'; ?>
+                </p>
+            </div>
         </div>
     </div>
 

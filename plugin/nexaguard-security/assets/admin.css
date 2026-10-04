@@ -575,3 +575,383 @@
     font-weight: 600;
 }
 
+/* ============ SISTEMA DE VIGILANCIA 24H & RADAR ============ */
+.vigilance-card {
+    margin-top: 18px;
+    background: linear-gradient(135deg, rgba(13, 21, 56, 0.95), rgba(7, 12, 34, 0.98));
+    border: 1.5px solid rgba(61, 232, 164, 0.35);
+    box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.7);
+    position: relative;
+    overflow: hidden;
+}
+
+.vigilance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 16px;
+}
+
+.vigilance-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #3de8a4;
+    background: rgba(61, 232, 164, 0.12);
+    border: 1px solid rgba(61, 232, 164, 0.3);
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-bottom: 6px;
+}
+
+.vigilance-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 4px;
+}
+
+.vigilance-sub {
+    font-size: 0.88rem;
+    color: #a0acd2;
+    margin: 0;
+    max-width: 60ch;
+}
+
+.btn-vigilance-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    color: #a0acd2;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.v-switch-knob {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #64748b;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.btn-vigilance-toggle.is-active {
+    background: rgba(61, 232, 164, 0.15);
+    border-color: #3de8a4;
+    color: #3de8a4;
+    box-shadow: 0 0 20px rgba(61, 232, 164, 0.3);
+}
+
+.btn-vigilance-toggle.is-active .v-switch-knob {
+    background: #3de8a4;
+    box-shadow: 0 0 10px #3de8a4;
+}
+
+.vigilance-radar-box {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 18px 22px;
+    background: rgba(5, 9, 26, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    flex-wrap: wrap;
+}
+
+.radar-screen-wrap {
+    flex-shrink: 0;
+}
+
+.radar-screen {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #0b1d28 0%, #050e18 70%, #02070e 100%);
+    border: 2px solid rgba(61, 232, 164, 0.5);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 25px rgba(61, 232, 164, 0.2), inset 0 0 20px rgba(61, 232, 164, 0.15);
+}
+
+.radar-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px dashed rgba(61, 232, 164, 0.25);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.ring-1 { width: 33%; height: 33%; }
+.ring-2 { width: 66%; height: 66%; }
+.ring-3 { width: 95%; height: 95%; border-style: solid; border-color: rgba(61, 232, 164, 0.4); }
+
+.radar-crosshair {
+    position: absolute;
+    background: rgba(61, 232, 164, 0.2);
+}
+.cross-h { top: 50%; left: 0; width: 100%; height: 1px; transform: translateY(-50%); }
+.cross-v { left: 50%; top: 0; width: 1px; height: 100%; transform: translateX(-50%); }
+
+.radar-sweep-beam {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 50%;
+    height: 50%;
+    transform-origin: 0 0;
+    background: conic-gradient(from 0deg, rgba(61, 232, 164, 0.7) 0deg, rgba(61, 232, 164, 0.2) 35deg, transparent 60deg);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.radar-scanning .radar-sweep-beam {
+    opacity: 1;
+    animation: radar-rotate 2.8s linear infinite;
+}
+
+@keyframes radar-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.radar-center-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3de8a4;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 8px #3de8a4;
+}
+
+.radar-blip {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #ffcf33;
+    opacity: 0;
+}
+
+.radar-scanning .blip-a { top: 25%; left: 68%; animation: blip-pulse 2.8s ease-in-out infinite 0.4s; }
+.radar-scanning .blip-b { top: 72%; left: 32%; animation: blip-pulse 2.8s ease-in-out infinite 1.6s; }
+.radar-scanning .blip-c { top: 60%; left: 75%; animation: blip-pulse 2.8s ease-in-out infinite 2.2s; }
+
+@keyframes blip-pulse {
+    0%, 100% { opacity: 0; transform: scale(0.6); }
+    30% { opacity: 1; transform: scale(1.4); box-shadow: 0 0 8px #ffcf33; }
+    60% { opacity: 0.3; transform: scale(1); }
+}
+
+.radar-status-caption {
+    flex: 1;
+    min-width: 250px;
+}
+
+.radar-status-caption h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 6px;
+}
+
+.radar-status-caption p {
+    font-size: 0.88rem;
+    color: #a0acd2;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ============ BARRA DE LICENCIA ============ */
+.ng-license-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    background: rgba(13, 21, 56, 0.7);
+    border: 1px solid rgba(255, 207, 51, 0.25);
+    padding: 10px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.lic-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #eaf0ff;
+}
+
+.lic-check {
+    background: #3de8a4;
+    color: #05091a;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+    font-size: 0.75rem;
+}
+
+.lic-exp {
+    color: #a0acd2;
+    font-size: 0.85rem;
+}
+
+.lic-key-mgmt {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lic-key-tag {
+    font-family: monospace;
+    font-size: 0.82rem;
+    color: #ffcf33;
+    background: rgba(255, 207, 51, 0.1);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 207, 51, 0.2);
+}
+
+.btn-ng-link {
+    background: none;
+    border: 0;
+    color: #6b8cff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.ng-license-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.license-expired {
+    background: rgba(255, 69, 96, 0.15);
+    border: 1.5px solid #ff4560;
+    color: #ff8ba0;
+}
+
+.license-warning {
+    background: rgba(255, 176, 32, 0.15);
+    border: 1.5px solid #ffb020;
+    color: #ffd07a;
+}
+
+.ng-license-banner strong {
+    display: block;
+    font-size: 0.98rem;
+    margin-bottom: 3px;
+    color: #ffffff;
+}
+
+.ng-license-banner p {
+    font-size: 0.86rem;
+    margin: 0;
+    color: inherit;
+}
+
+.btn-ng-danger {
+    background: #ff4560;
+    color: #ffffff;
+}
+.btn-ng-danger:hover {
+    background: #e02f4a;
+}
+
+.btn-ng-warning {
+    background: #ffb020;
+    color: #0b1030;
+}
+.btn-ng-warning:hover {
+    background: #e69d15;
+}
+
+.ng-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 9, 26, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.ng-modal-box {
+    background: #0d1538;
+    border: 1.5px solid rgba(255, 207, 51, 0.4);
+    border-radius: 16px;
+    max-width: 480px;
+    width: 100%;
+    padding: 28px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+}
+
+.ng-modal-box h3 {
+    margin: 0 0 10px;
+    color: #ffffff;
+    font-size: 1.15rem;
+}
+
+.ng-modal-box p {
+    color: #a0acd2;
+    font-size: 0.88rem;
+    margin: 0 0 16px;
+}
+
+.in-ng {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #ffffff;
+    font-size: 0.92rem;
+    box-sizing: border-box;
+}
+
+.in-ng:focus {
+    outline: 2px solid #ffcf33;
+}
+
+.modal-msg {
+    min-height: 1.2em;
+    font-size: 0.85rem;
+    margin: 8px 0;
+}
+
+.ng-modal-acts {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+    justify-content: flex-end;
+}
+

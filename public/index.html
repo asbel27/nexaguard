@@ -286,7 +286,7 @@ a[data-go],a[data-act]{cursor:pointer}
 .stat span{color:var(--muted);font-size:.92rem}
 
 /* ---------- Precios ---------- */
-.plans{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--panel)}
+.plans{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--panel)}
 .plan{padding:34px 28px 30px;display:flex;flex-direction:column;gap:16px;border-right:1px solid var(--line)}
 .plan:last-child{border-right:0}
 .plan h3{font-size:1.1rem}
@@ -303,7 +303,21 @@ a[data-go],a[data-act]{cursor:pointer}
 .plan.feat .btn{background:#0b1030;color:var(--yellow)}
 .plan.feat .btn:hover{background:#000}
 .plan .tag{align-self:flex-start;background:#0b1030;color:var(--yellow);font-size:.78rem;font-weight:700;padding:.3em .8em;border-radius:999px}
+.plan .tag-sub{align-self:flex-start;background:rgba(107,140,255,.15);border:1px solid rgba(107,140,255,.3);color:#9fb3ff;font-size:.76rem;font-weight:700;padding:.28em .75em;border-radius:999px}
 .note{color:var(--muted);font-size:.88rem;margin-top:14px}
+
+/* Popup Promocional NexaGuard Security PRO */
+.cd-pro-box{max-width:480px;padding:32px 28px}
+.pro-modal-offer{background:rgba(255,207,51,.08);border:1.5px solid rgba(255,207,51,.3);border-radius:12px;padding:16px;text-align:center;margin:16px 0}
+.pro-modal-price{display:flex;align-items:baseline;justify-content:center;gap:4px}
+.pro-modal-price .p-currency{font-size:1.4rem;font-weight:700;color:var(--yellow)}
+.pro-modal-price .p-num{font-family:var(--fd);font-size:2.8rem;font-weight:700;color:var(--text);line-height:1}
+.pro-modal-price .p-per{font-size:.9rem;color:var(--muted);margin-left:4px}
+.pro-modal-guar{font-size:.82rem;color:var(--green);margin-top:6px;font-weight:600}
+.pro-modal-features{list-style:none;display:grid;gap:10px;margin:16px 0 20px;font-size:.92rem;color:#cdd6f5}
+.pro-modal-features li{display:flex;align-items:center;gap:10px}
+.pro-modal-features .ic{color:var(--green);flex-shrink:0}
+.pro-modal-acts{display:grid;gap:10px}
 
 /* ---------- FAQ ---------- */
 .faq{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(24px,5vw,80px);margin-top:clamp(60px,8vw,110px)}
@@ -507,8 +521,8 @@ a[data-go],a[data-act]{cursor:pointer}
 .ad-note{margin-top:14px;padding:12px 14px;border-radius:10px;border:1px solid rgba(107,140,255,.5);background:rgba(107,140,255,.08);font-size:.9rem;color:#cdd6f5}
 
 /* ---------- Diálogo de Contacto con Escudo Animado ---------- */
-#contactDlg{background:#0a1133;color:var(--text);border:1px solid var(--line2);border-radius:20px;padding:0;width:min(530px,94vw);max-height:94vh;overflow:auto;margin:auto;box-shadow:0 25px 60px -15px rgba(0,0,0,.85),0 0 40px rgba(107,140,255,.18)}
-#contactDlg::backdrop{background:rgba(3,6,20,.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#contactDlg, #proModal{background:#0a1133;color:var(--text);border:1px solid var(--line2);border-radius:20px;padding:0;width:min(530px,94vw);max-height:94vh;overflow:auto;margin:auto;box-shadow:0 25px 60px -15px rgba(0,0,0,.85),0 0 40px rgba(107,140,255,.18)}
+#contactDlg::backdrop, #proModal::backdrop{background:rgba(3,6,20,.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .cd-in{position:relative;padding:28px 24px 24px}
 .cd-x{position:absolute;top:14px;right:14px;background:none;border:0;color:var(--muted);font-size:1.6rem;line-height:1;padding:4px 8px;border-radius:8px;cursor:pointer;transition:color .2s,background .2s}
 .cd-x:hover{color:var(--text);background:rgba(255,255,255,.06)}
@@ -549,6 +563,11 @@ a[data-go],a[data-act]{cursor:pointer}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 /* ---------- Responsive ---------- */
+@media (max-width:1180px){
+  .plans{grid-template-columns:repeat(2,1fr)}
+  .plan:nth-child(2){border-right:0}
+  .plan:nth-child(-n+2){border-bottom:1px solid var(--line)}
+}
 @media (max-width:1080px){
   .nav-links{display:none}
   .term{display:none}
@@ -557,15 +576,17 @@ a[data-go],a[data-act]{cursor:pointer}
   .sym-grid{grid-template-columns:repeat(2,1fr)}
   .st-pin{grid-template-columns:1fr}
   .st-right{display:none}
-  .plans{grid-template-columns:1fr}
-  .plan{border-right:0;border-bottom:1px solid var(--line)}
-  .plan:last-child{border-bottom:0}
   .stats{grid-template-columns:1fr 1fr}
   .stat:nth-child(3){padding-left:0;border-left:0}
   .stat:nth-child(n+3){margin-top:22px}
   .faq{grid-template-columns:1fr}
   .ct-grid{grid-template-columns:1fr}
   .ct-left{min-height:0}
+}
+@media (max-width:760px){
+  .plans{grid-template-columns:1fr}
+  .plan{border-right:0;border-bottom:1px solid var(--line)}
+  .plan:last-child{border-bottom:0}
 }
 @media (max-width:620px){
   body{font-size:16px}
@@ -1023,14 +1044,29 @@ a[data-go],a[data-act]{cursor:pointer}
     </div>
     <div class="plans">
       <article class="plan">
+        <span class="tag-sub">Software SaaS</span>
+        <h3>Plan NexaGuard Security Pro</h3>
+        <p class="d">Licencia oficial para tu WordPress con Vigilancia 24H activa.</p>
+        <div class="price">$9.99<small>al mes</small></div>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Licencia Oficial NexaGuard PRO</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Sistema de Vigilancia 24 Horas activo</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Erradicación de malware con 1 clic</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Radar en la nube contra amenazas</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Actualizaciones continuas de firmas</li>
+        </ul>
+        <a class="btn btn-o" href="#contacto" data-plan="Plan NexaGuard Security Pro" data-pid="security_pro">Elegir Security Pro</a>
+      </article>
+      <article class="plan">
         <h3>Rescate</h3>
         <p class="d">Para sitios con síntomas puntuales que necesitan arreglo ya.</p>
         <div class="price">$99<small>pago único</small></div>
         <ul>
-          <li><svg class="ic"><use href="#i-check"/></svg>Escaneo completo de archivos y base de datos</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Limpieza de malware y backdoors</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Limpieza forense de archivos y DB</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Plugin NexaGuard Security incluido</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Reparación de errores del sitio</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Informe de lo encontrado</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Informe forense de intrusiones</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>3 análisis del escáner por mes</li>
         </ul>
         <a class="btn btn-o" href="#contacto" data-plan="Rescate" data-pid="rescate">Elegir Rescate</a>
       </article>
@@ -1041,22 +1077,23 @@ a[data-go],a[data-act]{cursor:pointer}
         <div class="price">$199<small>pago único</small></div>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>Todo lo del plan Rescate</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Firewall (WAF) y 2FA</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>1 Año de Licencia NexaGuard PRO</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Firewall (WAF) y 2FA configurados</li>
           <li><svg class="ic"><use href="#i-check"/></svg>wp-config y permisos endurecidos</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Revisión de Google incluida</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Garantía de 30 días y atención prioritaria</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Revisión de Google y 30 días de garantía</li>
         </ul>
         <a class="btn" href="#contacto" data-plan="Rescate + Blindaje" data-pid="blindaje">Elegir Rescate + Blindaje</a>
       </article>
       <article class="plan">
         <h3>Guardián</h3>
-        <p class="d">Vigilancia continua para no volver a pasar por esto.</p>
+        <p class="d">Vigilancia continua e ingeniería dedicada.</p>
         <div class="price">$39<small>al mes</small></div>
         <ul>
-          <li><svg class="ic"><use href="#i-check"/></svg>Monitoreo 24/7 con alertas</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Licencia NexaGuard PRO activa</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Sistema de Vigilancia 24 Horas continuo</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Monitoreo diario con alertas automáticas</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Backups diarios fuera del servidor</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Actualizaciones probadas</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Limpiezas incluidas</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Limpiezas y soporte prioritario incluidos</li>
         </ul>
         <a class="btn btn-o" href="#contacto" data-plan="Guardián" data-pid="guardian">Elegir Guardián</a>
       </article>
@@ -1295,6 +1332,64 @@ a[data-go],a[data-act]{cursor:pointer}
       <h3 class="cd-success-t">¡Mensaje enviado con éxito!</h3>
       <p class="cd-success-p">Hemos recibido tu mensaje correctamente en nuestra bandeja. Te responderemos cuanto antes al correo <strong id="cdSuccessEmail"></strong>.</p>
       <button type="button" class="btn btn-y" id="cdSuccessClose" style="min-width:180px">Entendido</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="proModal" class="cd" aria-label="Plan NexaGuard Security Pro">
+  <div class="cd-in cd-pro-box">
+    <button type="button" class="cd-x" id="proClose" aria-label="Cerrar ventana">×</button>
+
+    <div class="cd-head" style="margin-bottom:12px">
+      <div class="cd-shield-wrap" aria-hidden="true" style="width:58px;height:58px;margin-bottom:8px">
+        <div class="cd-shield-aura" style="background:radial-gradient(circle,rgba(0,240,255,.3) 0%,rgba(255,207,51,.2) 55%,transparent 75%)"></div>
+        <svg class="cd-shield-svg" viewBox="0 0 64 64" fill="none" style="width:48px;height:48px">
+          <path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="#0b163d" stroke="#00f0ff" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="32" cy="32" r="14" stroke="rgba(0,240,255,0.4)" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <circle cx="32" cy="32" r="5" fill="#ffcf33"/>
+          <path d="M32 18L32 32L42 38" stroke="#00f0ff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="cd-tag" style="color:#00f0ff;background:rgba(0,240,255,.1);border-color:rgba(0,240,255,.3)">🛡️ Herramienta Esencial para tu Web</span>
+      <h3 class="cd-t" style="font-size:1.35rem">Plan NexaGuard Security Pro</h3>
+      <p class="cd-sub" style="font-size:.86rem">Protege tu WordPress con vigilancia activa 24/7 contra inyecciones y malware.</p>
+    </div>
+
+    <div class="pro-modal-offer">
+      <div class="pro-modal-price">
+        <span class="p-currency">$</span>
+        <span class="p-num">9.99</span>
+        <span class="p-per">USD / mes</span>
+      </div>
+      <div class="pro-modal-guar">🛡️ Licencia PRO Oficial incluida • Cancela cuando quieras</div>
+    </div>
+
+    <ul class="pro-modal-features">
+      <li>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polyline points="20 6 9 17 4 12"/></svg>
+        <span><strong>Sistema de Vigilancia 24 Horas:</strong> Radar activo en tiempo real.</span>
+      </li>
+      <li>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polyline points="20 6 9 17 4 12"/></svg>
+        <span><strong>Escaneo de Malware e Inyecciones:</strong> Detección profunda de webshells.</span>
+      </li>
+      <li>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polyline points="20 6 9 17 4 12"/></svg>
+        <span><strong>Alertas Preventivas:</strong> Avisos de caducidad e incidentes antes de infectar.</span>
+      </li>
+      <li>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polyline points="20 6 9 17 4 12"/></svg>
+        <span><strong>Descarga inmediata:</strong> Plugin listo para instalar en tu WordPress.</span>
+      </li>
+    </ul>
+
+    <div class="pro-modal-acts">
+      <button type="button" class="btn btn-y" id="btnGetProModal" style="width:100%;font-weight:700;padding:13px">
+        Adquirir Security Pro ($9.99/mes)
+      </button>
+      <button type="button" class="btn btn-o" id="btnDismissProModal" style="width:100%;font-size:.85rem;padding:9px;color:var(--muted)">
+        Continuar navegando
+      </button>
     </div>
   </div>
 </dialog>
@@ -2282,6 +2377,9 @@ function showResult(f) {
   $('#btnCopy').onclick = function () {
     copyText(summary).then(function (ok) { toast(ok ? 'Resumen copiado.' : 'No pudimos copiarlo. Selecciona el texto manualmente.'); });
   };
+  setTimeout(function () {
+    if (!proShown) openProModal();
+  }, 6500);
 }
 
 $('#btnReset').addEventListener('click', function () {
@@ -2426,6 +2524,54 @@ if (contactForm) {
 }
 
 /* =====================================================
+   Popup NexaGuard Security PRO (Exit-intent & post-scan)
+   ===================================================== */
+var proModal = $('#proModal');
+var proShown = false;
+
+function openProModal() {
+  if (proShown || !proModal) return;
+  try {
+    if (sessionStorage.getItem('nxg_pro_seen')) return;
+  } catch (e) {}
+  proShown = true;
+  try { sessionStorage.setItem('nxg_pro_seen', '1'); } catch (e) {}
+  if (proModal.showModal) proModal.showModal();
+  else proModal.setAttribute('open', '');
+}
+
+function closeProModal() {
+  if (!proModal) return;
+  if (proModal.close) proModal.close();
+  else proModal.removeAttribute('open');
+}
+
+var proCloseBtn = $('#proClose');
+if (proCloseBtn) proCloseBtn.addEventListener('click', closeProModal);
+var btnDismissPro = $('#btnDismissProModal');
+if (btnDismissPro) btnDismissPro.addEventListener('click', closeProModal);
+
+if (proModal) {
+  proModal.addEventListener('click', function (e) {
+    if (e.target === proModal) closeProModal();
+  });
+}
+
+var btnGetPro = $('#btnGetProModal');
+if (btnGetPro) {
+  btnGetPro.addEventListener('click', function () {
+    closeProModal();
+    openAuth('security_pro');
+  });
+}
+
+document.addEventListener('mouseleave', function (e) {
+  if (e.clientY <= 12 && !proShown) {
+    openProModal();
+  }
+});
+
+/* =====================================================
    Escáner en vivo (habla con scanner/server.js)
    Todo lo que se muestra viene del servidor: aquí no hay valores simulados.
    ===================================================== */
@@ -2538,6 +2684,9 @@ function scFinish(ev) {
   var vt = (SC_VERDICT[ev.verdict] || ['', ''])[0];
   S.scanLine = 'Escáner web (' + new Date().toISOString().slice(0, 10) + '): ' + vt + ' · ' + (ev.counts.crit || 0) + ' graves, ' + (ev.counts.warn || 0) + ' avisos';
   if (scene) scene.boost(.8);
+  setTimeout(function () {
+    if (!proShown) openProModal();
+  }, 5500);
 }
 
 function scReport() {

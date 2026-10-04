@@ -503,4 +503,121 @@ jQuery(document).ready(function ($) {
         if (!str) return '';
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
+    // ============ SISTEMA DE VIGILANCIA 24H & RADAR ============
+    function playRadarActivationSound() {
+        try {
+            var AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            var ctx = new AudioContext();
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+
+            // Tono inicial en 940Hz que baja en barrido hacia 440Hz como sonar de submarino/radar
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(940, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.38);
+
+            // Ataque rápido y desvanecimiento suave con eco
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.28, ctx.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.65);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start();
+            osc.stop(ctx.currentTime + 0.7);
+        } catch (e) {
+            console.log('Web Audio Radar sound:', e);
+        }
+    }
+
+    $('#btn-toggle-vigilance').on('click', function () {
+        var $btn = $(this);
+        var current = parseInt($btn.attr('data-active'), 10) || 0;
+        var next = current === 1 ? 0 : 1;
+
+        $btn.prop('disabled', true);
+
+        if (next === 1) {
+            playRadarActivationSound();
+            $btn.addClass('is-active').attr('data-active', '1');
+            $('#v-toggle-label').text('VIGILANCIA ACTIVA 24H');
+            $('#vigilance-radar-box').removeClass('radar-paused').addClass('radar-scanning');
+            $('#radar-status-text').html('🟢 El sistema de vigilancia de 24 horas para tu web está activado.');
+            $('#radar-status-sub').text('NexaGuard Cloud Radar supervisa continuamente inyecciones PHP, cambios en archivos y peticiones maliciosas.');
+        } else {
+            $btn.removeClass('is-active').attr('data-active', '0');
+            $('#v-toggle-label').text('ACTIVAR VIGILANCIA 24H');
+            $('#vigilance-radar-box').removeClass('radar-scanning').addClass('radar-paused');
+            $('#radar-status-text').html('⏸️ Sistema de vigilancia en pausa. Actívalo para proteger tu web.');
+            $('#radar-status-sub').text('Haz clic en el botón superior para activar el radar perimetral permanente.');
+        }
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_toggle_vigilance',
+                active: next,
+                nonce: nexaguardData.nonce
+            },
+            complete: function () {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
+    // ============ GESTIÓN DE LICENCIA PRO ============
+    $('#btn-edit-license').on('click', function () {
+        $('#license-modal').fadeIn(200);
+        $('#license-modal-msg').text('');
+    });
+
+    $('#btn-close-license').on('click', function () {
+        $('#license-modal').fadeOut(200);
+    });
+
+    $('#btn-save-license').on('click', function () {
+        var $btn = $(this);
+        var key = $('#input-license-key').val().trim();
+        var $msg = $('#license-modal-msg');
+
+        if (!key) {
+            $msg.text('Por favor escribe tu clave de licencia.').css('color', '#ff8ba0');
+            return;
+        }
+
+        $btn.prop('disabled', true).text('Verificando…');
+        $msg.text('Conectando con NexaGuard Threat Cloud…').css('color', '#a0acd2');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_validate_license',
+                license_key: key,
+                nonce: nexaguardData.nonce
+            },
+            success: function (res) {
+                if (res.success && res.data) {
+                    $msg.text('✓ ' + (res.data.notice || 'Licencia activada con éxito.')).css('color', '#3de8a4');
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1200);
+                } else {
+                    $msg.text(res.data && res.data.message ? res.data.message : 'Error al verificar la licencia.').css('color', '#ff8ba0');
+                }
+            },
+            error: function () {
+                $msg.text('Error de conexión con el servidor.').css('color', '#ff8ba0');
+            },
+            complete: function () {
+                $btn.prop('disabled', false).text('Verificar y Guardar');
+            }
+        });
+    });
 });

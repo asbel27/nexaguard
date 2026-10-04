@@ -8,20 +8,25 @@ const DAY = 864e5;
 
 /* ---------- Planes: aquí defines qué incluye cada uno ---------- */
 const PLANS = {
+  security_pro: {
+    id: 'security_pro', tier: 1, name: 'Plan NexaGuard Security Pro', price: 9.99, currency: 'USD', period: 'al mes', type: 'subscription',
+    sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
+    features: ['Licencia Oficial NexaGuard Security PRO para WordPress', 'Sistema de Vigilancia 24 Horas contra amenazas activo', 'Auditoría forense y erradicación de malware con 1 clic', 'Sincronización en tiempo real con NexaGuard Threat Cloud', 'Actualizaciones continuas de firmas Zero-Day']
+  },
   rescate: {
-    id: 'rescate', tier: 1, name: 'Rescate', price: 99, currency: 'USD', period: 'pago único', type: 'oneoff',
+    id: 'rescate', tier: 2, name: 'Rescate', price: 99, currency: 'USD', period: 'pago único', type: 'oneoff',
     sites: 1, scansPerMonth: 3, scheduled: false, priority: false, afterDeliveryDays: 14, response: '24 a 48 horas',
-    features: ['Escaneo completo de archivos y base de datos', 'Limpieza de malware y backdoors', 'Reparación de errores del sitio', 'Informe de lo encontrado', '3 análisis del escáner por mes']
+    features: ['Limpieza forense humana de archivos y base de datos', 'Plugin NexaGuard Security incluido para análisis interno', 'Reparación de errores críticos del sitio', 'Informe detallado de intrusiones', '3 análisis del escáner web por mes']
   },
   blindaje: {
-    id: 'blindaje', tier: 2, name: 'Rescate + Blindaje', price: 199, currency: 'USD', period: 'pago único', type: 'oneoff',
-    sites: 1, scansPerMonth: 10, scheduled: false, priority: true, afterDeliveryDays: 30, response: 'menos de 24 horas',
-    features: ['Todo lo del plan Rescate', 'Firewall (WAF) y 2FA', 'wp-config y permisos endurecidos', 'Revisión de Google incluida', 'Garantía de 30 días', 'Soporte prioritario', '10 análisis del escáner por mes']
+    id: 'blindaje', tier: 3, name: 'Rescate + Blindaje', price: 199, currency: 'USD', period: 'pago único', type: 'oneoff',
+    sites: 1, scansPerMonth: 10, scheduled: false, priority: true, afterDeliveryDays: 365, response: 'menos de 24 horas',
+    features: ['Todo lo del plan Rescate', '1 Año Completo de Licencia NexaGuard Security PRO incluida', 'Firewall (WAF) y 2FA configurados por expertos', 'wp-config y permisos endurecidos', 'Revisión y deslistado de Google Safe Browsing', 'Garantía de 30 días y atención prioritaria']
   },
   guardian: {
-    id: 'guardian', tier: 3, name: 'Guardián', price: 39, currency: 'USD', period: 'al mes', type: 'subscription',
+    id: 'guardian', tier: 4, name: 'Guardián', price: 39, currency: 'USD', period: 'al mes', type: 'subscription',
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 24, priority: true, afterDeliveryDays: 0, response: 'menos de 24 horas',
-    features: ['Monitoreo automático diario con el escáner', 'Alertas cuando el sitio cambia a infectado', 'Análisis manuales ilimitados', 'Backups y actualizaciones', 'Soporte prioritario']
+    features: ['Licencia NexaGuard Security PRO siempre activa', 'Sistema de Vigilancia 24 Horas continuo', 'Monitoreo automático diario con el escáner', 'Backups diarios y actualizaciones probadas asistidas', 'Limpiezas y soporte prioritario incluidos']
   }
 };
 const STAGES = ['Triage y diagnóstico', 'Copia y aislamiento', 'Limpieza quirúrgica', 'Blindaje y garantía'];
@@ -153,7 +158,8 @@ function createApp({ store, scanner, config }) {
     return {
       id: o.id, plan: o.plan, planName: p.name, type: p.type, status: o.status, stage: o.stage || 0, amount: o.amount, currency: p.currency, period: p.period,
       createdAt: iso(o.createdAt), paidAt: iso(o.paidAt), deliveredAt: iso(o.deliveredAt), nextBilling: iso(o.nextBilling), notes: o.notes || '',
-      access: info.access, accessUntil: iso(info.accessUntil), overdue: info.overdue
+      access: info.access, accessUntil: iso(info.accessUntil), overdue: info.overdue,
+      licenseKey: o.licenseKey || null
     };
   }
   const planView = p => ({ id: p.id, name: p.name, price: p.price, currency: p.currency, period: p.period, type: p.type, sites: p.sites, scansPerMonth: p.scansPerMonth, scheduled: p.scheduled, priority: p.priority, response: p.response, features: p.features, afterDeliveryDays: p.afterDeliveryDays });
@@ -600,6 +606,10 @@ function createApp({ store, scanner, config }) {
     const p = PLANS[o.plan];
     const pay = { id: id('pay'), userId: o.userId, orderId: o.id, amount: Math.round(amount * 100) / 100, currency: currency || p.currency, method: method || 'manual', reference: reference || '', at: T(), by: by || 'sistema' };
     db.payments.push(pay);
+    if (!o.licenseKey) {
+      const pfx = (p.type === 'subscription') ? 'NXG-PRO' : (p.id === 'blindaje' ? 'NXG-ANNUAL' : 'NXG-LIC');
+      o.licenseKey = pfx + '-' + crypto.randomBytes(3).toString('hex').toUpperCase() + '-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+    }
     if (o.status === 'pending_payment') { o.paidAt = T(); if (p.type === 'subscription') { o.status = 'active'; o.nextBilling = T() + 30 * DAY; } else o.status = 'in_progress'; }
     else if (p.type === 'subscription' && o.status === 'active') o.nextBilling = Math.max(o.nextBilling || 0, T()) + 30 * DAY;
     return pay;
@@ -681,6 +691,57 @@ function createApp({ store, scanner, config }) {
     save();
     const headers = user ? {} : startSession(req, res, target.id);
     send(res, 201, { ok: true, user: publicUser(target), order: orderView(order), tempPassword: newTempPass }, headers);
+  });
+
+  /* ---------- Validación de Licencias para el Plugin WordPress ---------- */
+  route('POST', '/api/license/validate', null, (ctx) => {
+    const { body, res } = ctx;
+    const key = clean(body.key || '', 60).toUpperCase();
+    const domain = clean(body.domain || '', 120).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+
+    if (!key) return fail(res, 400, 'Clave de licencia requerida.');
+
+    const order = db.orders.find(o => (o.licenseKey === key || (o.id && key.includes(o.id.toUpperCase()))));
+    const isAnnual = key.startsWith('NXG-ANNUAL') || (order && order.plan === 'blindaje');
+    const isPro = key.startsWith('NXG-PRO') || (order && (order.plan === 'security_pro' || order.plan === 'guardian'));
+
+    const now = T();
+    let createdAt = order ? (order.paidAt || order.createdAt) : now;
+    let expiresAt = isAnnual ? (createdAt + 365 * DAY) : (order && order.nextBilling ? order.nextBilling : createdAt + 30 * DAY);
+
+    if (order) {
+      const info = orderInfo(order);
+      if (info.accessUntil) expiresAt = info.accessUntil;
+    }
+
+    const diffMs = expiresAt - now;
+    const daysLeft = Math.ceil(diffMs / DAY);
+    const isExpired = diffMs <= 0;
+    const isExpiringSoon = !isExpired && daysLeft <= 7;
+    const status = isExpired ? 'expired' : isExpiringSoon ? 'expiring_soon' : 'active';
+    const planName = isAnnual ? 'Licencia Anual (1 Año) · NexaGuard Pro' : 'Plan NexaGuard Security Pro (Mensual)';
+
+    send(res, 200, {
+      valid: !isExpired,
+      status,
+      plan: planName,
+      period: isAnnual ? 'annual' : 'monthly',
+      expires_at: expiresAt,
+      expires_formatted: new Date(expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      days_left: Math.max(0, daysLeft),
+      domain: domain,
+      notice: isExpired
+        ? 'Tu suscripción a NexaGuard Security Pro ha vencido. Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
+        : isExpiringSoon
+          ? 'Atención: Tu suscripción a NexaGuard Security Pro vencerá en ' + daysLeft + ' días. Renueva a tiempo en nexaguards.com para mantener el escudo activo.'
+          : 'Licencia activa y sincronizada con NexaGuard Threat Cloud.',
+      renew_url: 'https://nexaguards.com/#planes',
+      features: {
+        vigilance_24h: !isExpired,
+        deep_clean: true,
+        cloud_intel: !isExpired
+      }
+    });
   });
   route('GET', '/api/admin/tickets', 'admin', (ctx) => {
     const st = ctx.query.get('status') || '';
