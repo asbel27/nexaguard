@@ -786,14 +786,20 @@ function createApp({ store, scanner, config }) {
     const u = new URL(req.url, 'http://x'), pathname = u.pathname;
     if (!pathname.startsWith('/api/')) return false;
     try {
+      const isPublicExternalApi = pathname === '/api/license/validate';
       const origin = req.headers.origin;
-      if (origin) {
+      if (isPublicExternalApi) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return true; }
+      } else if (origin) {
         const host = req.headers.host, same = origin === 'http://' + host || origin === 'https://' + host;
         if (!same) return fail(res, 403, 'Origen no permitido.'), true;
       }
       const r = routes.find(x => x.method === req.method && x.re.test(pathname));
       if (!r) return fail(res, 404, 'No encontrado.'), true;
-      if (req.method !== 'GET' && req.headers['x-requested-with'] !== 'parche') return fail(res, 403, 'Petición no válida.'), true;
+      if (req.method !== 'GET' && !isPublicExternalApi && req.headers['x-requested-with'] !== 'parche') return fail(res, 403, 'Petición no válida.'), true;
       const user = sessionUser(req);
       if (r.role) {
         if (!user) return fail(res, 401, 'Inicia sesión para continuar.'), true;
