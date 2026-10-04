@@ -95,7 +95,7 @@ jQuery(document).ready(function ($) {
                 $('#status-heading').text('Listo para Iniciar Análisis en Tiempo Real');
                 $('#status-desc').html('Haz clic en <strong>"Iniciar Análisis Forense"</strong> para auditar plugins, temas, Core y base de datos con la base de firmas en tiempo real.');
                 $('#threats-badge').removeClass('danger').addClass('ok').text('0 hallazgos');
-                $('#threats-list').html('<div class="empty-state"><p>🛡️ No hay amenazas activas detectadas en este momento.</p><small class="ng-hint" style="color: #9cb1e6;">Pulsa "Iniciar Análisis Forense" para auditar en tiempo real.</small></div>');
+                $('#threats-list').html('<div class="empty-state"><p>🛡️ No hay amenazas activas detectadas en este momento.</p><small class="ng-hint" style="color: #e2eafc; font-weight: 600;">Pulsa "Iniciar Análisis Forense" para auditar en tiempo real.</small></div>');
 
                 // Resetear cuadrícula de carpetas
                 $('.folder-item').removeClass('has-threats');
@@ -170,7 +170,7 @@ jQuery(document).ready(function ($) {
         var $list = $('#threats-list').empty();
         if (!d.threats || d.threats.length === 0) {
             $('.threats-pro-banner').remove();
-            $list.append('<div class="empty-state"><p>🛡️ No se encontraron amenazas. Tu instalación de WordPress está limpia.</p><small class="ng-hint" style="color: #9cb1e6;">Mantén activo el Cortafuegos WAF para bloquear intrusiones en tiempo real.</small></div>');
+            $list.append('<div class="empty-state"><p>🛡️ No se encontraron amenazas. Tu instalación de WordPress está limpia.</p><small class="ng-hint" style="color: #e2eafc; font-weight: 600;">Mantén activo el Cortafuegos WAF para bloquear intrusiones en tiempo real.</small></div>');
             return;
         }
 
@@ -534,7 +534,7 @@ jQuery(document).ready(function ($) {
             $('#status-icon').text('✓');
             $('#status-heading').text('Sistema 100% limpio y protegido');
             $('#threats-badge').removeClass('danger').addClass('ok');
-            $('#threats-list').html('<div class="empty-state"><p>🛡️ No hay amenazas activas detectadas en este momento.</p><small class="ng-hint" style="color: #9cb1e6;">Mantén activo el Cortafuegos WAF para bloquear intrusiones en tiempo real.</small></div>');
+            $('#threats-list').html('<div class="empty-state"><p>🛡️ No hay amenazas activas detectadas en este momento.</p><small class="ng-hint" style="color: #e2eafc; font-weight: 600;">Mantén activo el Cortafuegos WAF para bloquear intrusiones en tiempo real.</small></div>');
         }
     }
 

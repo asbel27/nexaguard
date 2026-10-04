@@ -235,7 +235,7 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
                 <span class="live-dot" style="background:#ffcf33; box-shadow:0 0 10px #ffcf33;"></span>
                 <span id="scan-current-folder">Evaluando: 📁 wp-content/uploads/</span>
             </div>
-            <span id="scan-live-status-sub" style="font-size:0.84rem; color:#9cb1e6;">Inspeccionando PHP, JS, código ofuscado y permisos...</span>
+            <span id="scan-live-status-sub" style="font-size:0.86rem; color:#dbe4ff; font-weight:600;">Inspeccionando PHP, JS, código ofuscado y permisos...</span>
         </div>
     </div>
 
@@ -245,7 +245,7 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
             <h3>Directorios y Componentes Auditados</h3>
             <span class="badge-v" style="font-size:0.75rem;">Cobertura 100% Core + BD + Archivos</span>
         </div>
-        <p class="ng-hint" style="color: #9cb1e6; margin-top: 4px;">
+        <p class="ng-hint" style="color: #e2eafc; margin-top: 4px; font-weight: 500;">
             Auditoría en tiempo real de cada directorio y capa de tu WordPress (temas, plugins, medios, núcleo y base de datos).
         </p>
         <div id="breakdown-grid" class="folder-breakdown-grid">
@@ -309,7 +309,7 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
             <?php if (!$last_report || empty($last_report['threats'])): ?>
                 <div class="empty-state">
                     <p>🛡️ No hay amenazas activas detectadas en este momento.</p>
-                    <small class="ng-hint" style="color: #9cb1e6;">Pulsa "Iniciar Análisis Forense" para auditar en tiempo real.</small>
+                    <small class="ng-hint" style="color: #e2eafc; font-weight: 600;">Pulsa "Iniciar Análisis Forense" para auditar en tiempo real.</small>
                 </div>
             <?php else: ?>
                 <?php foreach ($last_report['threats'] as $t): ?>
@@ -404,7 +404,7 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
     <?php if (!empty($quarantine_log)): ?>
     <div class="ng-card" style="margin-top:20px;">
         <h3>Archivos Aislados en Cuarentena Segura</h3>
-        <p class="ng-hint" style="color: #a4b8ec;">Estos archivos fueron deshabilitados y movidos a un entorno protegido con permisos restringidos (Deny From All).</p>
+        <p class="ng-hint" style="color: #dbe4ff; font-weight: 500;">Estos archivos fueron deshabilitados y movidos a un entorno protegido con permisos restringidos (Deny From All).</p>
         <table class="ng-table">
             <thead>
                 <tr>
