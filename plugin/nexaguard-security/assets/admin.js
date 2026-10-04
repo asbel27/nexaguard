@@ -152,8 +152,24 @@ jQuery(document).ready(function ($) {
             });
         }
 
+        if (!nexaguardData.is_pro && d.threats_count > 0) {
+            $('.threats-pro-banner').remove();
+            var bannerHtml = '<div class="threats-pro-banner">' +
+                '<div class="tpb-badge">⚡ FUNCIÓN DE LIMPIEZA AUTOMÁTICA PRO</div>' +
+                '<h4>Erradicación con 1 Clic Bloqueada · Se detectaron ' + d.threats_count + ' amenazas</h4>' +
+                '<p>NexaGuard ha localizado con precisión quirúrgica los archivos infectados y las inyecciones en base de datos. Para erradicarlos automáticamente sin romper tu sitio o encargar la desinfección a nuestros ingenieros:</p>' +
+                '<div class="tpb-acts">' +
+                    '<button type="button" class="btn-ng btn-ng-primary btn-open-clean-modal">⚡ Desbloquear Erradicación con Plan PRO ($9.99/mes)</button> ' +
+                    '<a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-danger">Solicitar Plan Rescate ($99)</a> ' +
+                    '<button type="button" class="btn-ng btn-ng-link btn-open-lic-modal" style="color:#ffcf33">Ya tengo mi clave de licencia ›</button>' +
+                '</div>' +
+            '</div>';
+            $('#threats-list').before(bannerHtml);
+        }
+
         var $list = $('#threats-list').empty();
         if (!d.threats || d.threats.length === 0) {
+            $('.threats-pro-banner').remove();
             $list.append('<div class="empty-state"><p>🛡️ No se encontraron amenazas. Tu instalación de WordPress está limpia.</p><small class="ng-hint" style="color: #9cb1e6;">Mantén activo el Cortafuegos WAF para bloquear intrusiones en tiempo real.</small></div>');
             return;
         }
@@ -198,6 +214,15 @@ jQuery(document).ready(function ($) {
 
             var whitelistBtn = '<button type="button" class="btn-ng btn-ng-outline btn-whitelist-item" data-target="' + t.file + '" data-id="' + t.id + '" title="Omitir en futuros escaneos">✓ Permitir / Falso Positivo</button>';
 
+            var actionButtonsHtml = '';
+            if (nexaguardData.is_pro) {
+                actionButtonsHtml = delFolderBtn + ' ' + actBtn + ' ' + forceDelBtn + ' ' + quarantineBtn + ' ' + whitelistBtn;
+            } else {
+                actionButtonsHtml = '<button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="' + t.file + '" title="Erradicar amenaza (Requiere Plan Pro o Rescate)">🔒 Erradicar Amenaza (Función PRO)</button> ' +
+                                    '<button type="button" class="btn-ng btn-ng-outline btn-locked-clean" data-target="' + t.file + '" title="Mover a cuarentena (Requiere Plan Pro)">🔒 Cuarentena (Función PRO)</button> ' +
+                                    whitelistBtn;
+            }
+
             var item = $('<div class="threat-item ' + sevClass + '" id="threat-' + t.id + '">' +
                 '<div class="threat-header">' +
                     '<span class="sev-badge ' + sevClass + '">' + sevLabel + '</span>' +
@@ -206,7 +231,7 @@ jQuery(document).ready(function ($) {
                 '<p class="threat-desc">' + escapeHtml(t.desc) + '</p>' +
                 '<div class="threat-loc"><code>' + escapeHtml(t.file) + (t.line > 0 ? ' : Línea ' + t.line : '') + '</code></div>' +
                 (t.code ? '<pre class="threat-snippet"><code>' + escapeHtml(t.code) + '</code></pre>' : '') +
-                '<div class="threat-actions">' + delFolderBtn + ' ' + actBtn + ' ' + forceDelBtn + ' ' + quarantineBtn + ' ' + whitelistBtn + '</div>' +
+                '<div class="threat-actions">' + actionButtonsHtml + '</div>' +
             '</div>');
 
             $list.append(item);
@@ -644,5 +669,21 @@ jQuery(document).ready(function ($) {
                 $btn.prop('disabled', false).text('Verificar y Guardar');
             }
         });
+    });
+
+    // ============ MODAL DE CONVERSIÓN DE LIMPIEZA ============
+    $(document).on('click', '.btn-locked-clean, .btn-open-clean-modal', function (e) {
+        e.preventDefault();
+        $('#clean-upgrade-modal').fadeIn(200);
+    });
+
+    $('#btn-close-clean-modal').on('click', function () {
+        $('#clean-upgrade-modal').fadeOut(200);
+    });
+
+    $(document).on('click', '.btn-switch-to-key', function (e) {
+        e.preventDefault();
+        $('#clean-upgrade-modal').fadeOut(100);
+        $('#license-modal').fadeIn(200);
     });
 });

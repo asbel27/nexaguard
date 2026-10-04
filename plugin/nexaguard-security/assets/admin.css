@@ -992,3 +992,162 @@
     margin-top: 10px;
 }
 
+/* Banner de Conversión sobre Resultados */
+.threats-pro-banner {
+    background: linear-gradient(135deg, rgba(255, 207, 51, 0.12) 0%, rgba(255, 107, 138, 0.1) 100%);
+    border: 1.5px solid rgba(255, 207, 51, 0.35);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+}
+.threats-pro-banner .tpb-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #ffcf33;
+    background: rgba(255, 207, 51, 0.15);
+    border: 1px solid rgba(255, 207, 51, 0.3);
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+}
+.threats-pro-banner h4 {
+    margin: 0 0 6px;
+    font-size: 1.15rem;
+    color: #ffffff;
+}
+.threats-pro-banner p {
+    margin: 0 0 16px;
+    font-size: 0.88rem;
+    color: #cbd5f5;
+    max-width: 75ch;
+    line-height: 1.45;
+}
+.threats-pro-banner .tpb-acts {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Botones de Limpieza Bloqueados */
+.btn-locked-clean {
+    background: rgba(255, 107, 138, 0.12)!important;
+    border-color: rgba(255, 107, 138, 0.35)!important;
+    color: #ff8ba0!important;
+    cursor: pointer;
+}
+.btn-locked-clean:hover {
+    background: rgba(255, 107, 138, 0.22)!important;
+    box-shadow: 0 0 14px rgba(255, 107, 138, 0.35);
+}
+
+/* Modal de Erradicación y Desinfección */
+.clean-upgrade-box {
+    max-width: 660px!important;
+    padding: 28px 30px!important;
+}
+.cum-head {
+    text-align: center;
+    margin-bottom: 22px;
+}
+.cum-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #ffcf33;
+    background: rgba(255, 207, 51, 0.12);
+    border: 1px solid rgba(255, 207, 51, 0.25);
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+}
+.cum-head h3 {
+    font-size: 1.4rem;
+    color: #ffffff;
+    margin: 0 0 8px;
+}
+.cum-head p {
+    font-size: 0.88rem;
+    color: #a0acd2;
+    margin: 0;
+}
+.cum-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+@media (max-width: 600px) {
+    .cum-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.cum-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+}
+.cum-card-pro {
+    border-color: rgba(255, 207, 51, 0.45);
+    background: rgba(255, 207, 51, 0.04);
+}
+.cum-card-rescate {
+    border-color: rgba(255, 107, 138, 0.4);
+    background: rgba(255, 107, 138, 0.03);
+}
+.cum-card-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #ffcf33;
+    background: rgba(255, 207, 51, 0.15);
+    padding: 3px 8px;
+    border-radius: 999px;
+    align-self: flex-start;
+    margin-bottom: 8px;
+}
+.cum-card-badge-o {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #ff8ba0;
+    background: rgba(255, 107, 138, 0.15);
+    padding: 3px 8px;
+    border-radius: 999px;
+    align-self: flex-start;
+    margin-bottom: 8px;
+}
+.cum-card h4 {
+    font-size: 1.05rem;
+    color: #ffffff;
+    margin: 0 0 6px;
+}
+.cum-price {
+    margin-bottom: 14px;
+}
+.cum-price b {
+    font-size: 1.8rem;
+    color: #ffffff;
+}
+.cum-price span {
+    font-size: 0.82rem;
+    color: #a0acd2;
+}
+.cum-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+    font-size: 0.82rem;
+    color: #c9d5f7;
+    display: grid;
+    gap: 8px;
+    flex: 1;
+}
+.cum-foot {
+    display: flex;
+    justify-content: center;
+}
+

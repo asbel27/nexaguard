@@ -308,6 +308,19 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
             </span>
         </div>
 
+        <?php if (!$is_pro && $last_report && $last_report['threats_count'] > 0): ?>
+            <div class="threats-pro-banner">
+                <div class="tpb-badge">⚡ FUNCIÓN DE LIMPIEZA AUTOMÁTICA PRO</div>
+                <h4>Erradicación con 1 Clic Bloqueada · Se detectaron <?php echo $last_report['threats_count']; ?> amenazas</h4>
+                <p>NexaGuard ha localizado con precisión quirúrgica los archivos infectados y las inyecciones en base de datos. Para erradicarlos automáticamente sin romper tu sitio o encargar la desinfección a nuestros ingenieros:</p>
+                <div class="tpb-acts">
+                    <button type="button" class="btn-ng btn-ng-primary btn-open-clean-modal">⚡ Desbloquear Erradicación con Plan PRO ($9.99/mes)</button>
+                    <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-danger">Solicitar Plan Rescate ($99)</a>
+                    <button type="button" class="btn-ng btn-ng-link btn-open-lic-modal" style="color:#ffcf33">Ya tengo mi clave de licencia ›</button>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <div id="threats-list" class="threats-grid">
             <?php if (!$last_report || empty($last_report['threats'])): ?>
                 <div class="empty-state">
@@ -334,50 +347,59 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
                             <pre class="threat-snippet"><code><?php echo esc_html($t['code']); ?></code></pre>
                         <?php endif; ?>
                         <div class="threat-actions">
-                            <?php if ($is_hseo): ?>
-                                <button type="button" class="btn-ng btn-ng-danger btn-delete-plugin-folder" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Destruir la carpeta completa de este plugin troyano">
-                                    💥 Destruir Carpeta del Plugin (HSEO)
-                                </button>
-                            <?php endif; ?>
-
-                            <?php if (empty($t['is_db'])): ?>
-                                <?php if ($t['clean_action'] === 'sanitize_injection'): ?>
-                                    <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                        🧹 Erradicar Inyección y Reparar
+                            <?php if ($is_pro): ?>
+                                <?php if ($is_hseo): ?>
+                                    <button type="button" class="btn-ng btn-ng-danger btn-delete-plugin-folder" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Destruir la carpeta completa de este plugin troyano">
+                                        💥 Destruir Carpeta del Plugin (HSEO)
                                     </button>
                                 <?php endif; ?>
 
-                                <!-- Botón de eliminación forzada sin restricciones de permisos (archivos) -->
-                                <button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Forzar eliminación superando permisos de solo lectura">
-                                    💥 Forzar Eliminación (Desbloqueo)
-                                </button>
+                                <?php if (empty($t['is_db'])): ?>
+                                    <?php if ($t['clean_action'] === 'sanitize_injection'): ?>
+                                        <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                            🧹 Erradicar Inyección y Reparar
+                                        </button>
+                                    <?php endif; ?>
 
-                                <?php if ($t['clean_action'] === 'quarantine'): ?>
-                                    <button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                        🔒 Mover a Cuarentena
+                                    <button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Forzar eliminación superando permisos de solo lectura">
+                                        💥 Forzar Eliminación (Desbloqueo)
                                     </button>
+
+                                    <?php if ($t['clean_action'] === 'quarantine'): ?>
+                                        <button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                            🔒 Mover a Cuarentena
+                                        </button>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <?php if ($t['clean_action'] === 'clean_db_option'): ?>
+                                        <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Intentar limpiar cadenas maliciosas">
+                                            🧹 Limpiar Inyección en BD
+                                        </button>
+                                        <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="delete_db_option" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Eliminar completamente esta opción de la base de datos">
+                                            💥 Purgar Opción de BD
+                                        </button>
+                                    <?php elseif ($t['clean_action'] === 'clean_post_injection'): ?>
+                                        <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_post_injection" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                            📝 Limpiar Publicación en BD
+                                        </button>
+                                    <?php elseif ($t['clean_action'] === 'remove_cron_hook'): ?>
+                                        <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="remove_cron_hook" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                            ⏱️ Eliminar Tarea Cron
+                                        </button>
+                                    <?php elseif ($t['clean_action'] === 'downgrade_user'): ?>
+                                        <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="downgrade_user" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                            👤 Degradar a Suscriptor
+                                        </button>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <?php if ($t['clean_action'] === 'clean_db_option'): ?>
-                                    <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Intentar limpiar cadenas maliciosas">
-                                        🧹 Limpiar Inyección en BD
-                                    </button>
-                                    <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="delete_db_option" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Eliminar completamente esta opción de la base de datos">
-                                        💥 Purgar Opción de BD
-                                    </button>
-                                <?php elseif ($t['clean_action'] === 'clean_post_injection'): ?>
-                                    <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_post_injection" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                        📝 Limpiar Publicación en BD
-                                    </button>
-                                <?php elseif ($t['clean_action'] === 'remove_cron_hook'): ?>
-                                    <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="remove_cron_hook" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                        ⏱️ Eliminar Tarea Cron
-                                    </button>
-                                <?php elseif ($t['clean_action'] === 'downgrade_user'): ?>
-                                    <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="downgrade_user" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                        👤 Degradar a Suscriptor
-                                    </button>
-                                <?php endif; ?>
+                                <!-- En Modo Estándar: Botones bloqueados que abren la conversión -->
+                                <button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="<?php echo esc_attr($t['file']); ?>" title="Erradicar amenaza (Requiere Plan Pro o Rescate)">
+                                    🔒 Erradicar Amenaza (Función PRO)
+                                </button>
+                                <button type="button" class="btn-ng btn-ng-outline btn-locked-clean" data-target="<?php echo esc_attr($t['file']); ?>" title="Mover a cuarentena (Requiere Plan Pro)">
+                                    🔒 Cuarentena (Función PRO)
+                                </button>
                             <?php endif; ?>
 
                             <button type="button" class="btn-ng btn-ng-outline btn-whitelist-item" data-target="<?php echo esc_attr($t['file']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Omitir en futuros escaneos">
@@ -387,6 +409,53 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Modal de Conversión para Erradicación de Malware -->
+    <div id="clean-upgrade-modal" class="ng-modal" style="display:none;">
+        <div class="ng-modal-box clean-upgrade-box">
+            <div class="cum-head">
+                <span class="cum-tag">🛡️ DESINFECCIÓN Y ERRADICACIÓN DE AMENAZAS</span>
+                <h3>Desbloquea la Limpieza Automática de tu Web</h3>
+                <p>NexaGuard ha identificado las amenazas en tus archivos y base de datos. Elige cómo deseas desinfectar tu WordPress:</p>
+            </div>
+
+            <div class="cum-grid">
+                <!-- Opción 1: Plan Security Pro -->
+                <div class="cum-card cum-card-pro">
+                    <div class="cum-card-badge">MÁS POPULAR · $9.99 / MES</div>
+                    <h4>Plan NexaGuard Security PRO</h4>
+                    <div class="cum-price"><b>$9.99</b> <span>USD / mes</span></div>
+                    <ul class="cum-features">
+                        <li>✓ <strong>Erradicación con 1 Clic</strong> de todas las amenazas detectadas</li>
+                        <li>✓ <strong>Sistema de Vigilancia 24 Horas</strong> con radar continuo</li>
+                        <li>✓ <strong>Zero-Day Cloud Threat Intel:</strong> Bloquea ataques nuevos</li>
+                        <li>✓ <strong>Prevención de Reinfecciones:</strong> Blindaje automático</li>
+                    </ul>
+                    <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="width:100%;text-align:center;justify-content:center">Adquirir Plan PRO ($9.99/mes)</a>
+                    <button type="button" class="btn-ng btn-ng-link btn-switch-to-key" style="margin-top:8px;color:#ffcf33;font-size:0.82rem;width:100%;text-align:center">Ya tengo mi clave de licencia ›</button>
+                </div>
+
+                <!-- Opción 2: Plan Rescate -->
+                <div class="cum-card cum-card-rescate">
+                    <div class="cum-card-badge-o">SERVICIO HUMANO EXPERTO · $99</div>
+                    <h4>Plan Rescate Forense</h4>
+                    <div class="cum-price"><b>$99</b> <span>USD · Pago Único</span></div>
+                    <ul class="cum-features">
+                        <li>✓ <strong>Limpieza Humana Completa</strong> por ingenieros forenses</li>
+                        <li>✓ <strong>Reparación de Errores Críticos:</strong> Web operativa 100%</li>
+                        <li>✓ <strong>Deslistado de Listas Negras:</strong> Google y antivirus</li>
+                        <li>✓ <strong>Garantía Total de 30 Días:</strong> Si vuelve, lo limpiamos gratis</li>
+                    </ul>
+                    <a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-danger" style="width:100%;text-align:center;justify-content:center">Contratar Plan Rescate ($99)</a>
+                    <p style="font-size:0.78rem;color:#8f9fc7;margin-top:8px;text-align:center">Respuesta urgente en menos de 1 a 2 horas</p>
+                </div>
+            </div>
+
+            <div class="cum-foot">
+                <button type="button" id="btn-close-clean-modal" class="btn-ng btn-ng-outline">Cerrar</button>
+            </div>
         </div>
     </div>
 

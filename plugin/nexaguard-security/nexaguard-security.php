@@ -113,7 +113,20 @@ class NexaGuard_Plugin {
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce'    => wp_create_nonce('nexaguard_security_nonce'),
             'site_url' => site_url(),
+            'is_pro'   => $this->is_pro_active() ? 1 : 0
         ));
+    }
+
+    public function is_pro_active() {
+        $license = get_option('nexaguard_license_data', null);
+        if (empty($license) || empty($license['valid']) || empty($license['key'])) {
+            return false;
+        }
+        $days_left = isset($license['days_left']) ? intval($license['days_left']) : 0;
+        if ((isset($license['status']) && $license['status'] === 'expired') || $days_left <= 0) {
+            return false;
+        }
+        return (isset($license['status']) && ($license['status'] === 'active' || $license['status'] === 'expiring_soon'));
     }
 
     public function render_admin_page() {
@@ -142,6 +155,14 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code'    => 'pro_required',
+                'message' => 'La erradicación automática y desinfección de amenazas requiere Licencia NexaGuard PRO activa o el Plan Rescate.'
+            ));
+            return;
+        }
+
         $type = isset($_POST['threat_type']) ? sanitize_text_field($_POST['threat_type']) : '';
         $target = isset($_POST['target']) ? sanitize_text_field($_POST['target']) : '';
 
@@ -159,6 +180,14 @@ class NexaGuard_Plugin {
         check_ajax_referer('nexaguard_security_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code'    => 'pro_required',
+                'message' => 'El aislamiento en cuarentena protegida requiere Licencia NexaGuard PRO activa o el Plan Rescate.'
+            ));
+            return;
         }
 
         $file = isset($_POST['file']) ? sanitize_text_field($_POST['file']) : '';
@@ -246,6 +275,14 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code'    => 'pro_required',
+                'message' => 'La erradicación forzada y eliminación de archivos maliciosos requiere Licencia NexaGuard PRO activa o el Plan Rescate.'
+            ));
+            return;
+        }
+
         $target = isset($_POST['target']) ? sanitize_text_field($_POST['target']) : '';
         $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : 'file';
 
@@ -267,6 +304,14 @@ class NexaGuard_Plugin {
         check_ajax_referer('nexaguard_security_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code'    => 'pro_required',
+                'message' => 'El Sistema de Vigilancia 24 Horas requiere Licencia NexaGuard PRO activa.'
+            ));
+            return;
         }
 
         $active = !empty($_POST['active']) ? 1 : 0;
