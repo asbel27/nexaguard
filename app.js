@@ -735,7 +735,7 @@ function createApp({ store, scanner, config }) {
         : isExpiringSoon
           ? 'Atención: Tu suscripción a NexaGuard Security Pro vencerá en ' + daysLeft + ' días. Renueva a tiempo en nexaguards.com para mantener el escudo activo.'
           : 'Licencia activa y sincronizada con NexaGuard Threat Cloud.',
-      renew_url: 'https://nexaguards.com/#planes',
+      renew_url: 'https://www.nexaguards.com/#planes',
       features: {
         vigilance_24h: !isExpired,
         deep_clean: true,

@@ -292,8 +292,8 @@ class NexaGuard_Plugin {
             wp_send_json_success(array('status' => 'inactive', 'message' => 'Licencia desvinculada.'));
         }
 
-        // Consultar API en https://nexaguards.com/api/license/validate
-        $response = wp_remote_post('https://nexaguards.com/api/license/validate', array(
+        // Consultar API en https://www.nexaguards.com/api/license/validate
+        $response = wp_remote_post('https://www.nexaguards.com/api/license/validate', array(
             'timeout' => 12,
             'headers' => array('Content-Type' => 'application/json'),
             'body'    => wp_json_encode(array(
