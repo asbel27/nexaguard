@@ -485,6 +485,11 @@ jQuery(document).ready(function ($) {
     // 9. Guardar Configuración WAF
     $('#form-waf-settings').on('submit', function (e) {
         e.preventDefault();
+        if (!nexaguardData.is_pro) {
+            $('#clean-upgrade-modal').fadeIn(200);
+            return false;
+        }
+
         var $form = $(this);
         var $msg = $('#save-msg').text('Guardando reglas…').css('color', '#ffcf33');
 
@@ -509,6 +514,15 @@ jQuery(document).ready(function ($) {
                 $msg.text('Error de conexión.').css('color', '#ff8ba0');
             }
         });
+    });
+
+    // Interceptar clicks en WAF cuando no es PRO
+    $(document).on('click', '.waf-locked-container, .waf-locked-container label, .btn-locked-waf-submit, .btn-open-upgrade-modal', function (e) {
+        if (!nexaguardData.is_pro) {
+            e.preventDefault();
+            $('#clean-upgrade-modal').fadeIn(200);
+            return false;
+        }
     });
 
     function updateThreatCounts() {
@@ -558,8 +572,16 @@ jQuery(document).ready(function ($) {
         }
     }
 
-    $('#btn-toggle-vigilance').on('click', function () {
+    $('#btn-toggle-vigilance').on('click', function (e) {
         var $btn = $(this);
+
+        // Si es versión estándar sin PRO activa: bloquear radar y abrir modal de compra
+        if (!nexaguardData.is_pro || $btn.attr('data-locked') === '1' || $btn.hasClass('btn-vigilance-locked')) {
+            e.preventDefault();
+            $('#clean-upgrade-modal').fadeIn(200);
+            return false;
+        }
+
         var current = parseInt($btn.attr('data-active'), 10) || 0;
         var next = current === 1 ? 0 : 1;
 
@@ -595,6 +617,15 @@ jQuery(document).ready(function ($) {
         });
     });
 
+    // Clicks en la caja del radar o distintivos bloqueados
+    $(document).on('click', '.vigilance-card.vigilance-locked #vigilance-radar-box, .radar-locked', function (e) {
+        if (!nexaguardData.is_pro) {
+            e.preventDefault();
+            $('#clean-upgrade-modal').fadeIn(200);
+            return false;
+        }
+    });
+
     // ============ GESTIÓN DE LICENCIA PRO ============
     $('#btn-edit-license').on('click', function () {
         $('#license-modal').fadeIn(200);
@@ -603,8 +634,9 @@ jQuery(document).ready(function ($) {
 
     $(document).on('click', '.btn-vigilance-locked, .btn-open-lic-modal', function (e) {
         e.preventDefault();
+        $('#clean-upgrade-modal').fadeOut(150);
         $('#license-modal').fadeIn(200);
-        $('#license-modal-msg').text('Ingresa tu clave de licencia oficial del Plan Security PRO para desbloquear el radar 24h.').css('color', '#ffcf33');
+        $('#license-modal-msg').text('Ingresa tu clave de licencia oficial del Plan Security PRO para desbloquear el radar 24h y el blindaje WAF.').css('color', '#ffcf33');
     });
 
     $('#btn-unlink-license').on('click', function (e) {

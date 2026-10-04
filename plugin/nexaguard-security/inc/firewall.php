@@ -4,7 +4,24 @@ if (!defined('ABSPATH')) {
 }
 
 class NexaGuard_Firewall {
+    public static function is_pro() {
+        $license = get_option('nexaguard_license_data', null);
+        if (empty($license) || empty($license['valid']) || empty($license['key'])) {
+            return false;
+        }
+        $days_left = isset($license['days_left']) ? intval($license['days_left']) : 0;
+        if ((isset($license['status']) && $license['status'] === 'expired') || $days_left <= 0) {
+            return false;
+        }
+        return (isset($license['status']) && ($license['status'] === 'active' || $license['status'] === 'expiring_soon'));
+    }
+
     public static function init() {
+        // En la versión estándar gratuita el Blindaje y Cortafuegos WAF perimetral permanecen en pausa
+        if (!self::is_pro()) {
+            return;
+        }
+
         $settings = get_option('nexaguard_settings', array(
             'block_php_uploads' => true,
             'disable_xmlrpc'    => true,

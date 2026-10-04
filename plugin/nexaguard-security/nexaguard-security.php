@@ -207,6 +207,14 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code'    => 'pro_required',
+                'message' => 'El Blindaje Activo y Cortafuegos WAF en tiempo real requiere Licencia NexaGuard PRO activa o el Plan Rescate.'
+            ));
+            return;
+        }
+
         $settings = array(
             'block_php_uploads' => !empty($_POST['block_php_uploads']),
             'disable_xmlrpc'    => !empty($_POST['disable_xmlrpc']),

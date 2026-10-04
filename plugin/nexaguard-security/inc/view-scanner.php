@@ -94,22 +94,6 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
         </div>
     <?php endif; ?>
 
-    <!-- Modal de Cambio de Licencia -->
-    <div id="license-modal" class="ng-modal" style="display:none;">
-        <div class="ng-modal-box">
-            <h3>🔑 Activar Licencia NexaGuard Pro</h3>
-            <p>Introduce tu clave de licencia oficial obtenida tras la compra de tu plan en NexaGuard:</p>
-            <div class="ng-modal-fld">
-                <input type="text" id="input-license-key" class="in-ng" placeholder="Ej: NXG-PRO-XXXX-XXXX" value="<?php echo esc_attr($has_license ? $license_data['key'] : ''); ?>">
-            </div>
-            <p id="license-modal-msg" class="modal-msg"></p>
-            <div class="ng-modal-acts">
-                <button type="button" id="btn-save-license" class="btn-ng btn-ng-primary">Verificar y Guardar</button>
-                <button type="button" id="btn-close-license" class="btn-ng btn-ng-outline">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
     <!-- ============ SISTEMA DE VIGILANCIA 24 HORAS CON RADAR ============ -->
     <div class="ng-card vigilance-card <?php echo !$is_pro ? 'vigilance-locked' : ''; ?>">
         <div class="vigilance-header">
@@ -412,52 +396,9 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
         </div>
     </div>
 
-    <!-- Modal de Conversión para Erradicación de Malware -->
-    <div id="clean-upgrade-modal" class="ng-modal" style="display:none;">
-        <div class="ng-modal-box clean-upgrade-box">
-            <div class="cum-head">
-                <span class="cum-tag">🛡️ DESINFECCIÓN Y ERRADICACIÓN DE AMENAZAS</span>
-                <h3>Desbloquea la Limpieza Automática de tu Web</h3>
-                <p>NexaGuard ha identificado las amenazas en tus archivos y base de datos. Elige cómo deseas desinfectar tu WordPress:</p>
-            </div>
-
-            <div class="cum-grid">
-                <!-- Opción 1: Plan Security Pro -->
-                <div class="cum-card cum-card-pro">
-                    <div class="cum-card-badge">MÁS POPULAR · $9.99 / MES</div>
-                    <h4>Plan NexaGuard Security PRO</h4>
-                    <div class="cum-price"><b>$9.99</b> <span>USD / mes</span></div>
-                    <ul class="cum-features">
-                        <li>✓ <strong>Erradicación con 1 Clic</strong> de todas las amenazas detectadas</li>
-                        <li>✓ <strong>Sistema de Vigilancia 24 Horas</strong> con radar continuo</li>
-                        <li>✓ <strong>Zero-Day Cloud Threat Intel:</strong> Bloquea ataques nuevos</li>
-                        <li>✓ <strong>Prevención de Reinfecciones:</strong> Blindaje automático</li>
-                    </ul>
-                    <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="width:100%;text-align:center;justify-content:center">Adquirir Plan PRO ($9.99/mes)</a>
-                    <button type="button" class="btn-ng btn-ng-link btn-switch-to-key" style="margin-top:8px;color:#ffcf33;font-size:0.82rem;width:100%;text-align:center">Ya tengo mi clave de licencia ›</button>
-                </div>
-
-                <!-- Opción 2: Plan Rescate -->
-                <div class="cum-card cum-card-rescate">
-                    <div class="cum-card-badge-o">SERVICIO HUMANO EXPERTO · $99</div>
-                    <h4>Plan Rescate Forense</h4>
-                    <div class="cum-price"><b>$99</b> <span>USD · Pago Único</span></div>
-                    <ul class="cum-features">
-                        <li>✓ <strong>Limpieza Humana Completa</strong> por ingenieros forenses</li>
-                        <li>✓ <strong>Reparación de Errores Críticos:</strong> Web operativa 100%</li>
-                        <li>✓ <strong>Deslistado de Listas Negras:</strong> Google y antivirus</li>
-                        <li>✓ <strong>Garantía Total de 30 Días:</strong> Si vuelve, lo limpiamos gratis</li>
-                    </ul>
-                    <a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-danger" style="width:100%;text-align:center;justify-content:center">Contratar Plan Rescate ($99)</a>
-                    <p style="font-size:0.78rem;color:#8f9fc7;margin-top:8px;text-align:center">Respuesta urgente en menos de 1 a 2 horas</p>
-                </div>
-            </div>
-
-            <div class="cum-foot">
-                <button type="button" id="btn-close-clean-modal" class="btn-ng btn-ng-outline">Cerrar</button>
-            </div>
-        </div>
-    </div>
+    <?php
+    include NEXAGUARD_DIR . 'inc/view-modals.php';
+    ?>
 
     <!-- Archivos en cuarentena -->
     <?php if (!empty($quarantine_log)): ?>

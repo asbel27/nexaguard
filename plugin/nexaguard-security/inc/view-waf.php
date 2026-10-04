@@ -3,6 +3,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+$license = get_option('nexaguard_license_data', null);
+$has_license = !empty($license) && !empty($license['valid']) && !empty($license['key']);
+$days_left = ($has_license && isset($license['days_left'])) ? intval($license['days_left']) : 0;
+$is_expired = $has_license && (($license['status'] === 'expired') || $days_left <= 0);
+$is_pro = $has_license && !$is_expired && !empty($license['valid']);
+
 $settings = get_option('nexaguard_settings', array(
     'block_php_uploads' => true,
     'disable_xmlrpc'    => true,
@@ -19,69 +25,103 @@ $settings = get_option('nexaguard_settings', array(
                 <path d="m9 12 2 2 4-4"/>
             </svg>
             <div>
-                <h1>Blindaje Activo & Cortafuegos (WAF)</h1>
+                <h1>Blindaje Activo & Cortafuegos (WAF) <?php if (!$is_pro): ?><span class="badge-v" style="background:rgba(255,107,138,.15);color:#ff8ba0;border:1px solid rgba(255,107,138,.3)">🔒 Función PRO</span><?php endif; ?></h1>
                 <p class="sub">Reglas de endurecimiento perimetral en tiempo real para evitar hackeos recurrentes</p>
             </div>
         </div>
         <div class="nexaguard-header-actions">
             <a href="<?php echo admin_url('admin.php?page=nexaguard-security'); ?>" class="btn-ng btn-ng-outline">← Volver al Escáner</a>
+            <?php if (!$is_pro): ?>
+                <button type="button" class="btn-ng btn-ng-primary btn-open-upgrade-modal">⚡ Desbloquear Modo PRO</button>
+            <?php endif; ?>
         </div>
     </div>
 
-    <form id="form-waf-settings" class="ng-card" style="margin-top:20px;">
-        <h3>Reglas de Protección en Tiempo Real</h3>
+    <!-- Banner cuando WAF está bloqueado en edición estándar -->
+    <?php if (!$is_pro): ?>
+        <div class="waf-locked-banner">
+            <div class="wlb-icon">🔒</div>
+            <div class="wlb-content">
+                <span class="wlb-tag">PROTECCIÓN PERIMETRAL BLOQUEADA · REQUIERE PLAN PRO</span>
+                <h3>Blindaje Activo y Cortafuegos WAF en Pausa</h3>
+                <p>El Cortafuegos de Aplicación Web (WAF) inspecciona peticiones entrantes, bloquea inyecciones SQL, carpetas sensibles, webshells y neutraliza el malware ClearFake / EtherHiding antes de tocar tu servidor. En la <strong>Edición Estándar</strong> esta capa perimetral permanece desactivada.</p>
+                <div class="wlb-actions">
+                    <button type="button" class="btn-ng btn-ng-primary btn-open-upgrade-modal">⚡ Desbloquear con Plan PRO ($9.99/mes)</button>
+                    <a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-danger">👨‍💻 Solicitar Especialista (Plan Rescate $99)</a>
+                    <button type="button" class="btn-ng btn-ng-link btn-open-lic-modal" style="color:#ffcf33">Ya tengo mi clave de licencia ›</button>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <form id="form-waf-settings" class="ng-card <?php echo !$is_pro ? 'waf-locked-form' : ''; ?>" style="margin-top:20px;">
+        <div class="card-title-bar">
+            <h3>Reglas de Protección en Tiempo Real</h3>
+            <?php if (!$is_pro): ?>
+                <span class="badge-v" style="background:rgba(255,107,138,.12);color:#ff8ba0">🔒 Bloqueadas en Edición Estándar</span>
+            <?php endif; ?>
+        </div>
         <p class="ng-hint">Estas medidas frenan intentos de intrusión antes de que toquen la base de datos o el núcleo de WordPress.</p>
 
-        <div class="toggle-list">
+        <div class="toggle-list <?php echo !$is_pro ? 'waf-locked-container' : ''; ?>">
             <!-- WAF Core -->
-            <label class="toggle-row">
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                 <div class="toggle-info">
-                    <b>Cortafuegos de Aplicación Web (WAF Inteligente)</b>
+                    <b>Cortafuegos de Aplicación Web (WAF Inteligente) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
                     <p class="ng-hint">Filtra todas las peticiones entrantes bloqueando inyecciones SQL, Directory Traversal (../..), scripts maliciosos y webshells con respuesta 403 Forbidden.</p>
                 </div>
-                <input type="checkbox" name="waf_enabled" value="1" <?php checked(!empty($settings['waf_enabled'])); ?> class="ng-toggle">
+                <input type="checkbox" name="waf_enabled" value="1" <?php checked(!empty($settings['waf_enabled'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
 
             <!-- Anti-ClearFake / Anti-ClickFix Live Filter -->
-            <label class="toggle-row">
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                 <div class="toggle-info">
-                    <b>Filtro Activo Anti-ClearFake y Falsos Captchas</b>
+                    <b>Filtro Activo Anti-ClearFake y Falsos Captchas <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
                     <p class="ng-hint">Inspecciona el HTML de salida en milisegundos y elimina al vuelo cualquier script base64 sospechoso o llamada a contratos inteligentes en blockchain (EtherHiding), impidiendo que los visitantes vean popups maliciosos.</p>
                 </div>
-                <input type="checkbox" name="anti_clearfake" value="1" <?php checked(!empty($settings['anti_clearfake'])); ?> class="ng-toggle">
+                <input type="checkbox" name="anti_clearfake" value="1" <?php checked(!empty($settings['anti_clearfake'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
 
             <!-- Bloqueo de PHP en Uploads -->
-            <label class="toggle-row">
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                 <div class="toggle-info">
-                    <b>Bloquear ejecución de scripts PHP en la carpeta /wp-content/uploads/</b>
+                    <b>Bloquear ejecución de scripts PHP en la carpeta /wp-content/uploads/ <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
                     <p class="ng-hint">Instala una regla perimetral en .htaccess para que ningún archivo .php subido por atacantes pueda ser ejecutado. Neutraliza el 90% de backdoors.</p>
                 </div>
-                <input type="checkbox" name="block_php_uploads" value="1" <?php checked(!empty($settings['block_php_uploads'])); ?> class="ng-toggle">
+                <input type="checkbox" name="block_php_uploads" value="1" <?php checked(!empty($settings['block_php_uploads'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
 
             <!-- Deshabilitar XML-RPC -->
-            <label class="toggle-row">
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                 <div class="toggle-info">
-                    <b>Deshabilitar completamente XML-RPC</b>
+                    <b>Deshabilitar completamente XML-RPC <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
                     <p class="ng-hint">Bloquea el archivo xmlrpc.php para detener ataques automatizados de fuerza bruta a contraseñas y ataques de amplificación DDoS.</p>
                 </div>
-                <input type="checkbox" name="disable_xmlrpc" value="1" <?php checked(!empty($settings['disable_xmlrpc'])); ?> class="ng-toggle">
+                <input type="checkbox" name="disable_xmlrpc" value="1" <?php checked(!empty($settings['disable_xmlrpc'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
 
             <!-- Ocultar versión de WordPress -->
-            <label class="toggle-row">
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                 <div class="toggle-info">
-                    <b>Ocultar versión de WordPress (wp_generator)</b>
+                    <b>Ocultar versión de WordPress (wp_generator) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
                     <p class="ng-hint">Elimina la etiqueta meta generator que expone la versión exacta de tu WordPress a bots que buscan vulnerabilidades conocidas.</p>
                 </div>
-                <input type="checkbox" name="hide_wp_version" value="1" <?php checked(!empty($settings['hide_wp_version'])); ?> class="ng-toggle">
+                <input type="checkbox" name="hide_wp_version" value="1" <?php checked(!empty($settings['hide_wp_version'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
         </div>
 
         <div class="form-actions" style="margin-top:24px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px">
-            <button type="submit" class="btn-ng btn-ng-primary">Guardar y Aplicar Blindaje</button>
-            <span id="save-msg" class="ng-hint" style="margin-left:12px"></span>
+            <?php if ($is_pro): ?>
+                <button type="submit" class="btn-ng btn-ng-primary">Guardar y Aplicar Blindaje</button>
+                <span id="save-msg" class="ng-hint" style="margin-left:12px"></span>
+            <?php else: ?>
+                <button type="button" class="btn-ng btn-ng-primary btn-locked-waf-submit">🔒 Desbloquear Blindaje con Plan PRO ($9.99/mes)</button>
+                <a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-danger" style="margin-left:10px">👨‍💻 Solicitar Especialista (Plan Rescate $99)</a>
+            <?php endif; ?>
         </div>
     </form>
 </div>
+
+<?php
+include NEXAGUARD_DIR . 'inc/view-modals.php';
+?>

@@ -1151,3 +1151,101 @@
     justify-content: center;
 }
 
+/* ============ WAF BLOQUEADO EN EDICIÓN ESTÁNDAR ============ */
+.waf-locked-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    background: linear-gradient(135deg, rgba(255, 107, 138, 0.12) 0%, rgba(255, 207, 51, 0.08) 100%);
+    border: 1.5px solid rgba(255, 107, 138, 0.35);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-top: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.wlb-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+}
+.wlb-content {
+    flex: 1;
+}
+.wlb-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #ff8ba0;
+    background: rgba(255, 107, 138, 0.15);
+    border: 1px solid rgba(255, 107, 138, 0.3);
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+}
+.waf-locked-banner h3 {
+    margin: 0 0 6px;
+    font-size: 1.25rem;
+    color: #ffffff;
+}
+.waf-locked-banner p {
+    margin: 0 0 16px;
+    font-size: 0.88rem;
+    color: #cbd5f5;
+    max-width: 75ch;
+    line-height: 1.45;
+}
+.wlb-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.waf-locked-form {
+    position: relative;
+    border-color: rgba(255, 107, 138, 0.25)!important;
+}
+.waf-locked-container {
+    cursor: pointer;
+}
+.row-locked {
+    opacity: 0.65;
+    cursor: pointer!important;
+    position: relative;
+    transition: all 0.2s ease;
+}
+.row-locked:hover {
+    opacity: 0.9;
+    background: rgba(255, 107, 138, 0.05);
+}
+.rule-lock-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #ff8ba0;
+    background: rgba(255, 107, 138, 0.15);
+    border: 1px solid rgba(255, 107, 138, 0.3);
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+.btn-locked-waf-submit {
+    background: linear-gradient(135deg, #ff6b8a 0%, #e04868 100%)!important;
+    border-color: #ff6b8a!important;
+    color: #ffffff!important;
+    box-shadow: 0 4px 14px rgba(255, 107, 138, 0.35);
+    cursor: pointer;
+}
+.btn-locked-waf-submit:hover {
+    box-shadow: 0 6px 20px rgba(255, 107, 138, 0.55);
+    transform: translateY(-1px);
+}
+
+/* Vigilancia radar bloqueada cursor e indicación visual */
+.vigilance-card.vigilance-locked,
+.vigilance-locked .btn-vigilance-toggle,
+.radar-locked {
+    cursor: pointer;
+}
+
+
