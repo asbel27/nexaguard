@@ -58,7 +58,33 @@ function createPayPalClient(cfg) {
       headers: requestId ? { 'PayPal-Request-Id': requestId } : {},
       body: JSON.stringify({
         intent: 'CAPTURE',
-        purchase_units: [{ reference_id: referenceId, custom_id: referenceId, description: description, amount: { currency_code: currency, value: amount } }],
+        purchase_units: [{
+          reference_id: referenceId,
+          custom_id: referenceId,
+          description: description,
+          amount: {
+            currency_code: currency,
+            value: amount,
+            breakdown: {
+              item_total: { currency_code: currency, value: amount }
+            }
+          },
+          items: [{
+            name: description || 'Servicio NexaGuard',
+            unit_amount: { currency_code: currency, value: amount },
+            quantity: '1',
+            category: 'DIGITAL_GOODS'
+          }]
+        }],
+        payment_source: {
+          paypal: {
+            experience_context: {
+              brand_name: 'NexaGuard',
+              shipping_preference: 'NO_SHIPPING',
+              user_action: 'PAY_NOW'
+            }
+          }
+        },
         application_context: {
           brand_name: 'NexaGuard',
           shipping_preference: 'NO_SHIPPING',
