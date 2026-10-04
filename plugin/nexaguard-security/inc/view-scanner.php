@@ -42,40 +42,40 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
 
     <!-- Barra de Licencia y Alertas de Suscripción -->
     <?php if ($is_standard): ?>
-        <div class="ng-license-banner license-standard">
-            <div class="lic-icon">🛡️</div>
-            <div class="lic-content">
-                <strong>EDICIÓN ESTÁNDAR: Escaneo Forense Local Activo.</strong>
-                <p>Estás usando NexaGuard Security Estándar. Para activar el <strong>Sistema de Vigilancia Continua 24 Horas con Radar</strong> y la protección en tiempo real, activa tu Licencia PRO.</p>
+        <div class="ng-license-banner license-standard" style="background:#0e163e !important; border:1px solid rgba(255,207,51,0.35) !important; border-radius:14px; padding:18px 24px; margin-bottom:20px; box-shadow:0 10px 30px rgba(0,0,0,0.35);">
+            <div class="lic-icon" style="font-size:2.4rem; line-height:1;">🛡️</div>
+            <div class="lic-content" style="flex:1; min-width:260px;">
+                <strong style="display:block; font-size:1.08rem; font-weight:800; color:#ffffff !important; margin-bottom:4px;">EDICIÓN ESTÁNDAR: Escaneo Forense Local Activo.</strong>
+                <p style="font-size:0.94rem; color:#e2eafc !important; margin:0; line-height:1.55; font-weight:500;">Estás usando NexaGuard Security Estándar. Para activar el <strong style="color:#ffd859 !important; font-weight:700;">Sistema de Vigilancia Continua 24 Horas con Radar</strong> y la protección en tiempo real, activa tu Licencia PRO.</p>
             </div>
-            <div class="lic-action">
+            <div class="lic-action" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <button type="button" id="btn-edit-license" class="btn-ng btn-ng-primary">🔑 Activar Licencia PRO</button>
-                <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-outline" style="margin-left:8px">Obtener Plan PRO ($9.99/mes)</a>
+                <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-outline" style="background:#141d4a !important; color:#ffffff !important; border:1.5px solid rgba(255,255,255,0.3) !important; margin-left:8px;">Obtener Plan PRO ($9.99/mes)</a>
             </div>
         </div>
     <?php elseif ($is_expired): ?>
-        <div class="ng-license-banner license-expired">
-            <div class="lic-icon">🔴</div>
-            <div class="lic-content">
-                <strong>LICENCIA PRO VENCIDA: Tu período de suscripción ha finalizado.</strong>
-                <p>Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24 Horas y las actualizaciones de firmas en tiempo real.</p>
+        <div class="ng-license-banner license-expired" style="background:#240e1b !important; border:2px solid #ff4560 !important; border-radius:14px; padding:18px 24px; margin-bottom:20px; box-shadow:0 10px 30px rgba(0,0,0,0.35);">
+            <div class="lic-icon" style="font-size:2.4rem; line-height:1;">🔴</div>
+            <div class="lic-content" style="flex:1; min-width:260px;">
+                <strong style="display:block; font-size:1.08rem; font-weight:800; color:#ffffff !important; margin-bottom:4px;">LICENCIA PRO VENCIDA: Tu período de suscripción ha finalizado.</strong>
+                <p style="font-size:0.94rem; color:#ffd2dc !important; margin:0; line-height:1.55; font-weight:500;">Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24 Horas y las actualizaciones de firmas en tiempo real.</p>
             </div>
-            <div class="lic-action">
+            <div class="lic-action" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-danger">Pagar Mensualidad / Renovar</a>
-                <button type="button" id="btn-edit-license" class="btn-ng btn-ng-outline" style="margin-left:8px">Ingresar Otra Clave</button>
+                <button type="button" id="btn-edit-license" class="btn-ng btn-ng-outline" style="background:#141d4a !important; color:#ffffff !important; border:1.5px solid rgba(255,255,255,0.3) !important; margin-left:8px;">Ingresar Otra Clave</button>
                 <button type="button" id="btn-unlink-license" class="btn-ng btn-ng-link" style="color:#ff8ba0;margin-left:8px">Volver a Estándar</button>
             </div>
         </div>
     <?php elseif ($is_expiring_soon): ?>
-        <div class="ng-license-banner license-warning">
-            <div class="lic-icon">⚠️</div>
-            <div class="lic-content">
-                <strong>ATENCIÓN: Tu suscripción a <?php echo esc_html($license_data['plan']); ?> vencerá en <?php echo $days_left; ?> días.</strong>
-                <p>Renueva a tiempo en nexaguards.com para mantener el escudo y la vigilancia continua activos sin interrupciones.</p>
+        <div class="ng-license-banner license-warning" style="background:#261907 !important; border:2px solid #ffcf33 !important; border-radius:14px; padding:18px 24px; margin-bottom:20px; box-shadow:0 10px 30px rgba(0,0,0,0.35);">
+            <div class="lic-icon" style="font-size:2.4rem; line-height:1;">⚠️</div>
+            <div class="lic-content" style="flex:1; min-width:260px;">
+                <strong style="display:block; font-size:1.08rem; font-weight:800; color:#ffffff !important; margin-bottom:4px;">ATENCIÓN: Tu suscripción a <?php echo esc_html($license_data['plan']); ?> vencerá en <?php echo $days_left; ?> días.</strong>
+                <p style="font-size:0.94rem; color:#fff0c7 !important; margin:0; line-height:1.55; font-weight:500;">Renueva a tiempo en nexaguards.com para mantener el escudo y la vigilancia continua activos sin interrupciones.</p>
             </div>
-            <div class="lic-action">
+            <div class="lic-action" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary">Renovar Suscripción</a>
-                <button type="button" id="btn-edit-license" class="btn-ng btn-ng-outline" style="margin-left:8px">Cambiar Clave</button>
+                <button type="button" id="btn-edit-license" class="btn-ng btn-ng-outline" style="background:#141d4a !important; color:#ffffff !important; border:1.5px solid rgba(255,255,255,0.3) !important; margin-left:8px;">Cambiar Clave</button>
                 <button type="button" id="btn-unlink-license" class="btn-ng btn-ng-link" style="color:#ff8ba0;margin-left:8px">Desvincular</button>
             </div>
         </div>

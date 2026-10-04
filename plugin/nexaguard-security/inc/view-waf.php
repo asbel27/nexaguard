@@ -39,16 +39,16 @@ $settings = get_option('nexaguard_settings', array(
 
     <!-- Banner cuando WAF está bloqueado en edición estándar -->
     <?php if (!$is_pro): ?>
-        <div class="waf-locked-banner">
-            <div class="wlb-icon">🔒</div>
+        <div class="waf-locked-banner" style="background:#fff0f3 !important; border:1.5px solid #ff4d6d !important; border-radius:14px; padding:24px 26px; margin-top:20px; box-shadow:0 10px 30px rgba(0,0,0,0.15) !important;">
+            <div class="wlb-icon" style="font-size:2.4rem; line-height:1;">🔒</div>
             <div class="wlb-content">
-                <span class="wlb-tag">PROTECCIÓN PERIMETRAL BLOQUEADA · REQUIERE PLAN PRO</span>
-                <h3>Blindaje Activo y Cortafuegos WAF en Pausa</h3>
-                <p>El Cortafuegos de Aplicación Web (WAF) inspecciona peticiones entrantes, bloquea inyecciones SQL, carpetas sensibles, webshells y neutraliza el malware ClearFake / EtherHiding antes de tocar tu servidor. En la <strong>Edición Estándar</strong> esta capa perimetral permanece desactivada.</p>
-                <div class="wlb-actions">
+                <span class="wlb-tag" style="background:#ffd1dc !important; color:#991b1b !important; border:1px solid #ff4d6d !important; font-weight:800 !important; padding:4px 12px; border-radius:999px; display:inline-block; margin-bottom:8px; font-size:0.75rem; letter-spacing:0.05em;">PROTECCIÓN PERIMETRAL BLOQUEADA · REQUIERE PLAN PRO</span>
+                <h3 style="color:#0f172a !important; font-size:1.35rem !important; font-weight:800 !important; margin:0 0 8px;">Blindaje Activo y Cortafuegos WAF en Pausa</h3>
+                <p style="color:#334155 !important; font-size:0.95rem !important; line-height:1.6 !important; margin:0 0 18px; max-width:75ch; font-weight:500;">El Cortafuegos de Aplicación Web (WAF) inspecciona peticiones entrantes, bloquea inyecciones SQL, carpetas sensibles, webshells y neutraliza el malware ClearFake / EtherHiding antes de tocar tu servidor. En la <strong style="color:#0f172a !important; font-weight:700;">Edición Estándar</strong> esta capa perimetral permanece desactivada.</p>
+                <div class="wlb-actions" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                     <button type="button" class="btn-ng btn-ng-primary btn-open-upgrade-modal">⚡ Desbloquear con Plan PRO ($9.99/mes)</button>
                     <a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-danger">👨‍💻 Solicitar Especialista (Plan Rescate $99)</a>
-                    <button type="button" class="btn-ng btn-ng-link btn-open-lic-modal" style="color:#ffcf33">Ya tengo mi clave de licencia ›</button>
+                    <button type="button" class="btn-ng btn-ng-link btn-open-lic-modal" style="color:#9a3412 !important; font-weight:700; text-decoration:underline;">Ya tengo mi clave de licencia ›</button>
                 </div>
             </div>
         </div>

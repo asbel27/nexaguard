@@ -924,9 +924,24 @@
     flex-wrap: wrap;
 }
 
-.license-standard {
-    background: #0f1847 !important;
-    border: 1.5px solid rgba(107, 140, 255, 0.5) !important;
+.license-standard,
+.ng-license-banner.license-standard {
+    background: #0e163e !important;
+    border: 1.5px solid rgba(255, 207, 51, 0.35) !important;
+}
+.license-standard strong,
+.ng-license-banner.license-standard strong {
+    color: #ffffff !important;
+}
+.license-standard p,
+.ng-license-banner.license-standard p {
+    color: #e2eafc !important;
+}
+.license-standard .btn-ng-outline,
+.ng-license-banner.license-standard .btn-ng-outline {
+    background: #141d4a !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
 }
 
 .license-expired {
@@ -1034,9 +1049,10 @@
 }
 
 /* Modo Estándar y Bloqueo de Radar */
-.license-standard {
-    background: #0f1847 !important;
-    border: 1.5px solid rgba(107, 140, 255, 0.5) !important;
+.license-standard,
+.ng-license-banner.license-standard {
+    background: #0e163e !important;
+    border: 1.5px solid rgba(255, 207, 51, 0.35) !important;
 }
 .btn-vigilance-locked {
     background: rgba(255, 107, 138, 0.12)!important;
@@ -1237,12 +1253,12 @@
     display: flex;
     align-items: flex-start;
     gap: 18px;
-    background: #141738 !important;
-    border: 2px solid #ff6b8a !important;
+    background: #fff0f3 !important;
+    border: 1.5px solid #ff4d6d !important;
     border-radius: 14px;
     padding: 24px 26px;
     margin-top: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
 }
 .wlb-icon {
     font-size: 2.4rem;
@@ -1253,12 +1269,12 @@
 }
 .wlb-tag {
     display: inline-block;
-    font-size: 0.74rem !important;
-    font-weight: 900 !important;
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
     letter-spacing: 0.05em;
-    color: #ff8ba0 !important;
-    background: rgba(255, 107, 138, 0.25) !important;
-    border: 1.5px solid rgba(255, 107, 138, 0.5) !important;
+    color: #991b1b !important;
+    background: #ffd1dc !important;
+    border: 1px solid #ff4d6d !important;
     padding: 4px 12px !important;
     border-radius: 999px;
     margin-bottom: 8px;
@@ -1267,15 +1283,19 @@
     margin: 0 0 8px;
     font-size: 1.35rem !important;
     font-weight: 800 !important;
-    color: #ffffff !important;
+    color: #0f172a !important;
 }
 .waf-locked-banner p {
     margin: 0 0 18px;
     font-size: 0.95rem !important;
-    color: #f0f4ff !important;
+    color: #334155 !important;
     max-width: 75ch;
     line-height: 1.6 !important;
     font-weight: 500;
+}
+.waf-locked-banner p strong {
+    color: #0f172a !important;
+    font-weight: 700 !important;
 }
 .wlb-actions {
     display: flex;
@@ -1284,9 +1304,10 @@
     flex-wrap: wrap;
 }
 .wlb-actions .btn-ng-link {
-    color: #ffd859 !important;
+    color: #9a3412 !important;
     font-size: 0.9rem !important;
     font-weight: 700 !important;
+    text-decoration: underline !important;
 }
 
 .waf-locked-form {
