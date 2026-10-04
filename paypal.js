@@ -58,7 +58,12 @@ function createPayPalClient(cfg) {
       headers: requestId ? { 'PayPal-Request-Id': requestId } : {},
       body: JSON.stringify({
         intent: 'CAPTURE',
-        purchase_units: [{ reference_id: referenceId, custom_id: referenceId, description: description, amount: { currency_code: currency, value: amount } }]
+        purchase_units: [{ reference_id: referenceId, custom_id: referenceId, description: description, amount: { currency_code: currency, value: amount } }],
+        application_context: {
+          brand_name: 'NexaGuard',
+          shipping_preference: 'NO_SHIPPING',
+          user_action: 'PAY_NOW'
+        }
       })
     });
   }
