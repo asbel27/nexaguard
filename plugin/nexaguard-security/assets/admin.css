@@ -113,13 +113,15 @@
 }
 
 .btn-ng-outline {
-    background: rgba(255, 255, 255, 0.05);
-    color: #e6edff;
-    border-color: rgba(255, 255, 255, 0.2);
+    background: #141d4a !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
 }
 .btn-ng-outline:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
+    background: #1d2966 !important;
+    border-color: #ffcf33 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
 .btn-ng-action {
@@ -897,35 +899,60 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 14px 20px;
-    border-radius: 12px;
-    margin-bottom: 18px;
+    padding: 18px 24px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.lic-icon {
+    font-size: 2.4rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.lic-content {
+    flex: 1;
+    min-width: 260px;
+}
+
+.lic-action {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
+.license-standard {
+    background: #0f1847 !important;
+    border: 1.5px solid rgba(107, 140, 255, 0.5) !important;
+}
+
 .license-expired {
-    background: rgba(255, 69, 96, 0.15);
-    border: 1.5px solid #ff4560;
-    color: #ff8ba0;
+    background: #240e1b !important;
+    border: 2px solid #ff4560 !important;
 }
 
 .license-warning {
-    background: rgba(255, 176, 32, 0.15);
-    border: 1.5px solid #ffb020;
-    color: #ffd07a;
+    background: #261907 !important;
+    border: 2px solid #ffcf33 !important;
 }
 
 .ng-license-banner strong {
     display: block;
-    font-size: 0.98rem;
-    margin-bottom: 3px;
-    color: #ffffff;
+    font-size: 1.08rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 4px;
+    color: #ffffff !important;
 }
 
 .ng-license-banner p {
-    font-size: 0.86rem;
+    font-size: 0.94rem !important;
     margin: 0;
-    color: inherit;
+    color: #e2eafc !important;
+    line-height: 1.55 !important;
+    font-weight: 500 !important;
 }
 
 .btn-ng-danger {
@@ -1008,8 +1035,8 @@
 
 /* Modo Estándar y Bloqueo de Radar */
 .license-standard {
-    background: rgba(107, 140, 255, 0.08);
-    border: 1px solid rgba(107, 140, 255, 0.28);
+    background: #0f1847 !important;
+    border: 1.5px solid rgba(107, 140, 255, 0.5) !important;
 }
 .btn-vigilance-locked {
     background: rgba(255, 107, 138, 0.12)!important;
@@ -1210,15 +1237,15 @@
     display: flex;
     align-items: flex-start;
     gap: 18px;
-    background: linear-gradient(135deg, rgba(255, 107, 138, 0.12) 0%, rgba(255, 207, 51, 0.08) 100%);
-    border: 1.5px solid rgba(255, 107, 138, 0.35);
+    background: #141738 !important;
+    border: 2px solid #ff6b8a !important;
     border-radius: 14px;
-    padding: 22px 24px;
+    padding: 24px 26px;
     margin-top: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
 }
 .wlb-icon {
-    font-size: 2.2rem;
+    font-size: 2.4rem;
     line-height: 1;
 }
 .wlb-content {
@@ -1226,33 +1253,40 @@
 }
 .wlb-tag {
     display: inline-block;
-    font-size: 0.72rem;
-    font-weight: 800;
+    font-size: 0.74rem !important;
+    font-weight: 900 !important;
     letter-spacing: 0.05em;
-    color: #ff8ba0;
-    background: rgba(255, 107, 138, 0.15);
-    border: 1px solid rgba(255, 107, 138, 0.3);
-    padding: 3px 10px;
+    color: #ff8ba0 !important;
+    background: rgba(255, 107, 138, 0.25) !important;
+    border: 1.5px solid rgba(255, 107, 138, 0.5) !important;
+    padding: 4px 12px !important;
     border-radius: 999px;
     margin-bottom: 8px;
 }
 .waf-locked-banner h3 {
-    margin: 0 0 6px;
-    font-size: 1.25rem;
-    color: #ffffff;
+    margin: 0 0 8px;
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
 }
 .waf-locked-banner p {
-    margin: 0 0 16px;
-    font-size: 0.88rem;
-    color: #cbd5f5;
+    margin: 0 0 18px;
+    font-size: 0.95rem !important;
+    color: #f0f4ff !important;
     max-width: 75ch;
-    line-height: 1.45;
+    line-height: 1.6 !important;
+    font-weight: 500;
 }
 .wlb-actions {
     display: flex;
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+}
+.wlb-actions .btn-ng-link {
+    color: #ffd859 !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
 }
 
 .waf-locked-form {
