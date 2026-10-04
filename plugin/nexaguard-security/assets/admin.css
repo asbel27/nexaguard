@@ -955,3 +955,40 @@
     justify-content: flex-end;
 }
 
+/* Modo Estándar y Bloqueo de Radar */
+.license-standard {
+    background: rgba(107, 140, 255, 0.08);
+    border: 1px solid rgba(107, 140, 255, 0.28);
+}
+.btn-vigilance-locked {
+    background: rgba(255, 107, 138, 0.12)!important;
+    border-color: rgba(255, 107, 138, 0.35)!important;
+    color: #ff8ba0!important;
+    cursor: pointer;
+}
+.btn-vigilance-locked:hover {
+    background: rgba(255, 107, 138, 0.22)!important;
+    box-shadow: 0 0 16px rgba(255, 107, 138, 0.35);
+}
+.btn-vigilance-locked .v-switch-knob {
+    background: #ff6b8a!important;
+    box-shadow: 0 0 8px rgba(255, 107, 138, 0.6);
+}
+.radar-locked .radar-screen {
+    border-color: rgba(255, 255, 255, 0.15)!important;
+    box-shadow: none!important;
+    filter: grayscale(0.85) opacity(0.5);
+}
+.radar-lock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 107, 138, 0.1);
+    border: 1px solid rgba(255, 107, 138, 0.25);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: #ff9fb4;
+    margin-top: 10px;
+}
+

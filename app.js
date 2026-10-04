@@ -702,8 +702,14 @@ function createApp({ store, scanner, config }) {
     if (!key) return fail(res, 400, 'Clave de licencia requerida.');
 
     const order = db.orders.find(o => (o.licenseKey === key || (o.id && key.includes(o.id.toUpperCase()))));
+    const isTestExpiring = key.startsWith('NXG-TEST-SOON') || key.includes('EXPIRING') || key.includes('SOON');
+    const isTestExpired = key.startsWith('NXG-TEST-EXPIRED') || key.includes('EXPIRED');
     const isAnnual = key.startsWith('NXG-ANNUAL') || (order && order.plan === 'blindaje');
     const isPro = key.startsWith('NXG-PRO') || (order && (order.plan === 'security_pro' || order.plan === 'guardian'));
+
+    if (!order && !isTestExpiring && !isTestExpired && !isAnnual && !isPro) {
+      return fail(res, 404, 'Clave de licencia no reconocida en el sistema de NexaGuard.');
+    }
 
     const now = T();
     let createdAt = order ? (order.paidAt || order.createdAt) : now;
@@ -714,8 +720,15 @@ function createApp({ store, scanner, config }) {
       if (info.accessUntil) expiresAt = info.accessUntil;
     }
 
+    // Soporte para pruebas del Administrador
+    if (isTestExpired) {
+      expiresAt = now - 1 * DAY;
+    } else if (isTestExpiring) {
+      expiresAt = now + 3 * DAY;
+    }
+
     const diffMs = expiresAt - now;
-    const daysLeft = Math.ceil(diffMs / DAY);
+    const daysLeft = Math.max(0, Math.ceil(diffMs / DAY));
     const isExpired = diffMs <= 0;
     const isExpiringSoon = !isExpired && daysLeft <= 7;
     const status = isExpired ? 'expired' : isExpiringSoon ? 'expiring_soon' : 'active';
@@ -728,7 +741,7 @@ function createApp({ store, scanner, config }) {
       period: isAnnual ? 'annual' : 'monthly',
       expires_at: expiresAt,
       expires_formatted: new Date(expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-      days_left: Math.max(0, daysLeft),
+      days_left: daysLeft,
       domain: domain,
       notice: isExpired
         ? 'Tu suscripción a NexaGuard Security Pro ha vencido. Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
@@ -741,6 +754,80 @@ function createApp({ store, scanner, config }) {
         deep_clean: true,
         cloud_intel: !isExpired
       }
+    });
+  });
+
+  /* ---------- Panel de Administración: Gestión y Banco de Licencias ---------- */
+  route('GET', '/api/admin/licenses', 'admin', (ctx) => {
+    const testKeys = [
+      {
+        id: 'pro_monthly',
+        name: 'Licencia PRO Mensual (30 días)',
+        key: 'NXG-PRO-ADMIN-MASTER',
+        plan: 'Plan NexaGuard Security Pro (Mensual)',
+        period: 'monthly',
+        days: 30,
+        status: 'active',
+        badge: 'ACTIVA · 30 DÍAS',
+        desc: 'Activa la vigilancia continua 24H, el radar táctico y las actualizaciones por 1 mes.'
+      },
+      {
+        id: 'annual',
+        name: 'Licencia Anual (365 días - Blindaje)',
+        key: 'NXG-ANNUAL-ADMIN-MASTER',
+        plan: 'Licencia Anual (1 Año) · NexaGuard Pro',
+        period: 'annual',
+        days: 365,
+        status: 'active',
+        badge: 'ACTIVA · 365 DÍAS',
+        desc: 'Activa la vigilancia 24H durante 1 año completo.'
+      },
+      {
+        id: 'expiring',
+        name: 'Prueba: Alerta por Vencer (3 días restantes)',
+        key: 'NXG-TEST-SOON',
+        plan: 'Plan NexaGuard Security Pro (Prueba)',
+        period: 'monthly',
+        days: 3,
+        status: 'expiring_soon',
+        badge: 'POR VENCER · 3 DÍAS',
+        desc: 'Simula el estado preventivo en el plugin con el banner amarillo de advertencia.'
+      },
+      {
+        id: 'expired',
+        name: 'Prueba: Licencia Vencida (Expirada)',
+        key: 'NXG-TEST-EXPIRED',
+        plan: 'Plan NexaGuard Security Pro (Vencida)',
+        period: 'monthly',
+        days: 0,
+        status: 'expired',
+        badge: 'VENCIDA · 0 DÍAS',
+        desc: 'Simula que venció el mes: radar bloqueado, banner rojo y aviso de renovación.'
+      }
+    ];
+
+    const clientOrders = db.orders
+      .filter(o => o.licenseKey)
+      .map(o => {
+        const u = db.users.find(u => u.id === o.userId) || {};
+        const p = PLANS[o.plan] || {};
+        return {
+          orderId: o.id,
+          clientName: u.name || 'Cliente',
+          clientEmail: u.email || '',
+          planId: o.plan,
+          planName: p.name || o.plan,
+          licenseKey: o.licenseKey,
+          status: o.status,
+          createdAt: iso(o.createdAt),
+          paidAt: iso(o.paidAt)
+        };
+      });
+
+    send(ctx.res, 200, {
+      testKeys,
+      clientOrders,
+      downloadUrl: '/downloads/nexaguard-security.zip'
     });
   });
   route('GET', '/api/admin/tickets', 'admin', (ctx) => {

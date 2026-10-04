@@ -449,7 +449,7 @@ function showAuth() {
 /* ================= Estructura ================= */
 var NAV = {
   client: [['resumen', 'Resumen', 'home'], ['sitios', 'Mis sitios', 'globe'], ['analisis', 'Análisis', 'search'], ['soporte', 'Soporte', 'life'], ['pagos', 'Plan y pagos', 'card'], ['cuenta', 'Mi cuenta', 'user']],
-  admin: [['resumen', 'Resumen', 'home'], ['clientes', 'Clientes', 'users'], ['soporte', 'Soporte', 'life'], ['analisis', 'Análisis', 'search'], ['ajustes', 'Ajustes', 'cog']]
+  admin: [['resumen', 'Resumen', 'home'], ['clientes', 'Clientes', 'users'], ['licencias', 'Licencias & Plugin', 'shield'], ['soporte', 'Soporte', 'life'], ['analisis', 'Análisis', 'search'], ['ajustes', 'Ajustes', 'cog']]
 };
 function go(p) { location.hash = '#/' + p; }
 function routeParts() { var p = location.hash.replace(/^#\/?/, '').split('/'); return { name: p[0] || 'resumen', id: p[1] || null }; }
@@ -1026,6 +1026,21 @@ CV.pagos = async function () {
     return o.type === 'subscription' ? (o.nextBilling ? 'Próximo cobro: ' + fmtDate(o.nextBilling) : '—') : (o.accessUntil ? 'Acceso hasta: ' + fmtDate(o.accessUntil) : (o.stage >= 4 || o.status === 'delivered') ? 'Servicio completado' : 'En proceso');
   };
   root.appendChild(d.orders.length ? table(['Plan', 'Estado', 'Monto', 'Fecha', 'Detalle'], d.orders.map(function (o) { return { cells: [o.planName, pill(ORDER_ST[o.status]), money(o.amount, o.currency), fmtDate(o.createdAt), detailCell(o)] }; })) : h('div', { class: 'empty' }, 'Aún no tienes pedidos.'));
+  var licOrders = d.orders.filter(function (o) { return o.licenseKey; });
+  if (licOrders.length) {
+    licOrders.forEach(function (o) {
+      root.appendChild(h('div', { class: 'card', style: 'border:1px solid rgba(255,207,51,.35);background:rgba(255,207,51,.04);margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px' },
+        h('div', null,
+          h('div', { style: 'display:flex;align-items:center;gap:8px;margin-bottom:4px' },
+            h('span', { class: 'pill ok' }, '🔑 Licencia PRO Asignada'),
+            h('b', { style: 'color:#fff' }, o.planName)),
+          h('p', { class: 'hint', style: 'margin:2px 0 6px;font-size:.85rem' }, 'Usa esta clave en tu WordPress dentro de NexaGuard Security para desbloquear la Vigilancia 24 Horas:'),
+          h('code', { style: 'font-family:var(--fm);color:var(--yellow);background:rgba(255,207,51,.12);padding:4px 10px;border-radius:6px;font-size:.95rem;border:1px solid rgba(255,207,51,.25)' }, o.licenseKey)),
+        h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
+          h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey); toast('Clave copiada al portapapeles'); } } }, 'Copiar Clave'),
+          h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar Plugin (.zip)'))));
+    });
+  }
   var pendientes = d.orders.filter(function (o) { return o.status === 'pending_payment' && (!o.stage || o.stage < 1); });
   pendientes.forEach(function (o) {
     var card = h('div', { id: 'pay-' + o.id, class: 'card', style: 'margin-top:12px' }, h('h3', null, 'Pagar ' + o.planName));
@@ -1178,6 +1193,64 @@ AV.analisis = async function (id) {
   var f = h('select', { class: 'in', style: 'width:auto', 'aria-label': 'Resultado' }, h('option', { value: '' }, 'Todos'), Object.keys(VERDICT).map(function (k) { return h('option', { value: k }, VERDICT[k][0]); })), holder = h('div');
   async function load() { var r = await api('GET', '/api/admin/scans?verdict=' + f.value); holder.innerHTML = ''; holder.appendChild(scanTable(r.scans, true, function (i) { go('analisis/' + i); })); }
   f.addEventListener('change', load); root.appendChild(head('Análisis', 'Los análisis más recientes de todos los clientes.')); root.appendChild(h('div', { class: 'filters' }, f)); root.appendChild(holder); await load(); return root;
+};
+
+AV.licencias = async function () {
+  var data = await api('GET', '/api/admin/licenses');
+  var root = h('div', null);
+
+  root.appendChild(head('Licencias & Plugin', 'Gestor maestro de licencias, pruebas para WordPress y descarga oficial del plugin.',
+    h('a', { class: 'btn btn-y', href: data.downloadUrl, download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
+
+  // Tarjeta de Descarga
+  var dlCard = h('div', { class: 'card', style: 'border:1.5px solid var(--yellow);background:rgba(255,207,51,.04);margin-bottom:20px' },
+    h('div', { style: 'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px' },
+      h('div', null,
+        h('span', { class: 'pill ok', style: 'margin-bottom:6px;display:inline-block' }, '🛡️ Edición Estándar para WordPress'),
+        h('h3', { style: 'margin:4px 0 6px;color:#fff;font-size:1.15rem' }, 'Plugin Oficial NexaGuard Security v1.2.2'),
+        h('p', { class: 'hint', style: 'max-width:65ch;margin:0' }, 'Paquete .zip limpio y estándar. Al instalarlo en WordPress viene en Modo Estándar con escáner local. El Radar y la Vigilancia 24H se desbloquean al activar una licencia PRO.')),
+      h('a', { class: 'btn btn-y', href: data.downloadUrl, download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar NexaGuard (.zip)')));
+  root.appendChild(dlCard);
+
+  // Banco de pruebas de licencias para el Administrador
+  var testCard = h('div', { class: 'card', style: 'margin-bottom:20px' },
+    h('h3', null, '🔑 Banco de Pruebas de Licencias para el Administrador'),
+    h('p', { class: 'hint', style: 'margin-bottom:16px' }, 'Usa estas claves maestras en tu propio WordPress para verificar y probar cómo reacciona el plugin ante cada tipo de plan y estado de suscripción:'),
+    h('div', { class: 'stack', style: 'gap:12px' },
+      data.testKeys.map(function (k) {
+        var pillCls = k.status === 'active' ? 'ok' : (k.status === 'expiring_soon' ? 'warn' : 'crit');
+        return h('div', { style: 'background:rgba(255,255,255,.03);border:1px solid var(--line2);border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px' },
+          h('div', { style: 'flex:1;min-width:240px' },
+            h('div', { style: 'display:flex;align-items:center;gap:8px;margin-bottom:4px' },
+              h('span', { class: 'pill ' + pillCls }, k.badge),
+              h('b', { style: 'font-size:.95rem;color:#fff' }, k.name)),
+            h('p', { class: 'hint', style: 'margin:2px 0 6px;font-size:.85rem' }, k.desc),
+            h('code', { style: 'font-family:var(--fm);font-size:.9rem;color:var(--yellow);background:rgba(255,207,51,.1);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,207,51,.25)' }, k.key)),
+          h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(k.key); toast('Clave copiada: ' + k.key); } } }, 'Copiar Clave'));
+      })));
+  root.appendChild(testCard);
+
+  // Tabla de licencias generadas para clientes
+  var clientRows = data.clientOrders.map(function (o) {
+    return {
+      cells: [
+        h('b', null, o.clientName),
+        o.clientEmail,
+        o.planName,
+        h('code', { style: 'font-family:var(--fm);font-size:.84rem;color:var(--yellow)' }, o.licenseKey),
+        pill(ORDER_ST[o.status] || o.status),
+        h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey); toast('Clave copiada: ' + o.licenseKey); } } }, 'Copiar')
+      ]
+    };
+  });
+
+  root.appendChild(h('div', { class: 'card' },
+    h('h3', null, '📋 Licencias de Clientes Emitidas'),
+    h('p', { class: 'hint', style: 'margin-bottom:12px' }, 'Licencias asignadas automáticamente tras compras de planes Security Pro, Rescate + Blindaje y Guardián.'),
+    clientRows.length ? table(['Cliente', 'Correo', 'Plan', 'Clave de Licencia', 'Estado', 'Acción'], clientRows)
+      : h('div', { class: 'empty' }, 'Aún no hay licencias de clientes generadas.')));
+
+  return root;
 };
 
 AV.ajustes = async function () {

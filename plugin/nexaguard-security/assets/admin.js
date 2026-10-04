@@ -576,6 +576,30 @@ jQuery(document).ready(function ($) {
         $('#license-modal-msg').text('');
     });
 
+    $(document).on('click', '.btn-vigilance-locked, .btn-open-lic-modal', function (e) {
+        e.preventDefault();
+        $('#license-modal').fadeIn(200);
+        $('#license-modal-msg').text('Ingresa tu clave de licencia oficial del Plan Security PRO para desbloquear el radar 24h.').css('color', '#ffcf33');
+    });
+
+    $('#btn-unlink-license').on('click', function (e) {
+        e.preventDefault();
+        if (!confirm('¿Deseas desvincular la licencia de este WordPress y regresar a la Edición Estándar?')) return;
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_validate_license',
+                license_key: '',
+                nonce: nexaguardData.nonce
+            },
+            complete: function () {
+                location.reload();
+            }
+        });
+    });
+
     $('#btn-close-license').on('click', function () {
         $('#license-modal').fadeOut(200);
     });
@@ -603,13 +627,14 @@ jQuery(document).ready(function ($) {
                 nonce: nexaguardData.nonce
             },
             success: function (res) {
-                if (res.success && res.data) {
+                if (res.success && res.data && res.data.valid) {
                     $msg.text('✓ ' + (res.data.notice || 'Licencia activada con éxito.')).css('color', '#3de8a4');
                     setTimeout(function () {
                         location.reload();
-                    }, 1200);
+                    }, 1000);
                 } else {
-                    $msg.text(res.data && res.data.message ? res.data.message : 'Error al verificar la licencia.').css('color', '#ff8ba0');
+                    var errTxt = (res.data && res.data.message) ? res.data.message : ((res.data && res.data.notice) ? res.data.notice : 'Clave de licencia no válida o expirada.');
+                    $msg.text(errTxt).css('color', '#ff8ba0');
                 }
             },
             error: function () {
