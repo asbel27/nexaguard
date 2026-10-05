@@ -357,7 +357,8 @@ function createApp({ store, scanner, config }) {
         'uploads/astra-addon/',
         'wp-content/plugins/fluentform/',
         'wp-content/plugins/wp-file-manager/',
-        'wp-content/plugins/elementskit/'
+        'wp-content/plugins/elementskit/',
+        'wp-content/plugins/js_composer/'
       ]
     });
   });

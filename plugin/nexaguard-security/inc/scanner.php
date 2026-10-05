@@ -90,7 +90,7 @@ class NexaGuard_Scanner {
             'type'     => 'backdoor'
         ),
         'hidden_iframe' => array(
-            'regex'    => '/<iframe[^>]+(style\s*=\s*["\'][^"\']*(display\s*:\s*none|visibility\s*:\s*hidden|width\s*:\s*0|height\s*:\s*0)|width\s*=\s*["\']0["\'])/i',
+            'regex'    => '/<iframe[^>]+(style\s*=\s*["\'][^"\']*(display\s*:\s*none|visibility\s*:\s*hidden|\bwidth\s*:\s*0|\bheight\s*:\s*0)|\bwidth\s*=\s*["\']0["\']|\bheight\s*=\s*["\']0["\'])/i',
             'title'    => 'Iframe oculto / Redirección fraudulenta',
             'desc'     => 'Marco invisible diseñado para inflar visitas fraudulentas o cargar exploits en segundo plano.',
             'severity' => 'warn',
@@ -448,7 +448,11 @@ class NexaGuard_Scanner {
                     strpos($rel, 'elfinder') !== false ||
                     strpos($rel, 'jQuery-File-Upload') !== false ||
                     strpos($rel, 'copy-paste-cross-domain') !== false ||
-                    strpos($rel, 'elementskit') !== false) {
+                    strpos($rel, 'elementskit') !== false ||
+                    strpos($rel, 'js_composer') !== false ||
+                    strpos($rel, 'vc_gmaps') !== false ||
+                    strpos($rel, 'wpb_map') !== false ||
+                    strpos($rel, 'visualcomposer') !== false) {
                     continue;
                 }
             }
