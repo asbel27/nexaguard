@@ -33,6 +33,23 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => 'El archivo no existe en la ruta indicada: ' . esc_html($full_path));
         }
 
+        // Salvaguarda: No permitir cuarentena de archivos del núcleo o archivos maestros
+        $protected_basenames = array(
+            'wp-config.php', 'wp-settings.php', 'wp-load.php', 'wp-blog-header.php',
+            'wp-login.php', 'index.php', '.htaccess'
+        );
+        if (in_array(basename($full_path), $protected_basenames, true) ||
+            strpos($full_path, ABSPATH . WPINC) !== false ||
+            strpos($full_path, ABSPATH . 'wp-admin') !== false) {
+            return array(
+                'success' => false,
+                'message' => 'Protección del Sistema: Los archivos del Núcleo de WordPress no deben ser puestos en cuarentena total para evitar la caída de la web. Utiliza "Erradicar Inyección y Reparar".'
+            );
+        }
+
+        // Crear siempre un respaldo automático de seguridad previo
+        @copy($full_path, $full_path . '.bak_nexaguard_' . time());
+
         // Forzar permisos en directorio y archivo para evitar bloqueos
         if (!is_writable($full_path)) {
             @chmod(dirname($full_path), 0777);
@@ -113,6 +130,20 @@ class NexaGuard_Cleaner {
             return array('success' => true, 'message' => 'El elemento indicado ya no existe en el servidor.');
         }
 
+        // Salvaguarda: PROHIBIR terminantemente la eliminación forzada de archivos del Núcleo de WordPress
+        $protected_basenames = array(
+            'wp-config.php', 'wp-settings.php', 'wp-load.php', 'wp-blog-header.php',
+            'wp-login.php', 'index.php', '.htaccess'
+        );
+        if (in_array(basename($full_path), $protected_basenames, true) ||
+            strpos($full_path, ABSPATH . WPINC) !== false ||
+            strpos($full_path, ABSPATH . 'wp-admin') !== false) {
+            return array(
+                'success' => false,
+                'message' => 'Protección del Sistema: No se permite eliminar archivos del Núcleo de WordPress para evitar la caída de la web. Utiliza "Erradicar Inyección y Reparar".'
+            );
+        }
+
         if (is_dir($full_path)) {
             $ok = $this->recursive_force_delete_dir($full_path);
             if ($ok || !file_exists($full_path)) {
@@ -149,9 +180,10 @@ class NexaGuard_Cleaner {
         $parts = explode('/', str_replace('\\', '/', $rel_to_plugins));
         $plugin_folder_name = $parts[0];
 
-        // Evitar eliminar el propio NexaGuard Security
-        if (empty($plugin_folder_name) || $plugin_folder_name === 'nexaguard-security') {
-            return array('success' => false, 'message' => 'No se puede eliminar la carpeta del plugin NexaGuard.');
+        // Evitar eliminar NexaGuard Security o plugins esenciales del sitio
+        $protected_essential_plugins = array('nexaguard-security', 'woocommerce', 'elementor', 'js_composer', 'contact-form-7', 'wordpress-seo');
+        if (empty($plugin_folder_name) || in_array($plugin_folder_name, $protected_essential_plugins, true)) {
+            return array('success' => false, 'message' => "Por seguridad de tu web, no se puede eliminar la carpeta completa de '{$plugin_folder_name}'. Desinfecta las inyecciones de forma individual para evitar caídas.");
         }
 
         $plugin_folder_path = $plugins_dir . '/' . $plugin_folder_name;

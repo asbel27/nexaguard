@@ -55,7 +55,7 @@ class NexaGuard_Scanner {
             'type'     => 'malicious_js'
         ),
         'assert_shell' => array(
-            'regex'    => '/(assert\s*\(\s*\$_(GET|POST|REQUEST|COOKIE)|create_function\s*\([^\)]*\$_(GET|POST|REQUEST)|preg_replace\s*\(\s*[\'"][^\'"]*\/e[\'"]\s*,)/i',
+            'regex'    => '/(assert\s*\(\s*\$_(GET|POST|REQUEST|COOKIE)|create_function\s*\([^\)]*\$_(GET|POST|REQUEST)|preg_replace\s*\(\s*[\'"][^\'"]*\/e[\'"]\s*,\s*(\$_(GET|POST|REQUEST|COOKIE)|eval|base64_decode))/i',
             'title'    => 'Inyección de código remoto: assert / create_function / preg_replace /e',
             'desc'     => 'Puerta trasera que ejecuta código PHP arbitrario enviado por atacantes vía peticiones web.',
             'severity' => 'crit',
@@ -441,26 +441,42 @@ class NexaGuard_Scanner {
             return;
         }
 
+        $ext = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+
         foreach ($this->patterns as $key => $p) {
-            // Omitir iframes legítimos de descarga en librerías estándar de archivos / transporte
-            if ($key === 'hidden_iframe') {
-                if (strpos($rel, 'wp-file-manager') !== false ||
-                    strpos($rel, 'elfinder') !== false ||
-                    strpos($rel, 'jQuery-File-Upload') !== false ||
-                    strpos($rel, 'copy-paste-cross-domain') !== false ||
-                    strpos($rel, 'elementskit') !== false ||
-                    strpos($rel, 'js_composer') !== false ||
-                    strpos($rel, 'vc_gmaps') !== false ||
-                    strpos($rel, 'wpb_map') !== false ||
-                    strpos($rel, 'visualcomposer') !== false) {
-                    continue;
-                }
+            // 1. Los iframes ocultos NUNCA deben evaluarse en archivos PHP de plugins o temas
+            // (los shortcodes y librerías usan iframes legítimos para mapas, pagos y reproductores).
+            // Solo se auditan en Uploads y Base de Datos (donde sí representan malware inyectado).
+            if ($key === 'hidden_iframe' && ($location === 'plugins' || $location === 'themes' || $location === 'core')) {
+                continue;
+            }
+
+            // 2. No evaluar ofuscación JS genérica en archivos .js minificados de plugins o temas
+            if ($key === 'eval_atob_obfuscation' && $ext === 'js' && ($location === 'plugins' || $location === 'themes')) {
+                continue;
+            }
+
+            // 3. Omitir falsos positivos en plugins oficiales de Cloudflare Turnstile
+            if ($key === 'fake_captcha_turnstile' && (strpos($rel, 'cloudflare') !== false || strpos($rel, 'turnstile') !== false)) {
+                continue;
+            }
+
+            // 4. Omitir llamadas blockchain en plugins legítimos de Web3 / Crypto
+            if ($key === 'smart_contract_rpc' && (strpos($rel, 'web3') !== false || strpos($rel, 'crypto') !== false || strpos($rel, 'metamask') !== false)) {
+                continue;
             }
 
             if (preg_match($p['regex'], $content, $matches, PREG_OFFSET_CAPTURE)) {
                 $offset = $matches[0][1];
                 $line = substr_count(substr($content, 0, $offset), "\n") + 1;
                 $snippet = substr($content, max(0, $offset - 40), 180);
+
+                // Determinar acción segura: Si es un archivo de un plugin, tema o del núcleo,
+                // la acción de limpieza NUNCA debe ser borrar el archivo para no romper el sitio,
+                // sino desinfectar la inyección.
+                $is_system_or_plugin_file = ($location === 'core' || $location === 'plugins' || $location === 'themes');
+                $is_standalone_trojan = (strpos($rel, 'plugins/hseo') !== false || $location === 'uploads');
+                $clean_action = ($is_system_or_plugin_file && !$is_standalone_trojan) ? 'sanitize_injection' : (in_array($p['type'], array('clearfake', 'etherhiding', 'clickfix')) ? 'sanitize_injection' : 'quarantine');
 
                 $this->add_threat(array(
                     'id'          => md5($filepath . $line . $key),
@@ -473,7 +489,7 @@ class NexaGuard_Scanner {
                     'line'        => $line,
                     'code'        => htmlspecialchars($snippet),
                     'can_clean'   => true,
-                    'clean_action'=> in_array($p['type'], array('clearfake', 'etherhiding', 'clickfix')) ? 'sanitize_injection' : 'quarantine'
+                    'clean_action'=> $clean_action
                 ), $location);
             }
         }
