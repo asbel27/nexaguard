@@ -347,7 +347,12 @@ function createApp({ store, scanner, config }) {
         { id: 'clearfake_bsc', name: 'ClearFake / EtherHiding Smart Contract', chain: 97, pattern: '0xA1decFB' },
         { id: 'clearfake_bsc_2', name: 'ClearFake / EtherHiding Smart Contract', chain: 97, pattern: '0x46790e2' },
         { id: 'hseo_trojan', name: 'HSEO Trojan / Rogue Backdoor Plugin', pattern: 'wp-content/plugins/hseo/' },
-        { id: 'clickfix_ps', name: 'ClickFix PowerShell Execution', pattern: 'powershell -e' }
+        { id: 'clickfix_ps', name: 'ClickFix PowerShell Execution', pattern: 'powershell -e' },
+        { id: 'webshell_classic', name: 'WebShell Signatures (WSO/c99/r57/p0wny)', pattern: 'c99shell|r57shell|WSO_VERSION|FilesMan|b374k|p0wny-shell' },
+        { id: 'nulled_hex_packer', name: 'Nulled Hex/Octal Obfuscation Packer', pattern: '(\\x[0-9a-f]{2}){6,}' },
+        { id: 'nulled_dropper', name: 'Remote Code Dropper / Downloader', pattern: 'file_put_contents.*(wp_remote_get|file_get_contents|curl_exec)' },
+        { id: 'header_backdoor', name: 'Header-based Execution Backdoor', pattern: 'eval.*\\$_SERVER\\[[\'"]HTTP_' },
+        { id: 'traffic_hijack', name: 'Traffic Direction / Balada Redirect', pattern: 'location\\.href.*(traffic|gate|redirect|delivery)' }
       ],
       whitelisted_frameworks: [
         'uploads/redux/',

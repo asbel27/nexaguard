@@ -246,12 +246,19 @@ class NexaGuard_Cleaner {
         $clean_content = preg_replace('/load_\("0x[a-fA-F0-9]{40}"\)[^;]*;/i', '', $clean_content);
         $clean_content = preg_replace('/<script[^>]*>[^<]*(bsc-testnet|0xA1decFB|0x46790e2|turnstile|challenge-platform)[^<]*<\/script>/i', '', $clean_content);
 
+        // Limpiar inyecciones de redirecciones de tráfico malicioso en etiquetas <script>
+        $clean_content = preg_replace('/<script[^>]*>[^<]*(location\.href|location\.replace)\s*=\s*[\'"]https?:\/\/[^<]*<\/script>/i', '', $clean_content);
+
+        // Limpiar backdoors inyectados en una sola línea (PHP tag cerrado autónomo)
+        $clean_content = preg_replace('/<\?php\s*@?(eval|assert)\s*\(\s*(base64_decode|gzinflate|str_rot13|hex2bin)\s*\([^;]+\)\s*\)\s*;\s*\?>/i', '', $clean_content);
+        $clean_content = preg_replace('/<\?php\s*@?(eval|assert|system|passthru|shell_exec)\s*\(\s*@?\$_(SERVER|COOKIE)\[[\'"][A-Z_]+[\'"]\]\s*\)\s*;\s*\?>/i', '', $clean_content);
+
         if ($clean_content !== $content) {
             @file_put_contents($full_path, $clean_content);
             return array('success' => true, 'message' => 'Inyección maliciosa erradicada con éxito. Se guardó copia de seguridad.');
         }
 
-        return array('success' => false, 'message' => 'No se pudo limpiar automáticamente el patrón. Te recomendamos usar Eliminación Forzada.');
+        return array('success' => false, 'message' => 'No se pudo limpiar automáticamente el patrón sin riesgo de alterar código legítimo. Te recomendamos usar Mover a Cuarentena o Eliminación Forzada.');
     }
 
     private function clean_db_option($option_name) {

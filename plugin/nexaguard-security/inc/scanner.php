@@ -9,9 +9,9 @@ class NexaGuard_Scanner {
     private $scanned_options = 0;
     private $whitelist = array();
 
-    // Catálogo forense avanzado de firmas de malware y vectores de ataque
+    // Catálogo forense avanzado de firmas de malware y vectores de ataque (Histórico, Nulled y Moderno)
     private $patterns = array(
-        // ClearFake / ClickFix / EtherHiding (específico para el malware de capintvalue.com.mx)
+        // --- 1. AMENAZAS MODERNAS & ACTIVAS (2024 - 2026) ---
         'clearfake_etherhiding' => array(
             'regex'    => '/(data:text\/javascript;base64,[A-Za-z0-9+\/]{32,}|0xA1decFB[a-zA-Z0-9]*|0x46790e2[a-zA-Z0-9]*)/i',
             'title'    => 'Inyección de malware ClearFake / EtherHiding',
@@ -40,6 +40,80 @@ class NexaGuard_Scanner {
             'severity' => 'crit',
             'type'     => 'clickfix'
         ),
+        'balada_socgholish_redirect' => array(
+            'regex'    => '/(document\.location|window\.location|location\.href|location\.replace)\s*=\s*[\'"]https?:\/\/(?!wordpress\.org|localhost|127\.0\.0\.1|([a-z0-9\-]+\.)?google\.com|([a-z0-9\-]+\.)?gstatic\.com|([a-z0-9\-]+\.)?cloudflare\.com|([a-z0-9\-]+\.)?facebook\.com)[^\'"]*(traffic|click|track|stat|promo|ad\.|cdn[0-9]*\.|analytics-[a-z0-9]+\.com|gate|redirect|counter|delivery|fastcdn|suporte)\.[a-z]{2,}/i',
+            'title'    => 'Redirección maliciosa / Secuestro de tráfico (Traffic Hijacking)',
+            'desc'     => 'Script inyectado diseñado para desviar a los visitantes a páginas fraudulentas o de publicidad no autorizada.',
+            'severity' => 'crit',
+            'type'     => 'malicious_js'
+        ),
+        'magecart_formjacking' => array(
+            'regex'    => '/(addEventListener\s*\(\s*[\'"]submit[\'"]|on\(?[\'"]submit[\'"])[^}]*(cc_number|cardNumber|card_number|card-cvc|billing_card|creditCard)[^}]*(fetch\s*\(|sendBeacon|XMLHttpRequest|\$\.post|\$\.ajax)/is',
+            'title'    => 'Ladrón de tarjetas de crédito / Formjacking (Magecart)',
+            'desc'     => 'Script espía que intercepta datos de tarjetas de crédito y contraseñas en formularios de pago.',
+            'severity' => 'crit',
+            'type'     => 'stealer'
+        ),
+
+        // --- 2. VECTORES ESPECÍFICOS DE TEMAS Y PLUGINS NULLED (PIRATAS) ---
+        'nulled_hex_octal_pack' => array(
+            'regex'    => '/((\\\x[0-9a-fA-F]{2}){6,}|(\\[0-7]{3}){6,}|(\bchr\s*\(\s*\d+\s*\)\s*\.\s*){5,}|(\$GLOBALS\s*\[\s*[\'"]\\x[0-9a-fA-F]{2}))/i',
+            'title'    => 'Ofuscación Hexadecimal/Octal masiva (Nulled Packer / FOPO)',
+            'desc'     => 'Secuencias de código empaquetadas en valores hexadecimales o llamadas continuas a chr(), habituales en temas nulled.',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+        'unpack_gzinflate_base64' => array(
+            'regex'    => '/(gzinflate|gzuncompress)\s*\(\s*(base64_decode|str_rot13)\s*\(/i',
+            'title'    => 'Desempaquetado de Payload comprimido (gzinflate + base64)',
+            'desc'     => 'Doble capa de compresión utilizada para ocultar backdoors y código malicioso sin levantar sospechas directas.',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+        'nulled_header_backdoor' => array(
+            'regex'    => '/(eval|assert|system|passthru|shell_exec)\s*\(\s*@?\$_(SERVER|COOKIE)\[[\'"](HTTP_[A-Z_]+|REMOTE_[A-Z_]+)[\'"]\]\s*\)/i',
+            'title'    => 'Puerta trasera oculta en Cabecera HTTP (Header-based Backdoor)',
+            'desc'     => 'Código PHP que ejecuta comandos recibidos por User-Agent o Cookies para no dejar rastros en registros HTTP.',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+        'nulled_remote_dropper' => array(
+            'regex'    => '/(file_put_contents|fwrite)\s*\([^,]+,\s*(wp_remote_retrieve_body\s*\(|file_get_contents\s*\(\s*[\'"]https?:\/\/|curl_exec\s*\()/i',
+            'title'    => 'Dropper Remoto (Descarga y escritura de scripts)',
+            'desc'     => 'Mecanismo que descarga archivos de servidores externos de cibercriminales y los escribe como ejecutables locales.',
+            'severity' => 'crit',
+            'type'     => 'dropper'
+        ),
+        'nulled_admin_creator' => array(
+            'regex'    => '/(if\s*\([^)]*\$_(GET|POST|REQUEST|COOKIE)\[[^)]*\)[^}]*(wp_create_user|wp_insert_user|set_role\s*\(\s*[\'"]administrator[\'"]|wp_set_current_user|wp_set_auth_cookie))/is',
+            'title'    => 'Creación no autorizada de Administrador / Puerta trasera de Auth',
+            'desc'     => 'Código condicionado por parámetros web para crear administradores o forzar inicios de sesión clandestinos.',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+        'nulled_dynamic_execution' => array(
+            'regex'    => '/(call_user_func|call_user_func_array)\s*\(\s*[\'"](assert|system|passthru|shell_exec|exec|popen|proc_open)[\'"]\s*,/i',
+            'title'    => 'Evasión dinámica de ejecución (call_user_func -> RCE)',
+            'desc'     => 'Invocación indirecta de funciones peligrosas del sistema operativo para evadir la detección estática tradicional.',
+            'severity' => 'crit',
+            'type'     => 'rce'
+        ),
+        'obfuscated_strrev' => array(
+            'regex'    => '/(eval|assert)\s*\(\s*(strrev|str_rot13|hex2bin)\s*\(\s*[\'"][^\'"]{6,}[\'"]\s*\)\s*\)/i',
+            'title'    => 'Ofuscación por inversión/rotación de cadenas (strrev en eval)',
+            'desc'     => 'Código escrito al revés o rotado para burlar filtros de palabras clave al momento de la ejecución.',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+        'file_tampering_core' => array(
+            'regex'    => '/(file_put_contents|fwrite|touch|unlink|rename)\s*\([^)]*(\/|\\\\)?(wp-config\.php|wp-blog-header\.php|wp-load\.php|wp-settings\.php|\.htaccess)[\'"]?\s*\)/i',
+            'title'    => 'Manipulación no autorizada de archivos del Núcleo / htaccess',
+            'desc'     => 'Intento desde temas o plugins de sobreescribir o alterar archivos críticos de la raíz de WordPress.',
+            'severity' => 'crit',
+            'type'     => 'tampering'
+        ),
+
+        // --- 3. AMENAZAS HISTÓRICAS & WEBSHELLS CLÁSICAS ---
         'eval_base64' => array(
             'regex'    => '/eval\s*\(\s*(base64_decode|gzinflate|gzuncompress|str_rot13|hex2bin)\s*\(/i',
             'title'    => 'Ofuscación crítica: eval(base64/gzinflate)',
@@ -62,23 +136,23 @@ class NexaGuard_Scanner {
             'type'     => 'webshell'
         ),
         'system_execution' => array(
-            'regex'    => '/(system|shell_exec|passthru|popen|proc_open)\s*\(\s*\$_(GET|POST|REQUEST|COOKIE)/i',
+            'regex'    => '/(system|shell_exec|passthru|popen|proc_open)\s*\(\s*\$_(GET|POST|REQUEST|COOKIE|SERVER)/i',
             'title'    => 'Ejecución de comandos del sistema operativo (RCE)',
             'desc'     => 'Comando de terminal controlado por parámetros HTTP. Riesgo extremo de toma de control total del servidor.',
             'severity' => 'crit',
             'type'     => 'rce'
         ),
         'variable_function_call' => array(
-            'regex'    => '/\$_(GET|POST|COOKIE|REQUEST)\[[^\]]+\]\s*\(\s*\$_(GET|POST|COOKIE|REQUEST)\[[^\]]+\]\)/i',
+            'regex'    => '/(\$_(GET|POST|COOKIE|REQUEST)\[[^\]]+\]\s*\(\s*\$_(GET|POST|COOKIE|REQUEST)\[[^\]]+\]\)|\$([a-zA-Z0-9_]+)\s*=\s*\$_(GET|POST|COOKIE|REQUEST)\[[^\]]+\]\s*;[^\$]*\$\3\s*\()/is',
             'title'    => 'Llamada dinámica a función arbitraria vía input HTTP',
             'desc'     => 'Técnica de evasión donde tanto el nombre de la función como su argumento son controlados por el atacante.',
             'severity' => 'crit',
             'type'     => 'webshell'
         ),
         'webshell_signatures' => array(
-            'regex'    => '/(c99shell|r57shell|WSO_VERSION|FilesMan|b374k|alfa_team|IndoXploit|MadSpot|p0wny-shell|weevely)/i',
-            'title'    => 'Firma de WebShell conocida (c99/r57/WSO/FilesMan/b374k)',
-            'desc'     => 'Herramienta gráfica de administración ilícita instalada por ciberatacantes.',
+            'regex'    => '/(c99shell|r57shell|WSO_VERSION|FilesMan|b374k|alfa_team|alfa-shell|IndoXploit|MadSpot|p0wny-shell|weevely|Marvins|Ani-Shell|Casper|simattacker|c100|pHpINJ|Remview|Draft-Webshell|Mini-Shell|IronShell|AK-74|Webshell|PHP-Backdoor|Dark-Shell|Antichat|bypass403|bypass_shell|0byte|hacker-shell|AnonSec|SadAttack|Marijuana-Shell)/i',
+            'title'    => 'Firma de WebShell conocida (Clásica y Moderna)',
+            'desc'     => 'Herramienta gráfica de administración ilícita o consola remota instalada por ciberatacantes.',
             'severity' => 'crit',
             'type'     => 'webshell'
         ),
@@ -88,6 +162,13 @@ class NexaGuard_Scanner {
             'desc'     => 'Backdoor que permite subir y ejecutar scripts PHP adicionales en el servidor.',
             'severity' => 'crit',
             'type'     => 'backdoor'
+        ),
+        'seo_spam_injection' => array(
+            'regex'    => '/((style\s*=\s*[\'"][^\'"]*(display\s*:\s*none|visibility\s*:\s*hidden|position\s*:\s*absolute;\s*left\s*:\s*-[0-9]{3,}px|text-indent\s*:\s*-[0-9]{3,}px)[^\'"]*[\'"])|class\s*=\s*[\'"][^\'"]*hidden[^\'"]*[\'"])[^>]*>[^<]*<a[^>]+href=[^>]+>(online-casino|viagra|cialis|slot-online|judi-online|poker-online|payday-loan|replica-watch|baccarat|porn|sex-video)/i',
+            'title'    => 'Inyección de Spam SEO Oculto (Black Hat SEO)',
+            'desc'     => 'Enlaces o textos ocultos con CSS invisible para monetización ilegal (casinos, medicamentos ilegales, apuestas).',
+            'severity' => 'warn',
+            'type'     => 'seo_spam'
         ),
         'hidden_iframe' => array(
             'regex'    => '/<iframe[^>]+(style\s*=\s*["\'][^"\']*(display\s*:\s*none|visibility\s*:\s*hidden|\bwidth\s*:\s*0|\bheight\s*:\s*0)|\bwidth\s*=\s*["\']0["\']|\bheight\s*=\s*["\']0["\'])/i',
@@ -291,6 +372,48 @@ class NexaGuard_Scanner {
                     continue;
                 }
 
+                // 3. Detección de imágenes o archivos multimedia políglotas con PHP embebido en Uploads
+                if (in_array($ext, array('jpg', 'jpeg', 'png', 'gif', 'webp', 'ico', 'pdf', 'txt', 'svg')) && $item->getSize() < 2500000) {
+                    $head = @file_get_contents($filepath, false, null, 0, 16384);
+                    if ($head !== false && preg_match('/<\?(php|=)\s/i', $head)) {
+                        $this->add_threat(array(
+                            'id'          => md5($filepath . '_polyglot'),
+                            'category'    => 'polyglot_php_media',
+                            'severity'    => 'crit',
+                            'title'       => 'Payload ejecutable PHP oculto en archivo multimedia',
+                            'desc'        => 'Se detectó código ejecutable PHP camuflado dentro de un archivo de imagen o medio en Uploads (Técnica de evasión Polyglot/LFI).',
+                            'file'        => $rel,
+                            'full_path'   => $filepath,
+                            'line'        => 1,
+                            'code'        => htmlspecialchars(substr($head, 0, 180)),
+                            'can_clean'   => true,
+                            'clean_action'=> 'quarantine'
+                        ), 'uploads');
+                        continue;
+                    }
+                }
+
+                // 4. Detección de .htaccess sospechoso dentro de uploads que intente habilitar PHP
+                if (basename($filepath) === '.htaccess') {
+                    $ht = @file_get_contents($filepath);
+                    if ($ht !== false && preg_match('/(SetHandler|AddType|AddHandler|php_value\s+auto_prepend_file|php_flag\s+engine\s+on)/i', $ht)) {
+                        $this->add_threat(array(
+                            'id'          => md5($filepath . '_htaccess'),
+                            'category'    => 'htaccess_execution_override',
+                            'severity'    => 'crit',
+                            'title'       => 'Manipulación de .htaccess para ejecutar scripts en Uploads',
+                            'desc'        => 'Regla de servidor en uploads configurada para permitir la ejecución de scripts PHP o saltarse restricciones perimetrales.',
+                            'file'        => $rel,
+                            'full_path'   => $filepath,
+                            'line'        => 1,
+                            'code'        => htmlspecialchars(substr($ht, 0, 180)),
+                            'can_clean'   => true,
+                            'clean_action'=> 'quarantine'
+                        ), 'uploads');
+                        continue;
+                    }
+                }
+
                 // Escanear contenido de archivos .ico, .txt, .svg, .js por si tienen código PHP/JS embebido o malware
                 if (in_array($ext, array('ico', 'txt', 'svg', 'htm', 'html', 'js')) && $item->getSize() < 500000) {
                     $this->check_file_content($filepath, 'uploads');
@@ -327,7 +450,7 @@ class NexaGuard_Scanner {
                 }
 
                 $ext = strtolower($item->getExtension());
-                if (in_array($ext, array('php', 'js', 'html', 'htm', 'ico')) && $item->getSize() < 1200000) {
+                if (in_array($ext, array('php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phps', 'inc', 'js', 'html', 'htm', 'ico')) && $item->getSize() < 1200000) {
                     $this->scanned_files++;
                     $this->breakdown['plugins']['files']++;
                     $this->check_file_content($filepath, 'plugins');
@@ -370,7 +493,7 @@ class NexaGuard_Scanner {
         foreach ($iterator as $item) {
             if ($item->isFile()) {
                 $ext = strtolower($item->getExtension());
-                if (in_array($ext, array('php', 'js', 'html', 'htm')) && $item->getSize() < 1200000) {
+                if (in_array($ext, array('php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phps', 'inc', 'js', 'html', 'htm', 'ico')) && $item->getSize() < 1200000) {
                     $this->scanned_files++;
                     $this->breakdown['themes']['files']++;
                     $this->check_file_content($item->getPathname(), 'themes');
@@ -442,8 +565,23 @@ class NexaGuard_Scanner {
         }
 
         $ext = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+        $php_exts = array('php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phps', 'inc');
+        $is_php = in_array($ext, $php_exts);
+
+        // Reglas que aplican de forma exclusiva a código PHP
+        $php_only_rules = array(
+            'eval_base64', 'unpack_gzinflate_base64', 'nulled_hex_octal_pack',
+            'nulled_header_backdoor', 'nulled_remote_dropper', 'nulled_admin_creator',
+            'nulled_dynamic_execution', 'obfuscated_strrev', 'file_tampering_core',
+            'assert_shell', 'system_execution', 'variable_function_call', 'rogue_uploader'
+        );
 
         foreach ($this->patterns as $key => $p) {
+            // Si la regla requiere PHP y el archivo no es un script PHP ejecutable, saltar
+            if (in_array($key, $php_only_rules) && !$is_php) {
+                continue;
+            }
+
             // 1. Los iframes ocultos NUNCA deben evaluarse en archivos PHP de plugins o temas
             // (los shortcodes y librerías usan iframes legítimos para mapas, pagos y reproductores).
             // Solo se auditan en Uploads y Base de Datos (donde sí representan malware inyectado).
@@ -466,17 +604,37 @@ class NexaGuard_Scanner {
                 continue;
             }
 
+            // 5. La manipulación de Core no aplica a los propios archivos del Core
+            if ($key === 'file_tampering_core' && $location === 'core') {
+                continue;
+            }
+
+            // 6. Omitir falsos positivos de empaquetado en librerías de fuentes o vendor conocidas
+            if ($key === 'nulled_hex_octal_pack' && (strpos($rel, '/vendor/') !== false || strpos($rel, '/composer/') !== false || strpos($rel, 'ReduxFramework') !== false)) {
+                continue;
+            }
+
             if (preg_match($p['regex'], $content, $matches, PREG_OFFSET_CAPTURE)) {
                 $offset = $matches[0][1];
                 $line = substr_count(substr($content, 0, $offset), "\n") + 1;
                 $snippet = substr($content, max(0, $offset - 40), 180);
 
-                // Determinar acción segura: Si es un archivo de un plugin, tema o del núcleo,
-                // la acción de limpieza NUNCA debe ser borrar el archivo para no romper el sitio,
-                // sino desinfectar la inyección.
+                // Determinar acción segura:
+                // Si es un archivo estándar de tema o core, desinfectar la inyección para no romper la web.
+                // Si es una webshell dedicada o un archivo extraño (ej: wso.php, dropper), aislar en cuarentena.
                 $is_system_or_plugin_file = ($location === 'core' || $location === 'plugins' || $location === 'themes');
-                $is_standalone_trojan = (strpos($rel, 'plugins/hseo') !== false || $location === 'uploads');
-                $clean_action = ($is_system_or_plugin_file && !$is_standalone_trojan) ? 'sanitize_injection' : (in_array($p['type'], array('clearfake', 'etherhiding', 'clickfix')) ? 'sanitize_injection' : 'quarantine');
+                $basename = strtolower(basename($filepath));
+                $standard_template_files = array('functions.php', 'header.php', 'footer.php', 'index.php', 'page.php', 'single.php', 'archive.php', 'sidebar.php', 'comments.php', 'search.php', '404.php', 'style.css', 'template-loader.php', 'load.php', 'wp-settings.php', 'wp-blog-header.php', 'wp-config.php', 'wp-load.php', 'wp-login.php');
+                $is_dedicated_webshell_name = preg_match('/^(wso|c99|r57|alfa|shell|mini|leaf|bypass|backdoor|up|uploader|root|pass|cmd|temp|test|check|license|eval|madspot|p0wny|weevely)\.php$/i', $basename);
+                $is_standalone_trojan = (
+                    strpos($rel, 'plugins/hseo') !== false || 
+                    $location === 'uploads' || 
+                    $is_dedicated_webshell_name || 
+                    ($is_system_or_plugin_file && !in_array($basename, $standard_template_files) && in_array($p['type'], array('webshell', 'dropper', 'rce')))
+                );
+                $clean_action = ($is_system_or_plugin_file && !$is_standalone_trojan) 
+                    ? 'sanitize_injection' 
+                    : (in_array($p['type'], array('clearfake', 'etherhiding', 'clickfix')) ? 'sanitize_injection' : 'quarantine');
 
                 $this->add_threat(array(
                     'id'          => md5($filepath . $line . $key),
@@ -515,8 +673,18 @@ class NexaGuard_Scanner {
                 OR option_value LIKE '%eth_call%'
                 OR option_value LIKE '%challenge-platform%'
                 OR option_value LIKE '%eval(base64%'
-                OR option_value LIKE '%String.fromCharCode%')
-             LIMIT 250"
+                OR option_value LIKE '%String.fromCharCode%'
+                OR option_value LIKE '%gzinflate(%'
+                OR option_value LIKE '%str_rot13(%'
+                OR option_value LIKE '%assert(%'
+                OR option_value LIKE '%powershell%'
+                OR option_value LIKE '%base64_decode(%'
+                OR option_value LIKE '%location.href%'
+                OR option_value LIKE '%location.replace%'
+                OR option_value LIKE '%online-casino%'
+                OR option_value LIKE '%slot-online%'
+                OR option_value LIKE '%viagra%')
+             LIMIT 350"
         );
 
         if ($options) {
@@ -562,8 +730,14 @@ class NexaGuard_Scanner {
                  OR post_content LIKE '%challenge-platform%' 
                  OR post_content LIKE '%turnstile.render%' 
                  OR post_content LIKE '%eval(base64%' 
-                 OR post_content LIKE '%eval(atob%')
-             LIMIT 50"
+                 OR post_content LIKE '%eval(atob%'
+                 OR post_content LIKE '%location.href%'
+                 OR post_content LIKE '%location.replace%'
+                 OR post_content LIKE '%online-casino%'
+                 OR post_content LIKE '%slot-online%'
+                 OR post_content LIKE '%viagra%'
+                 OR post_content LIKE '%display:none%http%')
+             LIMIT 100"
         );
 
         if ($posts) {
@@ -626,14 +800,20 @@ class NexaGuard_Scanner {
         $admins = get_users(array('role' => 'administrator'));
         foreach ($admins as $admin) {
             $this->breakdown['admins']['files']++;
-            $email = $admin->user_email;
-            if (preg_match('/@(tempmail|guerrillamail|10minutemail|sharklasers|mailinator|yopmail|dispostable)\./i', $email)) {
+            $email = strtolower($admin->user_email);
+            $login = strtolower($admin->user_login);
+            $is_tempmail = preg_match('/@(tempmail|guerrillamail|10minutemail|sharklasers|mailinator|yopmail|dispostable|trashmail|throwawaymail)\./i', $email);
+            $is_suspicious_login = preg_match('/^(backdoor|test_admin|temp_admin|support_admin|wp_support|sysadmin_wp|backup_adm|wp_adm|ghost_admin)$/i', $login);
+            $is_dummy_email = preg_match('/@(example\.com|domain\.com|test\.com|localhost)$/i', $email);
+
+            if ($is_tempmail || $is_suspicious_login || $is_dummy_email) {
+                $reason = $is_tempmail ? 'correo temporal' : ($is_suspicious_login ? 'nombre de usuario altamente sospechoso' : 'correo ficticio o no verificable');
                 $this->add_threat(array(
                     'id'          => md5('user_' . $admin->ID),
                     'category'    => 'suspicious_admin',
                     'severity'    => 'crit',
-                    'title'       => 'Administrador con correo electrónico desechable',
-                    'desc'        => "El usuario '{$admin->user_login}' ({$email}) tiene privilegios de administrador y utiliza un dominio de correo temporal.",
+                    'title'       => 'Administrador sospechoso detectado (' . $reason . ')',
+                    'desc'        => "El usuario '{$admin->user_login}' ({$email}) tiene privilegios de administrador con {$reason}.",
                     'file'        => 'Usuarios de WordPress -> ID #' . $admin->ID,
                     'full_path'   => $admin->ID,
                     'line'        => 0,
