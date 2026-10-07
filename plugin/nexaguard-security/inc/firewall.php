@@ -33,13 +33,13 @@ class NexaGuard_Firewall {
             'disable_dir_browsing'  => true
         ));
 
-        // 0. Modo Aislamiento de Emergencia / Lockdown (Paso 1 de Hostinet automatizado)
+        // 0. Modo Aislamiento de Emergencia / Lockdown
         // Bloquea visitas y bots con 503 Mantenimiento pero permite acceso a administradores
         if (!empty($settings['emergency_lockdown'])) {
             add_action('init', array(__CLASS__, 'enforce_emergency_lockdown'), 1);
         }
 
-        // 1. Bloqueo de edición de temas y plugins desde el panel de WordPress (Hostinet Hardening #1)
+        // 1. Bloqueo de edición de temas y plugins desde el panel de WordPress (Hardening)
         if (!empty($settings['disallow_file_edit']) && !defined('DISALLOW_FILE_EDIT')) {
             define('DISALLOW_FILE_EDIT', true);
         }
@@ -75,7 +75,7 @@ class NexaGuard_Firewall {
     }
 
     /**
-     * Modo Aislamiento de Emergencia (Hostinet Paso 1)
+     * Modo Aislamiento de Emergencia
      * Desvía visitantes no autenticados y rastreadores a una pantalla 503 limpia de mantenimiento
      * mientras permite a los administradores logueados seguir operando sin restricciones.
      */

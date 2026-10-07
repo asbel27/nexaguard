@@ -435,7 +435,7 @@ class NexaGuard_Cleaner {
     }
 
     /**
-     * Blindaje en wp-config.php: Deshabilitar editor de temas y plugins (Hostinet Hardening #1)
+     * Blindaje en wp-config.php: Deshabilitar editor de temas y plugins (Hardening)
      */
     public function apply_disallow_file_edit() {
         $config_file = ABSPATH . 'wp-config.php';
@@ -459,7 +459,7 @@ class NexaGuard_Cleaner {
         @copy($config_file, $config_file . '.bak_nexaguard_' . time());
 
         $needle = "/* That's all, stop editing!";
-        $new_line = "\n/** NexaGuard Hardening: Bloqueo de edicion de temas y plugins desde el panel de control (Hostinet Hardening #1) */\ndefine('DISALLOW_FILE_EDIT', true);\n";
+        $new_line = "\n/** NexaGuard Hardening: Bloqueo de edicion de temas y plugins desde el panel de control */\ndefine('DISALLOW_FILE_EDIT', true);\n";
         if (strpos($content, $needle) !== false) {
             $content = str_replace($needle, $new_line . "\n" . $needle, $content);
         } else {
@@ -474,7 +474,7 @@ class NexaGuard_Cleaner {
     }
 
     /**
-     * Blindaje en .htaccess: Prevenir listado de directorios (Hostinet Hardening #2)
+     * Blindaje en .htaccess: Prevenir listado de directorios (Hardening)
      */
     public function apply_htaccess_no_indexes($enable = true) {
         $htaccess = ABSPATH . '.htaccess';
@@ -487,7 +487,7 @@ class NexaGuard_Cleaner {
             if (file_exists($htaccess)) {
                 @copy($htaccess, $htaccess . '.bak_nexaguard_' . time());
             }
-            $rules = "\n# NexaGuard Hardening - Prevenir listado de directorios Apache (Hostinet Hardening #2)\nOptions -Indexes\n";
+            $rules = "\n# NexaGuard Hardening - Prevenir listado de directorios Apache\nOptions -Indexes\n";
             @file_put_contents($htaccess, $content . $rules);
             return array('success' => true, 'message' => 'Blindaje aplicado: Se bloqueó el listado de directorios (Options -Indexes) en .htaccess.');
         } else {
@@ -501,7 +501,7 @@ class NexaGuard_Cleaner {
     }
 
     /**
-     * Regeneración segura de Claves y Sales Criptográficas en wp-config.php (Hostinet Paso 8)
+     * Regeneración segura de Claves y Sales Criptográficas en wp-config.php
      * Invalida todas las sesiones de usuarios actuales y cookies robadas/secuestradas por atacantes.
      */
     public function regenerate_wp_salts() {
@@ -530,7 +530,7 @@ class NexaGuard_Cleaner {
         }
 
         if (@file_put_contents($config_file, $content) !== false) {
-            return array('success' => true, 'message' => 'Sales criptográficas regeneradas con éxito. Todas las sesiones activas y cookies secuestradas han sido invalidadas (Hostinet Paso 8).');
+            return array('success' => true, 'message' => 'Sales criptográficas regeneradas con éxito. Todas las sesiones activas y cookies secuestradas han sido invalidadas.');
         }
 
         return array('success' => false, 'message' => 'No se pudo escribir en wp-config.php. Verifica los permisos de archivo.');

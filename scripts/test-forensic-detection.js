@@ -92,25 +92,25 @@ const testVectors = [
   },
   {
     id: 'insecure_salts_wp_config',
-    category: 'Sales Inseguras en wp-config.php (Hostinet Paso 8)',
+    category: 'Sales Inseguras en wp-config.php (Hardening #1)',
     sample: "define('AUTH_KEY',         'put your unique phrase here');\ndefine('SECURE_AUTH_KEY',  'put your unique phrase here');",
     regex: /define\s*\(\s*['"](AUTH_KEY|SECURE_AUTH_KEY|LOGGED_IN_KEY|NONCE_KEY|AUTH_SALT|SECURE_AUTH_SALT|LOGGED_IN_SALT|NONCE_SALT)['"]\s*,\s*['"](put your unique phrase here|[\s]*)['"]\s*\)/i
   },
   {
     id: 'disallow_file_edit_audit',
-    category: 'Editor de Archivos Habilitado (Hostinet Hardening #1)',
+    category: 'Editor de Archivos Habilitado (Hardening #2)',
     sample: "// wp-config sin DISALLOW_FILE_EDIT\ndefine('DB_NAME', 'wp_db');",
     testFn: (content) => !/define\s*\(\s*['"]DISALLOW_FILE_EDIT['"]\s*,\s*true\s*\)/i.test(content)
   },
   {
     id: 'htaccess_missing_options_indexes',
-    category: 'Listado de Directorios Expuesto (Hostinet Hardening #2)',
+    category: 'Listado de Directorios Expuesto (Hardening #3)',
     sample: "# .htaccess estandar de WordPress\nRewriteEngine On\nRewriteBase /\nRewriteRule ^index\\.php$ - [L]",
     testFn: (content) => content.toLowerCase().indexOf('options -indexes') === -1
   },
   {
     id: 'core_checksum_mismatch',
-    category: 'Integridad de Core / Hostinet Paso 4 (wp-mail.php alterado)',
+    category: 'Integridad de Core / Checksum MD5 (wp-mail.php alterado)',
     sample: "<?php\n// wp-mail.php con inyeccion clandestina\neval(base64_decode('...'));",
     testFn: (localContent) => {
       const officialCleanHash = crypto.createHash('md5').update("<?php // wp-mail.php limpio oficial").digest('hex');

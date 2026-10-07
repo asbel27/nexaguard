@@ -285,14 +285,14 @@ class NexaGuard_Plugin {
             $cleaner->protect_uploads_htaccess(false);
         }
 
-        // 2. Prevenir listado de directorios en .htaccess (Hostinet Hardening #2)
+        // 2. Prevenir listado de directorios en .htaccess
         if ($settings['disable_dir_browsing']) {
             $cleaner->apply_htaccess_no_indexes(true);
         } else {
             $cleaner->apply_htaccess_no_indexes(false);
         }
 
-        // 3. Deshabilitar editor de temas en wp-config.php si está marcado (Hostinet Hardening #1)
+        // 3. Deshabilitar editor de temas en wp-config.php si está marcado
         if ($settings['disallow_file_edit']) {
             $cleaner->apply_disallow_file_edit();
         }

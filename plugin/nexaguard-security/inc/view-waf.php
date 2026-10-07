@@ -109,7 +109,7 @@ $settings = get_option('nexaguard_settings', array(
                 <input type="checkbox" name="hide_wp_version" value="1" <?php checked(!empty($settings['hide_wp_version'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
 
-            <!-- Modo Aislamiento de Emergencia (Hostinet Paso 1) -->
+            <!-- Modo Aislamiento de Emergencia -->
             <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="border-left: 3px solid #ff4560;">
                 <div class="toggle-info">
                     <b>Modo Aislamiento de Emergencia / Cuarentena de Tráfico <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
@@ -118,7 +118,7 @@ $settings = get_option('nexaguard_settings', array(
                 <input type="checkbox" name="emergency_lockdown" value="1" <?php checked(!empty($settings['emergency_lockdown'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
 
-            <!-- Deshabilitar Editor de Temas y Plugins (Hostinet Hardening #1) -->
+            <!-- Deshabilitar Editor de Temas y Plugins -->
             <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                 <div class="toggle-info">
                     <b>Deshabilitar Editor de Temas y Plugins de WordPress (DISALLOW_FILE_EDIT) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
@@ -127,7 +127,7 @@ $settings = get_option('nexaguard_settings', array(
                 <input type="checkbox" name="disallow_file_edit" value="1" <?php checked(!empty($settings['disallow_file_edit'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
 
-            <!-- Prevenir Listado de Directorios (Hostinet Hardening #2) -->
+            <!-- Prevenir Listado de Directorios -->
             <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                 <div class="toggle-info">
                     <b>Bloquear Listado de Directorios Apache (Options -Indexes) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
