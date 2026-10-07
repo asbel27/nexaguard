@@ -341,15 +341,27 @@ $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
                                 <?php endif; ?>
 
                                 <?php if (empty($t['is_db'])): ?>
-                                    <?php if ($t['clean_action'] === 'sanitize_injection'): ?>
-                                        <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
-                                            🧹 Erradicar Inyección y Reparar
+                                    <?php if ($t['clean_action'] === 'restore_core_file'): ?>
+                                        <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Descargar y restaurar el archivo original limpio desde WordPress.org">
+                                            🔄 Restaurar Archivo Original (WordPress.org)
+                                        </button>
+                                    <?php elseif ($t['clean_action'] === 'sanitize_injection'): ?>
+                                        <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Extirpar código malicioso inyectado preservando el archivo original">
+                                            🧹 Desinfectar Código (Extirpar Inyección)
                                         </button>
                                     <?php endif; ?>
 
-                                    <button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Forzar eliminación superando permisos de solo lectura">
-                                        💥 Forzar Eliminación (Desbloqueo)
-                                    </button>
+                                    <?php 
+                                    $is_core_file = (isset($t['module']) && $t['module'] === 'core') || 
+                                        (strpos($t['file'], 'wp-includes') !== false) || 
+                                        (strpos($t['file'], 'wp-admin') !== false) || 
+                                        in_array(basename($t['file']), array('wp-config.php', 'wp-settings.php', 'wp-load.php', 'wp-blog-header.php', 'wp-login.php', 'index.php', '.htaccess', 'version.php'));
+                                    ?>
+                                    <?php if (!$is_core_file): ?>
+                                        <button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Forzar eliminación superando permisos de solo lectura">
+                                            💥 Forzar Eliminación (Desbloqueo)
+                                        </button>
+                                    <?php endif; ?>
 
                                     <?php if ($t['clean_action'] === 'quarantine'): ?>
                                         <button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">

@@ -1009,7 +1009,7 @@ class NexaGuard_Scanner {
                     'line'        => 1,
                     'code'        => 'MD5 local (' . substr($local_md5, 0, 10) . '...) != Oficial WP.org (' . substr($official_md5, 0, 10) . '...)',
                     'can_clean'   => true,
-                    'clean_action'=> 'sanitize_injection'
+                    'clean_action'=> 'restore_core_file'
                 ), 'core');
             }
         }
@@ -1085,7 +1085,7 @@ class NexaGuard_Scanner {
                             'line'        => 1,
                             'code'        => 'Última modificación detectada: ' . date('d/m/Y H:i:s', $mtime),
                             'can_clean'   => true,
-                            'clean_action'=> 'sanitize_injection'
+                            'clean_action'=> 'restore_core_file'
                         ), 'core');
                     }
                 }

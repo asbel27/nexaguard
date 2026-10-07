@@ -191,8 +191,10 @@ jQuery(document).ready(function ($) {
             var quarantineBtn = '';
 
             if (!t.is_db) {
-                if (t.clean_action === 'sanitize_injection') {
-                    actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '">🧹 Erradicar Inyección y Reparar</button>';
+                if (t.clean_action === 'restore_core_file') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Descargar y restaurar el archivo original limpio desde WordPress.org">🔄 Restaurar Archivo Original (WordPress.org)</button>';
+                } else if (t.clean_action === 'sanitize_injection') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Extirpar código malicioso inyectado preservando el archivo original">🧹 Desinfectar Código (Extirpar Inyección)</button>';
                 } else if (t.clean_action === 'clean_dropin') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="clean_dropin" data-target="' + t.full_path + '" data-id="' + t.id + '">💉 Desinfectar Drop-In (SC Malware)</button>';
                 } else if (t.clean_action === 'neutralize_auto_prepend') {
@@ -207,9 +209,10 @@ jQuery(document).ready(function ($) {
                     actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="regenerate_wp_salts" data-target="' + t.full_path + '" data-id="' + t.id + '">🔑 Regenerar Sales e Invalidar Sesiones</button>';
                 }
 
-                // Para acciones de hardening o neutralización, no mostrar botón redundante de eliminación forzada
+                // Para acciones de hardening, archivos core o neutralización, no mostrar botón redundante ni peligroso de eliminación forzada
                 var isHardeningAction = (t.clean_action === 'apply_disallow_file_edit' || t.clean_action === 'apply_htaccess_no_indexes' || t.clean_action === 'regenerate_wp_salts' || t.clean_action === 'protect_uploads_directory' || t.clean_action === 'neutralize_auto_prepend');
-                if (!isHardeningAction) {
+                var isCoreFile = (t.module === 'core' || t.clean_action === 'restore_core_file' || (t.file && (t.file.indexOf('wp-includes') !== -1 || t.file.indexOf('wp-admin') !== -1 || t.file === 'index.php' || t.file === 'wp-config.php' || t.file.indexOf('version.php') !== -1)));
+                if (!isHardeningAction && !isCoreFile) {
                     forceDelBtn = '<button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Forzar eliminación superando permisos de solo lectura">💥 Forzar Eliminación (Desbloqueo)</button>';
                 }
 
@@ -347,8 +350,10 @@ jQuery(document).ready(function ($) {
         var target = $btn.data('target');
         var id = $btn.data('id');
 
-        var confirmMsg = '¿Deseas erradicar esta inyección? Se creará una copia de seguridad automática antes de limpiar.';
-        if (type === 'delete_db_option') {
+        var confirmMsg = '¿Deseas desinfectar este archivo? Se extirpará únicamente el código malicioso inyectado y se creará una copia de seguridad automática antes de guardar.';
+        if (type === 'restore_core_file') {
+            confirmMsg = '¿Deseas restaurar este archivo oficial descargándolo directamente desde WordPress.org? Se creará una copia de seguridad antes de sustituirlo.';
+        } else if (type === 'delete_db_option') {
             confirmMsg = '¿Estás seguro de que deseas purgar y eliminar definitivamente esta clave de la base de datos?';
         } else if (type === 'remove_cron_hook') {
             confirmMsg = '¿Deseas remover esta tarea programada (cron) de la base de datos?';
@@ -366,7 +371,8 @@ jQuery(document).ready(function ($) {
             return;
         }
 
-        $btn.prop('disabled', true).text(type === 'delete_db_option' ? 'Purgando…' : (type.indexOf('apply_') !== -1 || type === 'regenerate_wp_salts' ? 'Aplicando…' : 'Limpiando…'));
+        var loadingLabel = (type === 'restore_core_file') ? 'Restaurando desde WP.org…' : (type === 'delete_db_option' ? 'Purgando…' : (type.indexOf('apply_') !== -1 || type === 'regenerate_wp_salts' ? 'Aplicando…' : 'Desinfectando…'));
+        $btn.prop('disabled', true).text(loadingLabel);
 
         $.ajax({
             url: nexaguardData.ajax_url,
@@ -386,7 +392,8 @@ jQuery(document).ready(function ($) {
                             updateThreatCounts();
                         });
                     } else {
-                        $('#threat-' + id).css('border-left-color', '#3de8a4').find('.threat-actions').html('<span style="color:#3de8a4;font-weight:700">✓ Infección erradicada con éxito</span>');
+                        var successMsg = (type === 'restore_core_file') ? '✓ Archivo oficial de WordPress.org restaurado' : '✓ Desinfección completada con éxito';
+                        $('#threat-' + id).css('border-left-color', '#3de8a4').find('.threat-actions').html('<span style="color:#3de8a4;font-weight:700">' + successMsg + '</span>');
                     }
                 } else {
                     $btn.prop('disabled', false).text('Reintentar');
