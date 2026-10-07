@@ -122,3 +122,14 @@ files.forEach(file => {
   console.log(`[PHP-SYNTAX] ${file} -> curlies: ${curlies}, parens: ${parens}, brackets: ${brackets}, inSingleQuote: ${inSingleQuote}, inDoubleQuote: ${inDoubleQuote}`);
 });
 
+// Check JavaScript files
+const jsFile = path.join(__dirname, '..', 'plugin', 'nexaguard-security', 'assets', 'admin.js');
+try {
+  const { execSync } = require('child_process');
+  execSync(`node -c "${jsFile}"`);
+  console.log('[JS-SYNTAX] assets/admin.js -> SYNTAX OK');
+} catch (err) {
+  console.error('[JS-SYNTAX ERROR] assets/admin.js:', err.message);
+  process.exit(1);
+}
+

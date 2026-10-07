@@ -513,6 +513,7 @@ jQuery(document).ready(function ($) {
                 file: file
             },
             success: function (res) {
+                if (res.success) {
                     $('#threat-' + id).fadeOut(400, function () { 
                         $(this).remove(); 
                         updateThreatCounts();
