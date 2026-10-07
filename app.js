@@ -352,7 +352,9 @@ function createApp({ store, scanner, config }) {
         { id: 'nulled_hex_packer', name: 'Nulled Hex/Octal Obfuscation Packer', pattern: '(\\x[0-9a-f]{2}){6,}' },
         { id: 'nulled_dropper', name: 'Remote Code Dropper / Downloader', pattern: 'file_put_contents.*(wp_remote_get|file_get_contents|curl_exec)' },
         { id: 'header_backdoor', name: 'Header-based Execution Backdoor', pattern: 'eval.*\\$_SERVER\\[[\'"]HTTP_' },
-        { id: 'traffic_hijack', name: 'Traffic Direction / Balada Redirect', pattern: 'location\\.href.*(traffic|gate|redirect|delivery)' }
+        { id: 'traffic_hijack', name: 'Traffic Direction / Balada Redirect', pattern: 'location\\.href.*(traffic|gate|redirect|delivery)' },
+        { id: 'fake_antimalware_bot', name: 'Wordfence 2025 Fake Anti-Malware Bot Trojan', pattern: 'WP-antymalwary-bot|acpp_ping_event|45\\.61\\.136\\.85' },
+        { id: 'stealth_hider', name: 'Dashboard Stealth Plugin Hider (all_plugins)', pattern: 'all_plugins.*plugin_basename' }
       ],
       whitelisted_frameworks: [
         'uploads/redux/',

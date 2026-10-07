@@ -113,7 +113,51 @@ class NexaGuard_Scanner {
             'type'     => 'tampering'
         ),
 
-        // --- 3. AMENAZAS HISTÓRICAS & WEBSHELLS CLÁSICAS ---
+        // --- 3. TROYANOS DISFRAZADOS DE SEGURIDAD & C&C (CAMPAÑA WORDFENCE 2025) ---
+        'fake_antimalware_bot' => array(
+            'regex'    => '/(acpp_ping_event|acpp_send_ping|45\.61\.136\.85|plugin-ping|WP-antymalwary-bot|custom_ads_url|insert_code_in_header_files)/i',
+            'title'    => 'Troyano C&C Camuflado de Anti-Malware (WP-antymalwary-bot)',
+            'desc'     => 'Malware reportado por Wordfence que se hace pasar por optimizador o anti-malware, envía pings C&C e inyecta anuncios.',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+        'stealth_plugin_hider' => array(
+            'regex'    => '/(add_filter\s*\(\s*[\'"]all_plugins[\'"][^)]*unset\s*\(\s*\$[a-zA-Z0-9_]+\[plugin_basename\s*\(\s*__FILE__\s*\)\]|unset\s*\(\s*\$[a-zA-Z0-9_]+\[plugin_basename\s*\(\s*__FILE__\s*\)\]\s*\))/is',
+            'title'    => 'Mecanismo de Ocultación de Plugin en Dashboard (Stealth Plugin Hider)',
+            'desc'     => 'Técnica de evasión que manipula el filtro all_plugins para esconder plugins maliciosos de la lista del panel de administración.',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+        'rest_api_unauthorized_rce' => array(
+            'regex'    => '/register_rest_route\s*\([^,]+,[^,]+,\s*\[[^]]*[\'"]permission_callback[\'"]\s*=>\s*[\'"]__return_true[\'"][^]]*\]\s*\)\s*;[^}]*(insert_code|header\.php|file_put_contents)/is',
+            'title'    => 'Ruta REST API no autorizada para Inyección Remota (REST RCE)',
+            'desc'     => 'Endpoint REST público sin control de permisos utilizado para inyectar código PHP arbitrario en los temas del sitio.',
+            'severity' => 'crit',
+            'type'     => 'rce'
+        ),
+        'encrypted_header_backdoor' => array(
+            'regex'    => '/(if\s*\(\s*!\s*isset\s*\(\s*\$_(GET|POST|REQUEST)\[[\'"]key[\'"]\]\s*\)\s*\|\|\s*!\s*isset\s*\(\s*\$_(GET|POST|REQUEST)\[[\'"]iv[\'"]\]\s*\)\s*\)[^}]*\$encryptedBase64|removable_code.*\$encryptedBase64)/is',
+            'title'    => 'Payload Cifrado en Plantilla con Clave Dinámica (AES Header Backdoor)',
+            'desc'     => 'Código en header.php que requiere parámetros de clave e IV (Initialization Vector) para descifrar y ejecutar código en vivo.',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+        'cron_persistence_reinstaller' => array(
+            'regex'    => '/(file_put_contents\s*\([^)]*plugins\/[^)]*\)\s*;[^}]*activate_plugin\s*\()/is',
+            'title'    => 'Persistencia y Reinstalación Clandestina de Plugins (Cron Dropper)',
+            'desc'     => 'Código en wp-cron.php u otros archivos del sistema que vuelve a crear y activar plugins maliciosos si son eliminados.',
+            'severity' => 'crit',
+            'type'     => 'dropper'
+        ),
+        'supply_chain_c2_drainer' => array(
+            'regex'    => '/(94\.156\.79\.8|hostpdf\.co|pachamama\s*\(|AddSites|sc-top\.js|custom_notify_plugin_update)/i',
+            'title'    => 'Malware Supply Chain WordPress.org (Angel Drainer / Pachamama)',
+            'desc'     => 'Inyección reportada por Wordfence en 5 plugins oficiales comprometidos: exfiltración de credenciales de base de datos a 94.156.79.8 y drenador de criptoactivos.',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+
+        // --- 4. AMENAZAS HISTÓRICAS & WEBSHELLS CLÁSICAS ---
         'eval_base64' => array(
             'regex'    => '/eval\s*\(\s*(base64_decode|gzinflate|gzuncompress|str_rot13|hex2bin)\s*\(/i',
             'title'    => 'Ofuscación crítica: eval(base64/gzinflate)',
@@ -513,6 +557,7 @@ class NexaGuard_Scanner {
             ABSPATH . 'wp-settings.php',
             ABSPATH . 'wp-load.php',
             ABSPATH . 'wp-login.php',
+            ABSPATH . 'wp-cron.php',
             ABSPATH . '.htaccess'
         );
 
@@ -520,6 +565,28 @@ class NexaGuard_Scanner {
             if (file_exists($filepath)) {
                 $this->scanned_files++;
                 $this->breakdown['core']['files']++;
+
+                // Auditoría especializada en wp-cron.php para detectar droppers de persistencia
+                if (basename($filepath) === 'wp-cron.php') {
+                    $cron_code = @file_get_contents($filepath);
+                    if ($cron_code !== false && preg_match('/(START CUSTOM CODE|WP-antymalwary-bot|activate_plugin|plugin_slug|custom_ads_url)/i', $cron_code)) {
+                        $this->add_threat(array(
+                            'id'          => md5($filepath . '_cron_dropper'),
+                            'category'    => 'cron_persistence_reinstaller',
+                            'severity'    => 'crit',
+                            'title'       => 'Infección Crítica en wp-cron.php (Persistencia / Dropper C&C)',
+                            'desc'        => 'Se detectó código inyectado en wp-cron.php diseñado para reinstalar y reactivar troyanos automáticamente en cada visita (Vector Wordfence 2025).',
+                            'file'        => 'wp-cron.php',
+                            'full_path'   => $filepath,
+                            'line'        => 1,
+                            'code'        => htmlspecialchars(substr($cron_code, 0, 200)),
+                            'can_clean'   => true,
+                            'clean_action'=> 'sanitize_injection'
+                        ), 'core');
+                        continue;
+                    }
+                }
+
                 $this->check_file_content($filepath, 'core');
             }
         }
@@ -573,7 +640,9 @@ class NexaGuard_Scanner {
             'eval_base64', 'unpack_gzinflate_base64', 'nulled_hex_octal_pack',
             'nulled_header_backdoor', 'nulled_remote_dropper', 'nulled_admin_creator',
             'nulled_dynamic_execution', 'obfuscated_strrev', 'file_tampering_core',
-            'assert_shell', 'system_execution', 'variable_function_call', 'rogue_uploader'
+            'assert_shell', 'system_execution', 'variable_function_call', 'rogue_uploader',
+            'fake_antimalware_bot', 'stealth_plugin_hider', 'rest_api_unauthorized_rce',
+            'encrypted_header_backdoor', 'cron_persistence_reinstaller'
         );
 
         foreach ($this->patterns as $key => $p) {
@@ -803,7 +872,7 @@ class NexaGuard_Scanner {
             $email = strtolower($admin->user_email);
             $login = strtolower($admin->user_login);
             $is_tempmail = preg_match('/@(tempmail|guerrillamail|10minutemail|sharklasers|mailinator|yopmail|dispostable|trashmail|throwawaymail)\./i', $email);
-            $is_suspicious_login = preg_match('/^(backdoor|test_admin|temp_admin|support_admin|wp_support|sysadmin_wp|backup_adm|wp_adm|ghost_admin)$/i', $login);
+            $is_suspicious_login = preg_match('/^(backdoor|test_admin|temp_admin|support_admin|wp_support|sysadmin_wp|backup_adm|wp_adm|ghost_admin|pluginauth|pluginguest|options)$/i', $login);
             $is_dummy_email = preg_match('/@(example\.com|domain\.com|test\.com|localhost)$/i', $email);
 
             if ($is_tempmail || $is_suspicious_login || $is_dummy_email) {
