@@ -198,7 +198,21 @@ function createApp({ store, scanner, config }) {
     if (mine.length > 40) { const drop = new Set(mine.sort((a, b) => a.at - b.at).slice(0, mine.length - 40).map(s => s.id)); db.scans = db.scans.filter(s => !drop.has(s.id)); }
     site.lastScan = { id: rec.id, at: rec.at, verdict: rec.verdict, counts: rec.counts, trigger };
     const bad = v => v === 'infected' || v === 'suspicious';
-    if (bad(rec.verdict) && !bad(prev)) record(trigger === 'auto' ? 'monitoreo' : 'escáner', userId, 'ALERTA: ' + site.host + ' ahora figura como ' + (rec.verdict === 'infected' ? 'INFECTADO' : 'con señales sospechosas'), 'alert');
+    if (bad(rec.verdict) && !bad(prev)) {
+      record(trigger === 'auto' ? 'monitoreo' : 'escáner', userId, 'ALERTA: ' + site.host + ' ahora figura como ' + (rec.verdict === 'infected' ? 'INFECTADO' : 'con señales sospechosas'), 'alert');
+      if (mailer && typeof mailer.sendThreatAlertEmail === 'function') {
+        const u = db.users.find(x => x.id === userId);
+        mailer.sendThreatAlertEmail({
+          siteUrl: site.url || site.host,
+          host: site.host,
+          verdict: rec.verdict,
+          threatCount: (rec.counts && (rec.counts.crit + rec.counts.warn)) || findings.length,
+          findings: findings.slice(0, 10),
+          clientEmail: u ? u.email : '',
+          clientName: u ? u.name : 'Cliente'
+        }).catch(err => console.error('Error enviando alerta de amenaza por correo:', err.message));
+      }
+    }
     save();
     return rec;
   }
@@ -354,7 +368,12 @@ function createApp({ store, scanner, config }) {
         { id: 'header_backdoor', name: 'Header-based Execution Backdoor', pattern: 'eval.*\\$_SERVER\\[[\'"]HTTP_' },
         { id: 'traffic_hijack', name: 'Traffic Direction / Balada Redirect', pattern: 'location\\.href.*(traffic|gate|redirect|delivery)' },
         { id: 'fake_antimalware_bot', name: 'Wordfence 2025 Fake Anti-Malware Bot Trojan', pattern: 'WP-antymalwary-bot|acpp_ping_event|45\\.61\\.136\\.85' },
-        { id: 'stealth_hider', name: 'Dashboard Stealth Plugin Hider (all_plugins)', pattern: 'all_plugins.*plugin_basename' }
+        { id: 'stealth_hider', name: 'Dashboard Stealth Plugin Hider (all_plugins)', pattern: 'all_plugins.*plugin_basename' },
+        { id: 'supply_chain_c2', name: 'WordPress.org Supply Chain C2 Drainer Attack', pattern: '94\\.156\\.79\\.8|hostpdf\\.co|pachamama' },
+        { id: 'cron_dropper_reinstaller', name: 'wp-cron.php Persistence Reinstaller', pattern: 'START CUSTOM CODE|activate_plugin.*WP-antymalwary-bot' },
+        { id: 'core_tampering_mismatch', name: 'WordPress.org Core Checksum Hash Mismatch', pattern: 'checksum_mismatch|rogue_core_file' },
+        { id: 'insecure_salts', name: 'Insecure Default Salts in wp-config.php', pattern: 'put your unique phrase here' },
+        { id: 'htaccess_hijack', name: 'Malicious SEO Traffic Redirect in .htaccess', pattern: 'RewriteRule.*https?:\\/\\/' }
       ],
       whitelisted_frameworks: [
         'uploads/redux/',
@@ -881,11 +900,11 @@ function createApp({ store, scanner, config }) {
     const u = new URL(req.url, 'http://x'), pathname = u.pathname;
     if (!pathname.startsWith('/api/')) return false;
     try {
-      const isPublicExternalApi = pathname === '/api/license/validate';
+      const isPublicExternalApi = pathname === '/api/license/validate' || pathname === '/api/threat-intel';
       const origin = req.headers.origin;
       if (isPublicExternalApi) {
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
         if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return true; }
       } else if (origin) {

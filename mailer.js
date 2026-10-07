@@ -383,11 +383,76 @@ contacto@nexaguards.com
     return adminResult;
   }
 
+  // 3. Notificación de Alerta de Amenaza Detectada (Monitoreo automático / Radar)
+  async function sendThreatAlertEmail({ siteUrl, host, verdict, threatCount, findings = [], clientEmail, clientName }) {
+    const isInf = verdict === 'infected';
+    const tag = isInf ? 'INFECTADO' : 'SOSPECHOSO';
+    const tagColor = isInf ? '#ff4560' : '#ffcf33';
+    const dateStr = new Date().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
+
+    let findingsHtml = '';
+    if (findings && findings.length > 0) {
+      findingsHtml = '<ul style="margin:12px 0;padding-left:20px;color:#cbd5e1;font-size:14px;line-height:1.6">';
+      findings.forEach(f => {
+        findingsHtml += `<li><strong style="color:${f.sev === 'crit' ? '#ff6b8a' : '#ffcf33'}">[${escapeHtml(f.sev ? f.sev.toUpperCase() : 'ALERTA')}]</strong> <b>${escapeHtml(f.title || f.cat || 'Amenaza')}</b>: ${escapeHtml(f.detail || '')}</li>`;
+      });
+      findingsHtml += '</ul>';
+    } else {
+      findingsHtml = '<p style="color:#94a3b8;font-size:14px">Se detectaron anomalías o scripts maliciosos durante la inspección automática.</p>';
+    }
+
+    const html = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head><meta charset="utf-8"></head>
+    <body style="margin:0;padding:24px;background:#060a1f;font-family:system-ui,-apple-system,sans-serif;color:#e2e8f0">
+      <div style="max-width:580px;margin:0 auto;background:#0d1538;border:1px solid rgba(255,69,96,0.35);border-radius:14px;padding:32px;box-shadow:0 15px 35px rgba(0,0,0,0.5)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+          <span style="font-size:32px">🚨</span>
+          <div>
+            <h2 style="margin:0;color:#ffffff;font-size:20px">Alerta Crítica de Seguridad · NexaGuard</h2>
+            <span style="display:inline-block;margin-top:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;background:rgba(255,69,96,0.18);color:${tagColor};border:1px solid ${tagColor}">${tag}: ${threatCount} AMENAZAS DETECTADAS</span>
+          </div>
+        </div>
+        <p style="font-size:15px;line-height:1.6;color:#cbd5e1">El sistema de vigilancia automática de <strong>NexaGuard Security</strong> ha detectado actividad maliciosa en el siguiente sitio web:</p>
+        <div style="background:#131c46;border-radius:8px;padding:16px;margin:18px 0;border:1px solid rgba(255,255,255,0.08)">
+          <p style="margin:0 0 6px;font-size:14px;color:#94a3b8">Dominio analizado:</p>
+          <a href="${escapeHtml(siteUrl)}" style="color:#ffcf33;font-size:17px;font-weight:700;text-decoration:none">${escapeHtml(host || siteUrl)}</a>
+          <p style="margin:8px 0 0;font-size:12px;color:#64748b">Fecha de detección: ${escapeHtml(dateStr)}</p>
+        </div>
+        <h4 style="color:#ffffff;margin:20px 0 8px;font-size:15px">Detalle de hallazgos iniciales:</h4>
+        ${findingsHtml}
+        <div style="margin-top:28px;text-align:center">
+          <a href="https://www.nexaguards.com/panel" style="display:inline-block;padding:12px 26px;background:#ff4560;color:#ffffff;font-weight:700;font-size:14px;text-decoration:none;border-radius:8px;box-shadow:0 4px 15px rgba(255,69,96,0.4)">Ingresar al Panel de Seguridad ›</a>
+        </div>
+        <p style="margin-top:24px;font-size:12px;color:#64748b;text-align:center">NexaGuard Security · Sistema Automatizado de Detección y Blindaje Forense</p>
+      </div>
+    </body>
+    </html>`;
+
+    const text = `🚨 ALERTA DE SEGURIDAD NEXAGUARD\n\nSitio: ${host || siteUrl}\nEstado: ${tag}\nAmenazas detectadas: ${threatCount}\nFecha: ${dateStr}\n\nIngresa al panel para desinfectar: https://www.nexaguards.com/panel`;
+
+    const subject = `🚨 [NexaGuard Alerta] Amenaza detectada en ${host || siteUrl} (${tag})`;
+
+    // Notificar al Administrador
+    await dispatchEmail({ to: toEmail, subject, html, text });
+
+    // Notificar al Cliente si tiene correo válido
+    if (clientEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail) && clientEmail.toLowerCase() !== toEmail.toLowerCase()) {
+      try {
+        await dispatchEmail({ to: clientEmail, subject, html, text });
+      } catch (err) {
+        console.warn('Aviso: no se pudo enviar copia de alerta al cliente:', err.message);
+      }
+    }
+  }
+
   return {
     isConfigured,
     user,
     toEmail,
-    sendContactEmail
+    sendContactEmail,
+    sendThreatAlertEmail
   };
 }
 
