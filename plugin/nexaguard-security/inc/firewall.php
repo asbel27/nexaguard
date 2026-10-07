@@ -23,20 +23,34 @@ class NexaGuard_Firewall {
         }
 
         $settings = get_option('nexaguard_settings', array(
-            'block_php_uploads' => true,
-            'disable_xmlrpc'    => true,
-            'hide_wp_version'   => true,
-            'waf_enabled'       => true,
-            'anti_clearfake'    => true
+            'block_php_uploads'     => true,
+            'disable_xmlrpc'        => true,
+            'hide_wp_version'       => true,
+            'waf_enabled'           => true,
+            'anti_clearfake'        => true,
+            'emergency_lockdown'    => false,
+            'disallow_file_edit'    => false,
+            'disable_dir_browsing'  => true
         ));
 
-        // 1. Ocultar versión de WordPress
+        // 0. Modo Aislamiento de Emergencia / Lockdown (Paso 1 de Hostinet automatizado)
+        // Bloquea visitas y bots con 503 Mantenimiento pero permite acceso a administradores
+        if (!empty($settings['emergency_lockdown'])) {
+            add_action('init', array(__CLASS__, 'enforce_emergency_lockdown'), 1);
+        }
+
+        // 1. Bloqueo de edición de temas y plugins desde el panel de WordPress (Hostinet Hardening #1)
+        if (!empty($settings['disallow_file_edit']) && !defined('DISALLOW_FILE_EDIT')) {
+            define('DISALLOW_FILE_EDIT', true);
+        }
+
+        // 2. Ocultar versión de WordPress
         if (!empty($settings['hide_wp_version'])) {
             remove_action('wp_head', 'wp_generator');
             add_filter('the_generator', '__return_empty_string');
         }
 
-        // 2. Deshabilitar XML-RPC (evita ataques de fuerza bruta y amplificación DDoS)
+        // 3. Deshabilitar XML-RPC (evita ataques de fuerza bruta y amplificación DDoS)
         if (!empty($settings['disable_xmlrpc'])) {
             add_filter('xmlrpc_enabled', '__return_false');
             add_filter('xmlrpc_methods', '__return_empty_array');
@@ -46,18 +60,70 @@ class NexaGuard_Firewall {
             }
         }
 
-        // 3. Cabeceras de seguridad HTTP
+        // 4. Cabeceras de seguridad HTTP
         add_action('send_headers', array(__CLASS__, 'send_security_headers'));
 
-        // 4. Filtro en vivo Anti-ClearFake / EtherHiding (elimina el script malicioso en tiempo real)
+        // 5. Filtro en vivo Anti-ClearFake / EtherHiding (elimina el script malicioso en tiempo real)
         if (!empty($settings['anti_clearfake']) && !is_admin()) {
             add_action('template_redirect', array(__CLASS__, 'start_buffer_filter'), 0);
         }
 
-        // 5. Inspección WAF de peticiones entrantes
+        // 6. Inspección WAF de peticiones entrantes
         if (!empty($settings['waf_enabled']) && !is_admin()) {
             self::inspect_request();
         }
+    }
+
+    /**
+     * Modo Aislamiento de Emergencia (Hostinet Paso 1)
+     * Desvía visitantes no autenticados y rastreadores a una pantalla 503 limpia de mantenimiento
+     * mientras permite a los administradores logueados seguir operando sin restricciones.
+     */
+    public static function enforce_emergency_lockdown() {
+        if (is_user_logged_in() && current_user_can('manage_options')) {
+            return;
+        }
+
+        $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        if (strpos($uri, 'wp-login.php') !== false || strpos($uri, 'admin-ajax.php') !== false) {
+            return;
+        }
+
+        if (preg_match('/\.(css|js|png|jpg|jpeg|gif|svg|woff2?|ico)$/i', $uri)) {
+            return;
+        }
+
+        status_header(503);
+        header('Retry-After: 3600');
+        ?>
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="utf-8">
+            <title>Mantenimiento de Seguridad · NexaGuard</title>
+            <style>
+                body{background:#0b1030;color:#eaf0ff;font-family:system-ui,-apple-system,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
+                .box{background:#111a44;border:1px solid rgba(255,207,51,.4);border-radius:16px;padding:36px;max-width:540px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+                .ic{font-size:3.2rem;margin-bottom:12px}
+                h1{font-size:1.6rem;margin:0 0 10px;color:#ffcf33}
+                p{color:#b6c4eb;font-size:1rem;line-height:1.6;margin:0 0 20px}
+                .badge{font-size:.82rem;font-weight:700;background:rgba(255,207,51,.15);color:#ffcf33;padding:.5em 1.2em;border-radius:999px;display:inline-block;margin-bottom:15px}
+                .admin-link{display:inline-block;color:#ffcf33;text-decoration:none;font-weight:600;font-size:.9rem;border-bottom:1px dashed #ffcf33}
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <div class="ic">🛡️</div>
+                <div class="badge">AISLAMIENTO PREVENTIVO ACTIVO</div>
+                <h1>Sitio en Modo Mantenimiento de Seguridad</h1>
+                <p>Este sitio web se encuentra en aislamiento de seguridad temporal mientras se completan tareas de auditoría y desinfección forense con <strong>NexaGuard Security</strong>.</p>
+                <p><small style="color:#7888b5">Si eres el administrador, puedes iniciar sesión normalmente para gestionar el sitio:</small></p>
+                <a href="<?php echo esc_url(wp_login_url()); ?>" class="admin-link">Acceso para Administradores ›</a>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
     }
 
     public static function send_security_headers() {

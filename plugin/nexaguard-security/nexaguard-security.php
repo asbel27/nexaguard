@@ -219,24 +219,40 @@ class NexaGuard_Plugin {
         }
 
         $settings = array(
-            'block_php_uploads' => !empty($_POST['block_php_uploads']),
-            'disable_xmlrpc'    => !empty($_POST['disable_xmlrpc']),
-            'hide_wp_version'   => !empty($_POST['hide_wp_version']),
-            'waf_enabled'       => !empty($_POST['waf_enabled']),
-            'anti_clearfake'    => !empty($_POST['anti_clearfake'])
+            'block_php_uploads'     => !empty($_POST['block_php_uploads']),
+            'disable_xmlrpc'        => !empty($_POST['disable_xmlrpc']),
+            'hide_wp_version'       => !empty($_POST['hide_wp_version']),
+            'waf_enabled'           => !empty($_POST['waf_enabled']),
+            'anti_clearfake'        => !empty($_POST['anti_clearfake']),
+            'emergency_lockdown'    => !empty($_POST['emergency_lockdown']),
+            'disallow_file_edit'    => !empty($_POST['disallow_file_edit']),
+            'disable_dir_browsing'  => !empty($_POST['disable_dir_browsing'])
         );
 
         update_option('nexaguard_settings', $settings);
 
-        // Si se activó bloquear PHP en uploads, regenerar o quitar .htaccess
         $cleaner = new NexaGuard_Cleaner();
+
+        // 1. Bloqueo de ejecución PHP en uploads
         if ($settings['block_php_uploads']) {
             $cleaner->protect_uploads_htaccess(true);
         } else {
             $cleaner->protect_uploads_htaccess(false);
         }
 
-        wp_send_json_success(array('message' => 'Configuración de seguridad guardada con éxito.'));
+        // 2. Prevenir listado de directorios en .htaccess (Hostinet Hardening #2)
+        if ($settings['disable_dir_browsing']) {
+            $cleaner->apply_htaccess_no_indexes(true);
+        } else {
+            $cleaner->apply_htaccess_no_indexes(false);
+        }
+
+        // 3. Deshabilitar editor de temas en wp-config.php si está marcado (Hostinet Hardening #1)
+        if ($settings['disallow_file_edit']) {
+            $cleaner->apply_disallow_file_edit();
+        }
+
+        wp_send_json_success(array('message' => 'Configuración de seguridad y blindaje guardada con éxito.'));
     }
 
     public function ajax_restore_quarantine() {

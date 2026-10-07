@@ -107,6 +107,12 @@ class NexaGuard_Cleaner {
             return $this->downgrade_user(intval($target));
         } elseif ($type === 'whitelist') {
             return $this->whitelist_item($target);
+        } elseif ($type === 'apply_disallow_file_edit') {
+            return $this->apply_disallow_file_edit();
+        } elseif ($type === 'apply_htaccess_no_indexes') {
+            return $this->apply_htaccess_no_indexes(true);
+        } elseif ($type === 'regenerate_wp_salts') {
+            return $this->regenerate_wp_salts();
         }
 
         return array('success' => false, 'message' => 'Acción de desinfección no reconocida.');
@@ -391,5 +397,107 @@ class NexaGuard_Cleaner {
                 }
             }
         }
+    }
+
+    /**
+     * Blindaje en wp-config.php: Deshabilitar editor de temas y plugins (Hostinet Hardening #1)
+     */
+    public function apply_disallow_file_edit() {
+        $config_file = ABSPATH . 'wp-config.php';
+        if (!file_exists($config_file)) {
+            if (file_exists(dirname(ABSPATH) . '/wp-config.php')) {
+                $config_file = dirname(ABSPATH) . '/wp-config.php';
+            } else {
+                return array('success' => false, 'message' => 'Archivo wp-config.php no encontrado en la ruta estándar.');
+            }
+        }
+
+        $content = @file_get_contents($config_file);
+        if ($content === false) {
+            return array('success' => false, 'message' => 'No se pudo leer wp-config.php.');
+        }
+
+        if (stripos($content, 'DISALLOW_FILE_EDIT') !== false) {
+            return array('success' => true, 'message' => 'La directiva DISALLOW_FILE_EDIT ya se encuentra configurada en wp-config.php.');
+        }
+
+        @copy($config_file, $config_file . '.bak_nexaguard_' . time());
+
+        $needle = "/* That's all, stop editing!";
+        $new_line = "\n/** NexaGuard Hardening: Bloqueo de edicion de temas y plugins desde el panel de control (Hostinet Hardening #1) */\ndefine('DISALLOW_FILE_EDIT', true);\n";
+        if (strpos($content, $needle) !== false) {
+            $content = str_replace($needle, $new_line . "\n" . $needle, $content);
+        } else {
+            $content .= "\n" . $new_line;
+        }
+
+        if (@file_put_contents($config_file, $content) !== false) {
+            return array('success' => true, 'message' => 'Blindaje aplicado con éxito: Se deshabilitó el editor de temas y plugins en el panel de administración.');
+        }
+
+        return array('success' => false, 'message' => 'No se pudo escribir en wp-config.php. Verifica los permisos de archivo en el servidor.');
+    }
+
+    /**
+     * Blindaje en .htaccess: Prevenir listado de directorios (Hostinet Hardening #2)
+     */
+    public function apply_htaccess_no_indexes($enable = true) {
+        $htaccess = ABSPATH . '.htaccess';
+        $content = file_exists($htaccess) ? @file_get_contents($htaccess) : '';
+
+        if ($enable) {
+            if (stripos($content, 'Options -Indexes') !== false) {
+                return array('success' => true, 'message' => 'La regla "Options -Indexes" ya está activa en .htaccess.');
+            }
+            if (file_exists($htaccess)) {
+                @copy($htaccess, $htaccess . '.bak_nexaguard_' . time());
+            }
+            $rules = "\n# NexaGuard Hardening - Prevenir listado de directorios Apache (Hostinet Hardening #2)\nOptions -Indexes\n";
+            @file_put_contents($htaccess, $content . $rules);
+            return array('success' => true, 'message' => 'Blindaje aplicado: Se bloqueó el listado de directorios (Options -Indexes) en .htaccess.');
+        } else {
+            if (file_exists($htaccess)) {
+                $cleaned = preg_replace('/# NexaGuard Hardening[^\n]*\nOptions -Indexes\n?/i', '', $content);
+                @file_put_contents($htaccess, $cleaned);
+                return array('success' => true, 'message' => 'Regla de listado de directorios retirada.');
+            }
+        }
+        return array('success' => true, 'message' => 'Operación completada.');
+    }
+
+    /**
+     * Regeneración segura de Claves y Sales Criptográficas en wp-config.php (Hostinet Paso 8)
+     * Invalida todas las sesiones de usuarios actuales y cookies robadas/secuestradas por atacantes.
+     */
+    public function regenerate_wp_salts() {
+        $config_file = ABSPATH . 'wp-config.php';
+        if (!file_exists($config_file)) {
+            if (file_exists(dirname(ABSPATH) . '/wp-config.php')) {
+                $config_file = dirname(ABSPATH) . '/wp-config.php';
+            } else {
+                return array('success' => false, 'message' => 'Archivo wp-config.php no encontrado.');
+            }
+        }
+
+        $content = @file_get_contents($config_file);
+        if ($content === false) {
+            return array('success' => false, 'message' => 'No se pudo leer wp-config.php.');
+        }
+
+        @copy($config_file, $config_file . '.bak_nexaguard_' . time());
+
+        $salt_keys = array('AUTH_KEY', 'SECURE_AUTH_KEY', 'LOGGED_IN_KEY', 'NONCE_KEY', 'AUTH_SALT', 'SECURE_AUTH_SALT', 'LOGGED_IN_SALT', 'NONCE_SALT');
+        foreach ($salt_keys as $key) {
+            $random_secret = function_exists('wp_generate_password') ? wp_generate_password(64, true, true) : substr(bin2hex(random_bytes(32)), 0, 64);
+            $pattern = "/define\s*\(\s*['\"]" . preg_quote($key, '/') . "['\"]\s*,\s*['\"][^'\"]*['\"]\s*\);/";
+            $replacement = "define('" . $key . "', '" . addcslashes($random_secret, "'\\") . "');";
+            $content = preg_replace($pattern, $replacement, $content);
+        }
+
+        if (@file_put_contents($config_file, $content) !== false) {
+            return array('success' => true, 'message' => 'Sales criptográficas regeneradas con éxito. Todas las sesiones activas y cookies secuestradas han sido invalidadas (Hostinet Paso 8).');
+        }
+
+        return array('success' => false, 'message' => 'No se pudo escribir en wp-config.php. Verifica los permisos de archivo.');
     }
 }

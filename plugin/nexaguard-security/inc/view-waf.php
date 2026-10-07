@@ -108,6 +108,33 @@ $settings = get_option('nexaguard_settings', array(
                 </div>
                 <input type="checkbox" name="hide_wp_version" value="1" <?php checked(!empty($settings['hide_wp_version'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
+
+            <!-- Modo Aislamiento de Emergencia (Hostinet Paso 1) -->
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="border-left: 3px solid #ff4560;">
+                <div class="toggle-info">
+                    <b>Modo Aislamiento de Emergencia / Cuarentena de Tráfico <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                    <p class="ng-hint">Desvía visitas públicas y rastreadores a una pantalla limpia de 503 Mantenimiento de Seguridad para evitar contagios o alertas de Google Safe Browsing durante limpiezas, permitiendo el acceso exclusivo a los administradores logueados.</p>
+                </div>
+                <input type="checkbox" name="emergency_lockdown" value="1" <?php checked(!empty($settings['emergency_lockdown'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+            </label>
+
+            <!-- Deshabilitar Editor de Temas y Plugins (Hostinet Hardening #1) -->
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <div class="toggle-info">
+                    <b>Deshabilitar Editor de Temas y Plugins de WordPress (DISALLOW_FILE_EDIT) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                    <p class="ng-hint">Impide que cualquier usuario modifique archivos PHP desde el panel de administración. Cierra la puerta principal a atacantes que intenten inyectar webshells si comprometen una cuenta admin.</p>
+                </div>
+                <input type="checkbox" name="disallow_file_edit" value="1" <?php checked(!empty($settings['disallow_file_edit'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+            </label>
+
+            <!-- Prevenir Listado de Directorios (Hostinet Hardening #2) -->
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <div class="toggle-info">
+                    <b>Bloquear Listado de Directorios Apache (Options -Indexes) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                    <p class="ng-hint">Añade directiva en .htaccess para que ningún visitante ni escáner automatizado pueda ver el listado de archivos dentro de carpetas de tu servidor.</p>
+                </div>
+                <input type="checkbox" name="disable_dir_browsing" value="1" <?php checked(!empty($settings['disable_dir_browsing'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+            </label>
         </div>
 
         <div class="form-actions" style="margin-top:24px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px">

@@ -561,6 +561,7 @@ class NexaGuard_Scanner {
             ABSPATH . '.htaccess'
         );
 
+        // 1. Escanear archivos raíz principales con firmas heurísticas
         foreach ($root_files as $filepath) {
             if (file_exists($filepath)) {
                 $this->scanned_files++;
@@ -591,7 +592,7 @@ class NexaGuard_Scanner {
             }
         }
 
-        // Inspeccionar archivos clave de wp-includes
+        // 2. Inspeccionar archivos clave de wp-includes
         $includes_dir = ABSPATH . WPINC;
         if (is_dir($includes_dir)) {
             $critical_includes = array(
@@ -614,7 +615,262 @@ class NexaGuard_Scanner {
                 }
             }
         }
+
+        // 3. Auditoría forense de wp-config.php (Sales criptográficas y DISALLOW_FILE_EDIT - Hostinet Paso 8 & Hardening)
+        $this->audit_wp_config();
+
+        // 4. Auditoría de .htaccess (Redirecciones maliciosas y Options -Indexes - Hostinet Paso 1, 5 & Hardening)
+        $this->audit_htaccess();
+
+        // 5. Verificación de Integridad por Checksums Oficiales de WordPress.org (Hostinet Pasos 4, 5 y 6)
+        $this->scan_core_checksums();
+
+        // 6. Detección de Anomalías Temporales / Archivos de Core modificados recientemente (Hostinet Paso 4)
+        $this->scan_recent_core_tampering();
     }
+
+    /**
+     * Auditoría de seguridad y hardening en wp-config.php
+     * Verifica sales criptográficas (Paso 8 Hostinet) y deshabilitación de edición de código en panel (Hardening #1)
+     */
+    private function audit_wp_config() {
+        $config_file = ABSPATH . 'wp-config.php';
+        if (!file_exists($config_file)) {
+            if (file_exists(dirname(ABSPATH) . '/wp-config.php')) {
+                $config_file = dirname(ABSPATH) . '/wp-config.php';
+            } else {
+                return;
+            }
+        }
+
+        $content = @file_get_contents($config_file);
+        if ($content === false) return;
+
+        // Comprobar claves y sales secretas por defecto o vacías (Hostinet Paso 8)
+        if (preg_match('/define\s*\(\s*[\'"](AUTH_KEY|SECURE_AUTH_KEY|LOGGED_IN_KEY|NONCE_KEY|AUTH_SALT|SECURE_AUTH_SALT|LOGGED_IN_SALT|NONCE_SALT)[\'"]\s*,\s*[\'"](put your unique phrase here|[\s]*)[\'"]\s*\)/i', $content, $matches)) {
+            $this->add_threat(array(
+                'id'          => md5('wp_config_insecure_salts'),
+                'category'    => 'insecure_salts',
+                'severity'    => 'crit',
+                'title'       => 'Claves de Sal Criptográfica Inseguras en wp-config.php',
+                'desc'        => 'Las sales secretas de autenticación (AUTH_KEY, SECURE_AUTH_SALT, etc.) usan la frase por defecto ("put your unique phrase here") o están vacías. Esto permite a atacantes falsificar cookies de sesión y mantener sesiones activas secuestradas (Hostinet Paso 8).',
+                'file'        => 'wp-config.php',
+                'full_path'   => $config_file,
+                'line'        => 0,
+                'code'        => htmlspecialchars(substr($matches[0], 0, 150)),
+                'can_clean'   => true,
+                'clean_action'=> 'regenerate_wp_salts'
+            ), 'core');
+        }
+
+        // Comprobar si DISALLOW_FILE_EDIT está ausente o en false (Hostinet Recomendación Hardening #1)
+        if (!preg_match('/define\s*\(\s*[\'"]DISALLOW_FILE_EDIT[\'"]\s*,\s*true\s*\)/i', $content)) {
+            $this->add_threat(array(
+                'id'          => md5('wp_config_file_edit_enabled'),
+                'category'    => 'hardening_file_edit',
+                'severity'    => 'warn',
+                'title'       => 'Editor de Temas y Plugins Activo en el Panel (Riesgo de Webshell)',
+                'desc'        => 'WordPress permite modificar archivos PHP directamente desde el Escritorio. Si un atacante compromete credenciales de administrador, podrá inyectar backdoors y webshells sin necesidad de acceso FTP (Hostinet Recomendación #1).',
+                'file'        => 'wp-config.php',
+                'full_path'   => $config_file,
+                'line'        => 0,
+                'code'        => "define('DISALLOW_FILE_EDIT', true); // No configurado",
+                'can_clean'   => true,
+                'clean_action'=> 'apply_disallow_file_edit'
+            ), 'core');
+        }
+    }
+
+    /**
+     * Auditoría forense de .htaccess raíz
+     * Comprueba redirecciones maliciosas de tráfico y falta de 'Options -Indexes'
+     */
+    private function audit_htaccess() {
+        $htaccess_file = ABSPATH . '.htaccess';
+        if (!file_exists($htaccess_file)) return;
+
+        $content = @file_get_contents($htaccess_file);
+        if ($content === false) return;
+
+        // Detección de redirecciones maliciosas o cloaking de tráfico (Hostinet Paso 1 & 5)
+        if (preg_match('/(RewriteRule|Redirect(Match)?)\s+.*\b(https?:\/\/(?!wordpress\.org|google\.|bing\.)[a-zA-Z0-9\.\-_]+\b.*)/i', $content, $m)) {
+            $site_domain = parse_url(home_url(), PHP_URL_HOST);
+            if ($site_domain && stripos($m[0], $site_domain) === false) {
+                $this->add_threat(array(
+                    'id'          => md5('htaccess_malicious_redirect'),
+                    'category'    => 'malicious_redirect',
+                    'severity'    => 'crit',
+                    'title'       => 'Redirección Sospechosa en .htaccess (Traffic Hijacking)',
+                    'desc'        => 'Se encontró una regla de redirección en .htaccess que desvía visitantes a un dominio externo no autorizado.',
+                    'file'        => '.htaccess',
+                    'full_path'   => $htaccess_file,
+                    'line'        => 0,
+                    'code'        => htmlspecialchars(substr($m[0], 0, 160)),
+                    'can_clean'   => true,
+                    'clean_action'=> 'sanitize_injection'
+                ), 'core');
+            }
+        }
+
+        // Comprobar si Options -Indexes está presente para evitar Directory Browsing (Hostinet Hardening #2)
+        if (stripos($content, 'Options -Indexes') === false && stripos($content, 'Options -indexes') === false) {
+            $this->add_threat(array(
+                'id'          => md5('htaccess_missing_options_indexes'),
+                'category'    => 'hardening_directory_browsing',
+                'severity'    => 'warn',
+                'title'       => 'Listado de Directorios Apache Expuesto (Falta "Options -Indexes")',
+                'desc'        => 'El servidor web podría permitir a atacantes listar el contenido de directorios sin index.php, revelando archivos de copia de seguridad o scripts (Hostinet Recomendación #2).',
+                'file'        => '.htaccess',
+                'full_path'   => $htaccess_file,
+                'line'        => 0,
+                'code'        => 'Options -Indexes // No configurado en .htaccess',
+                'can_clean'   => true,
+                'clean_action'=> 'apply_htaccess_no_indexes'
+            ), 'core');
+        }
+    }
+
+    /**
+     * Verificación de Integridad por Checksums Oficiales de WordPress.org
+     * Compara los hashes MD5 oficiales de cada archivo del núcleo con los locales (Hostinet Pasos 4, 5 y 6)
+     */
+    private function scan_core_checksums() {
+        global $wp_version;
+
+        $locale = function_exists('get_locale') ? get_locale() : 'en_US';
+        $cache_key = 'nexaguard_core_checksums_' . md5($wp_version . '_' . $locale);
+        $checksums = get_transient($cache_key);
+
+        if (empty($checksums) || !is_array($checksums)) {
+            $api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale={$locale}";
+            $response = wp_remote_get($api_url, array('timeout' => 4, 'sslverify' => false));
+            if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+                $body = json_decode(wp_remote_retrieve_body($response), true);
+                if ($body && !empty($body['checksums'])) {
+                    $checksums = $body['checksums'];
+                    set_transient($cache_key, $checksums, 24 * HOUR_IN_SECONDS);
+                }
+            }
+        }
+
+        if (empty($checksums) || !is_array($checksums)) {
+            return;
+        }
+
+        // Validar integridad de archivos clave del núcleo de WordPress
+        $core_critical_rel = array(
+            'index.php', 'wp-blog-header.php', 'wp-settings.php', 'wp-load.php',
+            'wp-login.php', 'wp-cron.php', 'wp-mail.php', 'wp-links-opml.php', 'wp-trackback.php',
+            'wp-includes/functions.php', 'wp-includes/template-loader.php',
+            'wp-includes/load.php', 'wp-includes/version.php', 'wp-includes/pluggable.php',
+            'wp-includes/default-filters.php', 'wp-includes/formatting.php', 'wp-includes/general-template.php'
+        );
+
+        foreach ($core_critical_rel as $rel_file) {
+            if (!isset($checksums[$rel_file])) continue;
+            $local_path = ABSPATH . $rel_file;
+            if (!file_exists($local_path)) continue;
+
+            $official_md5 = $checksums[$rel_file];
+            $local_md5 = md5_file($local_path);
+
+            if ($local_md5 !== false && $local_md5 !== $official_md5) {
+                $mtime = filemtime($local_path);
+                $mod_time_str = date('d/m/Y H:i:s', $mtime);
+
+                $this->add_threat(array(
+                    'id'          => md5('checksum_mismatch_' . $rel_file),
+                    'category'    => 'core_checksum_mismatch',
+                    'severity'    => 'crit',
+                    'title'       => 'Modificación no autorizada en archivo del Núcleo (' . $rel_file . ')',
+                    'desc'        => "La firma digital MD5 de este archivo no coincide con la versión original y firmada de WordPress.org (Modificado: {$mod_time_str}). Contiene alteraciones o inyecciones de código (Hostinet Pasos 4 y 5).",
+                    'file'        => $rel_file,
+                    'full_path'   => $local_path,
+                    'line'        => 1,
+                    'code'        => 'MD5 local (' . substr($local_md5, 0, 10) . '...) != Oficial WP.org (' . substr($official_md5, 0, 10) . '...)',
+                    'can_clean'   => true,
+                    'clean_action'=> 'sanitize_injection'
+                ), 'core');
+            }
+        }
+
+        // Inspeccionar archivos rogue desconocidos en wp-admin/
+        $admin_dir = ABSPATH . 'wp-admin';
+        if (is_dir($admin_dir)) {
+            $admin_files = @scandir($admin_dir);
+            if ($admin_files) {
+                foreach ($admin_files as $af) {
+                    if ($af === '.' || $af === '..' || is_dir($admin_dir . '/' . $af)) continue;
+                    if (pathinfo($af, PATHINFO_EXTENSION) === 'php') {
+                        $rel_admin = 'wp-admin/' . $af;
+                        if (!isset($checksums[$rel_admin])) {
+                            $this->add_threat(array(
+                                'id'          => md5('rogue_admin_file_' . $af),
+                                'category'    => 'rogue_core_file',
+                                'severity'    => 'crit',
+                                'title'       => 'Archivo desconocido o rogue en wp-admin/ (' . $af . ')',
+                                'desc'        => "El archivo '{$af}' no pertenece a la distribución oficial de WordPress en wp-admin/. Es altamente probable que sea una puerta trasera o webshell instalada clandestinamente.",
+                                'file'        => $rel_admin,
+                                'full_path'   => $admin_dir . '/' . $af,
+                                'line'        => 1,
+                                'code'        => 'Archivo PHP no reconocido por la base de datos oficial de WordPress.org',
+                                'can_clean'   => true,
+                                'clean_action'=> 'quarantine'
+                            ), 'core');
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Detección de anomalías temporales:
+     * Archivos sensibles del Core alterados en las últimas 48 horas (Hostinet Paso 4)
+     */
+    private function scan_recent_core_tampering() {
+        $recent_threshold = time() - (48 * 3600); // 48 horas atrás
+        $critical_core = array(
+            ABSPATH . 'index.php',
+            ABSPATH . 'wp-blog-header.php',
+            ABSPATH . 'wp-settings.php',
+            ABSPATH . 'wp-load.php',
+            ABSPATH . 'wp-login.php',
+            ABSPATH . 'wp-mail.php'
+        );
+
+        foreach ($critical_core as $file) {
+            if (file_exists($file)) {
+                $mtime = filemtime($file);
+                // Si fue modificado en las últimas 48 horas y no es una instalación nueva del día de hoy
+                if ($mtime > $recent_threshold && !file_exists($file . '.bak_nexaguard')) {
+                    $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $file);
+                    // Comprobar si ya se reportó por checksum para no duplicar
+                    $already_reported = false;
+                    foreach ($this->threats as $t) {
+                        if ($t['file'] === $rel) {
+                            $already_reported = true;
+                            break;
+                        }
+                    }
+                    if (!$already_reported) {
+                        $this->add_threat(array(
+                            'id'          => md5('recent_core_mod_' . $rel),
+                            'category'    => 'recent_core_modification',
+                            'severity'    => 'warn',
+                            'title'       => 'Archivo del Núcleo modificado recientemente (' . $rel . ')',
+                            'desc'        => 'Este archivo del sistema fue alterado en las últimas 48 horas (' . date('d/m/Y H:i:s', $mtime) . '). Los atacantes suelen dejar huellas de fecha reciente al inyectar código (Hostinet Pasos 4 y 5).',
+                            'file'        => $rel,
+                            'full_path'   => $file,
+                            'line'        => 1,
+                            'code'        => 'Última modificación detectada: ' . date('d/m/Y H:i:s', $mtime),
+                            'can_clean'   => true,
+                            'clean_action'=> 'sanitize_injection'
+                        ), 'core');
+                    }
+                }
+            }
+        }
 
     /**
      * Análisis forense de contenido de un archivo

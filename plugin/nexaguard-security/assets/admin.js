@@ -191,10 +191,19 @@ jQuery(document).ready(function ($) {
             if (!t.is_db) {
                 if (t.clean_action === 'sanitize_injection') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '">🧹 Erradicar Inyección y Reparar</button>';
+                } else if (t.clean_action === 'apply_disallow_file_edit') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="apply_disallow_file_edit" data-target="' + t.full_path + '" data-id="' + t.id + '">🛡️ Bloquear Editor de Archivos (wp-config)</button>';
+                } else if (t.clean_action === 'apply_htaccess_no_indexes') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="apply_htaccess_no_indexes" data-target="' + t.full_path + '" data-id="' + t.id + '">🛡️ Bloquear Listado de Carpetas (.htaccess)</button>';
+                } else if (t.clean_action === 'regenerate_wp_salts') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="regenerate_wp_salts" data-target="' + t.full_path + '" data-id="' + t.id + '">🔑 Regenerar Sales e Invalidar Sesiones</button>';
                 }
 
-                // Botón de forzar eliminación superando restricciones de permisos (archivos)
-                forceDelBtn = '<button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Forzar eliminación superando permisos de solo lectura">💥 Forzar Eliminación (Desbloqueo)</button>';
+                // Para acciones de hardening o regeneración de sales, no mostrar botón de forzar eliminación física
+                var isHardeningAction = (t.clean_action === 'apply_disallow_file_edit' || t.clean_action === 'apply_htaccess_no_indexes' || t.clean_action === 'regenerate_wp_salts');
+                if (!isHardeningAction) {
+                    forceDelBtn = '<button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Forzar eliminación superando permisos de solo lectura">💥 Forzar Eliminación (Desbloqueo)</button>';
+                }
 
                 if (t.clean_action === 'quarantine') {
                     quarantineBtn = '<button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="' + t.full_path + '" data-id="' + t.id + '">🔒 Mover a Cuarentena</button>';
@@ -335,13 +344,19 @@ jQuery(document).ready(function ($) {
             confirmMsg = '¿Deseas remover esta tarea programada (cron) de la base de datos?';
         } else if (type === 'downgrade_user') {
             confirmMsg = '¿Deseas degradar los permisos de este usuario sospechoso a suscriptor?';
+        } else if (type === 'apply_disallow_file_edit') {
+            confirmMsg = '¿Deseas aplicar el blindaje en wp-config.php para deshabilitar la edición de temas y plugins desde el panel de WordPress?';
+        } else if (type === 'apply_htaccess_no_indexes') {
+            confirmMsg = '¿Deseas aplicar "Options -Indexes" en .htaccess para evitar que se puedan listar directorios en tu servidor?';
+        } else if (type === 'regenerate_wp_salts') {
+            confirmMsg = '¿Deseas regenerar todas las claves y sales criptográficas en wp-config.php? Esto invalidará de inmediato todas las sesiones y cookies secuestradas por atacantes.';
         }
 
         if (!confirm(confirmMsg)) {
             return;
         }
 
-        $btn.prop('disabled', true).text(type === 'delete_db_option' ? 'Purgando…' : 'Limpiando…');
+        $btn.prop('disabled', true).text(type === 'delete_db_option' ? 'Purgando…' : (type.indexOf('apply_') !== -1 || type === 'regenerate_wp_salts' ? 'Aplicando…' : 'Limpiando…'));
 
         $.ajax({
             url: nexaguardData.ajax_url,
