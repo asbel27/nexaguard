@@ -113,6 +113,14 @@ class NexaGuard_Cleaner {
             return $this->apply_htaccess_no_indexes(true);
         } elseif ($type === 'regenerate_wp_salts') {
             return $this->regenerate_wp_salts();
+        } elseif ($type === 'clean_dropin') {
+            return $this->clean_dropin($target);
+        } elseif ($type === 'neutralize_auto_prepend') {
+            return $this->neutralize_auto_prepend($target);
+        } elseif ($type === 'protect_uploads_directory') {
+            return $this->protect_uploads_directory();
+        } elseif ($type === 'clean_db_trigger') {
+            return $this->clean_db_trigger($target);
         }
 
         return array('success' => false, 'message' => 'Acción de desinfección no reconocida.');
@@ -499,5 +507,98 @@ class NexaGuard_Cleaner {
         }
 
         return array('success' => false, 'message' => 'No se pudo escribir en wp-config.php. Verifica los permisos de archivo.');
+    }
+
+    /**
+     * Limpieza y neutralización de Drop-In infectado (wp-content/db.php, advanced-cache.php, etc.)
+     * Vector clave del SC WordPress Malware (Sucuri Sept/Oct 2026).
+     */
+    public function clean_dropin($target) {
+        $full_path = (strpos($target, ABSPATH) === 0) ? $target : (ABSPATH . ltrim($target, '/'));
+        if (!file_exists($full_path)) {
+            return array('success' => true, 'message' => 'El archivo drop-in ya no existe en la ruta.');
+        }
+
+        @copy($full_path, $full_path . '.bak_nexaguard_' . time());
+
+        $content = @file_get_contents($full_path);
+        if ($content === false) {
+            return array('success' => false, 'message' => 'No se pudo leer el archivo drop-in.');
+        }
+
+        // Si contiene delimitadores bounded (SC_START / SC_END)
+        if (preg_match('/\/\*[\s\S]*?(SC_START|BEGIN_SC_BLOCK)[\s\S]*?(SC_END|END_SC_BLOCK)[\s\S]*?\*\//i', $content)) {
+            $cleaned = preg_replace('/\/\*[\s\S]*?(SC_START|BEGIN_SC_BLOCK)[\s\S]*?(SC_END|END_SC_BLOCK)[\s\S]*?\*\//i', '', $content);
+            @file_put_contents($full_path, $cleaned);
+            return array('success' => true, 'message' => 'Inyección en drop-in erradicada exitosamente sin alterar funciones legítimas.');
+        }
+
+        // Si todo el archivo es un dropper malicioso sin clase legítima de WordPress, aislarlo en cuarentena
+        return $this->quarantine_file($full_path);
+    }
+
+    /**
+     * Neutralización Segura de auto_prepend_file / auto_append_file (Sucuri SC Malware Cleanup Paso 1)
+     * "Neutralize the prepend before deleting its target. Because the auto_prepend_file value is cached by PHP
+     * for up to 300 seconds, empty the prepend target to an inert stub first, then strip the directive."
+     */
+    public function neutralize_auto_prepend($config_file) {
+        $full_path = (strpos($config_file, ABSPATH) === 0) ? $config_file : (ABSPATH . ltrim($config_file, '/'));
+        if (!file_exists($full_path)) {
+            return array('success' => true, 'message' => 'El archivo de configuración ya no existe.');
+        }
+
+        $content = @file_get_contents($full_path);
+        if ($content === false) {
+            return array('success' => false, 'message' => 'No se pudo leer el archivo de configuración.');
+        }
+
+        @copy($full_path, $full_path . '.bak_nexaguard_' . time());
+
+        // 1. Localizar la ruta del archivo prepend
+        if (preg_match('/(auto_prepend_file|auto_append_file)\s*=\s*[\'"]?([^\r\n\'"]+)[\'"]?/i', $content, $matches)) {
+            $prepend_target = trim($matches[2]);
+            $target_file = (strpos($prepend_target, '/') === 0 || preg_match('/^[a-zA-Z]:\\\\/', $prepend_target))
+                ? $prepend_target
+                : dirname($full_path) . '/' . ltrim($prepend_target, '/');
+
+            // 2. Vaciar el archivo objetivo a un stub inerte PRIMERO para que PHP-FPM en caché no lance Fatal Error 500
+            if (file_exists($target_file)) {
+                @copy($target_file, $target_file . '.bak_nexaguard_' . time());
+                @file_put_contents($target_file, "<?php\n// Neutralizado quirúrgicamente por NexaGuard Security contra malware SC;\n");
+            }
+        }
+
+        // 3. Eliminar la directiva de .user.ini / php.ini / .htaccess
+        $cleaned_config = preg_replace('/^\s*(auto_prepend_file|auto_append_file)\s*=.*$/m', '', $content);
+        $cleaned_config = preg_replace('/^\s*php_value\s+(auto_prepend_file|auto_append_file)\s+.*$/m', '', $cleaned_config);
+        @file_put_contents($full_path, $cleaned_config);
+
+        // 4. Actualizar mtime para invalidar user_ini.cache_ttl de PHP
+        @touch($full_path);
+
+        return array('success' => true, 'message' => 'Directiva auto_prepend_file neutralizada de forma segura. El objetivo fue vaciado antes de desvincularlo para prevenir caídas HTTP 500.');
+    }
+
+    /**
+     * Blindaje en uploads contra ejecución PHP (CVE-2026-27540 Arbitrary File Upload)
+     */
+    public function protect_uploads_directory() {
+        $this->protect_uploads_htaccess(true);
+        return array('success' => true, 'message' => 'Protección aplicada: Se bloqueó la ejecución de scripts PHP en wp-content/uploads/ (.htaccess).');
+    }
+
+    /**
+     * Eliminación de triggers maliciosos de MySQL (Sucuri SC Malware: triggers que recrean administradores)
+     */
+    public function clean_db_trigger($trigger_name) {
+        global $wpdb;
+        if (empty($trigger_name)) {
+            return array('success' => false, 'message' => 'Nombre de trigger no especificado.');
+        }
+
+        $sanitized_name = preg_replace('/[^a-zA-Z0-9_]/', '', $trigger_name);
+        $wpdb->query("DROP TRIGGER IF EXISTS `{$sanitized_name}`");
+        return array('success' => true, 'message' => "Trigger malicioso '{$sanitized_name}' eliminado de MySQL con éxito.");
     }
 }

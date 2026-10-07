@@ -16,14 +16,16 @@ jQuery(document).ready(function ($) {
         var $progPct = $('#scan-progress-pct');
 
         var scanStages = [
-            { pct: 15, folder: '📁 Evaluando: wp-content/uploads/', label: 'Inspeccionando carpeta de medios (Uploads), ejecutables PHP y falsos positivos…' },
-            { pct: 34, folder: '🔌 Evaluando: wp-content/plugins/', label: 'Auditando plugins instalados (activos e inactivos), backdoors y webshells…' },
-            { pct: 52, folder: '🎨 Evaluando: wp-content/themes/', label: 'Escaneando plantillas del tema, functions.php y scripts inyectados…' },
-            { pct: 67, folder: '⚡ Evaluando: wp-content/mu-plugins/', label: 'Auditando plugins obligatorios del sistema (Must-Use plugins)...' },
-            { pct: 79, folder: '🏛️ Evaluando: wp-includes/ y wp-admin/', label: 'Verificando integridad del Núcleo de WordPress (Core Scripts y archivos raíz)...' },
-            { pct: 89, folder: '🗄️ Evaluando: Base de Datos MySQL', label: 'Examinando wp_options, publicaciones y tareas programadas (WP-Cron)...' },
-            { pct: 95, folder: '👤 Evaluando: Cuentas y Privilegios', label: 'Comprobando cuentas de usuario y permisos de Administrador…' },
-            { pct: 98, folder: '☁️ Sincronizando: NexaGuard Cloud Intel', label: 'Comparando contra firmas de ClearFake, EtherHiding, ClickFix y Zero-Day…' }
+            { pct: 12, folder: '📁 Evaluando: wp-content/uploads/', label: 'Inspeccionando carpeta de medios (Uploads), ejecutables PHP y blindaje .htaccess…' },
+            { pct: 24, folder: '🔌 Evaluando: wp-content/plugins/', label: 'Auditando plugins instalados (activos e inactivos), backdoors y webshells…' },
+            { pct: 36, folder: '💉 Evaluando: wp-content/ (Drop-Ins y Shims)', label: 'Inspeccionando db.php, advanced-cache.php, loaders ocultos y mallas SC malware…' },
+            { pct: 48, folder: '🎨 Evaluando: wp-content/themes/', label: 'Escaneando plantillas del tema, functions.php y scripts inyectados…' },
+            { pct: 60, folder: '⚡ Evaluando: wp-content/mu-plugins/', label: 'Auditando plugins obligatorios del sistema (Must-Use plugins)...' },
+            { pct: 72, folder: '🏛️ Evaluando: wp-includes/ y wp-admin/', label: 'Verificando firmas MD5 oficiales de WordPress.org, sales en wp-config y .htaccess...' },
+            { pct: 82, folder: '⚙️ Evaluando: Configuración PHP (.user.ini / php.ini)', label: 'Auditando directivas de secuestro auto_prepend_file y auto_append_file...' },
+            { pct: 90, folder: '🗄️ Evaluando: Base de Datos MySQL y Memoria', label: 'Examinando wp_options, publicaciones, tareas WP-Cron y triggers de persistencia...' },
+            { pct: 96, folder: '👤 Evaluando: Cuentas y Privilegios', label: 'Comprobando cuentas de administrador ocultas y permisos clandestinos…' },
+            { pct: 99, folder: '☁️ Sincronizando: NexaGuard Threat Cloud Intel', label: 'Comparando contra firmas de SC Mesh, ClearFake, EtherHiding, ClickFix y Zero-Day…' }
         ];
         var stageIdx = 0;
 
@@ -191,6 +193,12 @@ jQuery(document).ready(function ($) {
             if (!t.is_db) {
                 if (t.clean_action === 'sanitize_injection') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '">🧹 Erradicar Inyección y Reparar</button>';
+                } else if (t.clean_action === 'clean_dropin') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="clean_dropin" data-target="' + t.full_path + '" data-id="' + t.id + '">💉 Desinfectar Drop-In (SC Malware)</button>';
+                } else if (t.clean_action === 'neutralize_auto_prepend') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="neutralize_auto_prepend" data-target="' + t.full_path + '" data-id="' + t.id + '">⚡ Neutralizar auto_prepend_file (Seguro)</button>';
+                } else if (t.clean_action === 'protect_uploads_directory') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="protect_uploads_directory" data-target="' + t.full_path + '" data-id="' + t.id + '">🛡️ Bloquear Ejecución PHP en Uploads</button>';
                 } else if (t.clean_action === 'apply_disallow_file_edit') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="apply_disallow_file_edit" data-target="' + t.full_path + '" data-id="' + t.id + '">🛡️ Bloquear Editor de Archivos (wp-config)</button>';
                 } else if (t.clean_action === 'apply_htaccess_no_indexes') {
@@ -199,8 +207,8 @@ jQuery(document).ready(function ($) {
                     actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="regenerate_wp_salts" data-target="' + t.full_path + '" data-id="' + t.id + '">🔑 Regenerar Sales e Invalidar Sesiones</button>';
                 }
 
-                // Para acciones de hardening o regeneración de sales, no mostrar botón de forzar eliminación física
-                var isHardeningAction = (t.clean_action === 'apply_disallow_file_edit' || t.clean_action === 'apply_htaccess_no_indexes' || t.clean_action === 'regenerate_wp_salts');
+                // Para acciones de hardening o neutralización, no mostrar botón redundante de eliminación forzada
+                var isHardeningAction = (t.clean_action === 'apply_disallow_file_edit' || t.clean_action === 'apply_htaccess_no_indexes' || t.clean_action === 'regenerate_wp_salts' || t.clean_action === 'protect_uploads_directory' || t.clean_action === 'neutralize_auto_prepend');
                 if (!isHardeningAction) {
                     forceDelBtn = '<button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Forzar eliminación superando permisos de solo lectura">💥 Forzar Eliminación (Desbloqueo)</button>';
                 }
@@ -218,6 +226,8 @@ jQuery(document).ready(function ($) {
                     actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="remove_cron_hook" data-target="' + t.full_path + '" data-id="' + t.id + '">⏱️ Eliminar Tarea Cron</button>';
                 } else if (t.clean_action === 'downgrade_user') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="downgrade_user" data-target="' + t.full_path + '" data-id="' + t.id + '">👤 Degradar a Suscriptor</button>';
+                } else if (t.clean_action === 'clean_db_trigger') {
+                    actBtn = '<button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="clean_db_trigger" data-target="' + t.full_path + '" data-id="' + t.id + '">💥 Eliminar Trigger Malicioso de MySQL</button>';
                 }
             }
 
