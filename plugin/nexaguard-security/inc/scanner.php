@@ -57,7 +57,7 @@ class NexaGuard_Scanner {
 
         // --- 2. VECTORES ESPECÍFICOS DE TEMAS Y PLUGINS NULLED (PIRATAS) ---
         'nulled_hex_octal_pack' => array(
-            'regex'    => '/((\\\x[0-9a-fA-F]{2}){6,}|(\\[0-7]{3}){6,}|(\bchr\s*\(\s*\d+\s*\)\s*\.\s*){5,}|(\$GLOBALS\s*\[\s*[\'"]\\x[0-9a-fA-F]{2}))/i',
+            'regex'    => '/((\\\x[0-9a-fA-F]{8,}|(\\\x[0-9a-fA-F]{2}){8,}|(\\[0-7]{3}){8,}|(\bchr\s*\(\s*\d+\s*\)\s*\.\s*){6,}|(\$GLOBALS\s*\[\s*[\'"]\\x[0-9a-fA-F]{2}))/i',
             'title'    => 'Ofuscación Hexadecimal/Octal masiva (Nulled Packer / FOPO)',
             'desc'     => 'Secuencias de código empaquetadas en valores hexadecimales o llamadas continuas a chr(), habituales en temas nulled.',
             'severity' => 'crit',
@@ -187,7 +187,7 @@ class NexaGuard_Scanner {
             'type'     => 'clickfix'
         ),
         'comment2shell_xss' => array(
-            'regex'    => '/(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*([\'"][^\'"]*[\r\n]+[^\'"]*[\'"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*[\'"]?\s*javascript:|<[a-z]+[^>]*[\r\n]+[^>]*javascript:)/is',
+            'regex'    => '/(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*([\'"][^\'"]*[\r\n]+[^\'"]*[\'"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*[\'"]?\s*javascript:(?!\s*(void\s*\(\s*0\s*\)|;|void\s*0|history\.(back|go)\s*\(\s*-?1?\s*\)|return\s+false\s*;?)\s*[\'"]?)|\bhref\s*=\s*[\r\n]+\s*[\'"]?\s*javascript:|<[a-z]+[^>]*[\r\n]+[^>]*\bjavascript:(?!\s*(void\s*\(\s*0\s*\)|;|void\s*0|history\.(back|go)\s*\(\s*-?1?\s*\)|return\s+false\s*;?)\s*[\'"]?)(alert|eval|fetch|location|document|window|XMLHttpRequest|script|atob|fromCharCode|\(|\$|\+))/is',
             'title'    => 'Explotación Comment2Shell / XSS con Salto de Línea (CVE-2026-93485)',
             'desc'     => 'Vulnerabilidad reportada por Patchstack que burla el filtrado KSES mediante saltos de línea dentro de atributos HTML para ejecutar JavaScript en la sesión del administrador.',
             'severity' => 'crit',
@@ -245,7 +245,7 @@ class NexaGuard_Scanner {
             'type'     => 'webshell'
         ),
         'webshell_signatures' => array(
-            'regex'    => '/(c99shell|r57shell|WSO_VERSION|FilesMan|b374k|alfa_team|alfa-shell|IndoXploit|MadSpot|p0wny-shell|weevely|Marvins|Ani-Shell|Casper|simattacker|c100|pHpINJ|Remview|Draft-Webshell|Mini-Shell|IronShell|AK-74|Webshell|PHP-Backdoor|Dark-Shell|Antichat|bypass403|bypass_shell|0byte|hacker-shell|AnonSec|SadAttack|Marijuana-Shell)/i',
+            'regex'    => '/\b(c99shell|r57shell|WSO_VERSION|FilesMan|b374k|alfa_team|alfa-shell|IndoXploit|MadSpot|p0wny-shell|weevely|c100\s*(webshell|shell)|\$c100|pHpINJ|Remview|Draft-Webshell|IronShell|AK-74\s*shell|PHP-Backdoor|Dark-Shell|Antichat\s*shell|bypass403|bypass_shell|0byte\s*shell|hacker-shell|AnonSec|SadAttack|Marijuana-Shell)\b/i',
             'title'    => 'Firma de WebShell conocida (Clásica y Moderna)',
             'desc'     => 'Herramienta gráfica de administración ilícita o consola remota instalada por ciberatacantes.',
             'severity' => 'crit',
