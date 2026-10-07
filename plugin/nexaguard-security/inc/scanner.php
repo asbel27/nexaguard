@@ -1091,6 +1091,7 @@ class NexaGuard_Scanner {
                 }
             }
         }
+    }
 
     /**
      * Análisis forense de contenido de un archivo
