@@ -50,6 +50,8 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_force_delete', array($this, 'ajax_force_delete'));
         add_action('wp_ajax_nexaguard_toggle_vigilance', array($this, 'ajax_toggle_vigilance'));
         add_action('wp_ajax_nexaguard_validate_license', array($this, 'ajax_validate_license'));
+        add_action('wp_ajax_nexaguard_auto_remediate_all', array($this, 'ajax_auto_remediate_all'));
+        add_action('wp_ajax_nexaguard_revert_snapshot', array($this, 'ajax_revert_snapshot'));
 
         // Aviso en el pie de página de administración
         add_filter('admin_footer_text', array($this, 'admin_footer_text'));
@@ -137,7 +139,9 @@ class NexaGuard_Plugin {
     }
 
     public function render_waf_page() {
-        include NEXAGUARD_DIR . 'inc/view-waf.php';
+        // Redirigir a la pestaña WAF dentro de la interfaz principal unificada
+        $url = admin_url('admin.php?page=nexaguard-security&tab=waf');
+        echo '<script>sessionStorage.setItem("nexaguard_active_tab","waf");window.location.replace("' . esc_url($url) . '");</script>';
     }
 
     public function ajax_run_scan() {
@@ -171,6 +175,47 @@ class NexaGuard_Plugin {
 
         $cleaner = new NexaGuard_Cleaner();
         $result = $cleaner->clean($type, $target);
+
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+
+    public function ajax_auto_remediate_all() {
+        check_ajax_referer('nexaguard_security_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code'    => 'pro_required',
+                'message' => 'La Reparación y Blindaje Inteligente con 1 Clic requiere Licencia NexaGuard PRO activa o el Plan Rescate.'
+            ));
+            return;
+        }
+
+        $cleaner = new NexaGuard_Cleaner();
+        $result = $cleaner->auto_remediate_all();
+
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+
+    public function ajax_revert_snapshot() {
+        check_ajax_referer('nexaguard_security_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        $id = isset($_POST['snapshot_id']) ? sanitize_text_field($_POST['snapshot_id']) : '';
+        $cleaner = new NexaGuard_Cleaner();
+        $result = $cleaner->revert_snapshot($id);
 
         if ($result['success']) {
             wp_send_json_success($result);

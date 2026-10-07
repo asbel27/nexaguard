@@ -1,6 +1,31 @@
-/* NexaGuard Security - Admin JavaScript */
 jQuery(document).ready(function ($) {
     'use strict';
+
+    // ============ SISTEMA DE PESTAÑAS (TABS) ============
+    function switchTab(target) {
+        if (!target || !$('#tab-' + target).length) return;
+        $('.ng-tab').removeClass('is-active');
+        $('.ng-tab-panel').removeClass('is-active');
+        $('.ng-tab[data-tab="' + target + '"]').addClass('is-active');
+        $('#tab-' + target).addClass('is-active');
+        try { sessionStorage.setItem('nexaguard_active_tab', target); } catch(e) {}
+    }
+
+    $(document).on('click', '.ng-tab', function () {
+        var target = $(this).data('tab');
+        switchTab(target);
+    });
+
+    // Restaurar pestaña activa al cargar (prioridad: URL param > sessionStorage > pestaña por defecto)
+    try {
+        var urlParams = new URLSearchParams(window.location.search);
+        var paramTab = urlParams.get('tab');
+        var savedTab = sessionStorage.getItem('nexaguard_active_tab');
+        var initialTab = (paramTab && $('#tab-' + paramTab).length) ? paramTab : savedTab;
+        if (initialTab && $('#tab-' + initialTab).length) {
+            switchTab(initialTab);
+        }
+    } catch(e) {}
 
     // 1. Iniciar Escaneo Forense
     $('#btn-start-scan').on('click', function () {
@@ -103,6 +128,9 @@ jQuery(document).ready(function ($) {
                 $('.folder-item').removeClass('has-threats');
                 $('.folder-count b').text('0');
                 $('.folder-status-badge').removeClass('danger').addClass('clean').text('✓ Limpio');
+
+                // Quitar badge en la pestaña de escáner
+                $('.ng-tab[data-tab="scanner"] .ng-tab-badge').remove();
             },
             error: function () {
                 $btn.prop('disabled', false).text('🔄 Limpiar Vista / Resetear');
@@ -114,6 +142,14 @@ jQuery(document).ready(function ($) {
     function renderScanResults(d) {
         $('#kpi-threats').text(d.threats_count);
         $('#kpi-files').text(d.scanned_files);
+
+        // Actualizar badge en la pestaña de escáner
+        var $scannerTab = $('.ng-tab[data-tab="scanner"]');
+        $scannerTab.find('.ng-tab-badge').remove();
+        if (d.threats_count > 0) {
+            $scannerTab.append('<span class="ng-tab-badge danger">' + d.threats_count + '</span>');
+            switchTab('scanner');
+        }
 
         var $card = $('#scan-status-card');
         if (d.threats_count > 0) {
@@ -213,7 +249,7 @@ jQuery(document).ready(function ($) {
                 var isHardeningAction = (t.clean_action === 'apply_disallow_file_edit' || t.clean_action === 'apply_htaccess_no_indexes' || t.clean_action === 'regenerate_wp_salts' || t.clean_action === 'protect_uploads_directory' || t.clean_action === 'neutralize_auto_prepend');
                 var isCoreFile = (t.module === 'core' || t.clean_action === 'restore_core_file' || (t.file && (t.file.indexOf('wp-includes') !== -1 || t.file.indexOf('wp-admin') !== -1 || t.file === 'index.php' || t.file === 'wp-config.php' || t.file.indexOf('version.php') !== -1)));
                 if (!isHardeningAction && !isCoreFile) {
-                    forceDelBtn = '<button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Forzar eliminación superando permisos de solo lectura">💥 Forzar Eliminación (Desbloqueo)</button>';
+                    forceDelBtn = '<button type="button" class="btn-ng btn-ng-danger btn-force-delete" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Eliminar definitivamente este archivo malicioso">💥 Eliminar Archivo Malicioso</button>';
                 }
 
                 if (t.clean_action === 'quarantine') {
@@ -407,6 +443,54 @@ jQuery(document).ready(function ($) {
         });
     });
 
+    // 5.1 Reparación y Blindaje Automático con 1 Clic (Auto-Remediate All)
+    $(document).on('click', '#btn-auto-remediate-all', function () {
+        var $btn = $(this);
+
+        if (!confirm('¿Deseas que NexaGuard limpie, repare y blinde automáticamente todo tu sitio web de forma 100% segura?\n\n- Los archivos del sistema se restaurarán limpios desde WordPress.org.\n- Los virus en plugins se extirparán sin romper tus extensiones.\n- Se aplicarán los blindajes preventivos de servidor.\n- Se guardan copias de respaldo de cada archivo.')) {
+            return;
+        }
+
+        $btn.prop('disabled', true).html('⚡ Reparando y Blindando Sitio… (Espere)');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_auto_remediate_all',
+                nonce: nexaguardData.nonce
+            },
+            success: function (res) {
+                if (res.success) {
+                    $('#auto-remediate-banner').fadeOut(300);
+                    $('#threats-badge').removeClass('danger').addClass('ok').text('0 hallazgos (Limpio)');
+
+                    var summaryMsg = '<div class="empty-state" style="border: 2px solid #3de8a4; background: rgba(61,232,164,0.1); padding: 30px; border-radius: 12px; text-align: center;">' +
+                        '<div style="font-size: 3rem; margin-bottom: 12px;">🛡️✨</div>' +
+                        '<h3 style="color: #3de8a4; font-size: 1.4rem; margin-bottom: 8px;">¡Tu sitio web ha sido limpiado y blindado con éxito!</h3>' +
+                        '<p style="color: #e2eafc; font-size: 1rem; max-width: 600px; margin: 0 auto 16px;">' + (res.data.message || 'Todas las amenazas fueron neutralizadas de forma segura.') + '</p>' +
+                        '<button type="button" class="btn-ng btn-ng-primary" onclick="location.reload();">🔄 Actualizar Vista</button>' +
+                        '</div>';
+
+                    $('#threats-list').html(summaryMsg);
+
+                    $('.scan-summary-card').removeClass('status-danger').addClass('status-clean');
+                    $('.status-indicator').html('🛡️');
+                    $('.summary-left h3').text('SITIO BLINDADO Y PROTEGIDO');
+                    $('.summary-left p').text('0 amenazas activas en el sistema.');
+                } else {
+                    $btn.prop('disabled', false).html('⚡ LIMPIAR Y BLINDAR SITIO CON 1 CLIC');
+                    alert(res.data && res.data.message ? res.data.message : 'Error durante la reparación automática.');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).html('⚡ LIMPIAR Y BLINDAR SITIO CON 1 CLIC');
+                alert('Error de conexión durante el proceso de remediación.');
+            }
+        });
+    });
+
     // 6. Mover a Cuarentena
     $(document).on('click', '.btn-quarantine-file', function () {
         var $btn = $(this);
@@ -429,13 +513,18 @@ jQuery(document).ready(function ($) {
                 file: file
             },
             success: function (res) {
-                if (res.success) {
                     $('#threat-' + id).fadeOut(400, function () { 
                         $(this).remove(); 
                         updateThreatCounts();
                     });
-                    var qCount = parseInt($('#kpi-quarantine').text() || '0', 10);
-                    $('#kpi-quarantine').text(qCount + 1);
+                    var qCount = parseInt($('#kpi-quarantine').text() || '0', 10) + 1;
+                    $('#kpi-quarantine').text(qCount);
+                    $('#quarantine-badge').text(qCount + ' archivo(s)');
+                    var $qTab = $('.ng-tab[data-tab="quarantine"]');
+                    $qTab.find('.ng-tab-badge').remove();
+                    if (qCount > 0) {
+                        $qTab.append('<span class="ng-tab-badge info">' + qCount + '</span>');
+                    }
                 } else {
                     $btn.prop('disabled', false).text('Reintentar');
                     alert(res.data && res.data.message ? res.data.message : 'Error al aislar.');
@@ -514,6 +603,55 @@ jQuery(document).ready(function ($) {
         });
     });
 
+    // 8.1 Revertir Snapshot / Rollback en 1 Clic
+    $(document).on('click', '.btn-revert-snapshot', function () {
+        var $btn = $(this);
+        var snapshotId = $btn.data('id');
+        var fileName = $btn.data('file');
+
+        if (!confirm('¿Deseas revertir este archivo (' + fileName + ') a su estado exacto anterior a la desinfección? Se recuperará el archivo original que tenías antes.')) {
+            return;
+        }
+
+        $btn.prop('disabled', true).text('Revirtiendo…');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_revert_snapshot',
+                nonce: nexaguardData.nonce,
+                snapshot_id: snapshotId
+            },
+            success: function (res) {
+                if (res.success) {
+                    $btn.closest('tr').fadeOut(350, function () {
+                        $(this).remove();
+                        var count = $('#rollback-table tbody tr').length;
+                        $('#rollback-badge').text(count + ' punto(s) de respaldo');
+                        var $rbTab = $('.ng-tab[data-tab="rollback"]');
+                        $rbTab.find('.ng-tab-badge').remove();
+                        if (count > 0) {
+                            $rbTab.append('<span class="ng-tab-badge info">' + count + '</span>');
+                        }
+                        if (count === 0) {
+                            $('#rollback-table').replaceWith('<div class="empty-state" style="padding:22px; text-align:center;"><p style="margin:0; color:#a0acd2;">🛡️ La bóveda de seguridad está lista. Al realizar cualquier limpieza o restauración con 1 clic, tus puntos de reversión aparecerán aquí.</p></div>');
+                        }
+                    });
+                    alert(res.data && res.data.message ? res.data.message : 'Archivo restaurado con éxito a su estado previo.');
+                } else {
+                    $btn.prop('disabled', false).text('↩️ Revertir (Deshacer)');
+                    alert(res.data && res.data.message ? res.data.message : 'Error al revertir el archivo.');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).text('↩️ Revertir (Deshacer)');
+                alert('Error de conexión al revertir el respaldo.');
+            }
+        });
+    });
+
     // 9. Guardar Configuración WAF
     $('#form-waf-settings').on('submit', function (e) {
         e.preventDefault();
@@ -561,6 +699,14 @@ jQuery(document).ready(function ($) {
         var count = $('#threats-list .threat-item').length;
         $('#kpi-threats').text(count);
         $('#threats-badge').text(count + ' hallazgos');
+
+        // Actualizar badge en la pestaña
+        var $scannerTab = $('.ng-tab[data-tab="scanner"]');
+        $scannerTab.find('.ng-tab-badge').remove();
+        if (count > 0) {
+            $scannerTab.append('<span class="ng-tab-badge danger">' + count + '</span>');
+        }
+
         if (count === 0) {
             $('#scan-status-card').removeClass('status-danger').addClass('status-clean');
             $('#status-icon').text('✓');

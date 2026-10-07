@@ -82,6 +82,135 @@
     align-items: center;
 }
 
+/* ============ SISTEMA DE PESTAÑAS (TABS) ============ */
+.ng-tabs-bar {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding: 6px 8px;
+    background: #0a1030;
+    border: 1.5px solid rgba(130, 160, 255, 0.18);
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.ng-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 16px;
+    background: transparent;
+    border: 1.5px solid transparent;
+    border-radius: 10px;
+    color: #9cb1e6;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    position: relative;
+}
+
+.ng-tab:hover {
+    background: rgba(255, 207, 51, 0.08);
+    color: #dbe4ff;
+    border-color: rgba(255, 207, 51, 0.2);
+}
+
+.ng-tab.is-active {
+    background: rgba(255, 207, 51, 0.14);
+    color: #ffcf33;
+    border-color: rgba(255, 207, 51, 0.45);
+    box-shadow: 0 2px 10px rgba(255, 207, 51, 0.2);
+}
+
+.ng-tab-icon {
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.ng-tab-label {
+    line-height: 1;
+}
+
+.ng-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.ng-tab-badge.danger {
+    background: #ff4560;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(255, 69, 96, 0.5);
+    animation: badge-pulse 2s ease-in-out infinite;
+}
+
+.ng-tab-badge.active {
+    background: rgba(61, 232, 164, 0.25);
+    color: #3de8a4;
+    border: 1px solid rgba(61, 232, 164, 0.5);
+}
+
+.ng-tab-badge.locked {
+    background: rgba(255, 107, 138, 0.15);
+    color: #ff8ba0;
+    border: 1px solid rgba(255, 107, 138, 0.3);
+    font-size: 0.62rem;
+}
+
+.ng-tab-badge.info {
+    background: rgba(130, 160, 255, 0.2);
+    color: #a0b8ff;
+    border: 1px solid rgba(130, 160, 255, 0.35);
+}
+
+@keyframes badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+/* Panel de contenido de cada pestaña */
+.ng-tab-panel {
+    display: none;
+    animation: tabFadeIn 0.3s ease;
+}
+
+.ng-tab-panel.is-active {
+    display: block;
+}
+
+@keyframes tabFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .ng-tabs-bar {
+        gap: 3px;
+        padding: 4px 6px;
+    }
+    .ng-tab {
+        padding: 8px 10px;
+        font-size: 0.78rem;
+    }
+    .ng-tab-label {
+        display: none;
+    }
+    .ng-tab-icon {
+        font-size: 1.15rem;
+    }
+}
+
+
 .btn-ng {
     display: inline-flex;
     align-items: center;
@@ -1086,6 +1215,68 @@
     margin-top: 10px;
 }
 
+/* Banner de Reparación y Blindaje Inteligente con 1 Clic */
+.auto-remediate-banner {
+    background: linear-gradient(135deg, rgba(61, 232, 164, 0.16) 0%, rgba(255, 207, 51, 0.16) 100%) !important;
+    border: 2px solid #3de8a4 !important;
+    border-radius: 14px;
+    padding: 22px 26px;
+    margin-bottom: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.auto-remediate-banner .arb-left {
+    flex: 1;
+    min-width: 280px;
+}
+.auto-remediate-banner .arb-badge {
+    display: inline-block;
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    color: #3de8a4;
+    background: rgba(61, 232, 164, 0.2);
+    border: 1.5px solid rgba(61, 232, 164, 0.5);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+}
+.auto-remediate-banner h4 {
+    margin: 0 0 6px;
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+}
+.auto-remediate-banner p {
+    margin: 0;
+    font-size: 0.95rem !important;
+    color: #e2eafc !important;
+    line-height: 1.5 !important;
+    font-weight: 500;
+}
+.btn-auto-remediate-btn {
+    background: linear-gradient(135deg, #3de8a4 0%, #29b87f 100%) !important;
+    color: #05091a !important;
+    font-weight: 800 !important;
+    font-size: 1.02rem !important;
+    padding: 14px 26px !important;
+    border-radius: 10px !important;
+    border: none !important;
+    box-shadow: 0 6px 20px rgba(61, 232, 164, 0.45) !important;
+    cursor: pointer !important;
+    transition: all 0.25s ease !important;
+    white-space: nowrap;
+}
+.btn-auto-remediate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(61, 232, 164, 0.65) !important;
+    background: linear-gradient(135deg, #4ef5b2 0%, #32cb8e 100%) !important;
+}
+
 /* Banner de Conversión sobre Resultados */
 .threats-pro-banner {
     background: linear-gradient(135deg, rgba(255, 207, 51, 0.18) 0%, rgba(255, 107, 138, 0.18) 100%) !important;
@@ -1355,6 +1546,33 @@
 .vigilance-locked .btn-vigilance-toggle,
 .radar-locked {
     cursor: pointer;
+}
+
+/* Rollback / Puntos de Restauración */
+.rollback-card {
+    border-left: 5px solid #3de8a4 !important;
+}
+.badge-action-type {
+    display: inline-block;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #3de8a4;
+    background: rgba(61, 232, 164, 0.12);
+    border: 1px solid rgba(61, 232, 164, 0.35);
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+.btn-revert-snapshot {
+    color: #ffcf33 !important;
+    border-color: rgba(255, 207, 51, 0.4) !important;
+    background: rgba(255, 207, 51, 0.08) !important;
+    font-weight: 700 !important;
+    transition: all 0.2s ease !important;
+}
+.btn-revert-snapshot:hover {
+    background: rgba(255, 207, 51, 0.2) !important;
+    border-color: #ffcf33 !important;
+    box-shadow: 0 0 12px rgba(255, 207, 51, 0.35) !important;
 }
 
 

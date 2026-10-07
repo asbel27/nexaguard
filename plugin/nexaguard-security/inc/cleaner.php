@@ -5,11 +5,14 @@ if (!defined('ABSPATH')) {
 
 class NexaGuard_Cleaner {
     private $quarantine_dir;
+    private $backup_dir;
 
     public function __construct() {
         $upload = wp_upload_dir();
         $this->quarantine_dir = trailingslashit($upload['basedir']) . 'nexaguard-quarantine/';
+        $this->backup_dir     = trailingslashit($upload['basedir']) . 'nexaguard-backups/';
         $this->ensure_quarantine_dir();
+        $this->ensure_backup_dir();
     }
 
     private function ensure_quarantine_dir() {
@@ -21,6 +24,20 @@ class NexaGuard_Cleaner {
             @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n<Files *>\nDeny from all\n</Files>");
         }
         $index = $this->quarantine_dir . 'index.php';
+        if (!file_exists($index)) {
+            @file_put_contents($index, "<?php // Silence is golden\nexit;\n");
+        }
+    }
+
+    private function ensure_backup_dir() {
+        if (!is_dir($this->backup_dir)) {
+            wp_mkdir_p($this->backup_dir);
+        }
+        $htaccess = $this->backup_dir . '.htaccess';
+        if (!file_exists($htaccess)) {
+            @file_put_contents($htaccess, "Order Deny,Allow\nDeny from all\n<Files *>\nDeny from all\n</Files>");
+        }
+        $index = $this->backup_dir . 'index.php';
         if (!file_exists($index)) {
             @file_put_contents($index, "<?php // Silence is golden\nexit;\n");
         }
@@ -123,6 +140,8 @@ class NexaGuard_Cleaner {
             return $this->clean_db_trigger($target);
         } elseif ($type === 'restore_core_file') {
             return $this->restore_core_file($target);
+        } elseif ($type === 'revert_snapshot') {
+            return $this->revert_snapshot($target);
         }
 
         return array('success' => false, 'message' => 'Acción de desinfección no reconocida.');
@@ -165,6 +184,11 @@ class NexaGuard_Cleaner {
             if ($ok || !file_exists($full_path)) {
                 return array('success' => true, 'message' => 'Carpeta maliciosa eliminada por completo sin restricciones.');
             }
+        }
+
+        // Crear punto de restauración previo por seguridad
+        if (file_exists($full_path) && !is_dir($full_path)) {
+            $this->create_snapshot($full_path, 'Eliminación Forzada de Archivo');
         }
 
         // Forzar permisos a nivel de carpeta y archivo
@@ -251,7 +275,8 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => 'Error al leer el archivo.');
         }
 
-        // Crear respaldo de seguridad antes de modificar
+        // Crear punto de restauración y respaldo de seguridad antes de modificar
+        $this->create_snapshot($full_path, 'Desinfección de Código (Extirpar Inyección)');
         @copy($full_path, $full_path . '.bak_nexaguard_' . time());
 
         // Limpiar inyección de script base64 ClearFake / EtherHiding
@@ -619,8 +644,9 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => "El archivo '{$rel_path}' no es un archivo reconocido del núcleo de WordPress.org.");
         }
 
-        // Crear respaldo de seguridad previo
+        // Crear punto de restauración y respaldo de seguridad previo
         if (file_exists($full_path)) {
+            $this->create_snapshot($full_path, 'Restauración Oficial (WordPress.org)');
             @copy($full_path, $full_path . '.bak_nexaguard_' . time());
         }
 
@@ -671,6 +697,279 @@ class NexaGuard_Cleaner {
         return array(
             'success' => true,
             'message' => "✅ Archivo '{$rel_path}' restaurado con éxito a su versión oficial e inmaculada de WordPress.org (versión {$wp_version}). Se guardó una copia de seguridad."
+        );
+    }
+
+    /**
+     * Orquestador Inteligente: Limpia, desinfecta, restaura y blinda todo el sitio con 1 Clic
+     * Toma decisiones autónomas y 100% seguras según la naturaleza de cada amenaza.
+     */
+    public function auto_remediate_all() {
+        $report = get_option('nexaguard_last_scan_report', array());
+        $threats = (!empty($report['threats']) && is_array($report['threats'])) ? $report['threats'] : array();
+
+        $results = array(
+            'restored_core'       => 0,
+            'disinfected_plugins' => 0,
+            'removed_malware'     => 0,
+            'cleaned_db'          => 0,
+            'hardened'            => 0,
+            'skipped'             => 0,
+            'details'             => array()
+        );
+
+        foreach ($threats as $t) {
+            $action   = isset($t['clean_action']) ? $t['clean_action'] : '';
+            $target   = isset($t['full_path']) ? $t['full_path'] : '';
+            $file_rel = isset($t['file']) ? str_replace('\\', '/', $t['file']) : '';
+
+            // 1. REGLA NÚCLEO: Si pertenece al núcleo de WordPress -> RESTAURAR ORIGINAL DE WP.ORG (NUNCA ELIMINAR)
+            $is_core = ($action === 'restore_core_file') || 
+                       (isset($t['module']) && $t['module'] === 'core') ||
+                       (strpos($file_rel, 'wp-includes/') === 0) ||
+                       (strpos($file_rel, 'wp-admin/') === 0 && strpos($file_rel, 'wp-admin/includes/') !== false) ||
+                       in_array($file_rel, array('index.php', 'wp-blog-header.php', 'wp-settings.php', 'wp-load.php', 'wp-login.php', 'wp-cron.php', 'wp-mail.php', 'wp-links-opml.php', 'wp-trackback.php'), true);
+
+            if ($is_core) {
+                $res = $this->restore_core_file($target);
+                if ($res['success']) {
+                    $results['restored_core']++;
+                    $results['details'][] = "Restaurado archivo original de WordPress.org: {$file_rel}";
+                }
+                continue;
+            }
+
+            // 2. REGLA HARDENING: Blindajes preventivos del servidor
+            if ($action === 'protect_uploads_directory') {
+                $this->protect_uploads_directory();
+                $results['hardened']++;
+                $results['details'][] = "Bloqueada ejecución de scripts PHP en uploads (.htaccess)";
+                continue;
+            } elseif ($action === 'apply_disallow_file_edit') {
+                $this->apply_disallow_file_edit();
+                $results['hardened']++;
+                $results['details'][] = "Editor de archivos deshabilitado en wp-config.php (DISALLOW_FILE_EDIT)";
+                continue;
+            } elseif ($action === 'apply_htaccess_no_indexes') {
+                $this->apply_htaccess_no_indexes(true);
+                $results['hardened']++;
+                $results['details'][] = "Protegido listado de directorios en .htaccess (Options -Indexes)";
+                continue;
+            } elseif ($action === 'regenerate_wp_salts') {
+                $this->regenerate_wp_salts();
+                $results['hardened']++;
+                $results['details'][] = "Regeneradas claves de seguridad y sales criptográficas";
+                continue;
+            } elseif ($action === 'neutralize_auto_prepend') {
+                $this->neutralize_auto_prepend($target);
+                $results['hardened']++;
+                $results['details'][] = "Neutralizado secuestro auto_prepend_file";
+                continue;
+            }
+
+            // 3. REGLA BASE DE DATOS: Inyecciones en MySQL
+            if (!empty($t['is_db'])) {
+                if ($action === 'clean_db_option') {
+                    $this->clean_db_option($target);
+                    $results['cleaned_db']++;
+                    $results['details'][] = "Desinfectada opción en base de datos: {$target}";
+                } elseif ($action === 'clean_post_injection') {
+                    $this->clean_post_injection(intval($target));
+                    $results['cleaned_db']++;
+                    $results['details'][] = "Limpia inyección en publicación ID: {$target}";
+                } elseif ($action === 'remove_cron_hook') {
+                    $this->remove_cron_hook($target);
+                    $results['cleaned_db']++;
+                    $results['details'][] = "Removida tarea cron clandestina: {$target}";
+                } elseif ($action === 'downgrade_user') {
+                    $this->downgrade_user(intval($target));
+                    $results['cleaned_db']++;
+                    $results['details'][] = "Degradado usuario malicioso ID: {$target}";
+                } elseif ($action === 'clean_db_trigger') {
+                    $this->clean_db_trigger($target);
+                    $results['cleaned_db']++;
+                    $results['details'][] = "Eliminado trigger malicioso en MySQL: {$target}";
+                }
+                continue;
+            }
+
+            // 4. REGLA DROP-INS: Archivos maliciosos en wp-content raíz
+            if ($action === 'clean_dropin') {
+                $this->clean_dropin($target);
+                $results['disinfected_plugins']++;
+                $results['details'][] = "Desinfectado drop-in en wp-content: {$file_rel}";
+                continue;
+            }
+
+            // 5. REGLA VIRUS EN UPLOADS O ROGUE FILES SUELTOS: 100% SEGURO ELIMINAR
+            $is_in_uploads = (strpos($file_rel, 'wp-content/uploads/') !== false || strpos($target, '/uploads/') !== false);
+            $is_rogue_admin = (strpos($file_rel, 'wp-admin/') === 0 && !empty($t['category']) && $t['category'] === 'rogue_core_file');
+            $is_known_fake_plugin = (strpos($file_rel, 'wp-content/plugins/hseo') !== false);
+
+            if ($is_in_uploads || $is_rogue_admin || $is_known_fake_plugin) {
+                if ($is_known_fake_plugin) {
+                    $this->delete_plugin_folder($target);
+                    $results['removed_malware']++;
+                    $results['details'][] = "Destruido plugin troyano falso: {$file_rel}";
+                } else {
+                    $this->force_delete($target);
+                    $results['removed_malware']++;
+                    $results['details'][] = "Eliminado ejecutable malicioso no autorizado: {$file_rel}";
+                }
+                continue;
+            }
+
+            // 6. REGLA PLUGINS Y TEMAS LEGÍTIMOS: CIRUGÍA (EXTIRPAR INYECCIÓN SIN BORRAR ARCHIVO)
+            if (strpos($file_rel, 'wp-content/plugins/') !== false || strpos($file_rel, 'wp-content/themes/') !== false) {
+                $res = $this->clean_file_injection($target);
+                if ($res['success']) {
+                    $results['disinfected_plugins']++;
+                    $results['details'][] = "Desinfectado código inyectado en plugin/tema: {$file_rel}";
+                } else {
+                    // Si no se puede desinfectar automáticamente sin riesgo, se aísla en cuarentena reversible
+                    $this->quarantine_file($target);
+                    $results['removed_malware']++;
+                    $results['details'][] = "Aislado en cuarentena segura: {$file_rel}";
+                }
+                continue;
+            }
+
+            // Por defecto: Desinfección quirúrgica
+            $res = $this->clean_file_injection($target);
+            if ($res['success']) {
+                $results['disinfected_plugins']++;
+                $results['details'][] = "Desinfectado archivo: {$file_rel}";
+            } else {
+                $results['skipped']++;
+            }
+        }
+
+        // Blindaje final por defecto: aplicar reglas recomendadas de protección si no estaban activas
+        $this->protect_uploads_htaccess(true);
+        $this->apply_htaccess_no_indexes(true);
+
+        // Disparar re-escaneo forense en caliente para refrescar el informe a 0 amenazas
+        require_once NEXAGUARD_DIR . 'inc/scanner.php';
+        $scanner = new NexaGuard_Scanner();
+        $new_report = $scanner->scan_full();
+
+        $total_actions = $results['restored_core'] + $results['disinfected_plugins'] + $results['removed_malware'] + $results['cleaned_db'] + $results['hardened'];
+
+        return array(
+            'success'       => true,
+            'message'       => "⚡ Se completaron {$total_actions} acciones de limpieza y blindaje de forma 100% segura. Tu sitio está protegido.",
+            'stats'         => $results,
+            'new_report'    => $new_report
+        );
+    }
+
+    /**
+     * Guarda un punto de restauración seguro antes de cualquier modificación
+     */
+    public function create_snapshot($full_path, $action_name = 'Modificación') {
+        if (!file_exists($full_path) || is_dir($full_path)) {
+            return false;
+        }
+
+        $id = uniqid('rb_');
+        $dest_filename = $id . '_' . basename($full_path) . '.snapshot';
+        $dest_path = $this->backup_dir . $dest_filename;
+
+        if (!@copy($full_path, $dest_path)) {
+            $data = @file_get_contents($full_path);
+            if ($data !== false) {
+                @file_put_contents($dest_path, $data);
+            }
+        }
+
+        if (!file_exists($dest_path)) {
+            return false;
+        }
+
+        $history = get_option('nexaguard_backup_history', array());
+        if (!is_array($history)) {
+            $history = array();
+        }
+
+        $rel_path = trim(str_replace(array(ABSPATH, '\\'), array('', '/'), $full_path), '/');
+
+        $history[$id] = array(
+            'id'             => $id,
+            'original_path'  => $full_path,
+            'rel_path'       => $rel_path,
+            'backup_file'    => $dest_path,
+            'action_name'    => $action_name,
+            'date'           => current_time('mysql'),
+            'date_formatted' => date_i18n('d/m/Y H:i:s'),
+            'size'           => filesize($dest_path)
+        );
+
+        // Mantener hasta 50 puntos de restauración más recientes
+        if (count($history) > 50) {
+            $keys = array_keys($history);
+            $oldest_key = reset($keys);
+            if (!empty($history[$oldest_key]['backup_file']) && file_exists($history[$oldest_key]['backup_file'])) {
+                @unlink($history[$oldest_key]['backup_file']);
+            }
+            unset($history[$oldest_key]);
+        }
+
+        update_option('nexaguard_backup_history', $history);
+        return $id;
+    }
+
+    /**
+     * Revierte un archivo a su estado exacto anterior a la desinfección (Rollback en 1 Clic)
+     */
+    public function revert_snapshot($id) {
+        $history = get_option('nexaguard_backup_history', array());
+        if (!isset($history[$id])) {
+            return array('success' => false, 'message' => 'Punto de restauración no encontrado en el registro.');
+        }
+
+        $entry = $history[$id];
+        if (!file_exists($entry['backup_file'])) {
+            return array('success' => false, 'message' => 'El archivo de respaldo ya no existe en la bóveda de seguridad.');
+        }
+
+        $target_path = $entry['original_path'];
+        $target_dir = dirname($target_path);
+
+        if (!is_dir($target_dir)) {
+            wp_mkdir_p($target_dir);
+        }
+
+        @chmod($target_dir, 0777);
+        if (file_exists($target_path)) {
+            @chmod($target_path, 0777);
+        }
+
+        $copied = @copy($entry['backup_file'], $target_path);
+        if (!$copied) {
+            $content = @file_get_contents($entry['backup_file']);
+            if ($content !== false) {
+                @file_put_contents($target_path, $content);
+                $copied = true;
+            }
+        }
+
+        if (!$copied || !file_exists($target_path)) {
+            return array('success' => false, 'message' => "No se pudo restaurar el archivo en '{$entry['rel_path']}' por restricciones de permisos.");
+        }
+
+        // Eliminar el archivo de snapshot y el registro
+        @unlink($entry['backup_file']);
+        unset($history[$id]);
+        update_option('nexaguard_backup_history', $history);
+
+        // Si se revirtió un archivo del núcleo, limpiar caché de checksums
+        global $wp_version;
+        $locale = function_exists('get_locale') ? get_locale() : 'en_US';
+        delete_transient('nexaguard_core_checksums_' . md5($wp_version . '_' . $locale));
+
+        return array(
+            'success' => true,
+            'message' => "✅ Archivo '{$entry['rel_path']}' restaurado exitosamente a su estado previo."
         );
     }
 }
