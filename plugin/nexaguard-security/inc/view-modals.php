@@ -88,3 +88,48 @@ $has_license = !empty($license) && !empty($license['valid']) && !empty($license[
         </div>
     </div>
 </div>
+
+<!-- Modal Interactivo: Acción Bloqueada · Invitación a Plan PRO -->
+<div id="nexaguard-action-blocked-modal" class="ng-modal" style="display:none; z-index:9999999 !important;">
+    <div class="ng-modal-box action-blocked-box" style="max-width:540px; border:2px solid #ff4560; background:linear-gradient(180deg, #160c22 0%, #0c112e 100%); box-shadow:0 30px 70px rgba(0,0,0,0.9), 0 0 35px rgba(255,69,96,0.25); text-align:center; padding:32px 28px;">
+        <div style="width:68px; height:68px; margin:0 auto 16px; border-radius:50%; background:rgba(255,69,96,0.15); border:2px solid #ff4560; display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow:0 0 20px rgba(255,69,96,0.35);">
+            🔒
+        </div>
+        <span style="display:inline-block; font-size:0.75rem; font-weight:900; letter-spacing:0.08em; color:#ff8ba0; background:rgba(255,69,96,0.18); border:1px solid rgba(255,69,96,0.4); padding:4px 12px; border-radius:999px; margin-bottom:12px;">
+            FUNCIÓN RESTRINGIDA EN EDICIÓN ESTÁNDAR
+        </span>
+        <h3 style="font-size:1.35rem; font-weight:800; color:#ffffff; margin:0 0 10px; text-transform:uppercase; letter-spacing:0.02em;">
+            LO SENTIMOS, LA ACCIÓN NO SE EJECUTÓ
+        </h3>
+        <p style="color:#cad7f5; font-size:0.94rem; line-height:1.6; margin:0 0 22px; font-weight:500;">
+            La <strong>erradicación automática de malware</strong>, la <strong>desinfección de archivos infectados</strong> y el <strong>aislamiento en cuarentena</strong> requieren el motor activo de <strong style="color:#ffcf33;">NexaGuard Security PRO</strong>.
+        </p>
+        
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,207,51,0.25); border-radius:12px; padding:16px 18px; margin-bottom:24px; text-align:left;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <span style="color:#ffcf33; font-weight:800; font-size:0.88rem;">⚡ PLAN NEXAGUARD SECURITY PRO</span>
+                <span style="color:#3de8a4; font-weight:800; font-size:0.95rem;">$9.99 <span style="font-size:0.75rem; color:#a0acd2;">/ mes</span></span>
+            </div>
+            <ul style="margin:0; padding-left:18px; color:#dbe4ff; font-size:0.82rem; line-height:1.6;">
+                <li>✓ Limpieza y eliminación ilimitada de amenazas con 1 clic</li>
+                <li>✓ Restauración limpia de archivos Core desde WordPress.org</li>
+                <li>✓ Bóveda de Cuarentena y Puntos de Reversión automáticos</li>
+            </ul>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="justify-content:center; font-size:1rem; padding:12px 20px;">
+                ⚡ Adquirir Plan PRO ($9.99/mes)
+            </a>
+            <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:4px;">
+                <button type="button" class="btn-ng btn-ng-link btn-switch-to-key" style="color:#ffcf33; font-size:0.84rem; text-decoration:underline;">
+                    🔑 Ya tengo mi clave de licencia
+                </button>
+                <span style="color:rgba(255,255,255,0.25);">·</span>
+                <button type="button" id="btn-close-action-blocked" class="btn-ng btn-ng-outline" style="font-size:0.84rem; padding:6px 16px;">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

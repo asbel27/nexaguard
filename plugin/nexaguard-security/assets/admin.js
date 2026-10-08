@@ -897,6 +897,22 @@ jQuery(document).ready(function ($) {
         $('#clean-upgrade-modal').stop(true, true).fadeOut(150);
     };
 
+    window.nexaguardOpenActionBlockedModal = function () {
+        var $modal = $('#nexaguard-action-blocked-modal');
+        if (!$modal.length) {
+            window.nexaguardOpenUpgradeModal();
+            return;
+        }
+        if (!$modal.parent().is('body')) {
+            $modal.appendTo('body');
+        }
+        $modal.css({ display: 'flex', opacity: 0 }).stop(true, true).fadeTo(200, 1);
+    };
+
+    window.nexaguardCloseActionBlockedModal = function () {
+        $('#nexaguard-action-blocked-modal').stop(true, true).fadeOut(150);
+    };
+
     window.nexaguardOpenLicenseModal = function (msg) {
         var $modal = $('#license-modal');
         if (!$modal.length) return;
@@ -918,6 +934,8 @@ jQuery(document).ready(function ($) {
 
     var openUpgradeModal = window.nexaguardOpenUpgradeModal;
     var closeUpgradeModal = window.nexaguardCloseUpgradeModal;
+    var openActionBlockedModal = window.nexaguardOpenActionBlockedModal;
+    var closeActionBlockedModal = window.nexaguardCloseActionBlockedModal;
     var openLicenseModal = window.nexaguardOpenLicenseModal;
     var closeLicenseModal = window.nexaguardCloseLicenseModal;
 
@@ -1125,11 +1143,21 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    // ============ MODAL DE CONVERSIÓN DE LIMPIEZA ============
+    // ============ MODAL DE ACCIÓN BLOQUEADA / CONVERSIÓN DE LIMPIEZA ============
     $(document).on('click', '.btn-locked-clean, .btn-open-clean-modal', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        openUpgradeModal();
+
+        // 1. Disparar Toast Animado superior de aviso PRO (7 seg)
+        showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para erradicar y aislar amenazas.', 'warning', 'Acción Restringida');
+
+        // 2. Disparar Ventana Mediana Centrada Animada "LO SENTIMOS LA ACCIÓN NO SE EJECUTÓ"
+        openActionBlockedModal();
+    });
+
+    $('#btn-close-action-blocked').on('click', function (e) {
+        e.preventDefault();
+        closeActionBlockedModal();
     });
 
     $('#btn-close-clean-modal').on('click', function (e) {
@@ -1141,6 +1169,7 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         e.stopPropagation();
         closeUpgradeModal();
+        closeActionBlockedModal();
         openLicenseModal('Introduce tu clave de licencia del Plan PRO:');
     });
 
@@ -1148,6 +1177,7 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '.ng-modal', function (e) {
         if (e.target === this) {
             closeUpgradeModal();
+            closeActionBlockedModal();
             closeLicenseModal();
         }
     });
@@ -1156,6 +1186,7 @@ jQuery(document).ready(function ($) {
     $(document).on('keydown', function (e) {
         if (e.key === 'Escape' || e.keyCode === 27) {
             closeUpgradeModal();
+            closeActionBlockedModal();
             closeLicenseModal();
         }
     });
