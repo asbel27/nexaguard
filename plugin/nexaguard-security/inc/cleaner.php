@@ -415,11 +415,51 @@ class NexaGuard_Cleaner {
         return array('success' => true, 'message' => 'Archivo restaurado a su ubicación original.');
     }
 
+    /**
+     * Obtiene todas las posibles rutas del archivo .htaccess en la raíz de WordPress / public_html
+     */
+    private function get_root_htaccess_paths() {
+        $paths = array();
+
+        if (!function_exists('get_home_path')) {
+            if (file_exists(ABSPATH . 'wp-admin/includes/file.php')) {
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+            }
+        }
+
+        $home = function_exists('get_home_path') ? get_home_path() : ABSPATH;
+        $paths[] = trailingslashit($home) . '.htaccess';
+        $paths[] = trailingslashit(ABSPATH) . '.htaccess';
+
+        // Si WordPress está instalado en un subdirectorio (ej: public_html/wp/), verificar la carpeta superior (public_html/)
+        $parent = dirname(rtrim(ABSPATH, '/\\'));
+        if (!empty($parent) && $parent !== rtrim(ABSPATH, '/\\') && is_dir($parent)) {
+            $paths[] = trailingslashit($parent) . '.htaccess';
+        }
+
+        if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+            $doc_root = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/');
+            if (is_dir($doc_root)) {
+                $paths[] = $doc_root . '/.htaccess';
+            }
+        }
+
+        // Normalizar rutas y remover duplicados
+        $normalized = array();
+        foreach ($paths as $p) {
+            $real = str_replace('\\', '/', $p);
+            if (!in_array($real, $normalized)) {
+                $normalized[] = $real;
+            }
+        }
+
+        return $normalized;
+    }
+
     public function protect_uploads_htaccess($enable = true) {
         $upload = wp_upload_dir();
         $uploads_dir = isset($upload['basedir']) ? $upload['basedir'] : (WP_CONTENT_DIR . '/uploads');
         $uploads_htaccess = trailingslashit($uploads_dir) . '.htaccess';
-        $root_htaccess = ABSPATH . '.htaccess';
 
         $root_marker_begin = "# BEGIN NexaGuard Security - Bloqueo de ejecucion PHP en Uploads";
         $root_marker_end   = "# END NexaGuard Security - Bloqueo de ejecucion PHP en Uploads";
@@ -444,6 +484,9 @@ class NexaGuard_Cleaner {
             if (!is_dir($uploads_dir)) {
                 @wp_mkdir_p($uploads_dir);
             }
+            if (file_exists($uploads_htaccess) && !is_writable($uploads_htaccess)) {
+                @chmod($uploads_htaccess, 0644);
+            }
             if (@file_put_contents($uploads_htaccess, $uploads_rules) !== false) {
                 $written_any = true;
             }
@@ -456,48 +499,75 @@ class NexaGuard_Cleaner {
             }
         }
 
-        // 2. Reglas en el .htaccess principal (raíz de WordPress - visible para el usuario)
-        if (file_exists($root_htaccess) || $enable) {
-            $root_content = file_exists($root_htaccess) ? @file_get_contents($root_htaccess) : '';
-            if ($root_content === false) {
-                $root_content = '';
+        // 2. Reglas en el .htaccess principal (raíz de WordPress / public_html)
+        $root_candidates = $this->get_root_htaccess_paths();
+        $root_rules = array(
+            '<IfModule mod_rewrite.c>',
+            'RewriteEngine On',
+            'RewriteRule ^wp-content/uploads/.*\\.(?:php[0-9]?|phtml|phar|shtml|asp|aspx)$ - [F,L,NC]',
+            '</IfModule>'
+        );
+        $root_block_str = $root_marker_begin . "\n" . implode("\n", $root_rules) . "\n" . $root_marker_end . "\n\n";
+
+        foreach ($root_candidates as $root_file) {
+            if (!file_exists($root_file) && !$enable) {
+                continue;
             }
 
-            // Limpiar bloque previo si ya existía
-            $clean_root = preg_replace('/' . preg_quote($root_marker_begin, '/') . '.*?' . preg_quote($root_marker_end, '/') . '\s*/s', '', $root_content);
+            // Intentar desbloquear permisos de escritura si está protegido en solo lectura
+            if (file_exists($root_file) && !is_writable($root_file)) {
+                @chmod($root_file, 0644);
+            }
 
-            if ($enable) {
-                $root_block  = $root_marker_begin . "\n";
-                $root_block .= "<IfModule mod_rewrite.c>\n";
-                $root_block .= "RewriteEngine On\n";
-                $root_block .= "RewriteRule ^wp-content/uploads/.*\\.(?:php[0-9]?|phtml|phar|shtml|asp|aspx)$ - [F,L,NC]\n";
-                $root_block .= "</IfModule>\n";
-                $root_block .= $root_marker_end . "\n\n";
+            // Método A: Usar API oficial de WordPress insert_with_markers
+            if (!function_exists('insert_with_markers')) {
+                if (file_exists(ABSPATH . 'wp-admin/includes/misc.php')) {
+                    require_once ABSPATH . 'wp-admin/includes/misc.php';
+                }
+            }
 
-                // Respaldar antes de modificar si existe
-                if (file_exists($root_htaccess)) {
-                    @copy($root_htaccess, $root_htaccess . '.bak_nexaguard_' . time());
+            $wp_inserted = false;
+            if (function_exists('insert_with_markers') && (is_writable($root_file) || !file_exists($root_file))) {
+                if (file_exists($root_file)) {
+                    @copy($root_file, $root_file . '.bak_nexaguard_' . time());
+                }
+                $wp_inserted = insert_with_markers($root_file, 'NexaGuard Security - Bloqueo de ejecucion PHP en Uploads', $enable ? $root_rules : array());
+                if ($wp_inserted) {
+                    $written_any = true;
+                }
+            }
+
+            // Método B: Fallback directo de escritura por stream
+            if (!$wp_inserted) {
+                $root_content = file_exists($root_file) ? @file_get_contents($root_file) : '';
+                if ($root_content === false) {
+                    $root_content = '';
                 }
 
-                // Insertar preferentemente antes de # BEGIN WordPress
-                if (stripos($clean_root, '# BEGIN WordPress') !== false) {
-                    $new_root = preg_replace('/(# BEGIN WordPress)/i', $root_block . "$1", $clean_root, 1);
+                $clean_root = preg_replace('/' . preg_quote($root_marker_begin, '/') . '.*?' . preg_quote($root_marker_end, '/') . '\s*/s', '', $root_content);
+
+                if ($enable) {
+                    if (file_exists($root_file)) {
+                        @copy($root_file, $root_file . '.bak_nexaguard_' . time());
+                    }
+                    if (stripos($clean_root, '# BEGIN WordPress') !== false) {
+                        $new_root = preg_replace('/(# BEGIN WordPress)/i', $root_block_str . "$1", $clean_root, 1);
+                    } else {
+                        $new_root = $root_block_str . $clean_root;
+                    }
+                    if (@file_put_contents($root_file, $new_root) !== false) {
+                        $written_any = true;
+                    }
                 } else {
-                    $new_root = $root_block . $clean_root;
-                }
-
-                if (@file_put_contents($root_htaccess, $new_root) !== false) {
-                    $written_any = true;
-                }
-            } else {
-                if (@file_put_contents($root_htaccess, $clean_root) !== false) {
-                    $written_any = true;
+                    if (@file_put_contents($root_file, $clean_root) !== false) {
+                        $written_any = true;
+                    }
                 }
             }
         }
 
         if ($enable && !$written_any) {
-            return array('success' => false, 'message' => 'No se pudo escribir en el archivo .htaccess debido a permisos de servidor restringidos.');
+            return array('success' => false, 'message' => 'No se pudo escribir en el archivo .htaccess debido a permisos de servidor restringidos (chmod).');
         }
 
         return array('success' => true, 'message' => 'Blindaje aplicado: Se bloqueó la ejecución de scripts PHP en wp-content/uploads/ y en el .htaccess principal de WordPress.');
