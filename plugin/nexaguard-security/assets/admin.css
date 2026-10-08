@@ -1829,4 +1829,177 @@
     color: #8da2d8;
 }
 
+/* =========================================================================
+ * SISTEMA DE NOTIFICACIONES TOAST ANIMADAS · NEXAGUARD ALERT HUB (7 SEG)
+ * ========================================================================= */
+#nexaguard-toast-container {
+    position: fixed !important;
+    bottom: 28px !important;
+    right: 28px !important;
+    z-index: 9999999 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    max-width: 440px !important;
+    width: calc(100vw - 56px) !important;
+    pointer-events: none !important;
+}
+
+.ng-toast {
+    pointer-events: auto !important;
+    background: #090f2b !important;
+    border: 1.5px solid rgba(255, 207, 51, 0.45) !important;
+    border-radius: 14px !important;
+    padding: 16px 18px 14px !important;
+    color: #ffffff !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 20px rgba(255, 207, 51, 0.15) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+    overflow: hidden !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    transform: translateY(30px) scale(0.95);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, border-color 0.3s ease !important;
+}
+
+.ng-toast.ng-toast-visible {
+    transform: translateY(0) scale(1) !important;
+    opacity: 1 !important;
+}
+
+.ng-toast.ng-toast-closing {
+    transform: translateY(20px) scale(0.92) !important;
+    opacity: 0 !important;
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s ease !important;
+}
+
+.ng-toast-body {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+.ng-toast-icon {
+    font-size: 1.5rem !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+    margin-top: 1px !important;
+}
+
+.ng-toast-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.ng-toast-title {
+    font-size: 0.96rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.02em !important;
+    margin: 0 0 4px !important;
+    line-height: 1.3 !important;
+    color: #ffffff !important;
+}
+
+.ng-toast-msg {
+    font-size: 0.85rem !important;
+    color: #cad7f5 !important;
+    line-height: 1.45 !important;
+    margin: 0 !important;
+    word-break: break-word !important;
+    font-weight: 500 !important;
+}
+
+.ng-toast-close {
+    background: transparent !important;
+    border: none !important;
+    color: #7b8ebb !important;
+    font-size: 1.25rem !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    padding: 0 0 4px 6px !important;
+    margin-left: 6px !important;
+    transition: color 0.2s ease !important;
+}
+
+.ng-toast-close:hover {
+    color: #ffffff !important;
+}
+
+/* Barra de progreso de 7 segundos */
+.ng-toast-progress-bar {
+    position: absolute !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    height: 3px !important;
+    width: 100% !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    z-index: 1 !important;
+}
+
+.ng-toast-progress-fill {
+    height: 100% !important;
+    width: 100% !important;
+    background: #ffcf33 !important;
+    transform-origin: left !important;
+    animation: ngToastCountdown 7s linear forwards !important;
+}
+
+@keyframes ngToastCountdown {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
+/* Modificadores por Tipo */
+.ng-toast.toast-success {
+    border-color: rgba(61, 232, 164, 0.5) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(61, 232, 164, 0.2) !important;
+}
+.ng-toast.toast-success .ng-toast-title {
+    color: #3de8a4 !important;
+}
+.ng-toast.toast-success .ng-toast-progress-fill {
+    background: #3de8a4 !important;
+}
+
+.ng-toast.toast-error {
+    border-color: rgba(255, 69, 96, 0.6) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(255, 69, 96, 0.2) !important;
+}
+.ng-toast.toast-error .ng-toast-title {
+    color: #ff6b8b !important;
+}
+.ng-toast.toast-error .ng-toast-progress-fill {
+    background: #ff4560 !important;
+}
+
+.ng-toast.toast-warning {
+    border-color: rgba(255, 207, 51, 0.6) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(255, 207, 51, 0.2) !important;
+}
+.ng-toast.toast-warning .ng-toast-title {
+    color: #ffcf33 !important;
+}
+.ng-toast.toast-warning .ng-toast-progress-fill {
+    background: #ffcf33 !important;
+}
+
+.ng-toast.toast-info {
+    border-color: rgba(56, 189, 248, 0.5) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(56, 189, 248, 0.2) !important;
+}
+.ng-toast.toast-info .ng-toast-title {
+    color: #38bdf8 !important;
+}
+.ng-toast.toast-info .ng-toast-progress-fill {
+    background: #38bdf8 !important;
+}
+
 

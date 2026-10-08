@@ -1,6 +1,80 @@
 jQuery(document).ready(function ($) {
     'use strict';
 
+    // ============ SISTEMA DE NOTIFICACIONES TOAST ANIMADAS (7 SEG) ============
+    function showToast(message, type, title) {
+        type = type || 'info'; // 'success', 'error', 'warning', 'info'
+        var icons = {
+            success: '🛡️',
+            error: '🚨',
+            warning: '⚠️',
+            info: '🔔'
+        };
+        var titles = {
+            success: 'Operación Exitosa',
+            error: 'Atención / Error',
+            warning: 'Advertencia de Seguridad',
+            info: 'Aviso de NexaGuard'
+        };
+
+        var icon = icons[type] || '🔔';
+        var toastTitle = title || titles[type] || 'Aviso';
+
+        var $container = $('#nexaguard-toast-container');
+        if (!$container.length) {
+            $container = $('<div id="nexaguard-toast-container"></div>');
+            $('body').append($container);
+        }
+
+        var $toast = $(
+            '<div class="ng-toast toast-' + type + '">' +
+                '<div class="ng-toast-body">' +
+                    '<span class="ng-toast-icon">' + icon + '</span>' +
+                    '<div class="ng-toast-content">' +
+                        '<div class="ng-toast-title">' + escapeHtml(toastTitle) + '</div>' +
+                        '<p class="ng-toast-msg">' + escapeHtml(message) + '</p>' +
+                    '</div>' +
+                    '<button type="button" class="ng-toast-close" title="Cerrar">&times;</button>' +
+                '</div>' +
+                '<div class="ng-toast-progress-bar"><div class="ng-toast-progress-fill"></div></div>' +
+            '</div>'
+        );
+
+        $container.append($toast);
+
+        // Entrada fluida con animación
+        requestAnimationFrame(function () {
+            $toast.addClass('ng-toast-visible');
+        });
+
+        var isRemoved = false;
+        function dismissToast() {
+            if (isRemoved) return;
+            isRemoved = true;
+            $toast.removeClass('ng-toast-visible').addClass('ng-toast-closing');
+            setTimeout(function () {
+                $toast.remove();
+                if (!$container.children().length) {
+                    $container.remove();
+                }
+            }, 1200); // Se desvanece suavemente
+        }
+
+        // Cierre manual inmediato
+        $toast.find('.ng-toast-close').on('click', function () {
+            dismissToast();
+        });
+
+        // Cierre automático en exactamente 7 segundos (7000ms)
+        setTimeout(dismissToast, 7000);
+    }
+
+    // Exponer globalmente y como reemplazo amigable de alert en este panel
+    window.nexaguardToast = showToast;
+    var alert = function (msg, type, title) {
+        showToast(msg, type || (typeof msg === 'string' && (msg.toLowerCase().indexOf('éxito') !== -1 || msg.toLowerCase().indexOf('exito') !== -1) ? 'success' : 'error'), title);
+    };
+
     // ============ SISTEMA DE PESTAÑAS (TABS) ============
     function switchTab(target) {
         if (!target || !$('#tab-' + target).length) return;
@@ -157,11 +231,13 @@ jQuery(document).ready(function ($) {
             $('#status-icon').text('⚠️');
             $('#status-heading').text('¡Atención! Se detectaron ' + d.threats_count + ' amenazas de seguridad');
             $('#threats-badge').removeClass('ok').addClass('danger').text(d.threats_count + ' hallazgos');
+            showToast('El análisis forense detectó ' + d.threats_count + ' amenaza(s) activas que requieren desinfección o cuarentena.', 'warning', 'Amenazas Detectadas');
         } else {
             $card.removeClass('status-danger').addClass('status-clean');
             $('#status-icon').text('✓');
             $('#status-heading').text('Sistema 100% limpio y protegido');
             $('#threats-badge').removeClass('danger').addClass('ok').text('0 hallazgos');
+            showToast('Auditoría completada: No se encontraron archivos infectados ni anomalías en tu sitio web.', 'success', 'Sistema 100% Limpio');
         }
 
         // Actualizar texto descriptivo con alto contraste
@@ -676,13 +752,16 @@ jQuery(document).ready(function ($) {
             success: function (res) {
                 if (res.success) {
                     $msg.text('✓ Reglas de blindaje aplicadas con éxito.').css('color', '#3de8a4');
+                    showToast('Las reglas del Cortafuegos WAF y blindaje perimetral han sido guardadas y activadas en el servidor.', 'success', 'Blindaje WAF Actualizado');
                     setTimeout(function () { $msg.fadeOut(function () { $(this).text('').show(); }); }, 3500);
                 } else {
                     $msg.text('Error al guardar.').css('color', '#ff8ba0');
+                    showToast('No se pudieron aplicar las reglas de blindaje.', 'error', 'Error de Configuración');
                 }
             },
             error: function () {
                 $msg.text('Error de conexión.').css('color', '#ff8ba0');
+                showToast('Error de conexión con el servidor al guardar el WAF.', 'error', 'Error de Red');
             }
         });
     });
