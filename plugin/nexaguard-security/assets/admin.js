@@ -69,8 +69,71 @@ jQuery(document).ready(function ($) {
         setTimeout(dismissToast, 7000);
     }
 
+    // ============ SISTEMA DE CONFIRMACIÓN MODAL ESTILIZADO ============
+    function showConfirm(message, onConfirm, onCancel, options) {
+        options = options || {};
+        var title = options.title || 'Confirmación de Seguridad';
+        var icon = options.icon || '🛡️';
+        var btnOkText = options.btnOkText || 'Continuar';
+        var btnCancelText = options.btnCancelText || 'Cancelar';
+        var isDanger = options.danger || false;
+
+        var $modal = $('#nexaguard-confirm-modal');
+        if (!$modal.length) {
+            // Fallback si por alguna razón el modal no existe en el DOM
+            if (window.confirm(message)) {
+                if (typeof onConfirm === 'function') onConfirm();
+            } else {
+                if (typeof onCancel === 'function') onCancel();
+            }
+            return;
+        }
+
+        if (!$modal.parent().is('body')) {
+            $modal.appendTo('body');
+        }
+
+        $('#ng-confirm-title').text(title);
+        $('#ng-confirm-icon').text(icon);
+        $('#ng-confirm-message').text(message);
+        
+        var $okBtn = $('#ng-confirm-ok-btn').text(btnOkText);
+        var $cancelBtn = $('#ng-confirm-cancel-btn').text(btnCancelText);
+
+        if (isDanger) {
+            $okBtn.removeClass('btn-ng-primary').addClass('btn-ng-danger');
+        } else {
+            $okBtn.removeClass('btn-ng-danger').addClass('btn-ng-primary');
+        }
+
+        // Limpiar eventos anteriores
+        $okBtn.off('click');
+        $cancelBtn.off('click');
+
+        function closeModal() {
+            $modal.stop(true, true).fadeOut(150);
+        }
+
+        $okBtn.on('click', function () {
+            closeModal();
+            if (typeof onConfirm === 'function') {
+                onConfirm();
+            }
+        });
+
+        $cancelBtn.on('click', function () {
+            closeModal();
+            if (typeof onCancel === 'function') {
+                onCancel();
+            }
+        });
+
+        $modal.css({ display: 'flex', opacity: 0 }).stop(true, true).fadeTo(200, 1);
+    }
+
     // Exponer globalmente y como reemplazo amigable de alert en este panel
     window.nexaguardToast = showToast;
+    window.nexaguardConfirm = showConfirm;
     var alert = function (msg, type, title) {
         showToast(msg, type || (typeof msg === 'string' && (msg.toLowerCase().indexOf('éxito') !== -1 || msg.toLowerCase().indexOf('exito') !== -1) ? 'success' : 'error'), title);
     };
@@ -378,38 +441,41 @@ jQuery(document).ready(function ($) {
         var target = $btn.data('target');
         var id = $btn.data('id');
 
-        if (!confirm('¿Forzar la eliminación definitiva de esta amenaza? NexaGuard desbloqueará permisos y destruirá el archivo.')) {
-            return;
-        }
-
-        $btn.prop('disabled', true).text('Destruyendo…');
-
-        $.ajax({
-            url: nexaguardData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'nexaguard_force_delete',
-                nonce: nexaguardData.nonce,
-                target: target,
-                mode: 'file'
+        showConfirm(
+            '¿Forzar la eliminación definitiva de esta amenaza? NexaGuard desbloqueará permisos y destruirá el archivo.',
+            function () {
+                $btn.prop('disabled', true).text('Destruyendo…');
+                $.ajax({
+                    url: nexaguardData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_force_delete',
+                        nonce: nexaguardData.nonce,
+                        target: target,
+                        mode: 'file'
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            $('#threat-' + id).fadeOut(350, function () {
+                                $(this).remove();
+                                updateThreatCounts();
+                            });
+                            showToast('Archivo malicioso destruido con éxito.', 'success', 'Amenaza Neutralizada');
+                        } else {
+                            $btn.prop('disabled', false).text('Reintentar');
+                            alert(res.data && res.data.message ? res.data.message : 'Error al eliminar.');
+                        }
+                    },
+                    error: function () {
+                        $btn.prop('disabled', false).text('Reintentar');
+                        alert('Error de conexión.');
+                    }
+                });
             },
-            success: function (res) {
-                if (res.success) {
-                    $('#threat-' + id).fadeOut(350, function () {
-                        $(this).remove();
-                        updateThreatCounts();
-                    });
-                } else {
-                    $btn.prop('disabled', false).text('Reintentar');
-                    alert(res.data && res.data.message ? res.data.message : 'Error al eliminar.');
-                }
-            },
-            error: function () {
-                $btn.prop('disabled', false).text('Reintentar');
-                alert('Error de conexión.');
-            }
-        });
+            null,
+            { title: 'Destrucción Forzada', icon: '🗑️', btnOkText: 'Destruir Archivo', danger: true }
+        );
     });
 
     // 4. Destruir Carpeta Completa del Plugin Malicioso
@@ -417,42 +483,44 @@ jQuery(document).ready(function ($) {
         var $btn = $(this);
         var target = $btn.data('target');
 
-        if (!confirm('¿Estás seguro de destruir la carpeta completa del plugin malicioso? Esta acción eliminará todo el plugin troyano.')) {
-            return;
-        }
-
-        $btn.prop('disabled', true).text('Destruyendo plugin…');
-
-        $.ajax({
-            url: nexaguardData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'nexaguard_force_delete',
-                nonce: nexaguardData.nonce,
-                target: target,
-                mode: 'plugin_folder'
-            },
-            success: function (res) {
-                if (res.success) {
-                    // Remover todas las amenazas pertenecientes a ese plugin
-                    $('.threat-item').each(function () {
-                        var text = $(this).text();
-                        if (text.indexOf('hseo') !== -1) {
-                            $(this).fadeOut(350, function () { $(this).remove(); updateThreatCounts(); });
+        showConfirm(
+            '¿Estás seguro de destruir la carpeta completa del plugin malicioso? Esta acción eliminará todo el plugin troyano.',
+            function () {
+                $btn.prop('disabled', true).text('Destruyendo plugin…');
+                $.ajax({
+                    url: nexaguardData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_force_delete',
+                        nonce: nexaguardData.nonce,
+                        target: target,
+                        mode: 'plugin_folder'
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            // Remover todas las amenazas pertenecientes a ese plugin
+                            $('.threat-item').each(function () {
+                                var text = $(this).text();
+                                if (text.indexOf('hseo') !== -1) {
+                                    $(this).fadeOut(350, function () { $(this).remove(); updateThreatCounts(); });
+                                }
+                            });
+                            showToast(res.data && res.data.message ? res.data.message : 'Plugin destruido con éxito.', 'success', 'Carpeta Erradicada');
+                        } else {
+                            $btn.prop('disabled', false).text('Reintentar');
+                            alert(res.data && res.data.message ? res.data.message : 'Error al eliminar carpeta.');
                         }
-                    });
-                    alert(res.data && res.data.message ? res.data.message : 'Plugin destruido con éxito.');
-                } else {
-                    $btn.prop('disabled', false).text('Reintentar');
-                    alert(res.data && res.data.message ? res.data.message : 'Error al eliminar carpeta.');
-                }
+                    },
+                    error: function () {
+                        $btn.prop('disabled', false).text('Reintentar');
+                        alert('Error de conexión.');
+                    }
+                });
             },
-            error: function () {
-                $btn.prop('disabled', false).text('Reintentar');
-                alert('Error de conexión.');
-            }
-        });
+            null,
+            { title: 'Destruir Plugin Malicioso', icon: '💣', btnOkText: 'Destruir Carpeta', danger: true }
+        );
     });
 
     // 5. Limpiar / Erradicar Amenaza
@@ -463,108 +531,142 @@ jQuery(document).ready(function ($) {
         var id = $btn.data('id');
 
         var confirmMsg = '¿Deseas desinfectar este archivo? Se extirpará únicamente el código malicioso inyectado y se creará una copia de seguridad automática antes de guardar.';
+        var confirmTitle = 'Desinfección Forense';
+        var confirmIcon = '🛡️';
+        var confirmOk = 'Desinfectar Ahora';
+
         if (type === 'restore_core_file') {
             confirmMsg = '¿Deseas restaurar este archivo oficial descargándolo directamente desde WordPress.org? Se creará una copia de seguridad antes de sustituirlo.';
+            confirmTitle = 'Restaurar Core de WordPress';
+            confirmIcon = '🏛️';
+            confirmOk = 'Restaurar de WP.org';
         } else if (type === 'delete_db_option') {
             confirmMsg = '¿Estás seguro de que deseas purgar y eliminar definitivamente esta clave de la base de datos?';
+            confirmTitle = 'Purgar Registro MySQL';
+            confirmIcon = '🗄️';
+            confirmOk = 'Eliminar Registro';
         } else if (type === 'remove_cron_hook') {
             confirmMsg = '¿Deseas remover esta tarea programada (cron) de la base de datos?';
+            confirmTitle = 'Remover Tarea C&C WP-Cron';
+            confirmIcon = '⏱️';
+            confirmOk = 'Remover Tarea';
         } else if (type === 'downgrade_user') {
             confirmMsg = '¿Deseas degradar los permisos de este usuario sospechoso a suscriptor?';
+            confirmTitle = 'Revocar Privilegios Admin';
+            confirmIcon = '👤';
+            confirmOk = 'Degradar a Suscriptor';
         } else if (type === 'apply_disallow_file_edit') {
             confirmMsg = '¿Deseas aplicar el blindaje en wp-config.php para deshabilitar la edición de temas y plugins desde el panel de WordPress?';
+            confirmTitle = 'Blindar Editor PHP';
+            confirmIcon = '🔒';
+            confirmOk = 'Aplicar Blindaje';
         } else if (type === 'apply_htaccess_no_indexes') {
             confirmMsg = '¿Deseas aplicar "Options -Indexes" en .htaccess para evitar que se puedan listar directorios en tu servidor?';
+            confirmTitle = 'Bloquear Listado Apache';
+            confirmIcon = '📁';
+            confirmOk = 'Proteger Directorios';
         } else if (type === 'regenerate_wp_salts') {
             confirmMsg = '¿Deseas regenerar todas las claves y sales criptográficas en wp-config.php? Esto invalidará de inmediato todas las sesiones y cookies secuestradas por atacantes.';
+            confirmTitle = 'Regenerar Sales de Seguridad';
+            confirmIcon = '🔑';
+            confirmOk = 'Regenerar Sales';
         }
 
-        if (!confirm(confirmMsg)) {
-            return;
-        }
+        showConfirm(
+            confirmMsg,
+            function () {
+                var loadingLabel = (type === 'restore_core_file') ? 'Restaurando desde WP.org…' : (type === 'delete_db_option' ? 'Purgando…' : (type.indexOf('apply_') !== -1 || type === 'regenerate_wp_salts' ? 'Aplicando…' : 'Desinfectando…'));
+                $btn.prop('disabled', true).text(loadingLabel);
 
-        var loadingLabel = (type === 'restore_core_file') ? 'Restaurando desde WP.org…' : (type === 'delete_db_option' ? 'Purgando…' : (type.indexOf('apply_') !== -1 || type === 'regenerate_wp_salts' ? 'Aplicando…' : 'Desinfectando…'));
-        $btn.prop('disabled', true).text(loadingLabel);
-
-        $.ajax({
-            url: nexaguardData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'nexaguard_clean_threat',
-                nonce: nexaguardData.nonce,
-                threat_type: type,
-                target: target
-            },
-            success: function (res) {
-                if (res.success) {
-                    if (type === 'delete_db_option' || type === 'remove_cron_hook') {
-                        $('#threat-' + id).fadeOut(350, function () {
-                            $(this).remove();
-                            updateThreatCounts();
-                        });
-                    } else {
-                        var successMsg = (type === 'restore_core_file') ? '✓ Archivo oficial de WordPress.org restaurado' : '✓ Desinfección completada con éxito';
-                        $('#threat-' + id).css('border-left-color', '#3de8a4').find('.threat-actions').html('<span style="color:#3de8a4;font-weight:700">' + successMsg + '</span>');
+                $.ajax({
+                    url: nexaguardData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_clean_threat',
+                        nonce: nexaguardData.nonce,
+                        threat_type: type,
+                        target: target
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            if (type === 'delete_db_option' || type === 'remove_cron_hook') {
+                                $('#threat-' + id).fadeOut(350, function () {
+                                    $(this).remove();
+                                    updateThreatCounts();
+                                });
+                            } else {
+                                var successMsg = (type === 'restore_core_file') ? '✓ Archivo oficial de WordPress.org restaurado' : '✓ Desinfección completada con éxito';
+                                $('#threat-' + id).css('border-left-color', '#3de8a4').find('.threat-actions').html('<span style="color:#3de8a4;font-weight:700">' + successMsg + '</span>');
+                            }
+                            showToast('Acción completada con éxito. El archivo ha sido respaldado en la bóveda de reversión.', 'success', 'Operación Completada');
+                        } else {
+                            $btn.prop('disabled', false).text('Reintentar');
+                            alert(res.data && res.data.message ? res.data.message : 'Error al limpiar.');
+                        }
+                    },
+                    error: function () {
+                        $btn.prop('disabled', false).text('Reintentar');
+                        alert('Error de conexión.');
                     }
-                } else {
-                    $btn.prop('disabled', false).text('Reintentar');
-                    alert(res.data && res.data.message ? res.data.message : 'Error al limpiar.');
-                }
+                });
             },
-            error: function () {
-                $btn.prop('disabled', false).text('Reintentar');
-                alert('Error de conexión.');
-            }
-        });
+            null,
+            { title: confirmTitle, icon: confirmIcon, btnOkText: confirmOk }
+        );
     });
 
+    // 5.1 Reparación y Blindaje Automático con 1 Clic (Auto-Remediate All)
     // 5.1 Reparación y Blindaje Automático con 1 Clic (Auto-Remediate All)
     $(document).on('click', '#btn-auto-remediate-all', function () {
         var $btn = $(this);
 
-        if (!confirm('¿Deseas que NexaGuard limpie, repare y blinde automáticamente todo tu sitio web de forma 100% segura?\n\n- Los archivos del sistema se restaurarán limpios desde WordPress.org.\n- Los virus en plugins se extirparán sin romper tus extensiones.\n- Se aplicarán los blindajes preventivos de servidor.\n- Se guardan copias de respaldo de cada archivo.')) {
-            return;
-        }
+        showConfirm(
+            '¿Deseas que NexaGuard limpie, repare y blinde automáticamente todo tu sitio web de forma 100% segura?\n\n✓ Los archivos del sistema se restaurarán limpios desde WordPress.org.\n✓ Los virus en plugins se extirparán sin romper tus extensiones.\n✓ Se aplicarán los blindajes preventivos de servidor.\n✓ Se guardan copias de respaldo de cada archivo intervenido.',
+            function () {
+                $btn.prop('disabled', true).html('⚡ Reparando y Blindando Sitio… (Espere)');
 
-        $btn.prop('disabled', true).html('⚡ Reparando y Blindando Sitio… (Espere)');
+                $.ajax({
+                    url: nexaguardData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_auto_remediate_all',
+                        nonce: nexaguardData.nonce
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            $('#auto-remediate-banner').fadeOut(300);
+                            $('#threats-badge').removeClass('danger').addClass('ok').text('0 hallazgos (Limpio)');
 
-        $.ajax({
-            url: nexaguardData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'nexaguard_auto_remediate_all',
-                nonce: nexaguardData.nonce
+                            var summaryMsg = '<div class="empty-state" style="border: 2px solid #3de8a4; background: rgba(61,232,164,0.1); padding: 30px; border-radius: 12px; text-align: center;">' +
+                                '<div style="font-size: 3rem; margin-bottom: 12px;">🛡️✨</div>' +
+                                '<h3 style="color: #3de8a4; font-size: 1.4rem; margin-bottom: 8px;">¡Tu sitio web ha sido limpiado y blindado con éxito!</h3>' +
+                                '<p style="color: #e2eafc; font-size: 1rem; max-width: 600px; margin: 0 auto 16px;">' + (res.data.message || 'Todas las amenazas fueron neutralizadas de forma segura.') + '</p>' +
+                                '<button type="button" class="btn-ng btn-ng-primary" onclick="location.reload();">🔄 Actualizar Vista</button>' +
+                                '</div>';
+
+                            $('#threats-list').html(summaryMsg);
+
+                            $('.scan-summary-card').removeClass('status-danger').addClass('status-clean');
+                            $('.status-indicator').html('🛡️');
+                            $('.summary-left h3').text('SITIO BLINDADO Y PROTEGIDO');
+                            $('.summary-left p').text('0 amenazas activas en el sistema.');
+                            showToast('Todas las amenazas detectadas fueron neutralizadas y blindadas con éxito.', 'success', 'Remediación Exitosa');
+                        } else {
+                            $btn.prop('disabled', false).html('⚡ LIMPIAR Y BLINDAR SITIO CON 1 CLIC');
+                            alert(res.data && res.data.message ? res.data.message : 'Error durante la reparación automática.');
+                        }
+                    },
+                    error: function () {
+                        $btn.prop('disabled', false).html('⚡ LIMPIAR Y BLINDAR SITIO CON 1 CLIC');
+                        alert('Error de conexión durante el proceso de remediación.');
+                    }
+                });
             },
-            success: function (res) {
-                if (res.success) {
-                    $('#auto-remediate-banner').fadeOut(300);
-                    $('#threats-badge').removeClass('danger').addClass('ok').text('0 hallazgos (Limpio)');
-
-                    var summaryMsg = '<div class="empty-state" style="border: 2px solid #3de8a4; background: rgba(61,232,164,0.1); padding: 30px; border-radius: 12px; text-align: center;">' +
-                        '<div style="font-size: 3rem; margin-bottom: 12px;">🛡️✨</div>' +
-                        '<h3 style="color: #3de8a4; font-size: 1.4rem; margin-bottom: 8px;">¡Tu sitio web ha sido limpiado y blindado con éxito!</h3>' +
-                        '<p style="color: #e2eafc; font-size: 1rem; max-width: 600px; margin: 0 auto 16px;">' + (res.data.message || 'Todas las amenazas fueron neutralizadas de forma segura.') + '</p>' +
-                        '<button type="button" class="btn-ng btn-ng-primary" onclick="location.reload();">🔄 Actualizar Vista</button>' +
-                        '</div>';
-
-                    $('#threats-list').html(summaryMsg);
-
-                    $('.scan-summary-card').removeClass('status-danger').addClass('status-clean');
-                    $('.status-indicator').html('🛡️');
-                    $('.summary-left h3').text('SITIO BLINDADO Y PROTEGIDO');
-                    $('.summary-left p').text('0 amenazas activas en el sistema.');
-                } else {
-                    $btn.prop('disabled', false).html('⚡ LIMPIAR Y BLINDAR SITIO CON 1 CLIC');
-                    alert(res.data && res.data.message ? res.data.message : 'Error durante la reparación automática.');
-                }
-            },
-            error: function () {
-                $btn.prop('disabled', false).html('⚡ LIMPIAR Y BLINDAR SITIO CON 1 CLIC');
-                alert('Error de conexión durante el proceso de remediación.');
-            }
-        });
+            null,
+            { title: 'Remediación Total con 1 Clic', icon: '⚡', btnOkText: 'Limpiar y Blindar Web' }
+        );
     });
 
     // 6. Mover a Cuarentena
@@ -573,45 +675,49 @@ jQuery(document).ready(function ($) {
         var file = $btn.data('file');
         var id = $btn.data('id');
 
-        if (!confirm('¿Mover este archivo malicioso a la cuarentena segura aislada?')) {
-            return;
-        }
+        showConfirm(
+            '¿Mover este archivo malicioso a la cuarentena segura aislada con permisos restringidos (Deny From All)?',
+            function () {
+                $btn.prop('disabled', true).text('Aislando…');
 
-        $btn.prop('disabled', true).text('Aislando…');
-
-        $.ajax({
-            url: nexaguardData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'nexaguard_quarantine_file',
-                nonce: nexaguardData.nonce,
-                file: file
-            },
-            success: function (res) {
-                if (res.success) {
-                    $('#threat-' + id).fadeOut(400, function () { 
-                        $(this).remove(); 
-                        updateThreatCounts();
-                    });
-                    var qCount = parseInt($('#kpi-quarantine').text() || '0', 10) + 1;
-                    $('#kpi-quarantine').text(qCount);
-                    $('#quarantine-badge').text(qCount + ' archivo(s)');
-                    var $qTab = $('.ng-tab[data-tab="quarantine"]');
-                    $qTab.find('.ng-tab-badge').remove();
-                    if (qCount > 0) {
-                        $qTab.append('<span class="ng-tab-badge info">' + qCount + '</span>');
+                $.ajax({
+                    url: nexaguardData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_quarantine_file',
+                        nonce: nexaguardData.nonce,
+                        file: file
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            $('#threat-' + id).fadeOut(400, function () { 
+                                $(this).remove(); 
+                                updateThreatCounts();
+                            });
+                            var qCount = parseInt($('#kpi-quarantine').text() || '0', 10) + 1;
+                            $('#kpi-quarantine').text(qCount);
+                            $('#quarantine-badge').text(qCount + ' archivo(s)');
+                            var $qTab = $('.ng-tab[data-tab="quarantine"]');
+                            $qTab.find('.ng-tab-badge').remove();
+                            if (qCount > 0) {
+                                $qTab.append('<span class="ng-tab-badge ok">' + qCount + '</span>');
+                            }
+                            showToast('El archivo ha sido neutralizado y trasladado a la bóveda de cuarentena protegida.', 'success', 'Archivo en Cuarentena');
+                        } else {
+                            $btn.prop('disabled', false).text('Reintentar');
+                            alert(res.data && res.data.message ? res.data.message : 'Error al aislar.');
+                        }
+                    },
+                    error: function () {
+                        $btn.prop('disabled', false).text('Reintentar');
+                        alert('Error de conexión.');
                     }
-                } else {
-                    $btn.prop('disabled', false).text('Reintentar');
-                    alert(res.data && res.data.message ? res.data.message : 'Error al aislar.');
-                }
+                });
             },
-            error: function () {
-                $btn.prop('disabled', false).text('Reintentar');
-                alert('Error de conexión.');
-            }
-        });
+            null,
+            { title: 'Aislamiento de Seguridad', icon: '☣️', btnOkText: 'Enviar a Cuarentena', danger: true }
+        );
     });
 
     // 7. Marcar como Falso Positivo / Permitir
@@ -654,30 +760,38 @@ jQuery(document).ready(function ($) {
         var $btn = $(this);
         var qid = $btn.data('id');
 
-        if (!confirm('¿Restaurar este archivo a su ubicación original?')) {
-            return;
-        }
+        showConfirm(
+            '¿Restaurar este archivo a su ubicación original en el servidor?',
+            function () {
+                $btn.prop('disabled', true).text('Restaurando…');
 
-        $btn.prop('disabled', true).text('Restaurando…');
-
-        $.ajax({
-            url: nexaguardData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'nexaguard_restore_quarantine',
-                nonce: nexaguardData.nonce,
-                quarantine_id: qid
+                $.ajax({
+                    url: nexaguardData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_restore_quarantine',
+                        nonce: nexaguardData.nonce,
+                        quarantine_id: qid
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            $btn.closest('tr').fadeOut(400, function () { $(this).remove(); });
+                            showToast('Archivo restaurado a su ubicación original.', 'success', 'Restauración Exitosa');
+                        } else {
+                            $btn.prop('disabled', false).text('Restaurar');
+                            alert(res.data && res.data.message ? res.data.message : 'Error al restaurar.');
+                        }
+                    },
+                    error: function () {
+                        $btn.prop('disabled', false).text('Restaurar');
+                        alert('Error de conexión.');
+                    }
+                });
             },
-            success: function (res) {
-                if (res.success) {
-                    $btn.closest('tr').fadeOut(400, function () { $(this).remove(); });
-                } else {
-                    $btn.prop('disabled', false).text('Restaurar');
-                    alert(res.data && res.data.message ? res.data.message : 'Error al restaurar.');
-                }
-            }
-        });
+            null,
+            { title: 'Restaurar Archivo', icon: '↩️', btnOkText: 'Restaurar' }
+        );
     });
 
     // 8.1 Revertir Snapshot / Rollback en 1 Clic
@@ -686,47 +800,50 @@ jQuery(document).ready(function ($) {
         var snapshotId = $btn.data('id');
         var fileName = $btn.data('file');
 
-        if (!confirm('¿Deseas revertir este archivo (' + fileName + ') a su estado exacto anterior a la desinfección? Se recuperará el archivo original que tenías antes.')) {
-            return;
-        }
+        showConfirm(
+            '¿Deseas revertir este archivo (' + fileName + ') a su estado exacto anterior a la desinfección? Se recuperará el archivo original que tenías antes.',
+            function () {
+                $btn.prop('disabled', true).text('Revirtiendo…');
 
-        $btn.prop('disabled', true).text('Revirtiendo…');
-
-        $.ajax({
-            url: nexaguardData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'nexaguard_revert_snapshot',
-                nonce: nexaguardData.nonce,
-                snapshot_id: snapshotId
-            },
-            success: function (res) {
-                if (res.success) {
-                    $btn.closest('tr').fadeOut(350, function () {
-                        $(this).remove();
-                        var count = $('#rollback-table tbody tr').length;
-                        $('#rollback-badge').text(count + ' punto(s) de respaldo');
-                        var $rbTab = $('.ng-tab[data-tab="rollback"]');
-                        $rbTab.find('.ng-tab-badge').remove();
-                        if (count > 0) {
-                            $rbTab.append('<span class="ng-tab-badge info">' + count + '</span>');
+                $.ajax({
+                    url: nexaguardData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_revert_snapshot',
+                        nonce: nexaguardData.nonce,
+                        snapshot_id: snapshotId
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            $btn.closest('tr').fadeOut(350, function () {
+                                $(this).remove();
+                                var count = $('#rollback-table tbody tr').length;
+                                $('#rollback-badge').text(count + ' punto(s) de respaldo');
+                                var $rbTab = $('.ng-tab[data-tab="rollback"]');
+                                $rbTab.find('.ng-tab-badge').remove();
+                                if (count > 0) {
+                                    $rbTab.append('<span class="ng-tab-badge info">' + count + '</span>');
+                                }
+                                if (count === 0) {
+                                    $('#rollback-table').replaceWith('<div class="empty-state" style="padding:22px; text-align:center;"><p style="margin:0; color:#a0acd2;">🛡️ La bóveda de seguridad está lista. Al realizar cualquier limpieza o restauración con 1 clic, tus puntos de reversión aparecerán aquí.</p></div>');
+                                }
+                            });
+                            showToast(res.data && res.data.message ? res.data.message : 'Archivo restaurado con éxito a su estado previo.', 'success', 'Reversión Completada');
+                        } else {
+                            $btn.prop('disabled', false).text('↩️ Revertir (Deshacer)');
+                            alert(res.data && res.data.message ? res.data.message : 'Error al revertir el archivo.');
                         }
-                        if (count === 0) {
-                            $('#rollback-table').replaceWith('<div class="empty-state" style="padding:22px; text-align:center;"><p style="margin:0; color:#a0acd2;">🛡️ La bóveda de seguridad está lista. Al realizar cualquier limpieza o restauración con 1 clic, tus puntos de reversión aparecerán aquí.</p></div>');
-                        }
-                    });
-                    alert(res.data && res.data.message ? res.data.message : 'Archivo restaurado con éxito a su estado previo.');
-                } else {
-                    $btn.prop('disabled', false).text('↩️ Revertir (Deshacer)');
-                    alert(res.data && res.data.message ? res.data.message : 'Error al revertir el archivo.');
-                }
+                    },
+                    error: function () {
+                        $btn.prop('disabled', false).text('↩️ Revertir (Deshacer)');
+                        alert('Error de conexión al revertir el respaldo.');
+                    }
+                });
             },
-            error: function () {
-                $btn.prop('disabled', false).text('↩️ Revertir (Deshacer)');
-                alert('Error de conexión al revertir el respaldo.');
-            }
-        });
+            null,
+            { title: 'Reversión Instantánea', icon: '↩️', btnOkText: 'Revertir a Respaldo' }
+        );
     });
 
     // 9. Guardar Configuración WAF
@@ -939,20 +1056,26 @@ jQuery(document).ready(function ($) {
 
     $('#btn-unlink-license').on('click', function (e) {
         e.preventDefault();
-        if (!confirm('¿Deseas desvincular la licencia de este WordPress y regresar a la Edición Estándar?')) return;
-        $.ajax({
-            url: nexaguardData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'nexaguard_validate_license',
-                license_key: '',
-                nonce: nexaguardData.nonce
+        showConfirm(
+            '¿Deseas desvincular la licencia de este WordPress y regresar a la Edición Estándar?',
+            function () {
+                $.ajax({
+                    url: nexaguardData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_validate_license',
+                        license_key: '',
+                        nonce: nexaguardData.nonce
+                    },
+                    complete: function () {
+                        location.reload();
+                    }
+                });
             },
-            complete: function () {
-                location.reload();
-            }
-        });
+            null,
+            { title: 'Desvincular Licencia', icon: '🔑', btnOkText: 'Desvincular', danger: true }
+        );
     });
 
     $('#btn-close-license').on('click', function (e) {

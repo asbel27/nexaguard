@@ -70,3 +70,21 @@ $has_license = !empty($license) && !empty($license['valid']) && !empty($license[
         </div>
     </div>
 </div>
+
+<!-- Modal Interactivo y Estilizado de Confirmación NexaGuard (Reemplaza confirm() nativo) -->
+<div id="nexaguard-confirm-modal" class="ng-modal" style="display:none; z-index:9999999 !important;">
+    <div class="ng-modal-box" style="max-width:520px; border:1.5px solid rgba(255,207,51,0.5); box-shadow:0 25px 60px rgba(0,0,0,0.85), 0 0 30px rgba(255,207,51,0.15);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+            <span id="ng-confirm-icon" style="font-size:2rem; line-height:1;">🛡️</span>
+            <div>
+                <h3 id="ng-confirm-title" style="margin:0; font-size:1.2rem; color:#ffffff;">Confirmación de Seguridad</h3>
+                <small style="color:#ffcf33; font-weight:700; font-size:0.75rem; letter-spacing:0.04em;">NEXAGUARD INTELLIGENT FORENSICS</small>
+            </div>
+        </div>
+        <p id="ng-confirm-message" style="color:#dbe4ff; font-size:0.92rem; line-height:1.6; margin:0 0 20px; white-space:pre-line;"></p>
+        <div class="ng-modal-acts" style="display:flex; gap:10px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,0.08); padding-top:16px;">
+            <button type="button" id="ng-confirm-cancel-btn" class="btn-ng btn-ng-outline" style="min-width:105px;">Cancelar</button>
+            <button type="button" id="ng-confirm-ok-btn" class="btn-ng btn-ng-primary" style="min-width:140px;">Continuar</button>
+        </div>
+    </div>
+</div>
