@@ -337,6 +337,63 @@ var SEV_ORDER = { crit: 0, warn: 1, info: 2, ok: 3 }, SEV_TXT = { crit: 'GRAVE',
 var toastT;
 function toast(m) { var t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 3400); }
 
+function fallbackCopy(txt) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.width = '2em';
+    ta.style.height = '2em';
+    ta.style.padding = '0';
+    ta.style.border = 'none';
+    ta.style.outline = 'none';
+    ta.style.boxShadow = 'none';
+    ta.style.background = 'transparent';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    if (ta.setSelectionRange) {
+      ta.setSelectionRange(0, ta.value.length);
+    }
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+function copy(txt, el) {
+  if (!txt) return;
+  txt = String(txt).trim();
+  function feedback(ok) {
+    if (ok && el && el.textContent) {
+      var orig = el.textContent;
+      el.textContent = '✓ Copiado';
+      el.classList.add('btn-y');
+      setTimeout(function () {
+        el.textContent = orig;
+        el.classList.remove('btn-y');
+      }, 1800);
+    }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(function () {
+      feedback(true);
+    }).catch(function () {
+      var ok = fallbackCopy(txt);
+      feedback(ok);
+    });
+  } else {
+    var ok = fallbackCopy(txt);
+    feedback(ok);
+  }
+}
+
 async function api(method, url, body) {
   var r = await fetch(url, { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'parche' }, body: body === undefined ? undefined : JSON.stringify(body) });
   var d = {}; try { d = await r.json(); } catch (e) {}
@@ -1035,9 +1092,9 @@ CV.pagos = async function () {
             h('span', { class: 'pill ok' }, '🔑 Licencia PRO Asignada'),
             h('b', { style: 'color:#fff' }, o.planName)),
           h('p', { class: 'hint', style: 'margin:2px 0 6px;font-size:.85rem' }, 'Usa esta clave en tu WordPress dentro de NexaGuard Security para desbloquear la Vigilancia 24 Horas:'),
-          h('code', { style: 'font-family:var(--fm);color:var(--yellow);background:rgba(255,207,51,.12);padding:4px 10px;border-radius:6px;font-size:.95rem;border:1px solid rgba(255,207,51,.25)' }, o.licenseKey)),
+          h('code', { style: 'font-family:var(--fm);color:var(--yellow);background:rgba(255,207,51,.12);padding:4px 10px;border-radius:6px;font-size:.95rem;border:1px solid rgba(255,207,51,.25);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, o.licenseKey)),
         h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
-          h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey); toast('Clave copiada al portapapeles'); } } }, 'Copiar Clave'),
+          h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada al portapapeles'); } } }, 'Copiar Clave'),
           h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar Plugin (.zip)'))));
     });
   }
@@ -1225,8 +1282,8 @@ AV.licencias = async function () {
               h('span', { class: 'pill ' + pillCls }, k.badge),
               h('b', { style: 'font-size:.95rem;color:#fff' }, k.name)),
             h('p', { class: 'hint', style: 'margin:2px 0 6px;font-size:.85rem' }, k.desc),
-            h('code', { style: 'font-family:var(--fm);font-size:.9rem;color:var(--yellow);background:rgba(255,207,51,.1);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,207,51,.25)' }, k.key)),
-          h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(k.key); toast('Clave copiada: ' + k.key); } } }, 'Copiar Clave'));
+            h('code', { style: 'font-family:var(--fm);font-size:.9rem;color:var(--yellow);background:rgba(255,207,51,.1);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,207,51,.25);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(k.key, this); toast('Clave copiada: ' + k.key); } } }, k.key)),
+          h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(k.key, this); toast('Clave copiada: ' + k.key); } } }, 'Copiar Clave'));
       })));
   root.appendChild(testCard);
 
@@ -1237,9 +1294,9 @@ AV.licencias = async function () {
         h('b', null, o.clientName),
         o.clientEmail,
         o.planName,
-        h('code', { style: 'font-family:var(--fm);font-size:.84rem;color:var(--yellow)' }, o.licenseKey),
+        h('code', { style: 'font-family:var(--fm);font-size:.84rem;color:var(--yellow);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, o.licenseKey),
         pill(ORDER_ST[o.status] || o.status),
-        h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey); toast('Clave copiada: ' + o.licenseKey); } } }, 'Copiar')
+        h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, 'Copiar')
       ]
     };
   });
