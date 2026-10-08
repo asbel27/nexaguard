@@ -345,7 +345,7 @@
 
 .summary-left {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 18px;
     flex: 1;
     min-width: 280px;
@@ -623,6 +623,49 @@
     accent-color: #ffcf33;
     flex-shrink: 0;
     cursor: pointer;
+}
+
+.ng-subcontrols {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: rgba(8, 14, 42, 0.7);
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ng-subcontrols label {
+    font-size: 0.86rem;
+    color: #c2d1f7;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.ng-subcontrols input[type="text"],
+.ng-subcontrols input[type="number"] {
+    background: #060b24 !important;
+    border: 1px solid rgba(255, 207, 51, 0.45) !important;
+    color: #ffd859 !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+}
+
+.ng-subcontrols input[type="number"] {
+    width: 65px !important;
+    text-align: center;
+}
+
+.ng-slug-prefix {
+    font-family: monospace;
+    color: #8da2d8;
+    font-size: 0.85rem;
 }
 
 /* Tables */
@@ -1573,6 +1616,204 @@
     background: rgba(255, 207, 51, 0.2) !important;
     border-color: #ffcf33 !important;
     box-shadow: 0 0 12px rgba(255, 207, 51, 0.35) !important;
+}
+
+/* =========================================================================
+   LOGIN CUSTOMIZER & BRANDING STYLES
+   ========================================================================= */
+.login-customizer-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    margin-top: 14px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    transition: opacity 0.3s ease;
+}
+
+@media (max-width: 900px) {
+    .login-customizer-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.login-options-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.login-opt-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.login-opt-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #e2eafc;
+}
+
+.login-presets-wrap {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+
+.preset-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(14, 22, 62, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    color: #c2d1f7;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preset-pill:hover {
+    border-color: #ffcf33;
+    color: #ffd859;
+}
+
+.preset-pill input[type="radio"] {
+    accent-color: #ffcf33;
+    margin: 0;
+}
+
+.input-with-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.ng-input-full {
+    flex: 1;
+    background: #060b24 !important;
+    border: 1px solid rgba(255, 207, 51, 0.35) !important;
+    color: #ffffff !important;
+    padding: 7px 12px !important;
+    border-radius: 8px !important;
+    font-size: 0.88rem !important;
+}
+
+.btn-sm {
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
+    white-space: nowrap;
+}
+
+/* Vista Previa en Vivo de Pantalla de Login */
+.login-preview-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-preview-box {
+    position: relative;
+    border-radius: 14px;
+    border: 1.5px solid rgba(255, 207, 51, 0.35);
+    overflow: hidden;
+    min-height: 380px;
+    background: radial-gradient(ellipse at bottom, #1e1b4b 0%, #0a0f2c 60%, #030717 100%);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+    transition: background 0.3s ease;
+}
+
+.lpc-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 12, 36, 0.65);
+    backdrop-filter: blur(2px);
+    z-index: 1;
+}
+
+.lpc-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.lpc-logo {
+    margin-bottom: 12px;
+}
+
+.lpc-notice {
+    background: rgba(255, 207, 51, 0.14);
+    border: 1px solid rgba(255, 207, 51, 0.45);
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin-bottom: 14px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #ffd859;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.35;
+    max-width: 280px;
+}
+
+.lpc-form-dummy {
+    width: 100%;
+    max-width: 260px;
+    background: #111a44;
+    border: 1px solid rgba(255, 207, 51, 0.25);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    text-align: left;
+}
+
+.lpc-field {
+    margin-bottom: 10px;
+}
+
+.lpc-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #9cb1e6;
+    margin-bottom: 3px;
+    font-weight: 600;
+}
+
+.lpc-input {
+    background: #070c26;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 0.75rem;
+    color: #7b8ebb;
+}
+
+.lpc-btn {
+    background: linear-gradient(135deg, #ffcf33 0%, #ff9e00 100%);
+    color: #070c26;
+    font-weight: 800;
+    font-size: 0.78rem;
+    text-align: center;
+    padding: 7px;
+    border-radius: 6px;
+    margin-top: 10px;
+    box-shadow: 0 4px 12px rgba(255, 207, 51, 0.3);
+}
+
+.lpc-footer {
+    margin-top: 12px;
+    font-size: 0.68rem;
+    color: #8da2d8;
 }
 
 

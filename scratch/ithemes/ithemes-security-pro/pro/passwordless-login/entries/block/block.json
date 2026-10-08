@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "name": "ithemes-security/passwordless-login-settings",
+  "title": "Solid Security Passwordless Settings",
+  "category": "widgets",
+  "editorScript": "itsec-passwordless-login-block",
+  "editorStyle": "itsec-passwordless-login-block",
+  "supports": {
+    "inserter": false
+  }
+}

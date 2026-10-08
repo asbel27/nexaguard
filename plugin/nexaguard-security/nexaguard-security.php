@@ -96,6 +96,10 @@ class NexaGuard_Plugin {
             return;
         }
 
+        if (function_exists('wp_enqueue_media')) {
+            wp_enqueue_media();
+        }
+
         $css_ver = file_exists(NEXAGUARD_DIR . 'assets/admin.css') ? filemtime(NEXAGUARD_DIR . 'assets/admin.css') : NEXAGUARD_VERSION;
         $js_ver  = file_exists(NEXAGUARD_DIR . 'assets/admin.js') ? filemtime(NEXAGUARD_DIR . 'assets/admin.js') : NEXAGUARD_VERSION;
 
@@ -271,7 +275,21 @@ class NexaGuard_Plugin {
             'anti_clearfake'        => !empty($_POST['anti_clearfake']),
             'emergency_lockdown'    => !empty($_POST['emergency_lockdown']),
             'disallow_file_edit'    => !empty($_POST['disallow_file_edit']),
-            'disable_dir_browsing'  => !empty($_POST['disable_dir_browsing'])
+            'disable_dir_browsing'  => !empty($_POST['disable_dir_browsing']),
+            'brute_force_protection'=> !empty($_POST['brute_force_protection']),
+            'bf_max_retries'        => isset($_POST['bf_max_retries']) ? max(3, min(20, intval($_POST['bf_max_retries']))) : 5,
+            'bf_lockout_time'       => isset($_POST['bf_lockout_time']) ? max(5, min(1440, intval($_POST['bf_lockout_time']))) : 20,
+            'hide_backend'          => !empty($_POST['hide_backend']),
+            'login_slug'            => !empty($_POST['login_slug']) ? sanitize_title(trim($_POST['login_slug'])) : 'acceso-seguro',
+            'block_user_enumeration'=> !empty($_POST['block_user_enumeration']),
+            'generic_login_errors'  => !empty($_POST['generic_login_errors']),
+            'protect_system_files'  => !empty($_POST['protect_system_files']),
+            'admin_login_alerts'    => !empty($_POST['admin_login_alerts']),
+            'login_custom_design'   => !empty($_POST['login_custom_design']),
+            'login_bg_image'        => isset($_POST['login_bg_image']) ? esc_url_raw(trim($_POST['login_bg_image'])) : '',
+            'login_bg_preset'       => isset($_POST['login_bg_preset']) ? sanitize_key($_POST['login_bg_preset']) : 'deep-navy',
+            'login_logo_image'      => isset($_POST['login_logo_image']) ? esc_url_raw(trim($_POST['login_logo_image'])) : '',
+            'login_security_notice' => isset($_POST['login_security_notice']) ? sanitize_text_field(trim($_POST['login_security_notice'])) : 'Estás iniciando sesión en tu WordPress protegido por NexaGuard'
         );
 
         update_option('nexaguard_settings', $settings);
@@ -295,6 +313,13 @@ class NexaGuard_Plugin {
         // 3. Deshabilitar editor de temas en wp-config.php si está marcado
         if ($settings['disallow_file_edit']) {
             $cleaner->apply_disallow_file_edit();
+        }
+
+        // 4. Blindaje de archivos sensibles del sistema y wp-includes
+        if ($settings['protect_system_files']) {
+            $cleaner->protect_system_files(true);
+        } else {
+            $cleaner->protect_system_files(false);
         }
 
         wp_send_json_success(array('message' => 'Configuración de seguridad y blindaje guardada con éxito.'));

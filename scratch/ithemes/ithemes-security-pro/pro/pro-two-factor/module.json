@@ -1,0 +1,115 @@
+{
+  "id": "pro-two-factor",
+  "status": "inherit",
+  "type": "login",
+  "extends": "two-factor",
+  "user-groups": {
+    "protect_user_group": {
+      "type": "multiple",
+      "title": "Require Two Factor",
+      "description": "Require users to use two-factor authentication. We highly recommended requiring two-factor authentication for all users who can make changes to the site.",
+      "keywords": [
+        "Force Two Factor"
+      ],
+      "conditional": {
+        "settings": {
+          "$ref": "#/definitions/can-use-email"
+        }
+      }
+    },
+    "remember_group": {
+      "type": "multiple",
+      "title": "Allow Remembering Device",
+      "description": "When logging in, users will be presented with a “Remember this Device” option. If enabled, users won’t be prompted to provide a two-factor authentication code for the next 30 days while using a remembered device.",
+      "conditional": {
+        "active-modules": [
+          "fingerprinting"
+        ]
+      }
+    }
+  },
+  "settings": {
+    "type": "object",
+    "properties": {
+      "protect_vulnerable_users": {
+        "type": "boolean",
+        "default": false,
+        "title": "Vulnerable User Protection",
+        "description": "Require vulnerable user accounts to use two-factor authentication even if they haven't opted-in or previously had this as a requirement. Enabling this feature is highly recommended for users with weak passwords or any that attackers have targeted."
+      },
+      "protect_vulnerable_site": {
+        "type": "boolean",
+        "default": false,
+        "title": "Vulnerable Site Protection",
+        "description": "Require all users to use two-factor authentication to log in when the site is vulnerable due to outdated or exploitable software. Enabling this feature is highly recommended."
+      }
+    },
+    "uiSchema": {
+      "ui:sections": [
+        {
+          "title": "Protection",
+          "fields": [
+            "protect_vulnerable_users",
+            "protect_vulnerable_site"
+          ]
+        }
+      ]
+    }
+  },
+  "conditional-settings": {
+    "protect_vulnerable_users": {
+      "settings": {
+        "$ref": "#/definitions/can-use-email"
+      }
+    },
+    "protect_vulnerable_site": {
+      "settings": {
+        "$ref": "#/definitions/can-use-email"
+      },
+      "active-modules": [
+        "version-management"
+      ]
+    }
+  },
+  "definitions": {
+    "can-use-email": {
+      "type": "object",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "available_methods": {
+              "type": "string",
+              "enum": [
+                "all"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "available_methods": {
+              "type": "string",
+              "enum": [
+                "custom"
+              ]
+            },
+            "custom_available_methods": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "contains": {
+                "type": "string",
+                "enum": [
+                  "Two_Factor_Email"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

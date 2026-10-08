@@ -897,4 +897,115 @@ jQuery(document).ready(function ($) {
         $('#clean-upgrade-modal').fadeOut(100);
         $('#license-modal').fadeIn(200);
     });
+
+    // ============ PERSONALIZADOR Y EMBELLECEDOR DE LOGIN ============
+    // Selector de Medios de WordPress para Fondo
+    $(document).on('click', '#btn-select-login-bg', function (e) {
+        e.preventDefault();
+        if (typeof wp === 'undefined' || !wp.media) {
+            alert('La biblioteca de medios de WordPress no está disponible en este momento. Puedes ingresar la URL directamente.');
+            return;
+        }
+        var bgFrame = wp.media({
+            title: 'Seleccionar Imagen de Fondo para Login',
+            button: { text: 'Usar como Fondo' },
+            multiple: false
+        });
+        bgFrame.on('select', function () {
+            var attachment = bgFrame.state().get('selection').first().toJSON();
+            $('#login_bg_image').val(attachment.url).trigger('input');
+        });
+        bgFrame.open();
+    });
+
+    // Selector de Medios de WordPress para Logo
+    $(document).on('click', '#btn-select-login-logo', function (e) {
+        e.preventDefault();
+        if (typeof wp === 'undefined' || !wp.media) {
+            alert('La biblioteca de medios de WordPress no está disponible en este momento. Puedes ingresar la URL directamente.');
+            return;
+        }
+        var logoFrame = wp.media({
+            title: 'Seleccionar Logo Personalizado (Sustituir Icono WP)',
+            button: { text: 'Usar como Logo' },
+            multiple: false
+        });
+        logoFrame.on('select', function () {
+            var attachment = logoFrame.state().get('selection').first().toJSON();
+            $('#login_logo_image').val(attachment.url).trigger('input');
+        });
+        logoFrame.open();
+    });
+
+    // Limpiar imagen de fondo y logo
+    $(document).on('click', '#btn-clear-login-bg', function (e) {
+        e.preventDefault();
+        $('#login_bg_image').val('').trigger('input');
+    });
+
+    $(document).on('click', '#btn-clear-login-logo', function (e) {
+        e.preventDefault();
+        $('#login_logo_image').val('').trigger('input');
+    });
+
+    // Activar / Desactivar panel de customizer
+    $(document).on('change', '#login_custom_design', function () {
+        var isEnabled = $(this).is(':checked');
+        $('#login-customizer-controls').css('opacity', isEnabled ? '1' : '0.6');
+    });
+
+    // Función de actualización en tiempo real de la miniatura de previsualización
+    function updateLoginPreview() {
+        var bgUrl = ($('#login_bg_image').val() || '').trim();
+        var logoUrl = ($('#login_logo_image').val() || '').trim();
+        var preset = $('input[name="login_bg_preset"]:checked').val() || 'deep-navy';
+        var noticeText = ($('#login_security_notice').val() || '').trim() || 'Estás iniciando sesión en tu WordPress protegido por NexaGuard';
+
+        var $box = $('#login-preview-card');
+        if (!$box.length) return;
+
+        // Fondo
+        if (bgUrl) {
+            $box.css({
+                'background-image': 'url(' + bgUrl + ')',
+                'background-size': 'cover',
+                'background-position': 'center center'
+            });
+        } else if (preset === 'cyber-dark') {
+            $box.css({
+                'background-image': 'radial-gradient(circle at 50% 20%, #172554 0%, #0b112c 50%, #030712 100%)',
+                'background-size': 'auto'
+            });
+        } else if (preset === 'matrix') {
+            $box.css({
+                'background-image': 'linear-gradient(135deg, #022c22 0%, #05161e 40%, #0b0f19 100%)',
+                'background-size': 'auto'
+            });
+        } else {
+            // deep-navy
+            $box.css({
+                'background-image': 'radial-gradient(ellipse at bottom, #1e1b4b 0%, #0a0f2c 60%, #030717 100%)',
+                'background-size': 'auto'
+            });
+        }
+
+        // Logo
+        var $logoContainer = $('#login-preview-logo');
+        if (logoUrl) {
+            $logoContainer.html('<img src="' + logoUrl + '" alt="Logo" style="max-height:48px; max-width:180px; object-fit:contain;" />');
+        } else {
+            $logoContainer.html('<span style="font-size:2.2rem; line-height:1;">🛡️</span><span style="font-size:0.86rem; font-weight:800; color:#ffcf33; display:block; margin-top:4px;">NexaGuard Security</span>');
+        }
+
+        // Aviso de seguridad
+        $('#login-preview-notice').text(noticeText);
+    }
+
+    // Escuchar cambios para actualización instantánea
+    $(document).on('input change', '#login_bg_image, #login_logo_image, #login_security_notice, input[name="login_bg_preset"]', function () {
+        updateLoginPreview();
+    });
+
+    // Inicializar previsualización al cargar
+    updateLoginPreview();
 });

@@ -16,13 +16,26 @@ class NexaGuard_Firewall {
         return (isset($license['status']) && ($license['status'] === 'active' || $license['status'] === 'expiring_soon'));
     }
 
+    public static function get_client_ip() {
+        $ip = '';
+        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+            $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            $ip = trim($ips[0]);
+        } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+            $ip = $_SERVER['REMOTE_ADDR'];
+        }
+        return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '127.0.0.1';
+    }
+
     public static function init() {
         // En la versión estándar gratuita el Blindaje y Cortafuegos WAF perimetral permanecen en pausa
         if (!self::is_pro()) {
             return;
         }
 
-        $settings = get_option('nexaguard_settings', array(
+        $settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
             'block_php_uploads'     => true,
             'disable_xmlrpc'        => true,
             'hide_wp_version'       => true,
@@ -30,11 +43,24 @@ class NexaGuard_Firewall {
             'anti_clearfake'        => true,
             'emergency_lockdown'    => false,
             'disallow_file_edit'    => false,
-            'disable_dir_browsing'  => true
+            'disable_dir_browsing'  => true,
+            'brute_force_protection'=> true,
+            'bf_max_retries'        => 5,
+            'bf_lockout_time'       => 20,
+            'hide_backend'          => false,
+            'login_slug'            => 'acceso-seguro',
+            'block_user_enumeration'=> true,
+            'generic_login_errors'  => true,
+            'protect_system_files'  => true,
+            'admin_login_alerts'    => true,
+            'login_custom_design'   => false,
+            'login_bg_image'        => '',
+            'login_bg_preset'       => 'deep-navy',
+            'login_logo_image'      => '',
+            'login_security_notice' => 'Estás iniciando sesión en tu WordPress protegido por NexaGuard'
         ));
 
         // 0. Modo Aislamiento de Emergencia / Lockdown
-        // Bloquea visitas y bots con 503 Mantenimiento pero permite acceso a administradores
         if (!empty($settings['emergency_lockdown'])) {
             add_action('init', array(__CLASS__, 'enforce_emergency_lockdown'), 1);
         }
@@ -71,6 +97,47 @@ class NexaGuard_Firewall {
         // 6. Inspección WAF de peticiones entrantes
         if (!empty($settings['waf_enabled']) && !is_admin()) {
             self::inspect_request();
+        }
+
+        // 7. Protección Anti Fuerza Bruta Local
+        if (!empty($settings['brute_force_protection'])) {
+            add_action('wp_login_failed', array(__CLASS__, 'on_login_failed'));
+            add_action('login_init', array(__CLASS__, 'check_login_lockout'), 1);
+            add_filter('authenticate', array(__CLASS__, 'check_authenticate_lockout'), 1, 3);
+            add_action('wp_login', array(__CLASS__, 'on_login_success'), 10, 2);
+        }
+
+        // 8. Ocultar URL de Acceso / Hide Backend
+        if (!empty($settings['hide_backend']) && !empty($settings['login_slug'])) {
+            add_action('init', array(__CLASS__, 'handle_hide_backend'), 1);
+            add_filter('site_url', array(__CLASS__, 'filter_login_url'), 100, 2);
+            add_filter('network_site_url', array(__CLASS__, 'filter_login_url'), 100, 2);
+            add_filter('wp_redirect', array(__CLASS__, 'filter_login_redirect'), 100, 1);
+        }
+
+        // 9. Bloqueo de Enumeración de Usuarios (REST API y query params)
+        if (!empty($settings['block_user_enumeration'])) {
+            add_filter('rest_dispatch_request', array(__CLASS__, 'filter_rest_user_enumeration'), 10, 4);
+            add_action('template_redirect', array(__CLASS__, 'block_author_query_scan'), 1);
+        }
+
+        // 10. Ofuscación Genérica de Errores de Acceso
+        if (!empty($settings['generic_login_errors'])) {
+            add_filter('login_errors', array(__CLASS__, 'generic_login_error_message'));
+        }
+
+        // 11. Alerta por Email ante Inicio de Sesión de Administrador desde Nueva IP
+        if (!empty($settings['admin_login_alerts'])) {
+            add_action('wp_login', array(__CLASS__, 'alert_new_admin_login_ip'), 20, 2);
+        }
+
+        // 12. Personalización y Embellecedor Visual de Login (Login Customizer & Branding)
+        if (!empty($settings['login_custom_design'])) {
+            add_action('login_enqueue_scripts', array(__CLASS__, 'render_custom_login_styles'));
+            add_filter('login_headerurl', array(__CLASS__, 'custom_login_header_url'));
+            add_filter('login_headertext', array(__CLASS__, 'custom_login_header_text'));
+            add_filter('login_headertitle', array(__CLASS__, 'custom_login_header_text'));
+            add_filter('login_message', array(__CLASS__, 'custom_login_message'));
         }
     }
 
@@ -178,7 +245,6 @@ class NexaGuard_Firewall {
 
         foreach ($suspicious_patterns as $pattern => $reason) {
             if (preg_match($pattern, $check_string)) {
-                // Registrar y bloquear
                 self::block_access($reason);
             }
         }
@@ -212,5 +278,491 @@ class NexaGuard_Firewall {
         </html>
         <?php
         exit;
+    }
+
+    /* =========================================================================
+     * 7. PROTECCIÓN ANTI FUERZA BRUTA LOCAL
+     * ========================================================================= */
+
+    public static function on_login_failed($username) {
+        $ip = self::get_client_ip();
+        $ip_hash = md5($ip);
+        $attempts_key = 'nexaguard_bf_' . $ip_hash;
+        $attempts = (int) get_transient($attempts_key);
+        $attempts++;
+
+        $settings = get_option('nexaguard_settings', array());
+        $max_retries = !empty($settings['bf_max_retries']) ? intval($settings['bf_max_retries']) : 5;
+        $lockout_mins = !empty($settings['bf_lockout_time']) ? intval($settings['bf_lockout_time']) : 20;
+
+        set_transient($attempts_key, $attempts, 10 * MINUTE_IN_SECONDS);
+
+        if ($attempts >= $max_retries) {
+            set_transient('nexaguard_lockout_' . $ip_hash, time() + ($lockout_mins * MINUTE_IN_SECONDS), $lockout_mins * MINUTE_IN_SECONDS);
+            $total = (int) get_option('nexaguard_total_lockouts', 0);
+            update_option('nexaguard_total_lockouts', $total + 1);
+        }
+    }
+
+    public static function on_login_success($user_login, $user) {
+        $ip = self::get_client_ip();
+        delete_transient('nexaguard_bf_' . md5($ip));
+        delete_transient('nexaguard_lockout_' . md5($ip));
+    }
+
+    public static function check_login_lockout() {
+        $ip = self::get_client_ip();
+        $lockout_exp = get_transient('nexaguard_lockout_' . md5($ip));
+        if ($lockout_exp) {
+            $mins = max(1, ceil(($lockout_exp - time()) / 60));
+            self::render_lockout_screen($mins, $ip);
+        }
+    }
+
+    public static function check_authenticate_lockout($user, $username, $password) {
+        $ip = self::get_client_ip();
+        $lockout_exp = get_transient('nexaguard_lockout_' . md5($ip));
+        if ($lockout_exp) {
+            $mins = max(1, ceil(($lockout_exp - time()) / 60));
+            return new WP_Error(
+                'nexaguard_lockout',
+                sprintf('<strong>NexaGuard Security:</strong> Esta dirección IP (%s) ha sido bloqueada temporalmente por exceso de intentos fallidos. Por favor, espere %d minutos antes de volver a intentarlo.', esc_html($ip), $mins)
+            );
+        }
+        return $user;
+    }
+
+    public static function render_lockout_screen($minutes, $ip) {
+        status_header(429);
+        nocache_headers();
+        ?>
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="utf-8">
+            <title>Bloqueo de Seguridad · NexaGuard Protection</title>
+            <style>
+                body{background:#0b1030;color:#eaf0ff;font-family:system-ui,-apple-system,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
+                .box{background:#111a44;border:1px solid rgba(255,69,96,.5);border-radius:18px;padding:36px;max-width:520px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.7)}
+                .ic{font-size:3.5rem;margin-bottom:12px}
+                h1{font-size:1.55rem;margin:0 0 10px;color:#ff9fb0}
+                p{color:#b6c4eb;font-size:.95rem;line-height:1.6;margin:0 0 18px}
+                .time-box{background:rgba(255,69,96,.15);border:1px solid rgba(255,69,96,.3);border-radius:10px;padding:12px;margin-bottom:18px;color:#ffcf33;font-weight:700;font-size:1.1rem}
+                .tag{font-size:.8rem;color:#7888b5;display:block}
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <div class="ic">🛑</div>
+                <h1>Bloqueo Temporal por Seguridad</h1>
+                <p>NexaGuard Security ha bloqueado temporalmente los accesos desde tu dirección IP debido a múltiples intentos consecutivos fallidos de inicio de sesión.</p>
+                <div class="time-box">⏳ Tiempo restante de bloqueo: ~<?php echo intval($minutes); ?> minutos</div>
+                <span class="tag">Dirección IP protegida: <?php echo esc_html($ip); ?></span>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
+    }
+
+    /* =========================================================================
+     * 8. OCULTAR URL DE ACCESO / HIDE BACKEND
+     * ========================================================================= */
+
+    public static function handle_hide_backend() {
+        if (defined('DOING_CRON') && DOING_CRON) return;
+        if (defined('DOING_AJAX') && DOING_AJAX) return;
+        if (defined('WP_CLI') && WP_CLI) return;
+
+        $settings = get_option('nexaguard_settings', array());
+        $slug = !empty($settings['login_slug']) ? sanitize_title($settings['login_slug']) : '';
+        if (empty($slug)) return;
+
+        $req_uri = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : '';
+        $req_path = trim($req_uri, '/');
+        $ip = self::get_client_ip();
+
+        // 1. Acceso a la ruta de login personalizada (ej: /acceso-seguro/)
+        if ($req_path === $slug) {
+            $token = wp_create_nonce('nexaguard_hb_' . $ip);
+            set_transient('nexaguard_hb_allowed_' . md5($ip), 1, 3600);
+            $redirect_to = !empty($_GET['redirect_to']) ? '&redirect_to=' . urlencode($_GET['redirect_to']) : '';
+            wp_safe_redirect(site_url('wp-login.php?ng_token=' . $token . $redirect_to));
+            exit;
+        }
+
+        // 2. Acceso directo a wp-login.php sin autorización
+        if (strpos($req_uri, 'wp-login.php') !== false) {
+            if (is_user_logged_in()) {
+                return;
+            }
+
+            if (isset($_GET['action']) && $_GET['action'] === 'postpass') {
+                return;
+            }
+
+            $allowed = get_transient('nexaguard_hb_allowed_' . md5($ip));
+            $token = isset($_GET['ng_token']) ? $_GET['ng_token'] : '';
+            if ($allowed || ($token && wp_verify_nonce($token, 'nexaguard_hb_' . $ip))) {
+                return;
+            }
+
+            self::render_hide_backend_404();
+        }
+    }
+
+    public static function render_hide_backend_404() {
+        status_header(404);
+        nocache_headers();
+        $not_found_template = get_404_template();
+        if ($not_found_template && file_exists($not_found_template)) {
+            include($not_found_template);
+            exit;
+        }
+        wp_die('Página no encontrada (Error 404). El recurso solicitado no existe.', '404 No Encontrado', array('response' => 404));
+    }
+
+    public static function filter_login_url($url, $scheme = null) {
+        if (strpos($url, 'wp-login.php') !== false) {
+            $settings = get_option('nexaguard_settings', array());
+            $slug = !empty($settings['login_slug']) ? sanitize_title($settings['login_slug']) : '';
+            if (!empty($slug)) {
+                $query = parse_url($url, PHP_URL_QUERY);
+                $new_url = home_url('/' . $slug . '/');
+                if (!empty($query)) {
+                    $new_url .= '?' . $query;
+                }
+                return $new_url;
+            }
+        }
+        return $url;
+    }
+
+    public static function filter_login_redirect($location) {
+        if (strpos($location, 'wp-login.php') !== false) {
+            $settings = get_option('nexaguard_settings', array());
+            $slug = !empty($settings['login_slug']) ? sanitize_title($settings['login_slug']) : '';
+            if (!empty($slug)) {
+                $query = parse_url($location, PHP_URL_QUERY);
+                $new_loc = home_url('/' . $slug . '/');
+                if (!empty($query)) {
+                    $new_loc .= '?' . $query;
+                }
+                return $new_loc;
+            }
+        }
+        return $location;
+    }
+
+    /* =========================================================================
+     * 9. BLOQUEO DE ENUMERACIÓN DE USUARIOS
+     * ========================================================================= */
+
+    public static function filter_rest_user_enumeration($result, $server, $request) {
+        $route = strtolower($request->get_route());
+        $parts = explode('/', trim($route, '/'));
+
+        if (isset($parts[0], $parts[2]) && $parts[0] === 'wp' && $parts[2] === 'users') {
+            if (isset($parts[3]) && $parts[3] === 'me') {
+                return $result;
+            }
+
+            if (!current_user_can('list_users')) {
+                return new WP_Error(
+                    'nexaguard_rest_forbidden',
+                    'NexaGuard Security: La enumeración de usuarios a través de la REST API ha sido deshabilitada por motivos de seguridad.',
+                    array('status' => 403)
+                );
+            }
+        }
+
+        return $result;
+    }
+
+    public static function block_author_query_scan() {
+        if (is_admin()) return;
+
+        if (isset($_GET['author']) || (is_author() && !is_user_logged_in())) {
+            global $wp_query;
+            if (!empty($_GET['author']) || (isset($wp_query->post_count) && $wp_query->post_count < 1)) {
+                wp_safe_redirect(home_url('/'), 301);
+                exit;
+            }
+        }
+    }
+
+    /* =========================================================================
+     * 10. OFUSCACIÓN GENÉRICA DE ERRORES DE LOGIN
+     * ========================================================================= */
+
+    public static function generic_login_error_message($error) {
+        return '<strong>ERROR</strong>: Las credenciales ingresadas son incorrectas. Verifique su usuario y contraseña o restablezca su acceso.';
+    }
+
+    /* =========================================================================
+     * 11. ALERTA POR EMAIL ANTE INICIO DE SESIÓN DE ADMINISTRADOR DESDE NUEVA IP
+     * ========================================================================= */
+
+    public static function alert_new_admin_login_ip($user_login, $user) {
+        if (!$user || !user_can($user, 'manage_options')) {
+            return;
+        }
+
+        $ip = self::get_client_ip();
+        $known_ips = (array) get_user_meta($user->ID, 'nexaguard_known_ips', true);
+
+        if (!in_array($ip, $known_ips, true)) {
+            $known_ips[] = $ip;
+            if (count($known_ips) > 20) {
+                array_shift($known_ips);
+            }
+            update_user_meta($user->ID, 'nexaguard_known_ips', $known_ips);
+
+            $site_name = get_bloginfo('name');
+            $site_url = home_url();
+            $date = current_time('d/m/Y H:i:s');
+            $user_email = !empty($user->user_email) ? $user->user_email : get_option('admin_email');
+
+            $subject = "🛡️ [NexaGuard] Alerta de Seguridad: Acceso de Administrador desde Nueva IP ({$site_name})";
+            $body = "Hola,\n\n"
+                  . "El sistema de seguridad de NexaGuard Security ha detectado un inicio de sesión exitoso con privilegios de Administrador desde una dirección IP no registrada previamente:\n\n"
+                  . "• Sitio Web: {$site_name} ({$site_url})\n"
+                  . "• Usuario Administrador: {$user_login}\n"
+                  . "• Correo Electrónico: {$user_email}\n"
+                  . "• Dirección IP Detectada: {$ip}\n"
+                  . "• Fecha y Hora: {$date}\n\n"
+                  . "Si fuiste tú quien inició sesión, no es necesaria ninguna acción adicional. Tu dirección IP ha sido registrada de forma segura.\n\n"
+                  . "⚠️ SI NO RECONOCES ESTE ACCESO:\n"
+                  . "Un tercero no autorizado podría tener las credenciales de tu cuenta. Accede de inmediato al panel de administración de NexaGuard Security para invalidar sesiones activas, regenerar sales criptográficas y cambiar tu contraseña.\n\n"
+                  . "Atentamente,\n"
+                  . "NexaGuard Security Radar 24H\n"
+                  . "https://nexaguards.com\n";
+
+            @wp_mail($user_email, $subject, $body);
+        }
+    }
+
+    /* =========================================================================
+     * 12. PERSONALIZACIÓN Y EMBELLECEDOR VISUAL DE LOGIN (LOGIN BRANDING)
+     * ========================================================================= */
+
+    public static function custom_login_header_url($url) {
+        return home_url('/');
+    }
+
+    public static function custom_login_header_text($text) {
+        $site_name = get_bloginfo('name');
+        return $site_name . ' · Protegido por NexaGuard Security';
+    }
+
+    public static function custom_login_message($message) {
+        $settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
+            'login_custom_design'   => false,
+            'login_security_notice' => 'Estás iniciando sesión en tu WordPress protegido por NexaGuard'
+        ));
+
+        if (empty($settings['login_custom_design'])) {
+            return $message;
+        }
+
+        $notice_text = !empty($settings['login_security_notice'])
+            ? esc_html($settings['login_security_notice'])
+            : 'Estás iniciando sesión en tu WordPress protegido por NexaGuard';
+
+        $badge = '<div class="nexaguard-login-badge"><span class="shield-ic">🛡️</span> ' . $notice_text . '</div>';
+        return $badge . $message;
+    }
+
+    public static function render_custom_login_styles() {
+        $settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
+            'login_custom_design'   => false,
+            'login_bg_image'        => '',
+            'login_bg_preset'       => 'deep-navy',
+            'login_logo_image'      => '',
+            'login_security_notice' => 'Estás iniciando sesión en tu WordPress protegido por NexaGuard'
+        ));
+
+        if (empty($settings['login_custom_design'])) {
+            return;
+        }
+
+        $bg_css = '';
+        if (!empty($settings['login_bg_image'])) {
+            $bg_url = esc_url($settings['login_bg_image']);
+            $bg_css = "background-image: url('{$bg_url}') !important; background-size: cover !important; background-position: center center !important; background-repeat: no-repeat !important; background-attachment: fixed !important;";
+        } elseif ($settings['login_bg_preset'] === 'cyber-dark') {
+            $bg_css = "background: radial-gradient(circle at 50% 20%, #172554 0%, #0b112c 50%, #030712 100%) !important;";
+        } elseif ($settings['login_bg_preset'] === 'matrix') {
+            $bg_css = "background: linear-gradient(135deg, #022c22 0%, #05161e 40%, #0b0f19 100%) !important;";
+        } else {
+            // deep-navy (default NexaGuard)
+            $bg_css = "background: radial-gradient(ellipse at bottom, #1e1b4b 0%, #0a0f2c 60%, #030717 100%) !important;";
+        }
+
+        $logo_css = '';
+        if (!empty($settings['login_logo_image'])) {
+            $logo_url = esc_url($settings['login_logo_image']);
+            $logo_css = "background-image: url('{$logo_url}') !important; background-size: contain !important; background-position: center center !important; background-repeat: no-repeat !important; width: 100% !important; max-width: 280px !important; height: 85px !important;";
+        } else {
+            // Logo de escudo estilizado NexaGuard en sustitución del icono por defecto de WordPress
+            $logo_css = "background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffcf33' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E\") !important; background-size: contain !important; background-repeat: no-repeat !important; background-position: center center !important; width: 72px !important; height: 72px !important;";
+        }
+
+        ?>
+        <style id="nexaguard-login-customizer">
+            body.login {
+                <?php echo $bg_css; ?>
+                color: #eaf0ff !important;
+                font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
+                min-height: 100vh !important;
+                position: relative;
+            }
+            body.login::before {
+                content: '';
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(8, 14, 42, 0.72);
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                z-index: 0;
+                pointer-events: none;
+            }
+            body.login #login {
+                position: relative;
+                z-index: 2;
+                padding: 40px 20px 24px;
+                max-width: 390px;
+            }
+            body.login #login h1 {
+                margin-bottom: 18px;
+                text-align: center;
+            }
+            body.login #login h1 a {
+                <?php echo $logo_css; ?>
+                margin: 0 auto 12px !important;
+                display: block;
+                outline: none;
+                box-shadow: none;
+                filter: drop-shadow(0 8px 20px rgba(0,0,0,0.45));
+                transition: transform 0.25s ease;
+            }
+            body.login #login h1 a:hover {
+                transform: scale(1.03);
+            }
+            .nexaguard-login-badge {
+                background: linear-gradient(135deg, rgba(255, 207, 51, 0.14) 0%, rgba(255, 165, 0, 0.08) 100%);
+                border: 1px solid rgba(255, 207, 51, 0.45);
+                border-radius: 12px;
+                padding: 12px 16px;
+                margin-bottom: 22px;
+                text-align: center;
+                color: #ffd859;
+                font-size: 0.88rem;
+                font-weight: 700;
+                line-height: 1.45;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+            }
+            .nexaguard-login-badge .shield-ic {
+                font-size: 1.35rem;
+                line-height: 1;
+                flex-shrink: 0;
+            }
+            body.login form#loginform {
+                background: #111a44 !important;
+                border: 1.5px solid rgba(255, 207, 51, 0.35) !important;
+                border-radius: 18px !important;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+                padding: 30px 28px 26px !important;
+                margin-top: 0 !important;
+            }
+            body.login form#loginform label {
+                color: #c2d1f7 !important;
+                font-size: 0.88rem !important;
+                font-weight: 600 !important;
+                margin-bottom: 6px !important;
+            }
+            body.login form#loginform .input,
+            body.login form#loginform input[type="text"],
+            body.login form#loginform input[type="password"] {
+                background: #080e2b !important;
+                border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+                border-radius: 10px !important;
+                color: #ffffff !important;
+                font-size: 1rem !important;
+                padding: 10px 14px !important;
+                transition: all 0.2s ease !important;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.3) !important;
+            }
+            body.login form#loginform .input:focus,
+            body.login form#loginform input[type="text"]:focus,
+            body.login form#loginform input[type="password"]:focus {
+                border-color: #ffcf33 !important;
+                box-shadow: 0 0 0 3px rgba(255, 207, 51, 0.25), inset 0 2px 4px rgba(0,0,0,0.3) !important;
+                outline: none !important;
+            }
+            body.login .forgetmenot {
+                margin-top: 10px !important;
+            }
+            body.login .forgetmenot label {
+                color: #9cb1e6 !important;
+                font-size: 0.84rem !important;
+                cursor: pointer;
+            }
+            body.login form#loginform input[type="submit"]#wp-submit {
+                background: linear-gradient(135deg, #ffcf33 0%, #ff9e00 100%) !important;
+                border: none !important;
+                border-radius: 10px !important;
+                color: #070c26 !important;
+                font-weight: 800 !important;
+                font-size: 0.98rem !important;
+                letter-spacing: 0.02em !important;
+                padding: 11px 22px !important;
+                width: 100% !important;
+                margin-top: 16px !important;
+                box-shadow: 0 6px 18px rgba(255, 207, 51, 0.35) !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease !important;
+                text-shadow: none !important;
+                float: none !important;
+            }
+            body.login form#loginform input[type="submit"]#wp-submit:hover {
+                transform: translateY(-2px) !important;
+                box-shadow: 0 10px 24px rgba(255, 207, 51, 0.5) !important;
+                filter: brightness(1.05) !important;
+            }
+            body.login #nav, body.login #backtoblog {
+                text-align: center !important;
+                padding: 10px 0 !important;
+                margin: 12px 0 0 !important;
+            }
+            body.login #nav a, body.login #backtoblog a {
+                color: #9cb1e6 !important;
+                font-size: 0.86rem !important;
+                font-weight: 600 !important;
+                transition: color 0.2s ease !important;
+            }
+            body.login #nav a:hover, body.login #backtoblog a:hover {
+                color: #ffcf33 !important;
+                text-decoration: underline !important;
+            }
+            body.login .message, body.login .notice, body.login #login_error {
+                background: #162052 !important;
+                border-left: 4px solid #ff4560 !important;
+                color: #ffd859 !important;
+                border-radius: 8px !important;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+                font-size: 0.9rem !important;
+                padding: 12px 16px !important;
+            }
+            body.login .message {
+                border-left-color: #3de8a4 !important;
+                color: #d1fae5 !important;
+            }
+        </style>
+        <?php
     }
 }

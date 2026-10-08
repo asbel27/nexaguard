@@ -19,13 +19,31 @@ $is_standard = !$has_license;
 $vigilance_active = $is_pro ? get_option('nexaguard_vigilance_active', 1) : 0;
 
 // WAF settings (integrado en la misma vista)
-$settings = get_option('nexaguard_settings', array(
-    'block_php_uploads' => true,
-    'disable_xmlrpc'    => true,
-    'hide_wp_version'   => true,
-    'waf_enabled'       => true,
-    'anti_clearfake'    => true
+$settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
+    'block_php_uploads'     => true,
+    'disable_xmlrpc'        => true,
+    'hide_wp_version'       => true,
+    'waf_enabled'           => true,
+    'anti_clearfake'        => true,
+    'emergency_lockdown'    => false,
+    'disallow_file_edit'    => false,
+    'disable_dir_browsing'  => true,
+    'brute_force_protection'=> true,
+    'bf_max_retries'        => 5,
+    'bf_lockout_time'       => 20,
+    'hide_backend'          => false,
+    'login_slug'            => 'acceso-seguro',
+    'block_user_enumeration'=> true,
+    'generic_login_errors'  => true,
+    'protect_system_files'  => true,
+    'admin_login_alerts'    => true,
+    'login_custom_design'   => false,
+    'login_bg_image'        => '',
+    'login_bg_preset'       => 'deep-navy',
+    'login_logo_image'      => '',
+    'login_security_notice' => 'Estás iniciando sesión en tu WordPress protegido por NexaGuard'
 ));
+$total_lockouts = intval(get_option('nexaguard_total_lockouts', 0));
 
 $threat_count = $last_report ? $last_report['threats_count'] : 0;
 $quarantine_count = count($quarantine_log);
@@ -44,14 +62,6 @@ $rollback_count = count($backup_history);
                 <h1>NexaGuard Security <span class="badge-v">v<?php echo NEXAGUARD_VERSION; ?></span></h1>
                 <p class="sub">Auditoría forense profunda, erradicación de malware e inteligencia en la nube</p>
             </div>
-        </div>
-        <div class="nexaguard-header-actions">
-            <button type="button" id="btn-reset-scan" class="btn-ng btn-ng-outline" title="Borrar historial anterior e iniciar vista limpia">
-                🔄 Resetear
-            </button>
-            <button type="button" id="btn-start-scan" class="btn-ng btn-ng-primary">
-                ⚡ Iniciar Análisis Forense
-            </button>
         </div>
     </div>
 
@@ -197,6 +207,14 @@ $rollback_count = count($backup_history);
                         }
                         ?>
                     </p>
+                    <div class="scan-card-actions" style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <button type="button" id="btn-start-scan" class="btn-ng btn-ng-primary">
+                            ⚡ Iniciar Análisis Forense
+                        </button>
+                        <button type="button" id="btn-reset-scan" class="btn-ng btn-ng-outline" title="Borrar historial anterior e iniciar vista limpia">
+                            🔄 Limpiar Vista / Resetear
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="summary-kpis">
@@ -606,6 +624,179 @@ $rollback_count = count($backup_history);
                         <p class="ng-hint">Añade directiva en .htaccess para que ningún visitante ni escáner automatizado pueda ver el listado de archivos dentro de carpetas de tu servidor.</p>
                     </div>
                     <input type="checkbox" name="disable_dir_browsing" value="1" <?php checked(!empty($settings['disable_dir_browsing'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                </label>
+
+                <!-- Protección Anti Fuerza Bruta Local -->
+                <div class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                    <div class="toggle-info">
+                        <b>Protección Anti Fuerza Bruta Local (Bloqueo IP Automático) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <p class="ng-hint">Bloquea temporalmente el acceso por IP tras reiterados intentos fallidos de autenticación para mitigar ataques de diccionario masivos.</p>
+                        <?php if ($total_lockouts > 0): ?>
+                            <div style="margin-top:6px;"><span class="badge-v" style="background:rgba(61,232,164,.15);color:#3de8a4;font-size:0.75rem;">🛡️ <?php echo $total_lockouts; ?> bloqueo(s) perimetral(es) registrados</span></div>
+                        <?php endif; ?>
+                        <div class="ng-subcontrols">
+                            <label>Máx. Intentos Fallidos: <input type="number" name="bf_max_retries" value="<?php echo esc_attr($settings['bf_max_retries']); ?>" min="3" max="20" <?php disabled(!$is_pro); ?>></label>
+                            <label>Tiempo de Bloqueo (minutos): <input type="number" name="bf_lockout_time" value="<?php echo esc_attr($settings['bf_lockout_time']); ?>" min="5" max="1440" <?php disabled(!$is_pro); ?>></label>
+                        </div>
+                    </div>
+                    <label style="cursor:pointer; display:flex; align-items:center;">
+                        <input type="checkbox" name="brute_force_protection" value="1" <?php checked(!empty($settings['brute_force_protection'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                    </label>
+                </div>
+
+                <!-- Ocultar URL de Acceso (Hide Backend) -->
+                <div class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                    <div class="toggle-info">
+                        <b>Ocultar URL de Acceso al Panel (Hide wp-login.php) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <p class="ng-hint">Reemplaza el acceso estándar a <code>wp-login.php</code> por una ruta secreta personalizada. Bots automatizados y atacantes que intenten acceder directamente recibirán un error 404 No Encontrado.</p>
+                        <div class="ng-subcontrols">
+                            <label>Ruta Personalizada: <span class="ng-slug-prefix"><?php echo esc_url(home_url('/')); ?></span><input type="text" name="login_slug" value="<?php echo esc_attr($settings['login_slug']); ?>" placeholder="acceso-seguro" class="ng-input-slug" style="width:140px;" <?php disabled(!$is_pro); ?>><span class="ng-slug-prefix">/</span></label>
+                        </div>
+                    </div>
+                    <label style="cursor:pointer; display:flex; align-items:center;">
+                        <input type="checkbox" name="hide_backend" value="1" <?php checked(!empty($settings['hide_backend'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                    </label>
+                </div>
+
+                <!-- Personalizador y Embellecedor Visual de Login (Login Customizer & Branding) -->
+                <div class="toggle-row toggle-row-customizer <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="border-left: 3px solid #ffcf33; flex-direction: column; align-items: stretch; gap: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <div class="toggle-info">
+                            <b>Personalizador y Embellecedor Visual de Login (Login Customizer & Branding) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                            <p class="ng-hint">Transforma la pantalla estándar de <code>wp-login.php</code> con una experiencia visual moderna y elegante: añade tu propio fondo de pantalla, sustituye el icono de WordPress por tu logo y muestra un aviso de seguridad que indica que el sitio está protegido por NexaGuard.</p>
+                        </div>
+                        <label style="cursor:pointer; display:flex; align-items:center; margin-left: 14px;">
+                            <input type="checkbox" name="login_custom_design" id="login_custom_design" value="1" <?php checked(!empty($settings['login_custom_design'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                        </label>
+                    </div>
+
+                    <!-- Panel de Controles y Previsualización -->
+                    <div id="login-customizer-controls" class="login-customizer-grid" style="<?php echo empty($settings['login_custom_design']) ? 'opacity: 0.6;' : ''; ?>">
+                        
+                        <!-- Columna Izquierda: Opciones de Diseño -->
+                        <div class="login-options-col">
+                            <!-- Preset de fondo -->
+                            <div class="login-opt-group">
+                                <label class="login-opt-label">🎨 Estilo / Fondo de Pantalla:</label>
+                                <div class="login-presets-wrap">
+                                    <label class="preset-pill">
+                                        <input type="radio" name="login_bg_preset" value="deep-navy" <?php checked($settings['login_bg_preset'] === 'deep-navy'); ?> <?php disabled(!$is_pro); ?>>
+                                        <span>🛡️ Nexa Deep Navy</span>
+                                    </label>
+                                    <label class="preset-pill">
+                                        <input type="radio" name="login_bg_preset" value="cyber-dark" <?php checked($settings['login_bg_preset'] === 'cyber-dark'); ?> <?php disabled(!$is_pro); ?>>
+                                        <span>🌌 Cyber Dark Nebula</span>
+                                    </label>
+                                    <label class="preset-pill">
+                                        <input type="radio" name="login_bg_preset" value="matrix" <?php checked($settings['login_bg_preset'] === 'matrix'); ?> <?php disabled(!$is_pro); ?>>
+                                        <span>⚡ Matrix Cyberpunk</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Imagen de Fondo Personalizada -->
+                            <div class="login-opt-group">
+                                <label class="login-opt-label">🖼️ Imagen de Fondo Personalizada (URL o Subir Archivo):</label>
+                                <div class="input-with-actions">
+                                    <input type="text" name="login_bg_image" id="login_bg_image" value="<?php echo esc_attr($settings['login_bg_image']); ?>" placeholder="https://ejemplo.com/fondo.jpg" class="ng-input-full" <?php disabled(!$is_pro); ?>>
+                                    <button type="button" class="btn-ng btn-ng-outline btn-sm" id="btn-select-login-bg" <?php disabled(!$is_pro); ?>>📁 Elegir Imagen</button>
+                                    <button type="button" class="btn-ng btn-ng-link btn-sm" id="btn-clear-login-bg" title="Quitar imagen" <?php disabled(!$is_pro); ?>>✕</button>
+                                </div>
+                                <span class="ng-hint" style="font-size:0.78rem;">Se aplicará en alta resolución con superposición translúcida de seguridad.</span>
+                            </div>
+
+                            <!-- Logo Personalizado (Sustituye icono WP) -->
+                            <div class="login-opt-group">
+                                <label class="login-opt-label">👑 Logo Personalizado (Sustituye el Icono de WordPress):</label>
+                                <div class="input-with-actions">
+                                    <input type="text" name="login_logo_image" id="login_logo_image" value="<?php echo esc_attr($settings['login_logo_image']); ?>" placeholder="https://ejemplo.com/logo.png" class="ng-input-full" <?php disabled(!$is_pro); ?>>
+                                    <button type="button" class="btn-ng btn-ng-outline btn-sm" id="btn-select-login-logo" <?php disabled(!$is_pro); ?>>📁 Elegir Logo</button>
+                                    <button type="button" class="btn-ng btn-ng-link btn-sm" id="btn-clear-login-logo" title="Quitar logo" <?php disabled(!$is_pro); ?>>✕</button>
+                                </div>
+                                <span class="ng-hint" style="font-size:0.78rem;">Si no subes ningún logo, se mostrará el elegante escudo dorado de NexaGuard Security.</span>
+                            </div>
+
+                            <!-- Mensaje de Seguridad -->
+                            <div class="login-opt-group">
+                                <label class="login-opt-label">🔒 Mensaje de Seguridad en la Pantalla de Acceso:</label>
+                                <input type="text" name="login_security_notice" id="login_security_notice" value="<?php echo esc_attr($settings['login_security_notice']); ?>" placeholder="Estás iniciando sesión en tu WordPress protegido por NexaGuard" class="ng-input-full" <?php disabled(!$is_pro); ?>>
+                                <span class="ng-hint" style="font-size:0.78rem;">Aparecerá como distintivo oficial de blindaje en la parte superior del formulario de login.</span>
+                            </div>
+                        </div>
+
+                        <!-- Columna Derecha: Vista Previa en Vivo -->
+                        <div class="login-preview-col">
+                            <label class="login-opt-label" style="text-align:center; display:block; margin-bottom:8px;">👁️ Vista Previa en Tiempo Real:</label>
+                            <div id="login-preview-card" class="login-preview-box">
+                                <div class="lpc-overlay"></div>
+                                <div class="lpc-content">
+                                    <div id="login-preview-logo" class="lpc-logo">
+                                        <?php if (!empty($settings['login_logo_image'])): ?>
+                                            <img src="<?php echo esc_url($settings['login_logo_image']); ?>" alt="Logo" style="max-height:48px; max-width:180px; object-fit:contain;" />
+                                        <?php else: ?>
+                                            <span style="font-size:2.2rem; line-height:1;">🛡️</span>
+                                            <span style="font-size:0.86rem; font-weight:800; color:#ffcf33; display:block; margin-top:4px;">NexaGuard Security</span>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div class="lpc-notice">
+                                        <span style="font-size:1.1rem; line-height:1;">🛡️</span>
+                                        <span id="login-preview-notice"><?php echo esc_html($settings['login_security_notice']); ?></span>
+                                    </div>
+
+                                    <div class="lpc-form-dummy">
+                                        <div class="lpc-field">
+                                            <span class="lpc-label">Nombre de usuario o correo</span>
+                                            <div class="lpc-input">admin@tudominio.com</div>
+                                        </div>
+                                        <div class="lpc-field">
+                                            <span class="lpc-label">Contraseña</span>
+                                            <div class="lpc-input">••••••••••••••</div>
+                                        </div>
+                                        <div class="lpc-btn">Iniciar Sesión Segura ›</div>
+                                    </div>
+                                    <div class="lpc-footer">¿Has olvidado tu contraseña? · ← Volver al sitio</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Bloquear Enumeración de Usuarios -->
+                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                    <div class="toggle-info">
+                        <b>Bloquear Enumeración de Usuarios (Anti-Reconnaissance) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <p class="ng-hint">Prohíbe a escáneres y visitantes anónimos extraer los nombres de usuario reales del sitio a través del endpoint REST API (<code>/wp-json/wp/v2/users</code>) y parámetros de autor (<code>/?author=1</code>).</p>
+                    </div>
+                    <input type="checkbox" name="block_user_enumeration" value="1" <?php checked(!empty($settings['block_user_enumeration'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                </label>
+
+                <!-- Ofuscación Genérica de Errores de Acceso -->
+                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                    <div class="toggle-info">
+                        <b>Ofuscación Genérica de Errores de Inicio de Sesión <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <p class="ng-hint">Sustituye mensajes detallados como <em>"El usuario no existe"</em> o <em>"Contraseña incorrecta"</em> por un mensaje genérico. Evita que un atacante determine si un usuario específico existe en la web.</p>
+                    </div>
+                    <input type="checkbox" name="generic_login_errors" value="1" <?php checked(!empty($settings['generic_login_errors'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                </label>
+
+                <!-- Blindaje de Archivos del Sistema y wp-includes -->
+                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                    <div class="toggle-info">
+                        <b>Blindaje de Archivos del Sistema y wp-includes (.htaccess) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <p class="ng-hint">Bloquea la ejecución directa de scripts PHP en la carpeta interna <code>/wp-includes/</code>, deniega el acceso a <code>wp-config.php</code>, <code>readme.html</code> y bloquea métodos HTTP no seguros (TRACE, TRACK, DEBUG).</p>
+                    </div>
+                    <input type="checkbox" name="protect_system_files" value="1" <?php checked(!empty($settings['protect_system_files'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                </label>
+
+                <!-- Alertas de Acceso de Administrador por Email -->
+                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                    <div class="toggle-info">
+                        <b>Alertas por Correo ante Inicio de Sesión de Administrador desde Nueva IP <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <p class="ng-hint">Envía una alerta inmediata al correo del administrador cada vez que se inicie sesión con privilegios de gestión desde una dirección IP no reconocida previamente.</p>
+                    </div>
+                    <input type="checkbox" name="admin_login_alerts" value="1" <?php checked(!empty($settings['admin_login_alerts'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
                 </label>
             </div>
 

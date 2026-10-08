@@ -142,6 +142,8 @@ class NexaGuard_Cleaner {
             return $this->restore_core_file($target);
         } elseif ($type === 'revert_snapshot') {
             return $this->revert_snapshot($target);
+        } elseif ($type === 'protect_system_files') {
+            return $this->protect_system_files(true);
         }
 
         return array('success' => false, 'message' => 'Acción de desinfección no reconocida.');
@@ -495,6 +497,62 @@ class NexaGuard_Cleaner {
                 $cleaned = preg_replace('/# NexaGuard Hardening[^\n]*\nOptions -Indexes\n?/i', '', $content);
                 @file_put_contents($htaccess, $cleaned);
                 return array('success' => true, 'message' => 'Regla de listado de directorios retirada.');
+            }
+        }
+        return array('success' => true, 'message' => 'Operación completada.');
+    }
+
+    /**
+     * Blindaje de archivos sensibles del sistema y wp-includes (.htaccess)
+     * Bloquea ejecución directa en wp-includes, protege wp-config.php, readme.html y métodos TRACE/TRACK/DEBUG
+     */
+    public function protect_system_files($enable = true) {
+        $htaccess = ABSPATH . '.htaccess';
+        $content = file_exists($htaccess) ? @file_get_contents($htaccess) : '';
+
+        $marker_start = "# BEGIN NexaGuard System Hardening";
+        $marker_end = "# END NexaGuard System Hardening";
+
+        if ($enable) {
+            if (stripos($content, $marker_start) !== false) {
+                return array('success' => true, 'message' => 'El blindaje de archivos del sistema ya se encuentra activo en .htaccess.');
+            }
+
+            if (file_exists($htaccess)) {
+                @copy($htaccess, $htaccess . '.bak_nexaguard_' . time());
+            }
+
+            $rules = "\n{$marker_start}\n";
+            $rules .= "<FilesMatch \"^(wp-config\\.php|readme\\.html|readme\\.txt|license\\.txt)$\">\n";
+            $rules .= "    <IfModule mod_authz_core.c>\n";
+            $rules .= "        Require all denied\n";
+            $rules .= "    </IfModule>\n";
+            $rules .= "    <IfModule !mod_authz_core.c>\n";
+            $rules .= "        Order allow,deny\n";
+            $rules .= "        Deny from all\n";
+            $rules .= "    </IfModule>\n";
+            $rules .= "</FilesMatch>\n\n";
+
+            $rules .= "<IfModule mod_rewrite.c>\n";
+            $rules .= "    RewriteEngine On\n";
+            $rules .= "    RewriteRule ^wp-admin/install\\.php$ - [F,L]\n";
+            $rules .= "    RewriteRule ^wp-admin/includes/ - [F,L]\n";
+            $rules .= "    RewriteRule !^wp-includes/ - [S=3]\n";
+            $rules .= "    RewriteRule ^wp-includes/[^/]+\\.php$ - [F,L]\n";
+            $rules .= "    RewriteRule ^wp-includes/js/tinymce/langs/.+\\.php - [F,L]\n";
+            $rules .= "    RewriteRule ^wp-includes/theme-compat/ - [F,L]\n";
+            $rules .= "    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DEBUG) [NC]\n";
+            $rules .= "    RewriteRule ^ - [F,L]\n";
+            $rules .= "</IfModule>\n";
+            $rules .= "{$marker_end}\n";
+
+            @file_put_contents($htaccess, $content . $rules);
+            return array('success' => true, 'message' => 'Blindaje del sistema aplicado: Se protegieron archivos sensibles, wp-includes y métodos HTTP en .htaccess.');
+        } else {
+            if (file_exists($htaccess)) {
+                $cleaned = preg_replace('/' . preg_quote($marker_start, '/') . '[\\s\\S]*?' . preg_quote($marker_end, '/') . '\\n?/i', '', $content);
+                @file_put_contents($htaccess, $cleaned);
+                return array('success' => true, 'message' => 'Reglas de blindaje del sistema retiradas de .htaccess.');
             }
         }
         return array('success' => true, 'message' => 'Operación completada.');
