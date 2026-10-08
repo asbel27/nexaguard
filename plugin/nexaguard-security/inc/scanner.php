@@ -526,17 +526,27 @@ class NexaGuard_Scanner {
 
         // 5. Verificar blindaje de ejecución PHP en Uploads (CVE-2026-27540 Arbitrary File Upload Protection)
         $upload_protect_ht = trailingslashit($path) . '.htaccess';
-        if (!file_exists($upload_protect_ht) || stripos(@file_get_contents($upload_protect_ht), 'Deny from all') === false) {
+        $root_protect_ht = ABSPATH . '.htaccess';
+
+        $uploads_ht_protected = file_exists($upload_protect_ht) && (
+            stripos(@file_get_contents($upload_protect_ht), 'Deny from all') !== false ||
+            stripos(@file_get_contents($upload_protect_ht), 'Require all denied') !== false
+        );
+        $root_ht_protected = file_exists($root_protect_ht) && (
+            stripos(@file_get_contents($root_protect_ht), 'wp-content/uploads') !== false
+        );
+
+        if (!$uploads_ht_protected && !$root_ht_protected) {
             $this->add_threat(array(
                 'id'          => md5('uploads_php_execution_unprotected'),
                 'category'    => 'uploads_execution_risk',
                 'severity'    => 'warn',
                 'title'       => 'Directorio de Medios (Uploads) sin contención de scripts PHP',
-                'desc'        => 'No existe una regla de bloqueo de ejecución PHP (.htaccess) en wp-content/uploads/. Si un atacante explota una vulnerabilidad de subida arbitraria (ej: CVE-2026-27540 en WooCommerce Wholesale Lead Capture), podrá ejecutar webshells directamente.',
+                'desc'        => 'No existe una regla de bloqueo de ejecución PHP (.htaccess) en wp-content/uploads/ ni en la raíz. Si un atacante explota una vulnerabilidad de subida arbitraria (ej: CVE-2026-27540 en WooCommerce Wholesale Lead Capture), podrá ejecutar webshells directamente.',
                 'file'        => 'wp-content/uploads/.htaccess',
                 'full_path'   => $upload_protect_ht,
                 'line'        => 0,
-                'code'        => 'Falta directiva <FilesMatch "\.(php...)"> Deny from all',
+                'code'        => 'Falta directiva <FilesMatch "\.(php...)"> Deny from all / RewriteRule en .htaccess',
                 'can_clean'   => true,
                 'clean_action'=> 'protect_uploads_directory'
             ), 'uploads');

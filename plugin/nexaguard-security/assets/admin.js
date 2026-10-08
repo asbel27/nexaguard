@@ -587,6 +587,11 @@ jQuery(document).ready(function ($) {
             confirmTitle = 'Bloquear Listado Apache';
             confirmIcon = '📁';
             confirmOk = 'Proteger Directorios';
+        } else if (type === 'protect_uploads_directory') {
+            confirmMsg = '¿Deseas aplicar el blindaje contra ejecución de scripts PHP en la carpeta de medios (uploads) y en el archivo .htaccess principal de WordPress?';
+            confirmTitle = 'Bloquear PHP en Uploads';
+            confirmIcon = '🛡️';
+            confirmOk = 'Aplicar Blindaje';
         } else if (type === 'regenerate_wp_salts') {
             confirmMsg = '¿Deseas regenerar todas las claves y sales criptográficas en wp-config.php? Esto invalidará de inmediato todas las sesiones y cookies secuestradas por atacantes.';
             confirmTitle = 'Regenerar Sales de Seguridad';
@@ -603,7 +608,7 @@ jQuery(document).ready(function ($) {
                     return;
                 }
 
-                var loadingLabel = (type === 'restore_core_file') ? 'Restaurando desde WP.org…' : (type === 'delete_db_option' ? 'Purgando…' : (type.indexOf('apply_') !== -1 || type === 'regenerate_wp_salts' ? 'Aplicando…' : 'Desinfectando…'));
+                var loadingLabel = (type === 'restore_core_file') ? 'Restaurando desde WP.org…' : (type === 'delete_db_option' ? 'Purgando…' : (type.indexOf('apply_') !== -1 || type.indexOf('protect_') !== -1 || type === 'regenerate_wp_salts' ? 'Aplicando…' : 'Desinfectando…'));
                 $btn.prop('disabled', true).text(loadingLabel);
 
                 $.ajax({
@@ -624,10 +629,10 @@ jQuery(document).ready(function ($) {
                                     updateThreatCounts();
                                 });
                             } else {
-                                var successMsg = (type === 'restore_core_file') ? '✓ Archivo oficial de WordPress.org restaurado' : '✓ Desinfección completada con éxito';
+                                var successMsg = (type === 'restore_core_file') ? '✓ Archivo oficial de WordPress.org restaurado' : (type === 'protect_uploads_directory' || type.indexOf('apply_') !== -1 ? '✓ Blindaje .htaccess aplicado con éxito' : '✓ Desinfección completada con éxito');
                                 $('#threat-' + id).css('border-left-color', '#3de8a4').find('.threat-actions').html('<span style="color:#3de8a4;font-weight:700">' + successMsg + '</span>');
                             }
-                            showToast('Acción completada con éxito. El archivo ha sido respaldado en la bóveda de reversión.', 'success', 'Operación Completada');
+                            showToast(res.data && res.data.message ? res.data.message : 'Acción completada con éxito.', 'success', 'Operación Completada');
                         } else {
                             $btn.prop('disabled', false).text('Reintentar');
                             if (res.data && res.data.code === 'pro_required') {

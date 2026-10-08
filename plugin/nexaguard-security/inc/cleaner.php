@@ -417,23 +417,90 @@ class NexaGuard_Cleaner {
 
     public function protect_uploads_htaccess($enable = true) {
         $upload = wp_upload_dir();
-        $htaccess = trailingslashit($upload['basedir']) . '.htaccess';
+        $uploads_dir = isset($upload['basedir']) ? $upload['basedir'] : (WP_CONTENT_DIR . '/uploads');
+        $uploads_htaccess = trailingslashit($uploads_dir) . '.htaccess';
+        $root_htaccess = ABSPATH . '.htaccess';
 
+        $root_marker_begin = "# BEGIN NexaGuard Security - Bloqueo de ejecucion PHP en Uploads";
+        $root_marker_end   = "# END NexaGuard Security - Bloqueo de ejecucion PHP en Uploads";
+
+        $written_any = false;
+
+        // 1. Reglas en wp-content/uploads/.htaccess
         if ($enable) {
-            $rules = "# NexaGuard Security - Bloqueo de ejecucion PHP en Uploads\n";
-            $rules .= "<FilesMatch \"\\.(php|phtml|php3|php4|php5|php7|phps|shtml)$\">\n";
-            $rules .= "Order Deny,Allow\n";
-            $rules .= "Deny from all\n";
-            $rules .= "</FilesMatch>\n";
-            @file_put_contents($htaccess, $rules);
+            $uploads_rules  = "# NexaGuard Security - Bloqueo de ejecucion PHP en Uploads\n";
+            $uploads_rules .= "<IfModule !mod_authz_core.c>\n";
+            $uploads_rules .= "<FilesMatch \"\\.(php|phtml|php3|php4|php5|php7|phps|shtml|phar)$\">\n";
+            $uploads_rules .= "Order Deny,Allow\n";
+            $uploads_rules .= "Deny from all\n";
+            $uploads_rules .= "</FilesMatch>\n";
+            $uploads_rules .= "</IfModule>\n";
+            $uploads_rules .= "<IfModule mod_authz_core.c>\n";
+            $uploads_rules .= "<FilesMatch \"\\.(php|phtml|php3|php4|php5|php7|phps|shtml|phar)$\">\n";
+            $uploads_rules .= "Require all denied\n";
+            $uploads_rules .= "</FilesMatch>\n";
+            $uploads_rules .= "</IfModule>\n";
+
+            if (!is_dir($uploads_dir)) {
+                @wp_mkdir_p($uploads_dir);
+            }
+            if (@file_put_contents($uploads_htaccess, $uploads_rules) !== false) {
+                $written_any = true;
+            }
         } else {
-            if (file_exists($htaccess)) {
-                $content = @file_get_contents($htaccess);
-                if (strpos($content, 'NexaGuard Security') !== false) {
-                    @unlink($htaccess);
+            if (file_exists($uploads_htaccess)) {
+                $content = @file_get_contents($uploads_htaccess);
+                if ($content !== false && strpos($content, 'NexaGuard Security') !== false) {
+                    @unlink($uploads_htaccess);
                 }
             }
         }
+
+        // 2. Reglas en el .htaccess principal (raíz de WordPress - visible para el usuario)
+        if (file_exists($root_htaccess) || $enable) {
+            $root_content = file_exists($root_htaccess) ? @file_get_contents($root_htaccess) : '';
+            if ($root_content === false) {
+                $root_content = '';
+            }
+
+            // Limpiar bloque previo si ya existía
+            $clean_root = preg_replace('/' . preg_quote($root_marker_begin, '/') . '.*?' . preg_quote($root_marker_end, '/') . '\s*/s', '', $root_content);
+
+            if ($enable) {
+                $root_block  = $root_marker_begin . "\n";
+                $root_block .= "<IfModule mod_rewrite.c>\n";
+                $root_block .= "RewriteEngine On\n";
+                $root_block .= "RewriteRule ^wp-content/uploads/.*\\.(?:php[0-9]?|phtml|phar|shtml|asp|aspx)$ - [F,L,NC]\n";
+                $root_block .= "</IfModule>\n";
+                $root_block .= $root_marker_end . "\n\n";
+
+                // Respaldar antes de modificar si existe
+                if (file_exists($root_htaccess)) {
+                    @copy($root_htaccess, $root_htaccess . '.bak_nexaguard_' . time());
+                }
+
+                // Insertar preferentemente antes de # BEGIN WordPress
+                if (stripos($clean_root, '# BEGIN WordPress') !== false) {
+                    $new_root = preg_replace('/(# BEGIN WordPress)/i', $root_block . "$1", $clean_root, 1);
+                } else {
+                    $new_root = $root_block . $clean_root;
+                }
+
+                if (@file_put_contents($root_htaccess, $new_root) !== false) {
+                    $written_any = true;
+                }
+            } else {
+                if (@file_put_contents($root_htaccess, $clean_root) !== false) {
+                    $written_any = true;
+                }
+            }
+        }
+
+        if ($enable && !$written_any) {
+            return array('success' => false, 'message' => 'No se pudo escribir en el archivo .htaccess debido a permisos de servidor restringidos.');
+        }
+
+        return array('success' => true, 'message' => 'Blindaje aplicado: Se bloqueó la ejecución de scripts PHP en wp-content/uploads/ y en el .htaccess principal de WordPress.');
     }
 
     /**
@@ -669,8 +736,7 @@ class NexaGuard_Cleaner {
      * Blindaje en uploads contra ejecución PHP (CVE-2026-27540 Arbitrary File Upload)
      */
     public function protect_uploads_directory() {
-        $this->protect_uploads_htaccess(true);
-        return array('success' => true, 'message' => 'Protección aplicada: Se bloqueó la ejecución de scripts PHP en wp-content/uploads/ (.htaccess).');
+        return $this->protect_uploads_htaccess(true);
     }
 
     /**
