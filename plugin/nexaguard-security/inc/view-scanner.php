@@ -805,8 +805,8 @@ $rollback_count = count($backup_history);
                     <button type="submit" class="btn-ng btn-ng-primary">Guardar y Aplicar Blindaje</button>
                     <span id="save-msg" class="ng-hint" style="margin-left:12px"></span>
                 <?php else: ?>
-                    <button type="button" id="btn-locked-waf-submit" class="btn-ng btn-ng-primary btn-locked-waf-submit btn-open-upgrade-modal" style="cursor:pointer">🔒 Desbloquear Blindaje con Plan PRO ($9.99/mes)</button>
-                    <button type="button" class="btn-ng btn-ng-link btn-open-lic-modal" style="color:#ffcf33 !important; font-weight:700; cursor:pointer;">🔑 Ya tengo mi clave de licencia ›</button>
+                    <button type="button" id="btn-locked-waf-submit" class="btn-ng btn-ng-primary btn-locked-waf-submit btn-open-upgrade-modal" onclick="if(window.nexaguardOpenUpgradeModal){window.nexaguardOpenUpgradeModal();}else{jQuery('#clean-upgrade-modal').appendTo('body').css({display:'flex',opacity:1}).show();}" style="cursor:pointer">🔒 Desbloquear Blindaje con Plan PRO ($9.99/mes)</button>
+                    <button type="button" class="btn-ng btn-ng-link btn-open-lic-modal" onclick="if(window.nexaguardOpenLicenseModal){window.nexaguardOpenLicenseModal();}else{jQuery('#license-modal').appendTo('body').css({display:'flex',opacity:1}).show();}" style="color:#ffcf33 !important; font-weight:700; cursor:pointer;">🔑 Ya tengo mi clave de licencia ›</button>
                     <a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-danger">👨‍💻 Solicitar Especialista (Plan Rescate $99)</a>
                 <?php endif; ?>
             </div>

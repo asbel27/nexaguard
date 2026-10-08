@@ -688,20 +688,20 @@ jQuery(document).ready(function ($) {
     });
 
     // Funciones auxiliares para apertura/cierre confiable de modales
-    function openUpgradeModal() {
+    window.nexaguardOpenUpgradeModal = function () {
         var $modal = $('#clean-upgrade-modal');
         if (!$modal.length) return;
         if (!$modal.parent().is('body')) {
             $modal.appendTo('body');
         }
         $modal.css({ display: 'flex', opacity: 0 }).stop(true, true).fadeTo(200, 1);
-    }
+    };
 
-    function closeUpgradeModal() {
+    window.nexaguardCloseUpgradeModal = function () {
         $('#clean-upgrade-modal').stop(true, true).fadeOut(150);
-    }
+    };
 
-    function openLicenseModal(msg) {
+    window.nexaguardOpenLicenseModal = function (msg) {
         var $modal = $('#license-modal');
         if (!$modal.length) return;
         if (!$modal.parent().is('body')) {
@@ -714,18 +714,23 @@ jQuery(document).ready(function ($) {
             $msg.text('');
         }
         $modal.css({ display: 'flex', opacity: 0 }).stop(true, true).fadeTo(200, 1);
-    }
+    };
 
-    function closeLicenseModal() {
+    window.nexaguardCloseLicenseModal = function () {
         $('#license-modal').stop(true, true).fadeOut(150);
-    }
+    };
+
+    var openUpgradeModal = window.nexaguardOpenUpgradeModal;
+    var closeUpgradeModal = window.nexaguardCloseUpgradeModal;
+    var openLicenseModal = window.nexaguardOpenLicenseModal;
+    var closeLicenseModal = window.nexaguardCloseLicenseModal;
 
     // Interceptar clicks en WAF cuando no es PRO
-    $(document).on('click', '#btn-locked-waf-submit, .btn-locked-waf-submit, .waf-locked-container, .waf-locked-container label, .btn-open-upgrade-modal', function (e) {
+    $(document).on('click', '#btn-locked-waf-submit, .btn-locked-waf-submit, .waf-locked-container, .waf-locked-container label, .btn-open-upgrade-modal, [class*="btn-locked-waf"]', function (e) {
         if (!nexaguardData.is_pro) {
             e.preventDefault();
             e.stopPropagation();
-            openUpgradeModal();
+            window.nexaguardOpenUpgradeModal();
             return false;
         }
     });
