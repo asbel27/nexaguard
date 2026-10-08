@@ -55,6 +55,60 @@ class NexaGuard_Plugin {
 
         // Aviso en el pie de página de administración
         add_filter('admin_footer_text', array($this, 'admin_footer_text'));
+
+        // Autoprotección activa: Verificación de Integridad del Núcleo NexaGuard (Self-Defense Anti-Tampering)
+        add_action('admin_notices', array($this, 'check_plugin_integrity_notice'));
+    }
+
+    /**
+     * Autoprotección criptográfica: Comprueba que ningún hacker haya alterado
+     * o saboteado los archivos del núcleo del plugin NexaGuard Security.
+     */
+    public function verify_core_integrity() {
+        $manifest_file = NEXAGUARD_DIR . 'integrity.json';
+        if (!file_exists($manifest_file)) {
+            return array('tampered' => false, 'status' => 'verified');
+        }
+
+        $manifest_raw = file_get_contents($manifest_file);
+        $manifest = json_decode($manifest_raw, true);
+        if (!is_array($manifest)) {
+            return array('tampered' => false, 'status' => 'verified');
+        }
+
+        $tampered_files = array();
+        foreach ($manifest as $rel_file => $expected_hash) {
+            $abs_path = NEXAGUARD_DIR . $rel_file;
+            if (!file_exists($abs_path)) {
+                $tampered_files[] = $rel_file . ' (eliminado)';
+                continue;
+            }
+            $current_hash = hash_file('sha256', $abs_path);
+            if ($current_hash !== $expected_hash) {
+                $tampered_files[] = $rel_file . ' (código modificado)';
+            }
+        }
+
+        return array(
+            'tampered' => !empty($tampered_files),
+            'files'    => $tampered_files,
+            'status'   => empty($tampered_files) ? 'verified' : 'tampered'
+        );
+    }
+
+    public function check_plugin_integrity_notice() {
+        $screen = get_current_screen();
+        if (!$screen || strpos($screen->id, 'nexaguard') === false) {
+            return;
+        }
+
+        $check = $this->verify_core_integrity();
+        if ($check['tampered']) {
+            echo '<div class="notice notice-error" style="background:#2a1226 !important; border-left-color:#ff4560 !important; color:#ffffff !important; padding:14px 18px; margin:20px 0;">';
+            echo '<p style="margin:0 0 6px; font-weight:800; font-size:1.05rem; color:#ff8ba0;">🚨 ALERTA DE AUTOPROTECCIÓN: SABOTAJE O ALTERACIÓN DETECTADA EN NEXAGUARD</p>';
+            echo '<p style="margin:0; font-size:0.9rem; color:#e2eafc;">El sistema de auto-inmunidad detectó que los archivos de seguridad del plugin fueron alterados o parchados externamente (' . esc_html(implode(', ', $check['files'])) . '). Se recomienda reinstalar el plugin oficial desde <a href="https://nexaguards.com" target="_blank" style="color:#ffcf33; font-weight:700;">nexaguards.com</a> para restaurar la protección activa.</p>';
+            echo '</div>';
+        }
     }
 
     public function register_admin_menu() {

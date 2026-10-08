@@ -119,16 +119,31 @@ $rollback_count = count($backup_history);
         </div>
     <?php endif; ?>
 
-    <!-- Indicador de conexión a la nube de amenazas -->
-    <div class="cloud-status-strip">
-        <div class="cloud-status-pill">
-            <span class="live-dot"></span>
-            <span id="cloud-intel-label">NexaGuard Threat Cloud Intelligence: <strong>Sincronizado en Tiempo Real (v<?php echo esc_html($cloud_ver); ?>)</strong></span>
+    <!-- Indicador de conexión a la nube de amenazas y auto-integridad -->
+    <?php
+    $integrity_check = NexaGuard_Plugin::get_instance()->verify_core_integrity();
+    ?>
+    <?php if ($integrity_check['tampered']): ?>
+        <div class="cloud-status-strip" style="background:#2a1226 !important; border:1px solid #ff4560 !important; color:#ff8ba0 !important;">
+            <div class="cloud-status-pill" style="background:rgba(255,69,96,0.2) !important;">
+                <span style="color:#ff4560;font-weight:900;">🚨</span>
+                <span style="color:#ff8ba0 !important;">Autoprotección: <strong>Sabotaje o Alteración de Código Detectada (<?php echo esc_html(implode(', ', $integrity_check['files'])); ?>)</strong></span>
+            </div>
+            <div class="threat-intel-help" style="color:#ffffff !important;">
+                Reinstala el plugin desde <a href="https://nexaguards.com" target="_blank" style="color:#ffcf33; font-weight:700;">nexaguards.com</a> para restaurar la seguridad.
+            </div>
         </div>
-        <div class="threat-intel-help">
-            Zero-Day Shield activo · Sin falsos positivos
+    <?php else: ?>
+        <div class="cloud-status-strip">
+            <div class="cloud-status-pill">
+                <span class="live-dot"></span>
+                <span id="cloud-intel-label">NexaGuard Threat Cloud Intelligence: <strong>Sincronizado en Tiempo Real (v<?php echo esc_html($cloud_ver); ?>)</strong></span>
+            </div>
+            <div class="threat-intel-help">
+                <span style="color:#3de8a4;font-weight:700;">✓ Integridad de Núcleo Verificada</span> · Zero-Day Shield activo · Sin falsos positivos
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
 
     <!-- ====== BARRA DE PESTAÑAS (TABS) ====== -->
     <div class="ng-tabs-bar">

@@ -157,9 +157,41 @@ function createZip(sourceDir, zipPath, rootFolderName = 'nexaguard-security') {
   console.log(`✅ Plugin ZIP generado con éxito en ${zipPath} (${finalZip.length} bytes, ${entries.length} entradas)`);
 }
 
+const crypto = require('crypto');
+
+function generateIntegrityManifest(sourceDir) {
+  const coreFiles = [
+    'nexaguard-security.php',
+    'inc/firewall.php',
+    'inc/scanner.php',
+    'inc/cleaner.php',
+    'inc/view-scanner.php',
+    'inc/view-waf.php',
+    'inc/view-modals.php'
+  ];
+
+  const manifest = {};
+  for (const rel of coreFiles) {
+    const fullPath = path.join(sourceDir, rel);
+    if (fs.existsSync(fullPath)) {
+      const content = fs.readFileSync(fullPath);
+      manifest[rel.replace(/\\/g, '/')] = crypto.createHash('sha256').update(content).digest('hex');
+    }
+  }
+
+  const manifestPath = path.join(sourceDir, 'integrity.json');
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
+  console.log(`🔒 Manifiesto de integridad criptográfica generado con éxito (${Object.keys(manifest).length} archivos protegidos).`);
+}
+
 const rootDir = path.resolve(__dirname, '..');
+const pluginSourceDir = path.join(rootDir, 'plugin', 'nexaguard-security');
+
+// Generar manifiesto de integridad antes de comprimir
+generateIntegrityManifest(pluginSourceDir);
+
 createZip(
-  path.join(rootDir, 'plugin', 'nexaguard-security'),
+  pluginSourceDir,
   path.join(rootDir, 'public', 'downloads', 'nexaguard-security.zip'),
   'nexaguard-security'
 );
