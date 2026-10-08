@@ -687,11 +687,45 @@ jQuery(document).ready(function ($) {
         });
     });
 
+    // Funciones auxiliares para apertura/cierre confiable de modales
+    function openUpgradeModal() {
+        var $modal = $('#clean-upgrade-modal');
+        if (!$modal.length) return;
+        if (!$modal.parent().is('body')) {
+            $modal.appendTo('body');
+        }
+        $modal.css({ display: 'flex', opacity: 0 }).stop(true, true).fadeTo(200, 1);
+    }
+
+    function closeUpgradeModal() {
+        $('#clean-upgrade-modal').stop(true, true).fadeOut(150);
+    }
+
+    function openLicenseModal(msg) {
+        var $modal = $('#license-modal');
+        if (!$modal.length) return;
+        if (!$modal.parent().is('body')) {
+            $modal.appendTo('body');
+        }
+        var $msg = $('#license-modal-msg');
+        if (msg) {
+            $msg.text(msg).css('color', '#ffcf33');
+        } else {
+            $msg.text('');
+        }
+        $modal.css({ display: 'flex', opacity: 0 }).stop(true, true).fadeTo(200, 1);
+    }
+
+    function closeLicenseModal() {
+        $('#license-modal').stop(true, true).fadeOut(150);
+    }
+
     // Interceptar clicks en WAF cuando no es PRO
-    $(document).on('click', '.waf-locked-container, .waf-locked-container label, .btn-locked-waf-submit, .btn-open-upgrade-modal', function (e) {
+    $(document).on('click', '#btn-locked-waf-submit, .btn-locked-waf-submit, .waf-locked-container, .waf-locked-container label, .btn-open-upgrade-modal', function (e) {
         if (!nexaguardData.is_pro) {
             e.preventDefault();
-            $('#clean-upgrade-modal').fadeIn(200);
+            e.stopPropagation();
+            openUpgradeModal();
             return false;
         }
     });
@@ -800,22 +834,23 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '.vigilance-card.vigilance-locked #vigilance-radar-box, .radar-locked', function (e) {
         if (!nexaguardData.is_pro) {
             e.preventDefault();
-            $('#clean-upgrade-modal').fadeIn(200);
+            e.stopPropagation();
+            openUpgradeModal();
             return false;
         }
     });
 
     // ============ GESTIÓN DE LICENCIA PRO ============
-    $('#btn-edit-license').on('click', function () {
-        $('#license-modal').fadeIn(200);
-        $('#license-modal-msg').text('');
+    $('#btn-edit-license').on('click', function (e) {
+        e.preventDefault();
+        openLicenseModal();
     });
 
     $(document).on('click', '.btn-vigilance-locked, .btn-open-lic-modal', function (e) {
         e.preventDefault();
-        $('#clean-upgrade-modal').fadeOut(150);
-        $('#license-modal').fadeIn(200);
-        $('#license-modal-msg').text('Ingresa tu clave de licencia oficial del Plan Security PRO para desbloquear el radar 24h y el blindaje WAF.').css('color', '#ffcf33');
+        e.stopPropagation();
+        closeUpgradeModal();
+        openLicenseModal('Ingresa tu clave de licencia oficial del Plan Security PRO para desbloquear el radar 24h y el blindaje WAF.');
     });
 
     $('#btn-unlink-license').on('click', function (e) {
@@ -836,8 +871,9 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    $('#btn-close-license').on('click', function () {
-        $('#license-modal').fadeOut(200);
+    $('#btn-close-license').on('click', function (e) {
+        e.preventDefault();
+        closeLicenseModal();
     });
 
     $('#btn-save-license').on('click', function () {
@@ -885,17 +921,36 @@ jQuery(document).ready(function ($) {
     // ============ MODAL DE CONVERSIÓN DE LIMPIEZA ============
     $(document).on('click', '.btn-locked-clean, .btn-open-clean-modal', function (e) {
         e.preventDefault();
-        $('#clean-upgrade-modal').fadeIn(200);
+        e.stopPropagation();
+        openUpgradeModal();
     });
 
-    $('#btn-close-clean-modal').on('click', function () {
-        $('#clean-upgrade-modal').fadeOut(200);
+    $('#btn-close-clean-modal').on('click', function (e) {
+        e.preventDefault();
+        closeUpgradeModal();
     });
 
     $(document).on('click', '.btn-switch-to-key', function (e) {
         e.preventDefault();
-        $('#clean-upgrade-modal').fadeOut(100);
-        $('#license-modal').fadeIn(200);
+        e.stopPropagation();
+        closeUpgradeModal();
+        openLicenseModal('Introduce tu clave de licencia del Plan PRO:');
+    });
+
+    // Cerrar modales al hacer clic en el fondo oscuro exterior
+    $(document).on('click', '.ng-modal', function (e) {
+        if (e.target === this) {
+            closeUpgradeModal();
+            closeLicenseModal();
+        }
+    });
+
+    // Cerrar modales con tecla ESC
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' || e.keyCode === 27) {
+            closeUpgradeModal();
+            closeLicenseModal();
+        }
     });
 
     // ============ PERSONALIZADOR Y EMBELLECEDOR DE LOGIN ============

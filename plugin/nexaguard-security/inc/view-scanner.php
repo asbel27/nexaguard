@@ -800,13 +800,14 @@ $rollback_count = count($backup_history);
                 </label>
             </div>
 
-            <div class="form-actions" style="margin-top:24px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px">
+            <div class="form-actions" style="margin-top:24px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;">
                 <?php if ($is_pro): ?>
                     <button type="submit" class="btn-ng btn-ng-primary">Guardar y Aplicar Blindaje</button>
                     <span id="save-msg" class="ng-hint" style="margin-left:12px"></span>
                 <?php else: ?>
-                    <button type="button" class="btn-ng btn-ng-primary btn-locked-waf-submit">🔒 Desbloquear Blindaje con Plan PRO ($9.99/mes)</button>
-                    <a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-danger" style="margin-left:10px">👨‍💻 Solicitar Especialista (Plan Rescate $99)</a>
+                    <button type="button" id="btn-locked-waf-submit" class="btn-ng btn-ng-primary btn-locked-waf-submit btn-open-upgrade-modal" style="cursor:pointer">🔒 Desbloquear Blindaje con Plan PRO ($9.99/mes)</button>
+                    <button type="button" class="btn-ng btn-ng-link btn-open-lic-modal" style="color:#ffcf33 !important; font-weight:700; cursor:pointer;">🔑 Ya tengo mi clave de licencia ›</button>
+                    <a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-danger">👨‍💻 Solicitar Especialista (Plan Rescate $99)</a>
                 <?php endif; ?>
             </div>
         </form>

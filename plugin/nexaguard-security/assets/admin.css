@@ -1159,15 +1159,25 @@
 }
 
 .ng-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(5, 9, 26, 0.85);
-    backdrop-filter: blur(8px);
-    z-index: 99999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(5, 9, 26, 0.88) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    z-index: 999999 !important;
+    display: none;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 24px !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+}
+
+.ng-modal[style*="display: flex"],
+.ng-modal[style*="display: block"] {
+    display: flex !important;
 }
 
 .ng-modal-box {
@@ -1178,6 +1188,9 @@
     width: 100%;
     padding: 28px;
     box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+    margin: auto !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
 }
 
 .ng-modal-box h3 {
