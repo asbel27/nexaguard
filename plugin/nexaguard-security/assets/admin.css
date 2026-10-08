@@ -1837,7 +1837,7 @@
     position: fixed !important;
     top: 48px !important;
     right: 28px !important;
-    z-index: 9999999 !important;
+    z-index: 99999999 !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 12px !important;

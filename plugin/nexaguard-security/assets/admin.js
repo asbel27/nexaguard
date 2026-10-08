@@ -444,6 +444,12 @@ jQuery(document).ready(function ($) {
         showConfirm(
             '¿Forzar la eliminación definitiva de esta amenaza? NexaGuard desbloqueará permisos y destruirá el archivo.',
             function () {
+                if (!nexaguardData.is_pro) {
+                    showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para forzar la eliminación de amenazas.', 'warning', 'Acción Restringida');
+                    openActionBlockedModal();
+                    return;
+                }
+
                 $btn.prop('disabled', true).text('Destruyendo…');
                 $.ajax({
                     url: nexaguardData.ajax_url,
@@ -464,7 +470,12 @@ jQuery(document).ready(function ($) {
                             showToast('Archivo malicioso destruido con éxito.', 'success', 'Amenaza Neutralizada');
                         } else {
                             $btn.prop('disabled', false).text('Reintentar');
-                            alert(res.data && res.data.message ? res.data.message : 'Error al eliminar.');
+                            if (res.data && res.data.code === 'pro_required') {
+                                showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para eliminar amenazas.', 'warning', 'Acción Restringida');
+                                openActionBlockedModal();
+                            } else {
+                                alert(res.data && res.data.message ? res.data.message : 'Error al eliminar.');
+                            }
                         }
                     },
                     error: function () {
@@ -486,6 +497,12 @@ jQuery(document).ready(function ($) {
         showConfirm(
             '¿Estás seguro de destruir la carpeta completa del plugin malicioso? Esta acción eliminará todo el plugin troyano.',
             function () {
+                if (!nexaguardData.is_pro) {
+                    showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para destruir carpetas de plugins maliciosos.', 'warning', 'Acción Restringida');
+                    openActionBlockedModal();
+                    return;
+                }
+
                 $btn.prop('disabled', true).text('Destruyendo plugin…');
                 $.ajax({
                     url: nexaguardData.ajax_url,
@@ -509,7 +526,12 @@ jQuery(document).ready(function ($) {
                             showToast(res.data && res.data.message ? res.data.message : 'Plugin destruido con éxito.', 'success', 'Carpeta Erradicada');
                         } else {
                             $btn.prop('disabled', false).text('Reintentar');
-                            alert(res.data && res.data.message ? res.data.message : 'Error al eliminar carpeta.');
+                            if (res.data && res.data.code === 'pro_required') {
+                                showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para eliminar plugins maliciosos.', 'warning', 'Acción Restringida');
+                                openActionBlockedModal();
+                            } else {
+                                alert(res.data && res.data.message ? res.data.message : 'Error al eliminar carpeta.');
+                            }
                         }
                     },
                     error: function () {
@@ -575,6 +597,12 @@ jQuery(document).ready(function ($) {
         showConfirm(
             confirmMsg,
             function () {
+                if (!nexaguardData.is_pro) {
+                    showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para desinfectar y erradicar amenazas.', 'warning', 'Acción Restringida');
+                    openActionBlockedModal();
+                    return;
+                }
+
                 var loadingLabel = (type === 'restore_core_file') ? 'Restaurando desde WP.org…' : (type === 'delete_db_option' ? 'Purgando…' : (type.indexOf('apply_') !== -1 || type === 'regenerate_wp_salts' ? 'Aplicando…' : 'Desinfectando…'));
                 $btn.prop('disabled', true).text(loadingLabel);
 
@@ -602,7 +630,12 @@ jQuery(document).ready(function ($) {
                             showToast('Acción completada con éxito. El archivo ha sido respaldado en la bóveda de reversión.', 'success', 'Operación Completada');
                         } else {
                             $btn.prop('disabled', false).text('Reintentar');
-                            alert(res.data && res.data.message ? res.data.message : 'Error al limpiar.');
+                            if (res.data && res.data.code === 'pro_required') {
+                                showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para desinfectar amenazas.', 'warning', 'Acción Restringida');
+                                openActionBlockedModal();
+                            } else {
+                                alert(res.data && res.data.message ? res.data.message : 'Error al limpiar.');
+                            }
                         }
                     },
                     error: function () {
@@ -624,6 +657,12 @@ jQuery(document).ready(function ($) {
         showConfirm(
             '¿Deseas que NexaGuard limpie, repare y blinde automáticamente todo tu sitio web de forma 100% segura?\n\n✓ Los archivos del sistema se restaurarán limpios desde WordPress.org.\n✓ Los virus en plugins se extirparán sin romper tus extensiones.\n✓ Se aplicarán los blindajes preventivos de servidor.\n✓ Se guardan copias de respaldo de cada archivo intervenido.',
             function () {
+                if (!nexaguardData.is_pro) {
+                    showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para la remediación y blindaje automático.', 'warning', 'Acción Restringida');
+                    openActionBlockedModal();
+                    return;
+                }
+
                 $btn.prop('disabled', true).html('⚡ Reparando y Blindando Sitio… (Espere)');
 
                 $.ajax({
@@ -655,7 +694,12 @@ jQuery(document).ready(function ($) {
                             showToast('Todas las amenazas detectadas fueron neutralizadas y blindadas con éxito.', 'success', 'Remediación Exitosa');
                         } else {
                             $btn.prop('disabled', false).html('⚡ LIMPIAR Y BLINDAR SITIO CON 1 CLIC');
-                            alert(res.data && res.data.message ? res.data.message : 'Error durante la reparación automática.');
+                            if (res.data && res.data.code === 'pro_required') {
+                                showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para reparar tu sitio.', 'warning', 'Acción Restringida');
+                                openActionBlockedModal();
+                            } else {
+                                alert(res.data && res.data.message ? res.data.message : 'Error durante la reparación automática.');
+                            }
                         }
                     },
                     error: function () {
@@ -678,6 +722,12 @@ jQuery(document).ready(function ($) {
         showConfirm(
             '¿Mover este archivo malicioso a la cuarentena segura aislada con permisos restringidos (Deny From All)?',
             function () {
+                if (!nexaguardData.is_pro) {
+                    showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para mover archivos a cuarentena.', 'warning', 'Acción Restringida');
+                    openActionBlockedModal();
+                    return;
+                }
+
                 $btn.prop('disabled', true).text('Aislando…');
 
                 $.ajax({
@@ -706,7 +756,12 @@ jQuery(document).ready(function ($) {
                             showToast('El archivo ha sido neutralizado y trasladado a la bóveda de cuarentena protegida.', 'success', 'Archivo en Cuarentena');
                         } else {
                             $btn.prop('disabled', false).text('Reintentar');
-                            alert(res.data && res.data.message ? res.data.message : 'Error al aislar.');
+                            if (res.data && res.data.code === 'pro_required') {
+                                showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para aislar amenazas.', 'warning', 'Acción Restringida');
+                                openActionBlockedModal();
+                            } else {
+                                alert(res.data && res.data.message ? res.data.message : 'Error al aislar.');
+                            }
                         }
                     },
                     error: function () {
@@ -1143,16 +1198,11 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    // ============ MODAL DE ACCIÓN BLOQUEADA / CONVERSIÓN DE LIMPIEZA ============
+    // ============ MODAL DE UPGRADE / PLAN PRO ============
     $(document).on('click', '.btn-locked-clean, .btn-open-clean-modal', function (e) {
         e.preventDefault();
         e.stopPropagation();
-
-        // 1. Disparar Toast Animado superior de aviso PRO (7 seg)
-        showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para erradicar y aislar amenazas.', 'warning', 'Acción Restringida');
-
-        // 2. Disparar Ventana Mediana Centrada Animada "LO SENTIMOS LA ACCIÓN NO SE EJECUTÓ"
-        openActionBlockedModal();
+        openUpgradeModal();
     });
 
     $('#btn-close-action-blocked').on('click', function (e) {
