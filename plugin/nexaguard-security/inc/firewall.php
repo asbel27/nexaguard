@@ -397,20 +397,33 @@ class NexaGuard_Firewall {
         if (empty($slug)) return;
 
         $req_uri = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : '';
-        $req_path = trim($req_uri, '/');
+        $req_path = trim((string)$req_uri, '/');
         $ip = self::get_client_ip();
 
-        // 1. Acceso a la ruta de login personalizada (ej: /acceso-seguro/)
+        // 1. Acceso a la ruta de login secreta personalizada (ej: /acceso-seguro/)
         if ($req_path === $slug) {
             $token = wp_create_nonce('nexaguard_hb_' . $ip);
             set_transient('nexaguard_hb_allowed_' . md5($ip), 1, 3600);
-            $redirect_to = !empty($_GET['redirect_to']) ? '&redirect_to=' . urlencode($_GET['redirect_to']) : '';
-            wp_safe_redirect(site_url('wp-login.php?ng_token=' . $token . $redirect_to));
+
+            // Desactivar temporalmente los filtros de reescritura para evitar bucle infinito
+            remove_filter('site_url', array(__CLASS__, 'filter_login_url'), 100);
+            remove_filter('network_site_url', array(__CLASS__, 'filter_login_url'), 100);
+            remove_filter('wp_redirect', array(__CLASS__, 'filter_login_redirect'), 100);
+
+            $target = site_url('wp-login.php?ng_token=' . $token, 'login');
+            if (!empty($_GET['redirect_to'])) {
+                $target = add_query_arg('redirect_to', $_GET['redirect_to'], $target);
+            }
+            if (!empty($_GET['action'])) {
+                $target = add_query_arg('action', $_GET['action'], $target);
+            }
+
+            wp_safe_redirect($target);
             exit;
         }
 
-        // 2. Acceso directo a wp-login.php sin autorización
-        if (strpos($req_uri, 'wp-login.php') !== false) {
+        // 2. Acceso directo a wp-login.php sin autorización previa
+        if (strpos((string)$req_uri, 'wp-login.php') !== false) {
             if (is_user_logged_in()) {
                 return;
             }
@@ -422,6 +435,8 @@ class NexaGuard_Firewall {
             $allowed = get_transient('nexaguard_hb_allowed_' . md5($ip));
             $token = isset($_GET['ng_token']) ? $_GET['ng_token'] : '';
             if ($allowed || ($token && wp_verify_nonce($token, 'nexaguard_hb_' . $ip))) {
+                // Sesión de acceso válida: autorizar y renderizar formulario
+                set_transient('nexaguard_hb_allowed_' . md5($ip), 1, 3600);
                 return;
             }
 
@@ -441,6 +456,11 @@ class NexaGuard_Firewall {
     }
 
     public static function filter_login_url($url, $scheme = null) {
+        // Prevenir bucles de redirección si la URL ya tiene el token de autorización
+        if (strpos($url, 'ng_token') !== false) {
+            return $url;
+        }
+
         if (strpos($url, 'wp-login.php') !== false) {
             $settings = get_option('nexaguard_settings', array());
             $slug = !empty($settings['login_slug']) ? sanitize_title($settings['login_slug']) : '';
@@ -457,6 +477,11 @@ class NexaGuard_Firewall {
     }
 
     public static function filter_login_redirect($location) {
+        // Prevenir bucles de redirección si ya viaja con ng_token
+        if (strpos($location, 'ng_token') !== false) {
+            return $location;
+        }
+
         if (strpos($location, 'wp-login.php') !== false) {
             $settings = get_option('nexaguard_settings', array());
             $slug = !empty($settings['login_slug']) ? sanitize_title($settings['login_slug']) : '';
