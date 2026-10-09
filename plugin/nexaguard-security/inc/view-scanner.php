@@ -556,9 +556,6 @@ $rollback_count = count($backup_history);
                         <button type="button" id="btn-toggle-radar-sound" class="btn-ng btn-ng-outline" style="padding:3px 10px; font-size:0.72rem; border-radius:6px; border:1px solid rgba(255,207,51,0.35); color:#ffcf33; background:rgba(255,207,51,0.1); cursor:pointer; font-weight:700;" title="Activar o silenciar alarma sonora y locución Avast">
                             🔊 Alarma & Voz: ON
                         </button>
-                        <button type="button" id="btn-test-radar-sound" class="btn-ng btn-ng-outline" style="padding:3px 10px; font-size:0.72rem; border-radius:6px; border:1px solid rgba(61,232,164,0.35); color:#3de8a4; background:rgba(61,232,164,0.1); cursor:pointer; font-weight:700;" title="Probar alarma sonora de hospital y voz de ciberseguridad">
-                            ⚡ Probar Sirena
-                        </button>
                         <span class="t-counter-badge"><strong id="terminal-threat-count">0</strong> ATAQUES REGISTRADOS</span>
                         <span class="t-pulse"></span>
                     </div>

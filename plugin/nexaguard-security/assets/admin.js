@@ -1503,16 +1503,6 @@ jQuery(document).ready(function ($) {
         }
     });
 
-    // Botón para probar la sirena de 4 segundos y la voz sintética
-    $(document).on('click', '#btn-test-radar-sound', function (e) {
-        e.preventDefault();
-        triggerIntrusionAlert({
-            ip: '192.168.1.105',
-            reason: 'Inyección SQL Maliciosa y Payload Kali Linux',
-            tool_tag: 'Kali Linux [SQLMap Scanner]'
-        });
-    });
-
     // Inicializar estado del botón de sonido según preferencia guardada
     if (!radarSoundEnabled) {
         $('#btn-toggle-radar-sound').html('🔇 Silenciado').css({ color: '#94a3b8', borderColor: 'rgba(148,163,184,0.3)', background: 'rgba(148,163,184,0.08)' });
