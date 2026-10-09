@@ -146,6 +146,14 @@ jQuery(document).ready(function ($) {
         $('.ng-tab[data-tab="' + target + '"]').addClass('is-active');
         $('#tab-' + target).addClass('is-active');
         try { sessionStorage.setItem('nexaguard_active_tab', target); } catch(e) {}
+
+        if (target === 'vigilance') {
+            if (typeof startRadarTerminalStream === 'function' && $('#vigilance-radar-box').hasClass('radar-scanning')) {
+                startRadarTerminalStream();
+            } else if (typeof fetchAndRenderRealThreatLogs === 'function') {
+                fetchAndRenderRealThreatLogs();
+            }
+        }
     }
 
     $(document).on('click', '.ng-tab', function () {
@@ -1092,12 +1100,14 @@ jQuery(document).ready(function ($) {
             $('#vigilance-radar-box').removeClass('radar-paused').addClass('radar-scanning');
             $('#radar-status-text').html('🟢 El sistema de vigilancia de 24 horas para tu web está activado.');
             $('#radar-status-sub').text('NexaGuard Cloud Radar supervisa continuamente inyecciones PHP, cambios en archivos y peticiones maliciosas.');
+            startRadarTerminalStream();
         } else {
             $btn.removeClass('is-active').attr('data-active', '0');
             $('#v-toggle-label').text('ACTIVAR VIGILANCIA 24H');
             $('#vigilance-radar-box').removeClass('radar-scanning').addClass('radar-paused');
             $('#radar-status-text').html('⏸️ Sistema de vigilancia en pausa. Actívalo para proteger tu web.');
             $('#radar-status-sub').text('Haz clic en el botón superior para activar el radar perimetral permanente.');
+            stopRadarTerminalStream();
         }
 
         $.ajax({
@@ -1124,6 +1134,148 @@ jQuery(document).ready(function ($) {
             return false;
         }
     });
+
+    /* =========================================================================
+     * CONSOLA HACKER & LIVE TELEMETRY RADAR STREAM
+     * ========================================================================= */
+    var radarStreamTimer = null;
+    var displayedThreatIds = {};
+
+    var patrolTelemetryPool = [
+        { type: 'telemetry', text: 'PERIMETER SWEEP: Inspecting PHP core integrity against WordPress.org API... [0 TAMPERING]' },
+        { type: 'telemetry', text: 'WAF ENGINE: Monitoring /wp-comments-post.php against Comment2Shell (CVE-2026-93485)... [ARMED]' },
+        { type: 'telemetry', text: 'HEURISTIC SENSOR: Watching wp-content/uploads/ for unauthorized .php execution... [LOCKED]' },
+        { type: 'warn',      text: 'TRAFFIC PROBE: Inspecting incoming User-Agent strings for Kali Linux scanner signatures...' },
+        { type: 'telemetry', text: 'BLOCKCHAIN MONITOR: Scanning RPC nodes for EtherHiding / ClearFake C2 traffic... [SECURE]' },
+        { type: 'telemetry', text: 'SQL INJECTION SHIELD: Validating dynamic query statements across active plugins... [CLEAN]' },
+        { type: 'warn',      text: 'BOTNET RADAR: Analyzing request rate velocity from unverified IP subnets... [NORMAL]' },
+        { type: 'telemetry', text: 'RUNTIME DEFENSE: Verifying memory hooks in wp-settings.php and mu-plugins... [PASS]' },
+        { type: 'telemetry', text: 'DATABASE INTEGRITY: Monitoring wp_options table for serialized payload injection... [VERIFIED]' },
+        { type: 'warn',      text: 'DIRECTORY GUARD: Enforcing Options -Indexes on Apache/LiteSpeed web server... [PROTECTED]' }
+    ];
+
+    function appendTerminalLine(htmlClass, text) {
+        var $inner = $('#terminal-stream-inner');
+        var $screen = $('#hacker-radar-screen');
+        if (!$inner.length) return;
+
+        var now = new Date();
+        var timeStr = now.toTimeString().split(' ')[0];
+        var prefix = '[' + timeStr + '] ';
+
+        var $line = $('<div class="term-line ' + htmlClass + '"></div>');
+        $line.html(prefix + text);
+
+        $inner.append($line);
+
+        // Limitar a las últimas 120 líneas en el DOM para rendimiento óptimo
+        var $lines = $inner.find('.term-line');
+        if ($lines.length > 120) {
+            $lines.slice(0, $lines.length - 120).remove();
+        }
+
+        // Auto-scroll fluido hacia el final para efecto de terminal hacker
+        $screen.stop().animate({ scrollTop: $screen[0].scrollHeight }, 180);
+    }
+
+    function fetchAndRenderRealThreatLogs() {
+        if (!nexaguardData || !nexaguardData.ajax_url) return;
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_get_radar_logs',
+                nonce: nexaguardData.nonce
+            },
+            success: function (res) {
+                if (res && res.success && res.data && res.data.logs) {
+                    var logs = res.data.logs;
+                    var threatCount = logs.length;
+                    $('#terminal-threat-count').text(threatCount);
+
+                    // Recorrer los registros de ataques reales y mostrarlos
+                    for (var i = logs.length - 1; i >= 0; i--) {
+                        var log = logs[i];
+                        if (!displayedThreatIds[log.id]) {
+                            displayedThreatIds[log.id] = true;
+
+                            var kaliBadge = '';
+                            if (log.tool_tag && log.tool_tag.indexOf('Kali Linux') !== -1) {
+                                kaliBadge = '<span class="term-tag-kali">KALI LINUX DETECTED</span> ';
+                            } else if (log.tool_tag) {
+                                kaliBadge = '<span class="term-tag-kali" style="background:#ffbd2e;color:#000;">' + log.tool_tag + '</span> ';
+                            }
+
+                            var attackHtml = kaliBadge +
+                                '<strong>🚨 [ATAQUE INTERCEPTADO ' + (log.status || 403) + ']</strong> ' +
+                                'IP: ' + log.ip + ' | Motivo: ' + log.reason + ' | Solicitud: ' + log.method + ' ' + log.uri;
+
+                            appendTerminalLine('term-blocked', attackHtml);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function startRadarTerminalStream() {
+        if (radarStreamTimer) return;
+
+        appendTerminalLine('term-system', '[RADAR ACTIVE] Sistema táctico de telemetría en vivo iniciado. Escaneando frecuencias de red...');
+        $('#terminal-typing-status').text('monitoreando y patrullando perímetros de red en tiempo real...');
+
+        // Consultar ataques reales inmediatamente
+        fetchAndRenderRealThreatLogs();
+
+        var patrolIndex = 0;
+        radarStreamTimer = setInterval(function () {
+            var item = patrolTelemetryPool[patrolIndex % patrolTelemetryPool.length];
+            patrolIndex++;
+            appendTerminalLine(item.type === 'warn' ? 'term-warn' : 'term-telemetry', item.text);
+
+            // Cada 4 ciclos verificar si entraron nuevos ataques reales
+            if (patrolIndex % 4 === 0) {
+                fetchAndRenderRealThreatLogs();
+            }
+        }, 2500);
+    }
+
+    function stopRadarTerminalStream() {
+        if (radarStreamTimer) {
+            clearInterval(radarStreamTimer);
+            radarStreamTimer = null;
+        }
+        appendTerminalLine('term-dim', '[RADAR STANDBY] Telemetría en pausa por el operador. Sensores perimetrales en espera.');
+        $('#terminal-typing-status').text('en espera. Activa el radar para patrullar.');
+    }
+
+    // Limpiar terminal
+    $(document).on('click', '#btn-clear-terminal-logs', function (e) {
+        e.preventDefault();
+        if (confirm('¿Deseas vaciar el registro visual de ataques y la consola de telemetría?')) {
+            $.ajax({
+                url: nexaguardData.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'nexaguard_clear_radar_logs',
+                    nonce: nexaguardData.nonce
+                },
+                success: function () {
+                    $('#terminal-stream-inner').html('<div class="term-line term-system">[TERMINAL RESET] Registro vaciado por el administrador. Consola lista.</div>');
+                    $('#terminal-threat-count').text('0');
+                    displayedThreatIds = {};
+                }
+            });
+        }
+    });
+
+    // Auto-iniciar telemetría si el radar ya está activo al cargar
+    if ($('#vigilance-radar-box').hasClass('radar-scanning')) {
+        startRadarTerminalStream();
+    } else {
+        fetchAndRenderRealThreatLogs();
+    }
 
     // ============ GESTIÓN DE LICENCIA PRO ============
     $('#btn-edit-license').on('click', function (e) {

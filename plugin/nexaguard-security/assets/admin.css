@@ -1002,6 +1002,260 @@
     margin: 0;
 }
 
+/* ============ CONSOLA HACKER TELEMETRÍA RADAR ============ */
+.hacker-terminal-card {
+    margin-top: 24px;
+    background: #030712;
+    border: 1px solid rgba(0, 255, 128, 0.28);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 255, 128, 0.08);
+    font-family: 'Fira Code', 'Consolas', 'Courier New', monospace;
+}
+
+.terminal-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: #080f1a;
+    border-bottom: 1px solid rgba(0, 255, 128, 0.15);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.terminal-dots {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+}
+
+.t-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.t-red { background: #ff5f56; box-shadow: 0 0 6px rgba(255, 95, 86, 0.6); }
+.t-yellow { background: #ffbd2e; box-shadow: 0 0 6px rgba(255, 189, 46, 0.6); }
+.t-green { background: #27c93f; box-shadow: 0 0 6px rgba(39, 201, 63, 0.6); }
+
+.terminal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #a0aec0;
+    letter-spacing: 0.05em;
+}
+
+.t-badge-live {
+    background: rgba(0, 255, 128, 0.15);
+    color: #00ff88;
+    border: 1px solid rgba(0, 255, 128, 0.35);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    animation: live-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes live-glow {
+    0% { box-shadow: 0 0 4px rgba(0, 255, 128, 0.2); }
+    100% { box-shadow: 0 0 10px rgba(0, 255, 128, 0.6); }
+}
+
+.terminal-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.t-counter-badge {
+    font-size: 0.74rem;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.8);
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+.t-counter-badge strong {
+    color: #ff4757;
+    font-weight: 800;
+}
+
+.t-pulse {
+    width: 8px;
+    height: 8px;
+    background: #00ff88;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 8px #00ff88;
+    animation: pulse-dot 1.4s infinite;
+}
+
+@keyframes pulse-dot {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+.terminal-screen-wrap {
+    position: relative;
+    background: #02050b;
+}
+
+.terminal-crt-scanlines {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 3px, 6px 100%;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.65;
+}
+
+.terminal-screen {
+    position: relative;
+    z-index: 1;
+    min-height: 280px;
+    max-height: 380px;
+    overflow-y: auto;
+    padding: 16px 20px;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #00ff88;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 255, 128, 0.3) #030712;
+}
+
+.terminal-stream-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.term-line {
+    word-break: break-all;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    opacity: 0;
+    animation: term-appear 0.25s forwards ease;
+}
+
+@keyframes term-appear {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.term-system {
+    color: #00ffcc;
+    font-weight: 600;
+}
+
+.term-dim {
+    color: #10b981aa;
+    font-size: 0.8rem;
+}
+
+.term-telemetry {
+    color: #00ff88;
+    text-shadow: 0 0 4px rgba(0, 255, 136, 0.3);
+}
+
+.term-warn {
+    color: #ffcf33;
+    text-shadow: 0 0 4px rgba(255, 207, 51, 0.4);
+}
+
+.term-blocked {
+    color: #ff4757;
+    background: rgba(255, 71, 87, 0.12);
+    border-left: 3px solid #ff4757;
+    padding: 4px 8px;
+    border-radius: 0 4px 4px 0;
+    font-weight: 700;
+    text-shadow: 0 0 6px rgba(255, 71, 87, 0.5);
+    margin: 4px 0;
+}
+
+.term-blocked .term-tag-kali {
+    display: inline-block;
+    background: #ff4757;
+    color: #030712;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 800;
+    font-size: 0.72rem;
+    margin-right: 6px;
+}
+
+.terminal-cursor-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    color: #38bdf8;
+    font-size: 0.82rem;
+}
+
+.term-prompt {
+    color: #38bdf8;
+    font-weight: 700;
+}
+
+.terminal-typing-text {
+    color: #a7f3d0;
+    font-style: italic;
+}
+
+.terminal-cursor {
+    color: #00ff88;
+    animation: term-blink 0.9s infinite;
+}
+
+@keyframes term-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.terminal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    background: #060c16;
+    border-top: 1px solid rgba(0, 255, 128, 0.12);
+    font-size: 0.76rem;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.term-legend {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.leg-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #94a3b8;
+}
+
+.leg-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.leg-green .leg-dot { background: #00ff88; box-shadow: 0 0 4px #00ff88; }
+.leg-yellow .leg-dot { background: #ffcf33; box-shadow: 0 0 4px #ffcf33; }
+.leg-red .leg-dot { background: #ff4757; box-shadow: 0 0 4px #ff4757; }
+
 /* ============ BARRA DE LICENCIA ============ */
 .ng-license-strip {
     display: flex;

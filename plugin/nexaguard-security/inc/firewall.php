@@ -81,6 +81,7 @@ class NexaGuard_Firewall {
             add_filter('xmlrpc_enabled', '__return_false');
             add_filter('xmlrpc_methods', '__return_empty_array');
             if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'xmlrpc.php') !== false) {
+                self::log_threat('Sondeo o ataque contra XML-RPC (Fuerza Bruta)', 'XML-RPC Shield', 403);
                 status_header(403);
                 die('NexaGuard WAF: Acceso a XML-RPC deshabilitado por seguridad.');
             }
@@ -312,6 +313,7 @@ class NexaGuard_Firewall {
     }
 
     private static function block_access($reason) {
+        self::log_threat($reason, 'WAF Perimeter Interceptor', 403);
         status_header(403);
         ?>
         <!DOCTYPE html>
@@ -339,6 +341,97 @@ class NexaGuard_Firewall {
         </html>
         <?php
         exit;
+    }
+
+    /**
+     * Registro forense de ataques e intentos de intrusión para la Telemetría del Radar
+     */
+    public static function log_threat($reason, $source = 'WAF Interceptor', $status = 403) {
+        $logs = get_option('nexaguard_threat_logs', array());
+        if (!is_array($logs)) {
+            $logs = array();
+        }
+
+        $ip = self::get_client_ip();
+        $ua = isset($_SERVER['HTTP_USER_AGENT']) ? substr(sanitize_text_field($_SERVER['HTTP_USER_AGENT']), 0, 180) : 'Unknown';
+        $method = isset($_SERVER['REQUEST_METHOD']) ? sanitize_text_field($_SERVER['REQUEST_METHOD']) : 'GET';
+        $uri = isset($_SERVER['REQUEST_URI']) ? substr(sanitize_text_field($_SERVER['REQUEST_URI']), 0, 180) : '/';
+
+        // Clasificación de origen de la amenaza (Kali Linux, Botnet, Browser Exploit, etc.)
+        $tool_tag = 'Browser / Custom Payload';
+        $ua_lower = strtolower($ua);
+        if (strpos($ua_lower, 'sqlmap') !== false) {
+            $tool_tag = 'Kali Linux [SQLMap Scanner]';
+        } elseif (strpos($ua_lower, 'nikto') !== false) {
+            $tool_tag = 'Kali Linux [Nikto Web Scanner]';
+        } elseif (strpos($ua_lower, 'wpscan') !== false) {
+            $tool_tag = 'Kali Linux [WPScan Security Audit]';
+        } elseif (strpos($ua_lower, 'gobuster') !== false || strpos($ua_lower, 'dirbuster') !== false) {
+            $tool_tag = 'Kali Linux [Directory Bruteforce Tool]';
+        } elseif (strpos($ua_lower, 'nmap') !== false) {
+            $tool_tag = 'Kali Linux [Nmap Port/CGI Scanner]';
+        } elseif (strpos($ua_lower, 'hydra') !== false || strpos($ua_lower, 'medusa') !== false) {
+            $tool_tag = 'Kali Linux [Hydra Brute-Forcer]';
+        } elseif (strpos($ua_lower, 'metasploit') !== false) {
+            $tool_tag = 'Kali Linux [Metasploit Framework]';
+        } elseif (strpos($ua_lower, 'python-requests') !== false || strpos($ua_lower, 'aiohttp') !== false) {
+            $tool_tag = 'Automated Exploit Bot (Python)';
+        } elseif (strpos($ua_lower, 'curl') !== false || strpos($ua_lower, 'wget') !== false) {
+            $tool_tag = 'CLI HTTP Client (cURL / Wget)';
+        } elseif (strpos($ua_lower, 'mozilla') !== false || strpos($ua_lower, 'chrome') !== false || strpos($ua_lower, 'safari') !== false) {
+            $tool_tag = 'Web Browser Exploit Attempt';
+        }
+
+        $new_log = array(
+            'id' => uniqid('th_'),
+            'timestamp' => current_time('mysql'),
+            'time_short' => current_time('H:i:s'),
+            'ip' => $ip,
+            'reason' => $reason,
+            'tool_tag' => $tool_tag,
+            'source' => $source,
+            'method' => $method,
+            'uri' => $uri,
+            'status' => $status
+        );
+
+        array_unshift($logs, $new_log);
+        if (count($logs) > 80) {
+            $logs = array_slice($logs, 0, 80);
+        }
+
+        update_option('nexaguard_threat_logs', $logs, false);
+    }
+
+    public static function get_threat_logs() {
+        $logs = get_option('nexaguard_threat_logs', array());
+        if (!is_array($logs)) {
+            $logs = array();
+        }
+        return $logs;
+    }
+
+    public static function ajax_get_radar_logs() {
+        check_ajax_referer('nexaguard_admin_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Sin permisos suficientes.'));
+        }
+
+        $logs = self::get_threat_logs();
+        wp_send_json_success(array(
+            'logs' => $logs,
+            'total' => count($logs)
+        ));
+    }
+
+    public static function ajax_clear_radar_logs() {
+        check_ajax_referer('nexaguard_admin_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Sin permisos suficientes.'));
+        }
+
+        update_option('nexaguard_threat_logs', array(), false);
+        wp_send_json_success(array('message' => 'Logs de amenazas limpiados.'));
     }
 
     /* =========================================================================

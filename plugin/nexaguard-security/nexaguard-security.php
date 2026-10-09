@@ -3,7 +3,7 @@
  * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
  * Plugin URI: https://nexaguards.com
  * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
- * Version: 1.2.5
+ * Version: 1.2.6
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://nexaguards.com
  * License: GPLv2 or later
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.2.5');
+define('NEXAGUARD_VERSION', '1.2.6');
 define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
 define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
 
@@ -51,6 +51,8 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_reset_scan', array($this, 'ajax_reset_scan'));
         add_action('wp_ajax_nexaguard_force_delete', array($this, 'ajax_force_delete'));
         add_action('wp_ajax_nexaguard_toggle_vigilance', array($this, 'ajax_toggle_vigilance'));
+        add_action('wp_ajax_nexaguard_get_radar_logs', array('NexaGuard_Firewall', 'ajax_get_radar_logs'));
+        add_action('wp_ajax_nexaguard_clear_radar_logs', array('NexaGuard_Firewall', 'ajax_clear_radar_logs'));
         add_action('wp_ajax_nexaguard_validate_license', array($this, 'ajax_validate_license'));
         add_action('wp_ajax_nexaguard_auto_remediate_all', array($this, 'ajax_auto_remediate_all'));
         add_action('wp_ajax_nexaguard_revert_snapshot', array($this, 'ajax_revert_snapshot'));

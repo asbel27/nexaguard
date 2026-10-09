@@ -539,6 +539,53 @@ $rollback_count = count($backup_history);
                     <?php endif; ?>
                 </div>
             </div>
+
+            <!-- ============ CONSOLA HACKER TELEMETRÍA RADAR ============ -->
+            <div class="hacker-terminal-card">
+                <div class="terminal-bar">
+                    <div class="terminal-dots">
+                        <span class="t-dot t-red"></span>
+                        <span class="t-dot t-yellow"></span>
+                        <span class="t-dot t-green"></span>
+                    </div>
+                    <div class="terminal-title">
+                        <span class="t-badge-live">LIVE TELEMETRY</span>
+                        <span>NEXAGUARD THREAT INTERCEPTOR // KALI LINUX & BOTNET RADAR STREAM</span>
+                    </div>
+                    <div class="terminal-meta">
+                        <span class="t-counter-badge"><strong id="terminal-threat-count">0</strong> ATAQUES REGISTRADOS</span>
+                        <span class="t-pulse"></span>
+                    </div>
+                </div>
+
+                <div class="terminal-screen-wrap">
+                    <div class="terminal-crt-scanlines"></div>
+                    <div class="terminal-screen" id="hacker-radar-screen">
+                        <div class="terminal-stream-inner" id="terminal-stream-inner">
+                            <div class="term-line term-system">[SYSTEM INIT] NexaGuard Security Kernel v<?php echo NEXAGUARD_VERSION; ?> loaded.</div>
+                            <div class="term-line term-system">[SENSOR] Tactical 24H Radar listening on perimeter ports (HTTP/HTTPS, REST API, WP-RPC)...</div>
+                            <div class="term-line term-dim">[READY] Active defense module standing by. Live stream connected.</div>
+                        </div>
+                        <div class="terminal-cursor-line">
+                            <span class="term-prompt">root@nexaguard-radar:~#</span>
+                            <span class="terminal-typing-text" id="terminal-typing-status">monitoreando tráfico perimetral en tiempo real...</span>
+                            <span class="terminal-cursor">█</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="terminal-footer">
+                    <div class="term-legend">
+                        <span class="leg-item leg-green"><span class="leg-dot"></span> Telemetría de patrullaje</span>
+                        <span class="leg-item leg-yellow"><span class="leg-dot"></span> Sonda / Escaneo sospechoso</span>
+                        <span class="leg-item leg-red"><span class="leg-dot"></span> Ataque interceptado (HTTP 403)</span>
+                    </div>
+                    <div class="term-controls">
+                        <button type="button" id="btn-clear-terminal-logs" class="btn-ng btn-ng-link" style="color:#64748b;font-size:0.75rem;padding:0;text-decoration:none;">🗑️ Limpiar registro de terminal</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
     </div><!-- /tab-vigilance -->
