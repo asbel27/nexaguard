@@ -288,26 +288,44 @@ class NexaGuard_Firewall {
         $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
         $query = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
 
-        $suspicious_patterns = array(
-            '/(\%27)|(\')|(\-\-)|(\%23)|(#)/i' => 'SQLi comment injection',
-            '/(union\s+select|select\s+.*\s+from|concat\s*\(|information_schema)/i' => 'SQL Injection attempt',
-            '/(\.\.\/|\.\.\\\\)/i' => 'Directory Traversal attempt',
-            '/(base64_decode|eval\(|gzinflate|passthru|shell_exec|system\()/i' => 'Remote Code Execution attempt',
-            '/(<script|javascript:|alert\(|onerror=)/i' => 'Cross-Site Scripting (XSS) payload',
-            '/(wwlc_file_upload_handler|unauthenticated_upload)/i' => 'Arbitrary File Upload exploit (CVE-2026-27540)',
-            '/(powershell\s+(-e|-enc|-w\s+hidden)|mshta\s+https?:\/\/|certutil\s+-urlcache)/i' => 'ClickFix PowerShell payload smuggling',
-            '/(mainnet\.infura\.io|rpc\.ankr\.com|alchemy\.com\/v2|cloudflare-eth\.com|eth_call)/i' => 'Blockchain C2 RPC traffic hijacking',
-            '/(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*([\'"][^\'"]*[\r\n]+[^\'"]*[\'"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*[\'"]?\s*javascript:)/is' => 'Comment2Shell XSS exploitation (CVE-2026-93485)'
-        );
-
-        $check_string = $uri . ' ' . $query;
+        $raw_inputs = array($uri, $query);
+        if (!empty($_GET)) {
+            $raw_inputs[] = json_encode($_GET);
+        }
         if (!empty($_POST)) {
-            $check_string .= ' ' . json_encode($_POST);
+            $raw_inputs[] = json_encode($_POST);
         }
 
+        $combined = implode(' ', $raw_inputs);
+
+        $suspicious_patterns = array(
+            '/(\%27)|(\')|(\-\-)|(\%23)|(#)/i' => 'SQLi comment injection',
+            '/(union[\s\+]+select|select[\s\+]+.*[\s\+]+from|concat\s*\(|information_schema)/i' => 'SQL Injection attempt',
+            '/(\.\.\/|\.\.\\\\|\%2e\%2e\%2f|\%2e\%2e\/|\.\.%2f)/i' => 'Directory Traversal attempt',
+            '/(base64_decode|eval\s*\(|gzinflate|passthru|shell_exec|system\s*\()/i' => 'Remote Code Execution attempt',
+            '/(<script|%3cscript|javascript:|alert\s*\(|onerror=)/i' => 'Cross-Site Scripting (XSS) payload',
+            '/(wwlc_file_upload_handler|unauthenticated_upload)/i' => 'Arbitrary File Upload exploit (CVE-2026-27540)',
+            '/(powershell[\s\+]+(-e|-enc|-encodedcommand|-w[\s\+]+hidden)|mshta[\s\+]+https?:\/\/|certutil[\s\+]+-urlcache)/i' => 'ClickFix PowerShell payload smuggling',
+            '/(mainnet\.infura\.io|rpc\.ankr\.com|alchemy\.com\/v2|cloudflare-eth\.com|eth_call)/i' => 'Blockchain C2 RPC traffic hijacking',
+            '/(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*([\'"][^\'"]*[\r\n]+[^\'"]*[\'"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*[\'"]?\s*javascript:)/is' => 'Comment2Shell XSS exploitation (CVE-2026-93485)',
+            '/(\/|\\\\)(\.env|\.git|\.htaccess|wp-config\.php\.bak|wp-config\.old|wp-config\.txt)/i' => 'Sensitive configuration file probe'
+        );
+
+        // Normalización multicapa WAF para evitar evasiones de codificación (+, %20, doble URL encode)
+        $check_targets = array(
+            $combined,
+            urldecode($combined),
+            rawurldecode($combined),
+            urldecode(urldecode($combined)),
+            str_replace('+', ' ', $combined),
+            str_replace('+', ' ', urldecode($combined))
+        );
+
         foreach ($suspicious_patterns as $pattern => $reason) {
-            if (preg_match($pattern, $check_string)) {
-                self::block_access($reason);
+            foreach ($check_targets as $target) {
+                if (preg_match($pattern, $target)) {
+                    self::block_access($reason);
+                }
             }
         }
     }

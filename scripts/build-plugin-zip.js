@@ -202,7 +202,7 @@ function generateUpdateInfo(sourceDir, downloadsDir) {
     last_updated: new Date().toISOString().split('T')[0],
     sections: {
       description: "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
-      changelog: `<h4>Versión ${version}</h4><ul><li>Control deslizante interactivo de volumen (0% a 100%) y botón de silenciado en la consola del Radar.</li><li>Voz suave, pausada y reconfortante ante intrusiones con reporte exacto del vector de ataque bloqueado.</li><li>Alarma de monitor clínico senoidal sutil y gradual que avisa sin sobresaltos al usuario.</li><li>Sincronización y despliegue oficial directo desde la Red Global de NexaGuard Cloud.</li></ul>`
+      changelog: `<h4>Versión ${version}</h4><ul><li>Normalización multicapa del motor WAF perimetral contra evasiones de codificación (+, %20, doble URL encode).</li><li>Detección hermética de comandos PowerShell encubiertos, ClickFix, inyecciones SQL y rutas sensibles (.env, .git).</li><li>Control interactivo de volumen y locución suave reconfortante ante intrusiones bloqueadas.</li><li>Despliegue y actualización directa desde la Red Global de NexaGuard Cloud.</li></ul>`
     }
   };
 

@@ -1,6 +1,6 @@
 {
-  "nexaguard-security.php": "d92ef851bb89118f505963f6ccda505cba01221750639344091b04935fbb3281",
-  "inc/firewall.php": "7513383bd9f9409b167aeb789403c197b23684a1ddb38bcf9b621cde98e54b69",
+  "nexaguard-security.php": "b4471d715730f84a098e68fe6f6eddcb8b6a661ca02ae45bd8cde09c36a14117",
+  "inc/firewall.php": "44a128a60e6d9af5cac734ce7e2d755e037a4d1310e06b7344784414bc1d68f8",
   "inc/scanner.php": "3e1928189afc062b518fb629f6a8b167e26a8fdff77248bc02ef50ebed9f9a27",
   "inc/cleaner.php": "ac8307ba7ee1fb26f80db3c2e47a2974160ceb19d1fd95297336e56a7bbe0938",
   "inc/updater.php": "e9d09a28c38cfab8fee3c03f306656211a89d0eb55bf462a17fc005b0929b308",
