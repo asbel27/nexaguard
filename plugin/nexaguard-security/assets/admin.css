@@ -1434,6 +1434,11 @@
     display: flex !important;
 }
 
+@keyframes ngModalPopIn {
+    0% { transform: scale(0.92) translateY(12px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
 .ng-modal-box {
     background: #0d1538;
     border: 1.5px solid rgba(255, 207, 51, 0.4);
@@ -1445,6 +1450,7 @@
     margin: auto !important;
     max-height: 90vh !important;
     overflow-y: auto !important;
+    animation: ngModalPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .ng-modal-box h3 {

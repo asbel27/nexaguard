@@ -69,7 +69,33 @@ jQuery(document).ready(function ($) {
         setTimeout(dismissToast, 7000);
     }
 
-    // ============ SISTEMA DE CONFIRMACIÓN MODAL ESTILIZADO ============
+    // ============ SISTEMA DE MODAL INTERACTIVO Y ANIMADO (REEMPLAZO TOTAL DE ALERT Y CONFIRM) ============
+    function ensureConfirmModalExists() {
+        var $modal = $('#nexaguard-confirm-modal');
+        if (!$modal.length) {
+            $modal = $(
+                '<div id="nexaguard-confirm-modal" class="ng-modal" style="display:none; z-index:9999999 !important;">' +
+                    '<div class="ng-modal-box" style="max-width:520px; border:1.5px solid rgba(255,207,51,0.5); box-shadow:0 25px 60px rgba(0,0,0,0.85), 0 0 30px rgba(255,207,51,0.15);">' +
+                        '<div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">' +
+                            '<span id="ng-confirm-icon" style="font-size:2rem; line-height:1;">🛡️</span>' +
+                            '<div>' +
+                                '<h3 id="ng-confirm-title" style="margin:0; font-size:1.2rem; color:#ffffff;">Confirmación de Seguridad</h3>' +
+                                '<small style="color:#ffcf33; font-weight:700; font-size:0.75rem; letter-spacing:0.04em;">NEXAGUARD INTELLIGENT FORENSICS</small>' +
+                            '</div>' +
+                        '</div>' +
+                        '<p id="ng-confirm-message" style="color:#dbe4ff; font-size:0.92rem; line-height:1.6; margin:0 0 20px; white-space:pre-line;"></p>' +
+                        '<div class="ng-modal-acts" style="display:flex; gap:10px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,0.08); padding-top:16px;">' +
+                            '<button type="button" id="ng-confirm-cancel-btn" class="btn-ng btn-ng-outline" style="min-width:105px;">Cancelar</button>' +
+                            '<button type="button" id="ng-confirm-ok-btn" class="btn-ng btn-ng-primary" style="min-width:140px;">Continuar</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>'
+            );
+            $('body').append($modal);
+        }
+        return $modal;
+    }
+
     function showConfirm(message, onConfirm, onCancel, options) {
         options = options || {};
         var title = options.title || 'Confirmación de Seguridad';
@@ -78,17 +104,7 @@ jQuery(document).ready(function ($) {
         var btnCancelText = options.btnCancelText || 'Cancelar';
         var isDanger = options.danger || false;
 
-        var $modal = $('#nexaguard-confirm-modal');
-        if (!$modal.length) {
-            // Fallback si por alguna razón el modal no existe en el DOM
-            if (window.confirm(message)) {
-                if (typeof onConfirm === 'function') onConfirm();
-            } else {
-                if (typeof onCancel === 'function') onCancel();
-            }
-            return;
-        }
-
+        var $modal = ensureConfirmModalExists();
         if (!$modal.parent().is('body')) {
             $modal.appendTo('body');
         }
@@ -96,9 +112,9 @@ jQuery(document).ready(function ($) {
         $('#ng-confirm-title').text(title);
         $('#ng-confirm-icon').text(icon);
         $('#ng-confirm-message').text(message);
-        
-        var $okBtn = $('#ng-confirm-ok-btn').text(btnOkText);
-        var $cancelBtn = $('#ng-confirm-cancel-btn').text(btnCancelText);
+
+        var $okBtn = $('#ng-confirm-ok-btn').show().text(btnOkText);
+        var $cancelBtn = $('#ng-confirm-cancel-btn').show().text(btnCancelText);
 
         if (isDanger) {
             $okBtn.removeClass('btn-ng-primary').addClass('btn-ng-danger');
@@ -106,7 +122,6 @@ jQuery(document).ready(function ($) {
             $okBtn.removeClass('btn-ng-danger').addClass('btn-ng-primary');
         }
 
-        // Limpiar eventos anteriores
         $okBtn.off('click');
         $cancelBtn.off('click');
 
@@ -131,11 +146,68 @@ jQuery(document).ready(function ($) {
         $modal.css({ display: 'flex', opacity: 0 }).stop(true, true).fadeTo(200, 1);
     }
 
-    // Exponer globalmente y como reemplazo amigable de alert en este panel
+    function showAlert(message, type, title, onOk) {
+        type = type || 'info';
+        var icons = {
+            success: '🛡️',
+            error: '🚨',
+            warning: '⚠️',
+            info: '🔔'
+        };
+        var titles = {
+            success: 'Operación Exitosa',
+            error: 'Atención / Error',
+            warning: 'Advertencia de Seguridad',
+            info: 'Aviso de NexaGuard'
+        };
+
+        var icon = icons[type] || '🔔';
+        var modalTitle = title || titles[type] || 'Aviso de NexaGuard';
+
+        var $modal = ensureConfirmModalExists();
+        if (!$modal.parent().is('body')) {
+            $modal.appendTo('body');
+        }
+
+        $('#ng-confirm-title').text(modalTitle);
+        $('#ng-confirm-icon').text(icon);
+        $('#ng-confirm-message').text(message);
+
+        var $okBtn = $('#ng-confirm-ok-btn').show().text('Entendido');
+        var $cancelBtn = $('#ng-confirm-cancel-btn').hide();
+
+        if (type === 'error') {
+            $okBtn.removeClass('btn-ng-primary').addClass('btn-ng-danger');
+        } else {
+            $okBtn.removeClass('btn-ng-danger').addClass('btn-ng-primary');
+        }
+
+        $okBtn.off('click');
+        $cancelBtn.off('click');
+
+        function closeModal() {
+            $modal.stop(true, true).fadeOut(150);
+        }
+
+        $okBtn.on('click', function () {
+            closeModal();
+            if (typeof onOk === 'function') {
+                onOk();
+            }
+        });
+
+        $modal.css({ display: 'flex', opacity: 0 }).stop(true, true).fadeTo(200, 1);
+    }
+
+    // Exponer globalmente y neutralizar cualquier llamada nativa a window.alert o window.confirm
     window.nexaguardToast = showToast;
     window.nexaguardConfirm = showConfirm;
+    window.nexaguardAlert = showAlert;
+    window.alert = function (msg) {
+        showAlert(msg, 'warning', 'Aviso de NexaGuard');
+    };
     var alert = function (msg, type, title) {
-        showToast(msg, type || (typeof msg === 'string' && (msg.toLowerCase().indexOf('éxito') !== -1 || msg.toLowerCase().indexOf('exito') !== -1) ? 'success' : 'error'), title);
+        showAlert(msg, type || 'error', title);
     };
 
     // ============ SISTEMA DE PESTAÑAS (TABS) ============
@@ -232,7 +304,7 @@ jQuery(document).ready(function ($) {
                     if (res.success && res.data) {
                         renderScanResults(res.data);
                     } else {
-                        alert(res.data && res.data.message ? res.data.message : 'Error durante el análisis.');
+                        showAlert(res.data && res.data.message ? res.data.message : 'Error durante el análisis.', 'error', 'Error de Escaneo');
                     }
                 }, 500);
             },
@@ -240,7 +312,7 @@ jQuery(document).ready(function ($) {
                 clearInterval(timer);
                 $progBox.slideUp();
                 $btn.prop('disabled', false).text('⚡ Iniciar Análisis Forense');
-                alert('No se pudo completar la conexión con el servidor.');
+                showAlert('No se pudo completar la conexión con el servidor durante el escaneo.', 'error', 'Fallo de Conexión');
             }
         });
     });
@@ -279,7 +351,7 @@ jQuery(document).ready(function ($) {
             },
             error: function () {
                 $btn.prop('disabled', false).text('🔄 Limpiar Vista / Resetear');
-                alert('No se pudo resetear el historial.');
+                showAlert('No se pudo resetear el historial de auditoría.', 'error', 'Error');
             }
         });
     });
@@ -482,13 +554,13 @@ jQuery(document).ready(function ($) {
                                 showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para eliminar amenazas.', 'warning', 'Acción Restringida');
                                 openActionBlockedModal();
                             } else {
-                                alert(res.data && res.data.message ? res.data.message : 'Error al eliminar.');
+                                showAlert(res.data && res.data.message ? res.data.message : 'Error al eliminar el archivo.', 'error', 'Error al Eliminar');
                             }
                         }
                     },
                     error: function () {
                         $btn.prop('disabled', false).text('Reintentar');
-                        alert('Error de conexión.');
+                        showAlert('Error de conexión con el servidor al eliminar el archivo.', 'error', 'Fallo de Red');
                     }
                 });
             },
@@ -538,13 +610,13 @@ jQuery(document).ready(function ($) {
                                 showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para eliminar plugins maliciosos.', 'warning', 'Acción Restringida');
                                 openActionBlockedModal();
                             } else {
-                                alert(res.data && res.data.message ? res.data.message : 'Error al eliminar carpeta.');
+                                showAlert(res.data && res.data.message ? res.data.message : 'Error al eliminar carpeta del plugin.', 'error', 'Error al Eliminar');
                             }
                         }
                     },
                     error: function () {
                         $btn.prop('disabled', false).text('Reintentar');
-                        alert('Error de conexión.');
+                        showAlert('Error de conexión con el servidor al eliminar la carpeta.', 'error', 'Fallo de Red');
                     }
                 });
             },
@@ -653,13 +725,13 @@ jQuery(document).ready(function ($) {
                                 showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para desinfectar amenazas.', 'warning', 'Acción Restringida');
                                 openActionBlockedModal();
                             } else {
-                                alert(res.data && res.data.message ? res.data.message : 'Error al limpiar.');
+                                showAlert(res.data && res.data.message ? res.data.message : 'Error al limpiar la amenaza.', 'error', 'Error al Limpiar');
                             }
                         }
                     },
                     error: function () {
                         $btn.prop('disabled', false).text('Reintentar');
-                        alert('Error de conexión.');
+                        showAlert('Error de conexión con el servidor al intentar limpiar el archivo.', 'error', 'Fallo de Red');
                     }
                 });
             },
@@ -668,7 +740,6 @@ jQuery(document).ready(function ($) {
         );
     });
 
-    // 5.1 Reparación y Blindaje Automático con 1 Clic (Auto-Remediate All)
     // 5.1 Reparación y Blindaje Automático con 1 Clic (Auto-Remediate All)
     $(document).on('click', '#btn-auto-remediate-all', function () {
         var $btn = $(this);
@@ -717,13 +788,13 @@ jQuery(document).ready(function ($) {
                                 showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para reparar tu sitio.', 'warning', 'Acción Restringida');
                                 openActionBlockedModal();
                             } else {
-                                alert(res.data && res.data.message ? res.data.message : 'Error durante la reparación automática.');
+                                showAlert(res.data && res.data.message ? res.data.message : 'Error durante la reparación automática.', 'error', 'Error');
                             }
                         }
                     },
                     error: function () {
                         $btn.prop('disabled', false).html('⚡ LIMPIAR Y BLINDAR SITIO CON 1 CLIC');
-                        alert('Error de conexión durante el proceso de remediación.');
+                        showAlert('Error de conexión con el servidor durante el proceso de remediación.', 'error', 'Fallo de Red');
                     }
                 });
             },
@@ -779,13 +850,13 @@ jQuery(document).ready(function ($) {
                                 showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para aislar amenazas.', 'warning', 'Acción Restringida');
                                 openActionBlockedModal();
                             } else {
-                                alert(res.data && res.data.message ? res.data.message : 'Error al aislar.');
+                                showAlert(res.data && res.data.message ? res.data.message : 'Error al aislar el archivo.', 'error', 'Error en Cuarentena');
                             }
                         }
                     },
                     error: function () {
                         $btn.prop('disabled', false).text('Reintentar');
-                        alert('Error de conexión.');
+                        showAlert('Error de conexión con el servidor al aislar el archivo.', 'error', 'Fallo de Red');
                     }
                 });
             },
@@ -817,14 +888,15 @@ jQuery(document).ready(function ($) {
                         $(this).remove();
                         updateThreatCounts();
                     });
+                    showToast('Elemento añadido a la lista de permitidos.', 'success', 'Regla Guardada');
                 } else {
                     $btn.prop('disabled', false).text('Reintentar');
-                    alert('No se pudo añadir a la lista de permitidos.');
+                    showAlert('No se pudo añadir a la lista de permitidos.', 'error', 'Error');
                 }
             },
             error: function () {
                 $btn.prop('disabled', false).text('Reintentar');
-                alert('Error de conexión.');
+                showAlert('Error de conexión con el servidor al actualizar la lista.', 'error', 'Fallo de Red');
             }
         });
     });
@@ -854,12 +926,12 @@ jQuery(document).ready(function ($) {
                             showToast('Archivo restaurado a su ubicación original.', 'success', 'Restauración Exitosa');
                         } else {
                             $btn.prop('disabled', false).text('Restaurar');
-                            alert(res.data && res.data.message ? res.data.message : 'Error al restaurar.');
+                            showAlert(res.data && res.data.message ? res.data.message : 'Error al restaurar el archivo.', 'error', 'Error al Restaurar');
                         }
                     },
                     error: function () {
                         $btn.prop('disabled', false).text('Restaurar');
-                        alert('Error de conexión.');
+                        showAlert('Error de conexión con el servidor al restaurar.', 'error', 'Fallo de Red');
                     }
                 });
             },
@@ -906,12 +978,12 @@ jQuery(document).ready(function ($) {
                             showToast(res.data && res.data.message ? res.data.message : 'Archivo restaurado con éxito a su estado previo.', 'success', 'Reversión Completada');
                         } else {
                             $btn.prop('disabled', false).text('↩️ Revertir (Deshacer)');
-                            alert(res.data && res.data.message ? res.data.message : 'Error al revertir el archivo.');
+                            showAlert(res.data && res.data.message ? res.data.message : 'Error al revertir el archivo.', 'error', 'Error al Revertir');
                         }
                     },
                     error: function () {
                         $btn.prop('disabled', false).text('↩️ Revertir (Deshacer)');
-                        alert('Error de conexión al revertir el respaldo.');
+                        showAlert('Error de conexión con el servidor al revertir el respaldo.', 'error', 'Fallo de Red');
                     }
                 });
             },
@@ -1250,24 +1322,39 @@ jQuery(document).ready(function ($) {
         $('#terminal-typing-status').text('en espera. Activa el radar para patrullar.');
     }
 
-    // Limpiar terminal
+    // Limpiar terminal con modal animado NexaGuard (sin alerts nativos)
     $(document).on('click', '#btn-clear-terminal-logs', function (e) {
         e.preventDefault();
-        if (confirm('¿Deseas vaciar el registro visual de ataques y la consola de telemetría?')) {
-            $.ajax({
-                url: nexaguardData.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'nexaguard_clear_radar_logs',
-                    nonce: nexaguardData.nonce
-                },
-                success: function () {
-                    $('#terminal-stream-inner').html('<div class="term-line term-system">[TERMINAL RESET] Registro vaciado por el administrador. Consola lista.</div>');
-                    $('#terminal-threat-count').text('0');
-                    displayedThreatIds = {};
-                }
-            });
-        }
+        showConfirm(
+            '¿Deseas vaciar el registro visual de ataques detectados y reiniciar la consola de telemetría?',
+            function () {
+                $.ajax({
+                    url: nexaguardData.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'nexaguard_clear_radar_logs',
+                        nonce: nexaguardData.nonce
+                    },
+                    success: function () {
+                        $('#terminal-stream-inner').html('<div class="term-line term-system">[TERMINAL RESET] Registro vaciado por el operador. Sensores restablecidos.</div>');
+                        $('#terminal-threat-count').text('0');
+                        displayedThreatIds = {};
+                        showToast('Registro de telemetría y consola vaciados correctamente.', 'success', 'Terminal Reiniciada');
+                    },
+                    error: function () {
+                        showAlert('No se pudo vaciar el registro en el servidor.', 'error', 'Error');
+                    }
+                });
+            },
+            null,
+            {
+                title: 'Vaciar Telemetría del Radar',
+                icon: '🗑️',
+                btnOkText: 'Sí, vaciar',
+                btnCancelText: 'Cancelar',
+                danger: true
+            }
+        );
     });
 
     // Auto-iniciar telemetría si el radar ya está activo al cargar
@@ -1409,7 +1496,7 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '#btn-select-login-bg', function (e) {
         e.preventDefault();
         if (typeof wp === 'undefined' || !wp.media) {
-            alert('La biblioteca de medios de WordPress no está disponible en este momento. Puedes ingresar la URL directamente.');
+            showAlert('La biblioteca de medios de WordPress no está disponible en este momento. Puedes ingresar la URL directamente.', 'warning', 'Biblioteca de Medios');
             return;
         }
         var bgFrame = wp.media({
@@ -1428,7 +1515,7 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '#btn-select-login-logo', function (e) {
         e.preventDefault();
         if (typeof wp === 'undefined' || !wp.media) {
-            alert('La biblioteca de medios de WordPress no está disponible en este momento. Puedes ingresar la URL directamente.');
+            showAlert('La biblioteca de medios de WordPress no está disponible en este momento. Puedes ingresar la URL directamente.', 'warning', 'Biblioteca de Medios');
             return;
         }
         var logoFrame = wp.media({
@@ -1586,41 +1673,52 @@ jQuery(document).ready(function ($) {
         var $status = $('#update-check-status');
         var ngData = window.nexaguardData || window.nexaguard_data || {};
 
-        if (!confirm('¿Deseas sincronizar/actualizar NexaGuard Security con la versión más reciente de GitHub? Los archivos del plugin serán actualizados automáticamente.')) {
-            return;
-        }
+        showConfirm(
+            '¿Deseas sincronizar y actualizar NexaGuard Security con los archivos más recientes de GitHub?\n\n✓ Se actualizará el núcleo de blindaje, la consola y las reglas WAF.\n✓ Tus ajustes y configuraciones se conservarán intactos.\n✓ No necesitas desinstalar ni volver a subir ningún archivo ZIP.',
+            function () {
+                $btn.prop('disabled', true).text('Actualizando...');
+                $status.html('<span style="color:#ffcf33;">Descargando e instalando nueva versión desde GitHub...</span>');
 
-        $btn.prop('disabled', true).text('Actualizando...');
-        $status.html('<span style="color:#ffcf33;">Descargando e instalando nueva versión desde GitHub...</span>');
-
-        $.ajax({
-            url: ngData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            timeout: 60000,
-            data: {
-                action: 'nexaguard_perform_update',
-                nonce: ngData.nonce
+                $.ajax({
+                    url: ngData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    timeout: 60000,
+                    data: {
+                        action: 'nexaguard_perform_update',
+                        nonce: ngData.nonce
+                    },
+                    success: function (res) {
+                        if (res && res.success && res.data) {
+                            $status.html('<span style="color:#10b981; font-weight:700;">✓ ' + res.data.message + ' Recargando...</span>');
+                            showToast(res.data.message, 'success', 'Actualización Exitosa');
+                            setTimeout(function () {
+                                location.reload();
+                            }, 1800);
+                        } else {
+                            $btn.prop('disabled', false).text('Reintentar');
+                            var err = (res && res.data && res.data.message) ? res.data.message : 'La actualización falló.';
+                            $status.html('<span style="color:#ef4444;">' + err + '</span>');
+                            showAlert(err, 'error', 'Error al Actualizar');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        $btn.prop('disabled', false).text('Reintentar');
+                        var detail = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message)
+                            ? xhr.responseJSON.data.message
+                            : (error || status || 'Error desconocido');
+                        $status.html('<span style="color:#ef4444;">Error durante la actualización (' + detail + ').</span>');
+                        showAlert('Error durante la actualización: ' + detail, 'error', 'Fallo de Red');
+                    }
+                });
             },
-            success: function (res) {
-                if (res && res.success && res.data) {
-                    $status.html('<span style="color:#10b981; font-weight:700;">✓ ' + res.data.message + ' Recargando...</span>');
-                    setTimeout(function () {
-                        location.reload();
-                    }, 1800);
-                } else {
-                    $btn.prop('disabled', false).text('Reintentar');
-                    var err = (res && res.data && res.data.message) ? res.data.message : 'La actualización falló.';
-                    $status.html('<span style="color:#ef4444;">' + err + '</span>');
-                }
-            },
-            error: function (xhr, status, error) {
-                $btn.prop('disabled', false).text('Reintentar');
-                var detail = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message)
-                    ? xhr.responseJSON.data.message
-                    : (error || status || 'Error desconocido');
-                $status.html('<span style="color:#ef4444;">Error durante la actualización (' + detail + ').</span>');
+            null,
+            {
+                title: 'Actualizar NexaGuard Security',
+                icon: '⚡',
+                btnOkText: 'Actualizar ahora',
+                btnCancelText: 'Cancelar'
             }
-        });
+        );
     });
 });
