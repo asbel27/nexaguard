@@ -285,6 +285,31 @@ class NexaGuard_Firewall {
     }
 
     private static function inspect_request() {
+        // 1. Bloqueo perimetral inmediato de escáneres hostiles y herramientas de Kali Linux
+        $ua = isset($_SERVER['HTTP_USER_AGENT']) ? strtolower($_SERVER['HTTP_USER_AGENT']) : '';
+        if (!empty($ua)) {
+            $scanner_signatures = array(
+                'sqlmap'        => 'Escáner hostil de Kali Linux [SQLMap Scanner]',
+                'nikto'         => 'Escáner de vulnerabilidades [Nikto Web Scanner]',
+                'wpscan'        => 'Auditoría perimetral no autorizada [WPScan]',
+                'nmap'          => 'Escáner de puertos o CGI [Nmap]',
+                'dirbuster'     => 'Fuerza bruta de directorios [DirBuster]',
+                'gobuster'      => 'Fuerza bruta de directorios [Gobuster]',
+                'hydra'         => 'Herramienta de fuerza bruta [THC Hydra]',
+                'medusa'        => 'Herramienta de fuerza bruta [Medusa]',
+                'metasploit'    => 'Framework de explotación [Metasploit]',
+                'havij'         => 'Herramienta de inyección SQL [Havij]',
+                'acunetix'      => 'Escáner automatizado [Acunetix]',
+                'nessus'        => 'Escáner de vulnerabilidades [Nessus]'
+            );
+
+            foreach ($scanner_signatures as $sig => $desc) {
+                if (strpos($ua, $sig) !== false) {
+                    self::block_access($desc);
+                }
+            }
+        }
+
         $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
         $query = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
 
