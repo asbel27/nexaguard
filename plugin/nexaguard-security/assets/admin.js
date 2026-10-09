@@ -1536,6 +1536,7 @@ jQuery(document).ready(function ($) {
             url: ngData.ajax_url,
             type: 'POST',
             dataType: 'json',
+            timeout: 15000,
             data: {
                 action: 'nexaguard_check_update',
                 nonce: ngData.nonce
@@ -1547,12 +1548,17 @@ jQuery(document).ready(function ($) {
                     if (res.data.has_update) {
                         $status.html(
                             '<span style="color:#ffcf33; font-weight:700;">⚡ ¡Nueva versión v' + res.data.remote_version + ' disponible!</span> ' +
-                            '<button type="button" id="btn-do-plugin-update" class="btn-ng btn-ng-primary" style="padding:3px 10px; font-size:0.75rem; margin-left:6px; font-weight:700;">' +
+                            '<button type="button" id="btn-do-plugin-update" class="btn-ng btn-ng-primary" style="padding:4px 12px; font-size:0.75rem; margin-left:8px; font-weight:700; cursor:pointer;">' +
                             'Actualizar ahora' +
                             '</button>'
                         );
                     } else {
-                        $status.html('<span style="color:#10b981; font-weight:600;">✓ ' + res.data.message + '</span>');
+                        $status.html(
+                            '<span style="color:#10b981; font-weight:600;">✓ ' + res.data.message + '</span> ' +
+                            '<button type="button" id="btn-do-plugin-update" class="btn-ng btn-ng-outline" style="padding:2px 8px; font-size:0.72rem; margin-left:6px; cursor:pointer; color:#b6c4eb; border:1px solid rgba(255,255,255,0.2);" title="Reinstalar o sincronizar con los últimos cambios de GitHub">' +
+                            '🔄 Reinstalar / Sincronizar' +
+                            '</button>'
+                        );
                     }
                 } else {
                     var err = (res && res.data && res.data.message) ? res.data.message : 'Error al consultar actualizaciones.';
@@ -1561,7 +1567,15 @@ jQuery(document).ready(function ($) {
             },
             error: function (xhr, status, error) {
                 $btn.prop('disabled', false);
-                $status.html('<span style="color:#ef4444;">Error de conexión con el servidor (' + (error || status) + ').</span>');
+                var detail = '';
+                if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                    detail = xhr.responseJSON.data.message;
+                } else if (xhr && xhr.responseText && xhr.responseText.length < 150) {
+                    detail = xhr.responseText;
+                } else {
+                    detail = error || status || 'Tiempo de espera agotado';
+                }
+                $status.html('<span style="color:#ef4444;">Error al comprobar (' + detail + ').</span>');
             }
         });
     });
@@ -1572,17 +1586,18 @@ jQuery(document).ready(function ($) {
         var $status = $('#update-check-status');
         var ngData = window.nexaguardData || window.nexaguard_data || {};
 
-        if (!confirm('¿Deseas actualizar NexaGuard Security a la última versión disponible ahora mismo? Los archivos del plugin serán reemplazados de forma segura.')) {
+        if (!confirm('¿Deseas sincronizar/actualizar NexaGuard Security con la versión más reciente de GitHub? Los archivos del plugin serán actualizados automáticamente.')) {
             return;
         }
 
         $btn.prop('disabled', true).text('Actualizando...');
-        $status.html('<span style="color:#ffcf33;">Descargando e instalando nueva versión...</span>');
+        $status.html('<span style="color:#ffcf33;">Descargando e instalando nueva versión desde GitHub...</span>');
 
         $.ajax({
             url: ngData.ajax_url,
             type: 'POST',
             dataType: 'json',
+            timeout: 60000,
             data: {
                 action: 'nexaguard_perform_update',
                 nonce: ngData.nonce
@@ -1601,7 +1616,10 @@ jQuery(document).ready(function ($) {
             },
             error: function (xhr, status, error) {
                 $btn.prop('disabled', false).text('Reintentar');
-                $status.html('<span style="color:#ef4444;">Error durante la actualización (' + (error || status) + ').</span>');
+                var detail = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message)
+                    ? xhr.responseJSON.data.message
+                    : (error || status || 'Error desconocido');
+                $status.html('<span style="color:#ef4444;">Error durante la actualización (' + detail + ').</span>');
             }
         });
     });

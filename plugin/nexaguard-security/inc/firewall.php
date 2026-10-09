@@ -412,7 +412,9 @@ class NexaGuard_Firewall {
     }
 
     public static function ajax_get_radar_logs() {
-        check_ajax_referer('nexaguard_admin_nonce', 'nonce');
+        if (!check_ajax_referer('nexaguard_security_nonce', 'nonce', false) && !check_ajax_referer('nexaguard_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Token de seguridad inválido.'));
+        }
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Sin permisos suficientes.'));
         }
@@ -425,7 +427,9 @@ class NexaGuard_Firewall {
     }
 
     public static function ajax_clear_radar_logs() {
-        check_ajax_referer('nexaguard_admin_nonce', 'nonce');
+        if (!check_ajax_referer('nexaguard_security_nonce', 'nonce', false) && !check_ajax_referer('nexaguard_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Token de seguridad inválido.'));
+        }
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Sin permisos suficientes.'));
         }

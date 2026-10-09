@@ -202,7 +202,7 @@ function generateUpdateInfo(sourceDir, downloadsDir) {
     last_updated: new Date().toISOString().split('T')[0],
     sections: {
       description: "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
-      changelog: `<h4>Versión ${version}</h4><ul><li>Sistema de auto-actualización remota sincronizado con GitHub y nexaguards.com.</li><li>Pantalla de aislamiento preventivo con canales de soporte y asistencia técnica.</li><li>Corrección de persistencia en URL de login personalizada.</li></ul>`
+      changelog: `<h4>Versión ${version}</h4><ul><li>Consola Terminal Hacker en vivo bajo el Radar con registro de ataques y telemetría interactiva.</li><li>Motor de Auto-Actualización instantáneo con sincronización directa desde GitHub.</li><li>Blindaje forense WAF especializado que bloquea ataques no detectados por hosting.</li><li>Corrección de validación de tokens de seguridad y compatibilidad con WordPress 6.7+.</li></ul>`
     }
   };
 
