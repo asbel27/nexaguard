@@ -26,7 +26,7 @@ $settings = get_option('nexaguard_settings', array(
             </svg>
             <div>
                 <h1>Blindaje Activo & Cortafuegos (WAF) <?php if (!$is_pro): ?><span class="badge-v" style="background:rgba(255,107,138,.15);color:#ff8ba0;border:1px solid rgba(255,107,138,.3)">🔒 Función PRO</span><?php endif; ?></h1>
-                <p class="sub">Reglas de endurecimiento perimetral en tiempo real para evitar hackeos recurrentes</p>
+                <p class="sub">Atrapa amenazas avanzadas que tu hosting no logra detectar · Endurecimiento perimetral en tiempo real</p>
             </div>
         </div>
         <div class="nexaguard-header-actions">
