@@ -1522,16 +1522,23 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         var $btn = $(this);
         var $status = $('#update-check-status');
+        var ngData = window.nexaguardData || window.nexaguard_data || {};
+
+        if (!ngData.ajax_url) {
+            $status.html('<span style="color:#ef4444;">Error: Parámetros de WordPress no encontrados.</span>');
+            return;
+        }
 
         $btn.prop('disabled', true);
-        $status.html('<span style="color:#b6c4eb;">Buscando versión...</span>');
+        $status.html('<span style="color:#b6c4eb;">Buscando versión remota en GitHub...</span>');
 
         $.ajax({
-            url: nexaguard_data.ajax_url,
+            url: ngData.ajax_url,
             type: 'POST',
+            dataType: 'json',
             data: {
                 action: 'nexaguard_check_update',
-                nonce: nexaguard_data.nonce
+                nonce: ngData.nonce
             },
             success: function (res) {
                 $btn.prop('disabled', false);
@@ -1552,9 +1559,9 @@ jQuery(document).ready(function ($) {
                     $status.html('<span style="color:#ef4444;">' + err + '</span>');
                 }
             },
-            error: function () {
+            error: function (xhr, status, error) {
                 $btn.prop('disabled', false);
-                $status.html('<span style="color:#ef4444;">Error de conexión con el servidor.</span>');
+                $status.html('<span style="color:#ef4444;">Error de conexión con el servidor (' + (error || status) + ').</span>');
             }
         });
     });
@@ -1563,6 +1570,7 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         var $btn = $(this);
         var $status = $('#update-check-status');
+        var ngData = window.nexaguardData || window.nexaguard_data || {};
 
         if (!confirm('¿Deseas actualizar NexaGuard Security a la última versión disponible ahora mismo? Los archivos del plugin serán reemplazados de forma segura.')) {
             return;
@@ -1572,11 +1580,12 @@ jQuery(document).ready(function ($) {
         $status.html('<span style="color:#ffcf33;">Descargando e instalando nueva versión...</span>');
 
         $.ajax({
-            url: nexaguard_data.ajax_url,
+            url: ngData.ajax_url,
             type: 'POST',
+            dataType: 'json',
             data: {
                 action: 'nexaguard_perform_update',
-                nonce: nexaguard_data.nonce
+                nonce: ngData.nonce
             },
             success: function (res) {
                 if (res && res.success && res.data) {
@@ -1590,9 +1599,9 @@ jQuery(document).ready(function ($) {
                     $status.html('<span style="color:#ef4444;">' + err + '</span>');
                 }
             },
-            error: function () {
+            error: function (xhr, status, error) {
                 $btn.prop('disabled', false).text('Reintentar');
-                $status.html('<span style="color:#ef4444;">Error durante el proceso de actualización.</span>');
+                $status.html('<span style="color:#ef4444;">Error durante la actualización (' + (error || status) + ').</span>');
             }
         });
     });
