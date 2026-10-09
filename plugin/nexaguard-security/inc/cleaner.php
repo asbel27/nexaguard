@@ -484,16 +484,32 @@ class NexaGuard_Cleaner {
             if (!is_dir($uploads_dir)) {
                 @wp_mkdir_p($uploads_dir);
             }
-            if (file_exists($uploads_htaccess) && !is_writable($uploads_htaccess)) {
-                @chmod($uploads_htaccess, 0644);
+            if (is_dir($uploads_dir) && !is_writable($uploads_dir)) {
+                @chmod($uploads_dir, 0755);
             }
-            if (@file_put_contents($uploads_htaccess, $uploads_rules) !== false) {
+            if (file_exists($uploads_htaccess)) {
+                $this->create_snapshot($uploads_htaccess, 'Blindaje wp-content/uploads/.htaccess');
+                if (!is_writable($uploads_htaccess)) {
+                    @chmod($uploads_htaccess, 0644);
+                }
+            }
+            $u_written = @file_put_contents($uploads_htaccess, $uploads_rules);
+            if ($u_written === false) {
+                $fp = @fopen($uploads_htaccess, 'w');
+                if ($fp) {
+                    @fwrite($fp, $uploads_rules);
+                    @fclose($fp);
+                    $u_written = true;
+                }
+            }
+            if ($u_written !== false) {
                 $written_any = true;
             }
         } else {
             if (file_exists($uploads_htaccess)) {
                 $content = @file_get_contents($uploads_htaccess);
                 if ($content !== false && strpos($content, 'NexaGuard Security') !== false) {
+                    $this->create_snapshot($uploads_htaccess, 'Eliminación Blindaje wp-content/uploads/.htaccess');
                     @unlink($uploads_htaccess);
                 }
             }
@@ -529,6 +545,7 @@ class NexaGuard_Cleaner {
             $wp_inserted = false;
             if (function_exists('insert_with_markers') && (is_writable($root_file) || !file_exists($root_file))) {
                 if (file_exists($root_file)) {
+                    $this->create_snapshot($root_file, 'Blindaje .htaccess (Bloqueo PHP Uploads)');
                     @copy($root_file, $root_file . '.bak_nexaguard_' . time());
                 }
                 $wp_inserted = insert_with_markers($root_file, 'NexaGuard Security - Bloqueo de ejecucion PHP en Uploads', $enable ? $root_rules : array());
@@ -548,6 +565,7 @@ class NexaGuard_Cleaner {
 
                 if ($enable) {
                     if (file_exists($root_file)) {
+                        $this->create_snapshot($root_file, 'Blindaje .htaccess (Bloqueo PHP Uploads)');
                         @copy($root_file, $root_file . '.bak_nexaguard_' . time());
                     }
                     if (stripos($clean_root, '# BEGIN WordPress') !== false) {
@@ -559,6 +577,9 @@ class NexaGuard_Cleaner {
                         $written_any = true;
                     }
                 } else {
+                    if (file_exists($root_file)) {
+                        $this->create_snapshot($root_file, 'Retirar Blindaje .htaccess (Bloqueo PHP Uploads)');
+                    }
                     if (@file_put_contents($root_file, $clean_root) !== false) {
                         $written_any = true;
                     }
@@ -595,7 +616,13 @@ class NexaGuard_Cleaner {
             return array('success' => true, 'message' => 'La directiva DISALLOW_FILE_EDIT ya se encuentra configurada en wp-config.php.');
         }
 
-        @copy($config_file, $config_file . '.bak_nexaguard_' . time());
+        if (file_exists($config_file)) {
+            $this->create_snapshot($config_file, 'Blindaje wp-config.php (DISALLOW_FILE_EDIT)');
+            @copy($config_file, $config_file . '.bak_nexaguard_' . time());
+            if (!is_writable($config_file)) {
+                @chmod($config_file, 0644);
+            }
+        }
 
         $needle = "/* That's all, stop editing!";
         $new_line = "\n/** NexaGuard Hardening: Bloqueo de edicion de temas y plugins desde el panel de control */\ndefine('DISALLOW_FILE_EDIT', true);\n";
@@ -616,27 +643,51 @@ class NexaGuard_Cleaner {
      * Blindaje en .htaccess: Prevenir listado de directorios (Hardening)
      */
     public function apply_htaccess_no_indexes($enable = true) {
-        $htaccess = ABSPATH . '.htaccess';
-        $content = file_exists($htaccess) ? @file_get_contents($htaccess) : '';
+        $root_candidates = $this->get_root_htaccess_paths();
+        $written_any = false;
 
-        if ($enable) {
-            if (stripos($content, 'Options -Indexes') !== false) {
-                return array('success' => true, 'message' => 'La regla "Options -Indexes" ya está activa en .htaccess.');
+        foreach ($root_candidates as $htaccess) {
+            if (!file_exists($htaccess) && !$enable) {
+                continue;
             }
-            if (file_exists($htaccess)) {
-                @copy($htaccess, $htaccess . '.bak_nexaguard_' . time());
+
+            $content = file_exists($htaccess) ? @file_get_contents($htaccess) : '';
+            if ($content === false) {
+                $content = '';
             }
-            $rules = "\n# NexaGuard Hardening - Prevenir listado de directorios Apache\nOptions -Indexes\n";
-            @file_put_contents($htaccess, $content . $rules);
-            return array('success' => true, 'message' => 'Blindaje aplicado: Se bloqueó el listado de directorios (Options -Indexes) en .htaccess.');
-        } else {
-            if (file_exists($htaccess)) {
-                $cleaned = preg_replace('/# NexaGuard Hardening[^\n]*\nOptions -Indexes\n?/i', '', $content);
-                @file_put_contents($htaccess, $cleaned);
-                return array('success' => true, 'message' => 'Regla de listado de directorios retirada.');
+
+            if ($enable) {
+                if (stripos($content, 'Options -Indexes') !== false) {
+                    $written_any = true;
+                    continue;
+                }
+                if (file_exists($htaccess)) {
+                    $this->create_snapshot($htaccess, 'Blindaje .htaccess (Options -Indexes)');
+                    @copy($htaccess, $htaccess . '.bak_nexaguard_' . time());
+                    if (!is_writable($htaccess)) {
+                        @chmod($htaccess, 0644);
+                    }
+                }
+                $rules = "\n# NexaGuard Hardening - Prevenir listado de directorios Apache\nOptions -Indexes\n";
+                if (@file_put_contents($htaccess, $content . $rules) !== false) {
+                    $written_any = true;
+                }
+            } else {
+                if (file_exists($htaccess)) {
+                    $this->create_snapshot($htaccess, 'Retirar Blindaje .htaccess (Options -Indexes)');
+                    $cleaned = preg_replace('/# NexaGuard Hardening[^\n]*\nOptions -Indexes\n?/i', '', $content);
+                    if (@file_put_contents($htaccess, $cleaned) !== false) {
+                        $written_any = true;
+                    }
+                }
             }
         }
-        return array('success' => true, 'message' => 'Operación completada.');
+
+        if ($enable && !$written_any) {
+            return array('success' => false, 'message' => 'No se pudo escribir en .htaccess debido a permisos restringidos.');
+        }
+
+        return array('success' => true, 'message' => 'Blindaje aplicado: Se bloqueó el listado de directorios (Options -Indexes) en .htaccess.');
     }
 
     /**
@@ -644,55 +695,76 @@ class NexaGuard_Cleaner {
      * Bloquea ejecución directa en wp-includes, protege wp-config.php, readme.html y métodos TRACE/TRACK/DEBUG
      */
     public function protect_system_files($enable = true) {
-        $htaccess = ABSPATH . '.htaccess';
-        $content = file_exists($htaccess) ? @file_get_contents($htaccess) : '';
-
+        $root_candidates = $this->get_root_htaccess_paths();
         $marker_start = "# BEGIN NexaGuard System Hardening";
         $marker_end = "# END NexaGuard System Hardening";
+        $written_any = false;
 
-        if ($enable) {
-            if (stripos($content, $marker_start) !== false) {
-                return array('success' => true, 'message' => 'El blindaje de archivos del sistema ya se encuentra activo en .htaccess.');
+        foreach ($root_candidates as $htaccess) {
+            if (!file_exists($htaccess) && !$enable) {
+                continue;
             }
 
-            if (file_exists($htaccess)) {
-                @copy($htaccess, $htaccess . '.bak_nexaguard_' . time());
-            }
+            $content = file_exists($htaccess) ? @file_get_contents($htaccess) : '';
+            if ($content === false) $content = '';
 
-            $rules = "\n{$marker_start}\n";
-            $rules .= "<FilesMatch \"^(wp-config\\.php|readme\\.html|readme\\.txt|license\\.txt)$\">\n";
-            $rules .= "    <IfModule mod_authz_core.c>\n";
-            $rules .= "        Require all denied\n";
-            $rules .= "    </IfModule>\n";
-            $rules .= "    <IfModule !mod_authz_core.c>\n";
-            $rules .= "        Order allow,deny\n";
-            $rules .= "        Deny from all\n";
-            $rules .= "    </IfModule>\n";
-            $rules .= "</FilesMatch>\n\n";
+            if ($enable) {
+                if (stripos($content, $marker_start) !== false) {
+                    $written_any = true;
+                    continue;
+                }
 
-            $rules .= "<IfModule mod_rewrite.c>\n";
-            $rules .= "    RewriteEngine On\n";
-            $rules .= "    RewriteRule ^wp-admin/install\\.php$ - [F,L]\n";
-            $rules .= "    RewriteRule ^wp-admin/includes/ - [F,L]\n";
-            $rules .= "    RewriteRule !^wp-includes/ - [S=3]\n";
-            $rules .= "    RewriteRule ^wp-includes/[^/]+\\.php$ - [F,L]\n";
-            $rules .= "    RewriteRule ^wp-includes/js/tinymce/langs/.+\\.php - [F,L]\n";
-            $rules .= "    RewriteRule ^wp-includes/theme-compat/ - [F,L]\n";
-            $rules .= "    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DEBUG) [NC]\n";
-            $rules .= "    RewriteRule ^ - [F,L]\n";
-            $rules .= "</IfModule>\n";
-            $rules .= "{$marker_end}\n";
+                if (file_exists($htaccess)) {
+                    $this->create_snapshot($htaccess, 'Blindaje Archivos del Sistema (.htaccess)');
+                    @copy($htaccess, $htaccess . '.bak_nexaguard_' . time());
+                    if (!is_writable($htaccess)) {
+                        @chmod($htaccess, 0644);
+                    }
+                }
 
-            @file_put_contents($htaccess, $content . $rules);
-            return array('success' => true, 'message' => 'Blindaje del sistema aplicado: Se protegieron archivos sensibles, wp-includes y métodos HTTP en .htaccess.');
-        } else {
-            if (file_exists($htaccess)) {
-                $cleaned = preg_replace('/' . preg_quote($marker_start, '/') . '[\\s\\S]*?' . preg_quote($marker_end, '/') . '\\n?/i', '', $content);
-                @file_put_contents($htaccess, $cleaned);
-                return array('success' => true, 'message' => 'Reglas de blindaje del sistema retiradas de .htaccess.');
+                $rules = "\n{$marker_start}\n";
+                $rules .= "<FilesMatch \"^(wp-config\\.php|readme\\.html|readme\\.txt|license\\.txt)$\">\n";
+                $rules .= "    <IfModule mod_authz_core.c>\n";
+                $rules .= "        Require all denied\n";
+                $rules .= "    </IfModule>\n";
+                $rules .= "    <IfModule !mod_authz_core.c>\n";
+                $rules .= "        Order allow,deny\n";
+                $rules .= "        Deny from all\n";
+                $rules .= "    </IfModule>\n";
+                $rules .= "</FilesMatch>\n\n";
+
+                $rules .= "<IfModule mod_rewrite.c>\n";
+                $rules .= "    RewriteEngine On\n";
+                $rules .= "    RewriteRule ^wp-admin/install\\.php$ - [F,L]\n";
+                $rules .= "    RewriteRule ^wp-admin/includes/ - [F,L]\n";
+                $rules .= "    RewriteRule !^wp-includes/ - [S=3]\n";
+                $rules .= "    RewriteRule ^wp-includes/[^/]+\\.php$ - [F,L]\n";
+                $rules .= "    RewriteRule ^wp-includes/js/tinymce/langs/.+\\.php - [F,L]\n";
+                $rules .= "    RewriteRule ^wp-includes/theme-compat/ - [F,L]\n";
+                $rules .= "    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DEBUG) [NC]\n";
+                $rules .= "    RewriteRule ^ - [F,L]\n";
+                $rules .= "</IfModule>\n";
+                $rules .= "{$marker_end}\n";
+
+                if (@file_put_contents($htaccess, $content . $rules) !== false) {
+                    $written_any = true;
+                }
+            } else {
+                if (file_exists($htaccess)) {
+                    $this->create_snapshot($htaccess, 'Retirar Blindaje Archivos del Sistema (.htaccess)');
+                    $cleaned = preg_replace('/' . preg_quote($marker_start, '/') . '[\\s\\S]*?' . preg_quote($marker_end, '/') . '\\n?/i', '', $content);
+                    if (@file_put_contents($htaccess, $cleaned) !== false) {
+                        $written_any = true;
+                    }
+                }
             }
         }
-        return array('success' => true, 'message' => 'Operación completada.');
+
+        if ($enable && !$written_any) {
+            return array('success' => false, 'message' => 'No se pudo escribir en .htaccess debido a permisos restringidos.');
+        }
+
+        return array('success' => true, 'message' => 'Blindaje del sistema aplicado: Se protegieron archivos sensibles, wp-includes y métodos HTTP en .htaccess.');
     }
 
     /**
@@ -714,7 +786,13 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => 'No se pudo leer wp-config.php.');
         }
 
-        @copy($config_file, $config_file . '.bak_nexaguard_' . time());
+        if (file_exists($config_file)) {
+            $this->create_snapshot($config_file, 'Regeneración Sales de Seguridad (wp-config.php)');
+            @copy($config_file, $config_file . '.bak_nexaguard_' . time());
+            if (!is_writable($config_file)) {
+                @chmod($config_file, 0644);
+            }
+        }
 
         $salt_keys = array('AUTH_KEY', 'SECURE_AUTH_KEY', 'LOGGED_IN_KEY', 'NONCE_KEY', 'AUTH_SALT', 'SECURE_AUTH_SALT', 'LOGGED_IN_SALT', 'NONCE_SALT');
         foreach ($salt_keys as $key) {
