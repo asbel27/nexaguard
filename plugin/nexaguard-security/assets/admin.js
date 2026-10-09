@@ -1227,13 +1227,42 @@ jQuery(document).ready(function ($) {
     ];
 
     /* =========================================================================
-     * SISTEMA DE ALARMA HOSPITALARIA (4S) Y VOZ SINTÉTICA ESTILO AVAST
+    /* =========================================================================
+     * SISTEMA DE ALARMA HOSPITALARIA SUAVE Y VOZ SINTÉTICA RECONFORTANTE
      * ========================================================================= */
-    var radarSoundEnabled = localStorage.getItem('nexaguard_radar_sound') !== '0';
+    var radarVolume = parseInt(localStorage.getItem('nexaguard_radar_volume') || '35', 10);
+    if (isNaN(radarVolume) || radarVolume < 0) radarVolume = 35;
+    if (radarVolume > 100) radarVolume = 100;
+    var radarSoundEnabled = localStorage.getItem('nexaguard_radar_sound') !== '0' && localStorage.getItem('nexaguard_radar_muted') !== '1';
     var isInitialRadarLoad = true;
 
+    function updateRadarVolumeUI() {
+        var $btn = $('#btn-toggle-radar-sound');
+        var $icon = $('#radar-volume-icon');
+        var $slider = $('#radar-volume-slider');
+        var $label = $('#radar-volume-label');
+
+        if (!radarSoundEnabled || radarVolume === 0) {
+            $icon.text('🔇');
+            $slider.val(0);
+            $label.text('0%').css('color', '#94a3b8');
+            $btn.css('color', '#94a3b8');
+        } else {
+            if (radarVolume < 35) {
+                $icon.text('🔈');
+            } else if (radarVolume < 75) {
+                $icon.text('🔉');
+            } else {
+                $icon.text('🔊');
+            }
+            $slider.val(radarVolume);
+            $label.text(radarVolume + '%').css('color', '#ffcf33');
+            $btn.css('color', '#ffcf33');
+        }
+    }
+
     function playHospitalCyberAlarm(durationSeconds) {
-        if (!radarSoundEnabled) return;
+        if (!radarSoundEnabled || radarVolume <= 0) return;
         durationSeconds = durationSeconds || 4.0;
 
         try {
@@ -1245,35 +1274,37 @@ jQuery(document).ready(function ($) {
                 ctx.resume();
             }
 
+            // Ganancia suave regulada por el slider de volumen (máx 0.08, ~0.028 a 35%)
+            var targetGain = (radarVolume / 100) * 0.08;
             var masterGain = ctx.createGain();
-            masterGain.gain.setValueAtTime(0.001, ctx.currentTime);
-            masterGain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.05);
+            masterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+            masterGain.gain.exponentialRampToValueAtTime(Math.max(0.001, targetGain), ctx.currentTime + 0.12);
             masterGain.connect(ctx.destination);
 
-            // Filtro para sonido clínico/electrónico de alta urgencia
+            // Filtro paso bajo suave para quitar estridencias y hacerlo agradable
             var filter = ctx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(1400, ctx.currentTime);
+            filter.frequency.setValueAtTime(900, ctx.currentTime);
             filter.connect(masterGain);
 
             var osc = ctx.createOscillator();
-            osc.type = 'sawtooth';
-            osc.connect(filter);
+            osc.type = 'sine'; // Tono senoidal puro y suave, cero estridencia ni sustos
 
-            // Alternancia rítmica de 2 tonos de alarma médica/perimetral: 920Hz y 680Hz cada 250ms
+            // Alternancia rítmica suave de 2 tonos médicos de monitor: 680Hz y 540Hz cada 300ms
             var now = ctx.currentTime;
-            var step = 0.25;
+            var step = 0.30;
             var totalSteps = Math.floor(durationSeconds / step);
             for (var i = 0; i < totalSteps; i++) {
                 var t = now + (i * step);
-                var freq = (i % 2 === 0) ? 920 : 680;
+                var freq = (i % 2 === 0) ? 680 : 540;
                 osc.frequency.setValueAtTime(freq, t);
             }
 
-            // Desvanecimiento suave en los últimos milisegundos de los 4 segundos
-            masterGain.gain.setValueAtTime(0.35, now + durationSeconds - 0.2);
+            // Desvanecimiento gradual suave
+            masterGain.gain.setValueAtTime(targetGain, now + durationSeconds - 0.35);
             masterGain.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds);
 
+            osc.connect(filter);
             osc.start(now);
             osc.stop(now + durationSeconds + 0.05);
 
@@ -1286,22 +1317,40 @@ jQuery(document).ready(function ($) {
     }
 
     function speakThreatAlert(reason) {
-        if (!radarSoundEnabled || !window.speechSynthesis) return;
+        if (!radarSoundEnabled || radarVolume <= 0 || !window.speechSynthesis) return;
 
         try {
             window.speechSynthesis.cancel();
 
-            var cleanReason = (reason || 'Ataque malicioso')
+            var cleanAttack = (reason || 'petición maliciosa')
                 .replace(/\[.*?\]/g, '')
                 .replace(/HTTP\s*\d+/gi, '')
                 .trim();
 
-            var text = '¡Alerta NexaGuard! Amenaza detectada: ' + cleanReason + '. Intrusión bloqueada.';
+            if (/sqli|inyecci[oó]n sql/i.test(cleanAttack)) {
+                cleanAttack = 'inyección SQL';
+            } else if (/xss|cross-site/i.test(cleanAttack)) {
+                cleanAttack = 'inyección de scripts';
+            } else if (/traversal|lfi|rfi/i.test(cleanAttack)) {
+                cleanAttack = 'rutas del servidor';
+            } else if (/kali|sqlmap|nikto|wpscan/i.test(cleanAttack)) {
+                cleanAttack = 'escaneo de intrusión';
+            } else if (/backdoor|webshell/i.test(cleanAttack)) {
+                cleanAttack = 'puerta trasera';
+            } else if (/brute|fuerza bruta/i.test(cleanAttack)) {
+                cleanAttack = 'fuerza bruta';
+            }
+
+            // Frase suave y reconfortante solicitada por el usuario
+            var text = 'Alerta, alerta. Se ha encontrado un intruso queriendo introducir código malicioso en ' + cleanAttack + '. Ten confianza, el ataque ha sido erradicado y bloqueado.';
             var utter = new SpeechSynthesisUtterance(text);
             utter.lang = 'es-ES';
-            utter.rate = 1.05;
-            utter.pitch = 0.95;
-            utter.volume = 1.0;
+            utter.rate = 0.90; // Ritmo pausado, suave y claro
+            utter.pitch = 1.0;  // Tono cálido y natural
+
+            // Volumen suave según el slider (máximo 0.5 a 100%, ~0.18 a 35%)
+            var speechVol = Math.max(0.05, Math.min(1.0, (radarVolume / 100) * 0.5));
+            utter.volume = speechVol;
 
             var voices = window.speechSynthesis.getVoices();
             for (var i = 0; i < voices.length; i++) {
@@ -1311,12 +1360,12 @@ jQuery(document).ready(function ($) {
                 }
             }
 
-            // Iniciar locución a los 650ms para que la sirena suene primero
+            // Iniciar locución tras un breve intervalo de 450ms
             setTimeout(function () {
                 try {
                     window.speechSynthesis.speak(utter);
                 } catch (err) {}
-            }, 650);
+            }, 450);
         } catch (e) {
             console.warn('SpeechSynthesis error:', e);
         }
@@ -1488,25 +1537,55 @@ jQuery(document).ready(function ($) {
         );
     });
 
-    // Control de Alarma Sonora y Voz
+    // Control de Silencio / Sonido (botón de altavoz)
     $(document).on('click', '#btn-toggle-radar-sound', function (e) {
         e.preventDefault();
-        radarSoundEnabled = !radarSoundEnabled;
-        localStorage.setItem('nexaguard_radar_sound', radarSoundEnabled ? '1' : '0');
-
-        if (radarSoundEnabled) {
-            $(this).html('🔊 Alarma & Voz: ON').css({ color: '#ffcf33', borderColor: 'rgba(255,207,51,0.35)', background: 'rgba(255,207,51,0.1)' });
-            showToast('Alarma sonora y locución Avast activadas para nuevas amenazas.', 'info', 'Sonido Habilitado');
+        if (!radarSoundEnabled || radarVolume === 0) {
+            // Desmutear: restaurar a volumen guardado o 35%
+            radarSoundEnabled = true;
+            if (radarVolume === 0) {
+                radarVolume = 35;
+            }
+            localStorage.setItem('nexaguard_radar_sound', '1');
+            localStorage.setItem('nexaguard_radar_muted', '0');
+            localStorage.setItem('nexaguard_radar_volume', radarVolume);
+            updateRadarVolumeUI();
+            showToast('Alerta sonora y voz activadas (' + radarVolume + '%).', 'info', 'Sonido Activo');
         } else {
-            $(this).html('🔇 Silenciado').css({ color: '#94a3b8', borderColor: 'rgba(148,163,184,0.3)', background: 'rgba(148,163,184,0.08)' });
-            showToast('Alarma sonora y locución silenciadas.', 'info', 'Sonido Silenciado');
+            // Mutear
+            radarSoundEnabled = false;
+            localStorage.setItem('nexaguard_radar_sound', '0');
+            localStorage.setItem('nexaguard_radar_muted', '1');
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+            updateRadarVolumeUI();
+            showToast('Alerta sonora y voz silenciadas.', 'info', 'Silenciado');
         }
     });
 
-    // Inicializar estado del botón de sonido según preferencia guardada
-    if (!radarSoundEnabled) {
-        $('#btn-toggle-radar-sound').html('🔇 Silenciado').css({ color: '#94a3b8', borderColor: 'rgba(148,163,184,0.3)', background: 'rgba(148,163,184,0.08)' });
-    }
+    // Control Deslizante de Volumen (0% - 100%)
+    $(document).on('input change', '#radar-volume-slider', function () {
+        var val = parseInt($(this).val(), 10);
+        if (isNaN(val)) val = 35;
+        radarVolume = Math.max(0, Math.min(100, val));
+        localStorage.setItem('nexaguard_radar_volume', radarVolume);
+
+        if (radarVolume === 0) {
+            radarSoundEnabled = false;
+            localStorage.setItem('nexaguard_radar_sound', '0');
+            localStorage.setItem('nexaguard_radar_muted', '1');
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+        } else {
+            radarSoundEnabled = true;
+            localStorage.setItem('nexaguard_radar_sound', '1');
+            localStorage.setItem('nexaguard_radar_muted', '0');
+        }
+        updateRadarVolumeUI();
+    });
+
+    // Inicializar estado del control de volumen al cargar
+    updateRadarVolumeUI();
 
     // Auto-iniciar telemetría si el radar ya está activo al cargar
     if ($('#vigilance-radar-box').hasClass('radar-scanning')) {

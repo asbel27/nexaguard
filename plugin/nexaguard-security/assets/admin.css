@@ -1070,6 +1070,54 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
+}
+
+.radar-volume-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 207, 51, 0.3);
+    border-radius: 20px;
+    padding: 3px 10px;
+    transition: all 0.2s ease;
+}
+.radar-volume-control:hover {
+    border-color: rgba(255, 207, 51, 0.6);
+    box-shadow: 0 0 10px rgba(255, 207, 51, 0.15);
+}
+.radar-vol-btn {
+    background: none;
+    border: none;
+    color: #ffcf33;
+    cursor: pointer;
+    font-size: 0.88rem;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    transition: transform 0.15s ease;
+}
+.radar-vol-btn:hover {
+    transform: scale(1.15);
+}
+.radar-vol-slider {
+    width: 65px;
+    height: 4px;
+    accent-color: #ffcf33;
+    cursor: pointer;
+    vertical-align: middle;
+    outline: none;
+    border-radius: 2px;
+}
+.radar-vol-pct {
+    font-size: 0.7rem;
+    color: #ffcf33;
+    font-weight: 700;
+    min-width: 28px;
+    text-align: right;
+    font-family: monospace;
 }
 
 .t-counter-badge {

@@ -552,10 +552,14 @@ $rollback_count = count($backup_history);
                         <span class="t-badge-live">LIVE TELEMETRY</span>
                         <span>NEXAGUARD THREAT INTERCEPTOR // KALI LINUX & BOTNET RADAR STREAM</span>
                     </div>
-                    <div class="terminal-meta" style="display:flex; align-items:center; gap:8px;">
-                        <button type="button" id="btn-toggle-radar-sound" class="btn-ng btn-ng-outline" style="padding:3px 10px; font-size:0.72rem; border-radius:6px; border:1px solid rgba(255,207,51,0.35); color:#ffcf33; background:rgba(255,207,51,0.1); cursor:pointer; font-weight:700;" title="Activar o silenciar alarma sonora y locución Avast">
-                            🔊 Alarma & Voz: ON
-                        </button>
+                    <div class="terminal-meta" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <div class="radar-volume-control" title="Ajustar volumen de voz y alerta">
+                            <button type="button" id="btn-toggle-radar-sound" class="radar-vol-btn" title="Silenciar / Activar sonido de alerta">
+                                <span id="radar-volume-icon">🔉</span>
+                            </button>
+                            <input type="range" id="radar-volume-slider" class="radar-vol-slider" min="0" max="100" value="35" title="Desliza para subir o bajar el volumen de la voz (0% - 100%)">
+                            <span id="radar-volume-label" class="radar-vol-pct">35%</span>
+                        </div>
                         <span class="t-counter-badge"><strong id="terminal-threat-count">0</strong> ATAQUES REGISTRADOS</span>
                         <span class="t-pulse"></span>
                     </div>
