@@ -1005,6 +1005,55 @@ class NexaGuard_Scanner {
             $local_md5 = md5_file($local_path);
 
             if ($local_md5 !== false && $local_md5 !== $official_md5) {
+                // Caso especial wp-includes/version.php:
+                // Si el sitio tiene un idioma localizado (ej: es_MX, es_ES) pero fue instalado con el núcleo en_US
+                // (o viceversa), comprobar si el hash local coincide con la firma oficial de en_US o con $wp_local_package
+                if ($rel_file === 'wp-includes/version.php') {
+                    global $wp_local_package;
+
+                    // Probar firma oficial en_US si el locale actual no es en_US
+                    if ($locale !== 'en_US') {
+                        $en_cache_key = 'nexaguard_core_checksums_' . md5($wp_version . '_en_US');
+                        $en_checksums = get_transient($en_cache_key);
+                        if (empty($en_checksums) || !is_array($en_checksums)) {
+                            $en_api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale=en_US";
+                            $en_resp = wp_remote_get($en_api_url, array('timeout' => 4, 'sslverify' => false));
+                            if (!is_wp_error($en_resp) && wp_remote_retrieve_response_code($en_resp) === 200) {
+                                $en_body = json_decode(wp_remote_retrieve_body($en_resp), true);
+                                if (!empty($en_body['checksums'])) {
+                                    $en_checksums = $en_body['checksums'];
+                                    set_transient($en_cache_key, $en_checksums, 24 * HOUR_IN_SECONDS);
+                                }
+                            }
+                        }
+                        if (!empty($en_checksums['wp-includes/version.php']) && $local_md5 === $en_checksums['wp-includes/version.php']) {
+                            // El archivo local es el archivo oficial en_US original inalterado
+                            continue;
+                        }
+                    }
+
+                    // Probar si $wp_local_package difiere de get_locale()
+                    if (!empty($wp_local_package) && $wp_local_package !== $locale) {
+                        $pkg_cache_key = 'nexaguard_core_checksums_' . md5($wp_version . '_' . $wp_local_package);
+                        $pkg_checksums = get_transient($pkg_cache_key);
+                        if (empty($pkg_checksums) || !is_array($pkg_checksums)) {
+                            $pkg_api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale={$wp_local_package}";
+                            $pkg_resp = wp_remote_get($pkg_api_url, array('timeout' => 4, 'sslverify' => false));
+                            if (!is_wp_error($pkg_resp) && wp_remote_retrieve_response_code($pkg_resp) === 200) {
+                                $pkg_body = json_decode(wp_remote_retrieve_body($pkg_resp), true);
+                                if (!empty($pkg_body['checksums'])) {
+                                    $pkg_checksums = $pkg_body['checksums'];
+                                    set_transient($pkg_cache_key, $pkg_checksums, 24 * HOUR_IN_SECONDS);
+                                }
+                            }
+                        }
+                        if (!empty($pkg_checksums['wp-includes/version.php']) && $local_md5 === $pkg_checksums['wp-includes/version.php']) {
+                            // El archivo local coincide con su paquete de idioma registrado
+                            continue;
+                        }
+                    }
+                }
+
                 $mtime = filemtime($local_path);
                 $mod_time_str = date('d/m/Y H:i:s', $mtime);
 

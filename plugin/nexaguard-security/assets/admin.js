@@ -631,6 +631,12 @@ jQuery(document).ready(function ($) {
                             } else {
                                 var successMsg = (type === 'restore_core_file') ? '✓ Archivo oficial de WordPress.org restaurado' : (type === 'protect_uploads_directory' || type.indexOf('apply_') !== -1 ? '✓ Blindaje .htaccess aplicado con éxito' : '✓ Desinfección completada con éxito');
                                 $('#threat-' + id).css('border-left-color', '#3de8a4').find('.threat-actions').html('<span style="color:#3de8a4;font-weight:700">' + successMsg + '</span>');
+                                setTimeout(function () {
+                                    $('#threat-' + id).fadeOut(400, function () {
+                                        $(this).remove();
+                                        updateThreatCounts();
+                                    });
+                                }, 1800);
                             }
                             showToast(res.data && res.data.message ? res.data.message : 'Acción completada con éxito.', 'success', 'Operación Completada');
                         } else {

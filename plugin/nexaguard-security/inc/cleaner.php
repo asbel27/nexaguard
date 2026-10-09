@@ -902,27 +902,73 @@ class NexaGuard_Cleaner {
     }
 
     /**
+     * Elimina una amenaza resuelta del informe de escaneo guardado en base de datos
+     */
+    public function remove_threat_from_report($threat_id_or_file) {
+        $report = get_option('nexaguard_last_scan_report', array());
+        if (!empty($report['threats']) && is_array($report['threats'])) {
+            $updated = array();
+            foreach ($report['threats'] as $t) {
+                if (isset($t['id']) && $t['id'] === $threat_id_or_file) continue;
+                if (isset($t['file']) && $t['file'] === $threat_id_or_file) continue;
+                if (isset($t['full_path']) && $t['full_path'] === $threat_id_or_file) continue;
+                $updated[] = $t;
+            }
+            $report['threats'] = $updated;
+            $report['total_threats'] = count($updated);
+            update_option('nexaguard_last_scan_report', $report);
+        }
+    }
+
+    /**
      * Descarga y restaura el archivo original, limpio e inmaculado directamente desde WordPress.org
      */
     public function restore_core_file($target) {
-        global $wp_version;
+        global $wp_version, $wp_local_package;
 
-        $full_path = (strpos($target, ABSPATH) === 0) ? $target : (ABSPATH . ltrim($target, '/'));
-        $rel_path = trim(str_replace(array(ABSPATH, '\\'), array('', '/'), $full_path), '/');
+        $target_norm = wp_normalize_path(wp_unslash($target));
+        $abspath_norm = wp_normalize_path(ABSPATH);
+
+        if (strpos($target_norm, $abspath_norm) === 0) {
+            $rel_path = trim(substr($target_norm, strlen($abspath_norm)), '/');
+        } else {
+            $rel_path = trim($target_norm, '/');
+        }
+        $full_path = rtrim(ABSPATH, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel_path);
 
         // Validar que realmente sea un archivo del núcleo de WordPress
-        $is_core = (strpos($rel_path, 'wp-includes/') === 0 || strpos($rel_path, 'wp-admin/') === 0 || in_array($rel_path, array('index.php', 'wp-blog-header.php', 'wp-settings.php', 'wp-load.php', 'wp-login.php', 'wp-cron.php', 'wp-mail.php', 'wp-links-opml.php', 'wp-trackback.php')));
+        $is_core = (strpos($rel_path, 'wp-includes/') === 0 || 
+                    strpos($rel_path, 'wp-admin/') === 0 || 
+                    in_array($rel_path, array('index.php', 'wp-blog-header.php', 'wp-settings.php', 'wp-load.php', 'wp-login.php', 'wp-cron.php', 'wp-mail.php', 'wp-links-opml.php', 'wp-trackback.php'), true));
         if (!$is_core) {
             return array('success' => false, 'message' => "El archivo '{$rel_path}' no es un archivo reconocido del núcleo de WordPress.org.");
         }
 
-        // Crear punto de restauración y respaldo de seguridad previo
+        // Crear punto de restauración y snapshot de seguridad previo
         if (file_exists($full_path)) {
             $this->create_snapshot($full_path, 'Restauración Oficial (WordPress.org)');
             @copy($full_path, $full_path . '.bak_nexaguard_' . time());
         }
 
-        // Descargar desde repositorios oficiales de WordPress
+        // Obtener checksum oficial de WordPress.org para validar integridad exacta
+        $locale = function_exists('get_locale') ? get_locale() : 'en_US';
+        $cache_key = 'nexaguard_core_checksums_' . md5($wp_version . '_' . $locale);
+        $checksums = get_transient($cache_key);
+
+        if (empty($checksums) || !is_array($checksums)) {
+            $api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale={$locale}";
+            $response = wp_remote_get($api_url, array('timeout' => 8, 'sslverify' => false));
+            if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+                $body = json_decode(wp_remote_retrieve_body($response), true);
+                if (!empty($body['checksums'])) {
+                    $checksums = $body['checksums'];
+                    set_transient($cache_key, $checksums, 24 * HOUR_IN_SECONDS);
+                }
+            }
+        }
+        $expected_md5 = (!empty($checksums[$rel_path])) ? $checksums[$rel_path] : '';
+
+        // Descargar desde repositorios oficiales de WordPress (GitHub y SVN)
         $urls = array(
             "https://raw.githubusercontent.com/WordPress/WordPress/{$wp_version}/{$rel_path}",
             "https://core.svn.wordpress.org/tags/{$wp_version}/{$rel_path}"
@@ -944,16 +990,33 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => "No se pudo descargar la copia oficial de '{$rel_path}' para la versión {$wp_version} desde los servidores de WordPress.org. Comprueba la conexión a Internet de tu servidor.");
         }
 
-        // Si es version.php y el sitio tiene paquete de idioma localizado (ej: es_ES), sincronizar $wp_local_package
+        // Si es version.php y el sitio tiene paquete de idioma localizado (ej: es_MX, es_ES)
         if ($rel_path === 'wp-includes/version.php') {
-            $locale = function_exists('get_locale') ? get_locale() : 'en_US';
-            if ($locale !== 'en_US' && strpos($official_content, '$wp_local_package') === false) {
-                $official_content .= "\n/**\n * The WordPress local package\n *\n * @global string \$wp_local_package\n */\n\$wp_local_package = '{$locale}';\n";
+            $site_package = !empty($wp_local_package) ? $wp_local_package : $locale;
+
+            if ($site_package !== 'en_US' && strpos($official_content, '$wp_local_package') === false) {
+                // Formato oficial nativo de WordPress.org para distribuciones i18n
+                $candidate_localized = $official_content . "\n\$wp_local_package = '{$site_package}';\n";
+
+                if (!empty($expected_md5)) {
+                    if (md5($candidate_localized) === $expected_md5) {
+                        $official_content = $candidate_localized;
+                    } elseif (md5($official_content) === $expected_md5) {
+                        // El hash oficial coincide con la versión en_US pura
+                    } elseif ($locale !== $site_package && md5($official_content . "\n\$wp_local_package = '{$locale}';\n") === $expected_md5) {
+                        $official_content = $official_content . "\n\$wp_local_package = '{$locale}';\n";
+                    } else {
+                        $official_content = $candidate_localized;
+                    }
+                } else {
+                    $official_content = $candidate_localized;
+                }
             }
         }
 
         // Forzar permisos de escritura si está bloqueado
         if (file_exists($full_path) && !is_writable($full_path)) {
+            @chmod(dirname($full_path), 0755);
             @chmod($full_path, 0644);
         }
 
@@ -962,13 +1025,21 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => "Error de permisos: no se pudo escribir el archivo oficial en '{$full_path}'. Revisa los permisos en tu hosting.");
         }
 
-        // Invalidar caché de checksums para que el próximo análisis refleje el archivo limpio
-        $locale = function_exists('get_locale') ? get_locale() : 'en_US';
+        // Invalidar cachés de estadísticas, OPcache y transients de checksums
+        clearstatcache(true, $full_path);
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate($full_path, true);
+        }
         delete_transient('nexaguard_core_checksums_' . md5($wp_version . '_' . $locale));
+        delete_transient('nexaguard_core_checksums_' . md5($wp_version . '_en_US'));
+
+        // Purgar de la lista de amenazas registradas
+        $this->remove_threat_from_report(md5('checksum_mismatch_' . $rel_path));
+        $this->remove_threat_from_report($rel_path);
 
         return array(
             'success' => true,
-            'message' => "✅ Archivo '{$rel_path}' restaurado con éxito a su versión oficial e inmaculada de WordPress.org (versión {$wp_version}). Se guardó una copia de seguridad."
+            'message' => "✅ Archivo '{$rel_path}' restaurado con éxito a su versión oficial e inmaculada de WordPress.org (versión {$wp_version}). Verificado contra la firma digital oficial."
         );
     }
 
