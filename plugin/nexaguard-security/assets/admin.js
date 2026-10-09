@@ -1226,6 +1226,124 @@ jQuery(document).ready(function ($) {
         { type: 'warn',      text: 'DIRECTORY GUARD: Enforcing Options -Indexes on Apache/LiteSpeed web server... [PROTECTED]' }
     ];
 
+    /* =========================================================================
+     * SISTEMA DE ALARMA HOSPITALARIA (4S) Y VOZ SINTÉTICA ESTILO AVAST
+     * ========================================================================= */
+    var radarSoundEnabled = localStorage.getItem('nexaguard_radar_sound') !== '0';
+    var isInitialRadarLoad = true;
+
+    function playHospitalCyberAlarm(durationSeconds) {
+        if (!radarSoundEnabled) return;
+        durationSeconds = durationSeconds || 4.0;
+
+        try {
+            var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return;
+            var ctx = new AudioContextClass();
+
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
+
+            var masterGain = ctx.createGain();
+            masterGain.gain.setValueAtTime(0.001, ctx.currentTime);
+            masterGain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.05);
+            masterGain.connect(ctx.destination);
+
+            // Filtro para sonido clínico/electrónico de alta urgencia
+            var filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1400, ctx.currentTime);
+            filter.connect(masterGain);
+
+            var osc = ctx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.connect(filter);
+
+            // Alternancia rítmica de 2 tonos de alarma médica/perimetral: 920Hz y 680Hz cada 250ms
+            var now = ctx.currentTime;
+            var step = 0.25;
+            var totalSteps = Math.floor(durationSeconds / step);
+            for (var i = 0; i < totalSteps; i++) {
+                var t = now + (i * step);
+                var freq = (i % 2 === 0) ? 920 : 680;
+                osc.frequency.setValueAtTime(freq, t);
+            }
+
+            // Desvanecimiento suave en los últimos milisegundos de los 4 segundos
+            masterGain.gain.setValueAtTime(0.35, now + durationSeconds - 0.2);
+            masterGain.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds);
+
+            osc.start(now);
+            osc.stop(now + durationSeconds + 0.05);
+
+            setTimeout(function () {
+                try { ctx.close(); } catch (e) {}
+            }, (durationSeconds + 0.3) * 1000);
+        } catch (e) {
+            console.warn('AudioContext alarm error:', e);
+        }
+    }
+
+    function speakThreatAlert(reason) {
+        if (!radarSoundEnabled || !window.speechSynthesis) return;
+
+        try {
+            window.speechSynthesis.cancel();
+
+            var cleanReason = (reason || 'Ataque malicioso')
+                .replace(/\[.*?\]/g, '')
+                .replace(/HTTP\s*\d+/gi, '')
+                .trim();
+
+            var text = '¡Alerta NexaGuard! Amenaza detectada: ' + cleanReason + '. Intrusión bloqueada.';
+            var utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'es-ES';
+            utter.rate = 1.05;
+            utter.pitch = 0.95;
+            utter.volume = 1.0;
+
+            var voices = window.speechSynthesis.getVoices();
+            for (var i = 0; i < voices.length; i++) {
+                if (voices[i].lang && voices[i].lang.toLowerCase().indexOf('es') === 0) {
+                    utter.voice = voices[i];
+                    break;
+                }
+            }
+
+            // Iniciar locución a los 650ms para que la sirena suene primero
+            setTimeout(function () {
+                try {
+                    window.speechSynthesis.speak(utter);
+                } catch (err) {}
+            }, 650);
+        } catch (e) {
+            console.warn('SpeechSynthesis error:', e);
+        }
+    }
+
+    function triggerIntrusionAlert(log) {
+        // 1. Sirena electrónica hospitalaria por 4 segundos
+        playHospitalCyberAlarm(4.0);
+
+        // 2. Voz sintética estilo Avast anunciando la amenaza
+        speakThreatAlert(log.reason);
+
+        // 3. Parpadeo de emergencia rojo en la pantalla de la terminal
+        var $screen = $('#hacker-radar-screen');
+        $screen.addClass('terminal-alarm-flash');
+        setTimeout(function () {
+            $screen.removeClass('terminal-alarm-flash');
+        }, 4000);
+
+        // 4. Notificación flotante de seguridad
+        showToast(
+            'IP ' + log.ip + ' intentó: ' + log.reason + ' (' + (log.tool_tag || 'HTTP 403') + ')',
+            'error',
+            '🚨 INTRUSIÓN INTERCEPTADA'
+        );
+    }
+
     function appendTerminalLine(htmlClass, text) {
         var $inner = $('#terminal-stream-inner');
         var $screen = $('#hacker-radar-screen');
@@ -1266,6 +1384,8 @@ jQuery(document).ready(function ($) {
                     var threatCount = logs.length;
                     $('#terminal-threat-count').text(threatCount);
 
+                    var newThreatToAlert = null;
+
                     // Recorrer los registros de ataques reales y mostrarlos
                     for (var i = logs.length - 1; i >= 0; i--) {
                         var log = logs[i];
@@ -1284,8 +1404,19 @@ jQuery(document).ready(function ($) {
                                 'IP: ' + log.ip + ' | Motivo: ' + log.reason + ' | Solicitud: ' + log.method + ' ' + log.uri;
 
                             appendTerminalLine('term-blocked', attackHtml);
+
+                            if (!isInitialRadarLoad) {
+                                newThreatToAlert = log;
+                            }
                         }
                     }
+
+                    // Si no es la carga inicial y se detectó un nuevo ataque en vivo: ¡disparar alarma y voz!
+                    if (!isInitialRadarLoad && newThreatToAlert) {
+                        triggerIntrusionAlert(newThreatToAlert);
+                    }
+
+                    isInitialRadarLoad = false;
                 }
             }
         });
@@ -1357,12 +1488,49 @@ jQuery(document).ready(function ($) {
         );
     });
 
+    // Control de Alarma Sonora y Voz
+    $(document).on('click', '#btn-toggle-radar-sound', function (e) {
+        e.preventDefault();
+        radarSoundEnabled = !radarSoundEnabled;
+        localStorage.setItem('nexaguard_radar_sound', radarSoundEnabled ? '1' : '0');
+
+        if (radarSoundEnabled) {
+            $(this).html('🔊 Alarma & Voz: ON').css({ color: '#ffcf33', borderColor: 'rgba(255,207,51,0.35)', background: 'rgba(255,207,51,0.1)' });
+            showToast('Alarma sonora y locución Avast activadas para nuevas amenazas.', 'info', 'Sonido Habilitado');
+        } else {
+            $(this).html('🔇 Silenciado').css({ color: '#94a3b8', borderColor: 'rgba(148,163,184,0.3)', background: 'rgba(148,163,184,0.08)' });
+            showToast('Alarma sonora y locución silenciadas.', 'info', 'Sonido Silenciado');
+        }
+    });
+
+    // Botón para probar la sirena de 4 segundos y la voz sintética
+    $(document).on('click', '#btn-test-radar-sound', function (e) {
+        e.preventDefault();
+        triggerIntrusionAlert({
+            ip: '192.168.1.105',
+            reason: 'Inyección SQL Maliciosa y Payload Kali Linux',
+            tool_tag: 'Kali Linux [SQLMap Scanner]'
+        });
+    });
+
+    // Inicializar estado del botón de sonido según preferencia guardada
+    if (!radarSoundEnabled) {
+        $('#btn-toggle-radar-sound').html('🔇 Silenciado').css({ color: '#94a3b8', borderColor: 'rgba(148,163,184,0.3)', background: 'rgba(148,163,184,0.08)' });
+    }
+
     // Auto-iniciar telemetría si el radar ya está activo al cargar
     if ($('#vigilance-radar-box').hasClass('radar-scanning')) {
         startRadarTerminalStream();
     } else {
         fetchAndRenderRealThreatLogs();
     }
+
+    // Monitoreo periódico en segundo plano si la pestaña de vigilancia está abierta
+    setInterval(function () {
+        if ($('#tab-vigilance').hasClass('is-active')) {
+            fetchAndRenderRealThreatLogs();
+        }
+    }, 8000);
 
     // ============ GESTIÓN DE LICENCIA PRO ============
     $('#btn-edit-license').on('click', function (e) {

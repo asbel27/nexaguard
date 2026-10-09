@@ -3,7 +3,7 @@
  * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
  * Plugin URI: https://nexaguards.com
  * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
- * Version: 1.2.7
+ * Version: 1.2.8
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://nexaguards.com
  * License: GPLv2 or later
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.2.7');
+define('NEXAGUARD_VERSION', '1.2.8');
 define('NEXAGUARD_FILE', __FILE__);
 define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
 define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
@@ -344,6 +344,8 @@ class NexaGuard_Plugin {
             'generic_login_errors'  => !empty($_POST['generic_login_errors']),
             'protect_system_files'  => !empty($_POST['protect_system_files']),
             'admin_login_alerts'    => !empty($_POST['admin_login_alerts']),
+            'threat_email_alerts'   => !empty($_POST['threat_email_alerts']),
+            'alert_email'           => !empty($_POST['alert_email']) ? sanitize_email($_POST['alert_email']) : '',
             'login_custom_design'   => !empty($_POST['login_custom_design']),
             'login_bg_image'        => isset($_POST['login_bg_image']) ? esc_url_raw(trim($_POST['login_bg_image'])) : '',
             'login_bg_preset'       => isset($_POST['login_bg_preset']) ? sanitize_key($_POST['login_bg_preset']) : 'deep-navy',

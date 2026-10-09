@@ -401,6 +401,121 @@ class NexaGuard_Firewall {
         }
 
         update_option('nexaguard_threat_logs', $logs, false);
+
+        // Enviar alerta inmediata por correo al administrador
+        self::send_threat_alert_email($new_log);
+    }
+
+    /**
+     * Envía notificación inmediata por correo ante intrusiones o ataques
+     */
+    public static function send_threat_alert_email($log) {
+        $settings = get_option('nexaguard_settings', array());
+
+        // Permitir desactivar alertas por correo en configuración si el usuario lo desea
+        if (isset($settings['threat_email_alerts']) && empty($settings['threat_email_alerts'])) {
+            return;
+        }
+
+        $to = !empty($settings['alert_email']) ? sanitize_email($settings['alert_email']) : get_option('admin_email');
+        if (empty($to) || !is_email($to)) {
+            return;
+        }
+
+        // Control anti-saturación: máximo 1 correo cada 10 min para la misma IP y tipo de ataque
+        $throttle_key = 'ng_mail_thr_' . md5($log['ip'] . $log['reason']);
+        if (get_transient($throttle_key)) {
+            return;
+        }
+        set_transient($throttle_key, 1, 10 * MINUTE_IN_SECONDS);
+
+        $site_name = get_bloginfo('name');
+        $site_url = site_url();
+        $radar_url = admin_url('admin.php?page=nexaguard-security');
+
+        $subject = '🚨 [NexaGuard] Intrusión Bloqueada: ' . sanitize_text_field($log['reason']) . ' en ' . $site_name;
+
+        $body = '<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>' . esc_html($subject) . '</title>
+        </head>
+        <body style="margin:0; padding:20px; background-color:#080d26; font-family:-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; color:#dbe4ff;">
+            <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:620px; background-color:#0e163e; border:1.5px solid rgba(255,207,51,0.4); border-radius:14px; overflow:hidden; box-shadow:0 15px 40px rgba(0,0,0,0.6);">
+                <tr>
+                    <td style="padding:28px 30px; background:linear-gradient(135deg, #121c4e 0%, #0a1030 100%); border-bottom:1px solid rgba(255,207,51,0.25); text-align:center;">
+                        <div style="font-size:2.8rem; line-height:1; margin-bottom:8px;">🛡️</div>
+                        <h1 style="margin:0; font-size:1.45rem; color:#ffffff; letter-spacing:0.02em;">NexaGuard Security</h1>
+                        <span style="display:inline-block; margin-top:6px; font-size:0.75rem; font-weight:800; color:#ffcf33; letter-spacing:0.06em; text-transform:uppercase;">
+                            BLINDAJE WAF // ALERTA FORENSE EN TIEMPO REAL
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:26px 30px;">
+                        <div style="background:rgba(255,69,96,0.12); border-left:4px solid #ff4560; padding:14px 18px; border-radius:6px; margin-bottom:24px;">
+                            <strong style="color:#ff6b82; font-size:1.05rem; display:block; margin-bottom:4px;">🚨 Intrusión Detectada y Bloqueada</strong>
+                            <p style="margin:0; font-size:0.92rem; color:#e2eafc; line-height:1.5;">
+                                El cortafuegos WAF de NexaGuard interceptó y neutralizó con éxito una petición maliciosa dirigida a tu sitio web <strong>' . esc_html($site_name) . '</strong> antes de que pudiera ejecutarse.
+                            </p>
+                        </div>
+
+                        <h3 style="color:#ffffff; font-size:1rem; margin:0 0 14px; text-transform:uppercase; letter-spacing:0.04em;">Detalles del Intento de Ataque:</h3>
+                        
+                        <table width="100%" cellpadding="10" cellspacing="0" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; font-size:0.88rem; margin-bottom:24px;">
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td width="35%" style="color:#a0acd2; font-weight:600;">Vector / Amenaza:</td>
+                                <td style="color:#ffcf33; font-weight:700;">' . esc_html($log['reason']) . '</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td style="color:#a0acd2; font-weight:600;">Dirección IP Origen:</td>
+                                <td style="color:#ffffff; font-family:monospace; font-size:0.95rem;">' . esc_html($log['ip']) . '</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td style="color:#a0acd2; font-weight:600;">Herramienta / Agente:</td>
+                                <td style="color:#3de8a4; font-weight:600;">' . esc_html($log['tool_tag']) . '</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td style="color:#a0acd2; font-weight:600;">Solicitud Interceptada:</td>
+                                <td style="color:#ffffff; font-family:monospace; word-break:break-all;">' . esc_html($log['method']) . ' ' . esc_html($log['uri']) . '</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td style="color:#a0acd2; font-weight:600;">Fecha y Hora:</td>
+                                <td style="color:#cad7f5;">' . esc_html($log['timestamp']) . '</td>
+                            </tr>
+                            <tr>
+                                <td style="color:#a0acd2; font-weight:600;">Acción Aplicada:</td>
+                                <td style="color:#3de8a4; font-weight:800;">🛡️ BLOQUEADO (HTTP 403 FORBIDDEN)</td>
+                            </tr>
+                        </table>
+
+                        <p style="color:#cad7f5; font-size:0.9rem; line-height:1.55; margin:0 0 24px;">
+                            Tu sitio se encuentra <strong>completamente a salvo</strong>. No se requiere ninguna acción manual urgente en este momento, ya que la petición fue aislada automáticamente en el perímetro.
+                        </p>
+
+                        <div style="text-align:center; margin-bottom:10px;">
+                            <a href="' . esc_url($radar_url) . '" style="display:inline-block; background:linear-gradient(135deg, #ffcf33 0%, #f59e0b 100%); color:#080d26; font-weight:800; text-decoration:none; padding:12px 28px; border-radius:8px; font-size:0.95rem; box-shadow:0 4px 15px rgba(255,207,51,0.35);">
+                                📡 Ver Radar y Telemetría en Vivo
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:18px 30px; background:rgba(0,0,0,0.25); border-top:1px solid rgba(255,255,255,0.06); text-align:center; font-size:0.78rem; color:#7e8bb6;">
+                        Este es un mensaje de notificación de seguridad automática generado por NexaGuard Security instalado en <a href="' . esc_url($site_url) . '" style="color:#ffcf33; text-decoration:none;">' . esc_html($site_url) . '</a>.
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>';
+
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: NexaGuard Security <' . get_option('admin_email') . '>'
+        );
+
+        wp_mail($to, $subject, $body, $headers);
     }
 
     public static function get_threat_logs() {

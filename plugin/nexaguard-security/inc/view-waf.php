@@ -216,6 +216,29 @@ $settings = get_option('nexaguard_settings', array(
                 </div>
                 <input type="checkbox" name="disable_dir_browsing" value="1" <?php checked(!empty($settings['disable_dir_browsing'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
+
+            <!-- Alertas Inmediatas por Correo ante Intrusiones (SQLi, XSS, Webshells) -->
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <div class="toggle-info">
+                    <b>Alertas Inmediatas por Correo ante Ataques e Intrusiones
+                        <span class="ng-tooltip-btn" tabindex="0">
+                            <span class="ng-tooltip-icon">ℹ️</span>
+                            <span class="ng-tooltip-popover">
+                                <strong class="ng-tooltip-title">📧 Notificación Forense Inmediata</strong>
+                                <span class="ng-tooltip-desc">Envía un informe de ciberseguridad por correo electrónico cada vez que un hacker o robot intente inyectar SQL, scripts maliciosos, webshells o escanee con Kali Linux.</span>
+                                <span class="ng-tooltip-rec">💡 Recomendado: ACTIVO</span>
+                            </span>
+                        </span>
+                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                    </b>
+                    <p class="ng-hint">Envía un aviso de emergencia con los detalles del atacante (IP, vector, payload y herramienta) al correo del administrador en cuanto la amenaza es bloqueada.</p>
+                    <div style="margin-top:8px;">
+                        <input type="email" name="alert_email" value="<?php echo esc_attr(!empty($settings['alert_email']) ? $settings['alert_email'] : ''); ?>" placeholder="<?php echo esc_attr(get_option('admin_email')); ?>" class="in-ng" style="max-width:340px; font-size:0.82rem; padding:6px 12px;" <?php disabled(!$is_pro); ?>>
+                        <small style="display:block; color:#a0acd2; font-size:0.75rem; margin-top:3px;">Destinatario personalizado (dejar vacío para usar el correo de administración de WordPress).</small>
+                    </div>
+                </div>
+                <input type="checkbox" name="threat_email_alerts" value="1" <?php checked(!isset($settings['threat_email_alerts']) || !empty($settings['threat_email_alerts'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+            </label>
         </div>
 
         <div class="form-actions" style="margin-top:24px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;">
