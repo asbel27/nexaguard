@@ -10,15 +10,22 @@ if (!defined('ABSPATH')) {
 }
 
 class NexaGuard_Updater {
-    private static $plugin_file = 'nexaguard-security/nexaguard-security.php';
-    private static $slug = 'nexaguard-security';
     private static $remote_urls = array(
         'https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/info.json',
         'https://www.nexaguards.com/downloads/info.json'
     );
 
+    public static function get_plugin_file() {
+        return plugin_basename(dirname(dirname(__FILE__)) . '/nexaguard-security.php');
+    }
+
+    public static function get_plugin_slug() {
+        return dirname(self::get_plugin_file());
+    }
+
     public static function init() {
-        // Hooks nativos del gestor de actualizaciones de WordPress
+        // Hooks nativos del gestor de actualizaciones de WordPress (tanto en lectura como en guardado)
+        add_filter('site_transient_update_plugins', array(__CLASS__, 'check_update'));
         add_filter('pre_set_site_transient_update_plugins', array(__CLASS__, 'check_update'));
         add_filter('plugins_api', array(__CLASS__, 'plugin_info'), 20, 3);
         add_filter('upgrader_source_selection', array(__CLASS__, 'fix_source_folder'), 10, 4);
@@ -43,11 +50,11 @@ class NexaGuard_Updater {
         $data = null;
         foreach (self::$remote_urls as $url) {
             $res = wp_remote_get($url, array(
-                'timeout' => 8,
-                'sslverify' => true,
+                'timeout' => 12,
+                'sslverify' => false, // Evita fallos por certificados CA obsoletos en hostings compartidos
                 'headers' => array(
                     'Accept' => 'application/json',
-                    'User-Agent' => 'WordPress/' . get_bloginfo('version') . '; NexaGuard/' . NEXAGUARD_VERSION
+                    'User-Agent' => 'WordPress/' . get_bloginfo('version') . '; NexaGuard/' . (defined('NEXAGUARD_VERSION') ? NEXAGUARD_VERSION : '1.0.0')
                 )
             ));
 
@@ -82,14 +89,16 @@ class NexaGuard_Updater {
             return $transient;
         }
 
+        $plugin_file = self::get_plugin_file();
+        $plugin_slug = self::get_plugin_slug();
         $current_ver = defined('NEXAGUARD_VERSION') ? NEXAGUARD_VERSION : '1.0.0';
         $download_url = !empty($remote->download_url) ? $remote->download_url : (!empty($remote->fallback_download_url) ? $remote->fallback_download_url : '');
 
         if (version_compare($remote->version, $current_ver, '>')) {
             $item = new stdClass();
-            $item->id = self::$plugin_file;
-            $item->slug = self::$slug;
-            $item->plugin = self::$plugin_file;
+            $item->id = $plugin_file;
+            $item->slug = $plugin_slug;
+            $item->plugin = $plugin_file;
             $item->new_version = $remote->version;
             $item->url = !empty($remote->homepage) ? $remote->homepage : 'https://www.nexaguards.com';
             $item->package = $download_url;
@@ -100,22 +109,28 @@ class NexaGuard_Updater {
             $item->tested = !empty($remote->tested) ? $remote->tested : '6.7';
             $item->requires_php = !empty($remote->requires_php) ? $remote->requires_php : '7.4';
 
-            $transient->response[self::$plugin_file] = $item;
-            if (isset($transient->no_update[self::$plugin_file])) {
-                unset($transient->no_update[self::$plugin_file]);
+            if (!isset($transient->response)) {
+                $transient->response = array();
+            }
+            $transient->response[$plugin_file] = $item;
+            if (isset($transient->no_update[$plugin_file])) {
+                unset($transient->no_update[$plugin_file]);
             }
         } else {
             $item = new stdClass();
-            $item->id = self::$plugin_file;
-            $item->slug = self::$slug;
-            $item->plugin = self::$plugin_file;
+            $item->id = $plugin_file;
+            $item->slug = $plugin_slug;
+            $item->plugin = $plugin_file;
             $item->new_version = $current_ver;
             $item->url = 'https://www.nexaguards.com';
             $item->package = '';
 
-            $transient->no_update[self::$plugin_file] = $item;
-            if (isset($transient->response[self::$plugin_file])) {
-                unset($transient->response[self::$plugin_file]);
+            if (!isset($transient->no_update)) {
+                $transient->no_update = array();
+            }
+            $transient->no_update[$plugin_file] = $item;
+            if (isset($transient->response[$plugin_file])) {
+                unset($transient->response[$plugin_file]);
             }
         }
 
@@ -130,7 +145,8 @@ class NexaGuard_Updater {
             return $res;
         }
 
-        if (!isset($args->slug) || $args->slug !== self::$slug) {
+        $plugin_slug = self::get_plugin_slug();
+        if (!isset($args->slug) || ($args->slug !== $plugin_slug && $args->slug !== 'nexaguard-security')) {
             return $res;
         }
 
@@ -143,7 +159,7 @@ class NexaGuard_Updater {
 
         $info = new stdClass();
         $info->name = !empty($remote->name) ? $remote->name : 'NexaGuard Security';
-        $info->slug = self::$slug;
+        $info->slug = $plugin_slug;
         $info->version = $remote->version;
         $info->author = '<a href="https://www.nexaguards.com" target="_blank">NexaGuard Cybersecurity Team</a>';
         $info->homepage = 'https://www.nexaguards.com';
@@ -166,13 +182,16 @@ class NexaGuard_Updater {
     }
 
     /**
-     * Asegura que el directorio del plugin conserve siempre el nombre nexaguard-security
+     * Asegura que el directorio del plugin conserve siempre el nombre del slug
      */
     public static function fix_source_folder($source, $remote_source, $upgrader, $hook_extra = array()) {
         global $wp_filesystem;
 
-        if (isset($hook_extra['plugin']) && $hook_extra['plugin'] === self::$plugin_file) {
-            $correct_dir = trailingslashit($remote_source) . self::$slug;
+        $plugin_file = self::get_plugin_file();
+        $plugin_slug = self::get_plugin_slug();
+
+        if (isset($hook_extra['plugin']) && $hook_extra['plugin'] === $plugin_file) {
+            $correct_dir = trailingslashit($remote_source) . $plugin_slug;
             if ($source !== $correct_dir && $wp_filesystem->exists($source)) {
                 $wp_filesystem->move($source, $correct_dir);
                 return trailingslashit($correct_dir);
@@ -198,11 +217,16 @@ class NexaGuard_Updater {
 
         $remote = self::get_remote_info(true);
         if (!$remote || empty($remote->version)) {
-            wp_send_json_error(array('message' => 'No se pudo conectar con el servidor de versiones de NexaGuard.'));
+            wp_send_json_error(array('message' => 'No se pudo conectar con el repositorio de NexaGuard en GitHub.'));
         }
 
         $current_ver = defined('NEXAGUARD_VERSION') ? NEXAGUARD_VERSION : '1.0.0';
         $has_update = version_compare($remote->version, $current_ver, '>');
+
+        // Actualizamos el transient de WordPress
+        if (function_exists('wp_update_plugins')) {
+            wp_update_plugins();
+        }
 
         wp_send_json_success(array(
             'current_version' => $current_ver,
@@ -234,14 +258,18 @@ class NexaGuard_Updater {
             wp_send_json_error(array('message' => 'No se pudo obtener la información de la actualización.'));
         }
 
+        $plugin_file = self::get_plugin_file();
+
         $skin = new WP_Ajax_Upgrader_Skin();
         $upgrader = new Plugin_Upgrader($skin);
 
         // Preparamos el transient antes de invocar la actualización
         delete_site_transient('update_plugins');
-        wp_update_plugins();
+        if (function_exists('wp_update_plugins')) {
+            wp_update_plugins();
+        }
 
-        $result = $upgrader->upgrade(self::$plugin_file);
+        $result = $upgrader->upgrade($plugin_file);
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));
@@ -250,7 +278,7 @@ class NexaGuard_Updater {
         }
 
         // Reactivar el plugin para asegurar continuidad operativa
-        activate_plugin(self::$plugin_file);
+        activate_plugin($plugin_file);
 
         wp_send_json_success(array(
             'message' => '¡NexaGuard Security se ha actualizado con éxito a la versión ' . esc_html($remote->version) . '!',
@@ -258,4 +286,3 @@ class NexaGuard_Updater {
         ));
     }
 }
-
