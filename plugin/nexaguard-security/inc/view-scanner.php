@@ -572,7 +572,17 @@ $rollback_count = count($backup_history);
                 <!-- WAF Core -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Cortafuegos de Aplicación Web (WAF Inteligente) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Cortafuegos de Aplicación Web (WAF Inteligente)
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">🛡️ Cortafuegos Perimetral WAF</strong>
+                                    <span class="ng-tooltip-desc">Filtra todo el tráfico entrante en milisegundos y bloquea ataques de hackers como Inyecciones SQL, Directory Traversal (../..), payloads XSS y webshells con respuesta 403 Forbidden.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Filtra todas las peticiones entrantes bloqueando inyecciones SQL, Directory Traversal (../..), scripts maliciosos y webshells con respuesta 403 Forbidden.</p>
                     </div>
                     <input type="checkbox" name="waf_enabled" value="1" <?php checked(!empty($settings['waf_enabled'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -581,7 +591,17 @@ $rollback_count = count($backup_history);
                 <!-- Anti-ClearFake / Anti-ClickFix Live Filter -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Filtro Activo Anti-ClearFake y Falsos Captchas <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Filtro Activo Anti-ClearFake y Falsos Captchas
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">🛑 Anti-Engaño y Malware Web3</strong>
+                                    <span class="ng-tooltip-desc">Inspecciona el HTML de salida y elimina en vivo falsos avisos de "Actualiza tu navegador" o "Resuelve este Captcha" inyectados en blockchain (EtherHiding) o scripts base64, protegiendo a tus visitantes.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Inspecciona el HTML de salida en milisegundos y elimina al vuelo cualquier script base64 sospechoso o llamada a contratos inteligentes en blockchain (EtherHiding), impidiendo que los visitantes vean popups maliciosos.</p>
                     </div>
                     <input type="checkbox" name="anti_clearfake" value="1" <?php checked(!empty($settings['anti_clearfake'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -590,7 +610,17 @@ $rollback_count = count($backup_history);
                 <!-- Bloqueo de PHP en Uploads -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Bloquear ejecución de scripts PHP en /wp-content/uploads/ <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Bloquear ejecución de scripts PHP en /wp-content/uploads/
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">📁 Protección de Medios (.htaccess)</strong>
+                                    <span class="ng-tooltip-desc">La carpeta de subidas solo debe alojar imágenes o documentos, nunca código PHP. Esta regla bloquea la ejecución de cualquier backdoor o virus que un atacante intente colar en Uploads.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: Esencial (Previene el 90% de intrusiones)</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Instala una regla perimetral en .htaccess para que ningún archivo .php subido por atacantes pueda ser ejecutado. Neutraliza el 90% de backdoors.</p>
                     </div>
                     <input type="checkbox" name="block_php_uploads" value="1" <?php checked(!empty($settings['block_php_uploads'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -599,7 +629,17 @@ $rollback_count = count($backup_history);
                 <!-- Deshabilitar XML-RPC -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Deshabilitar completamente XML-RPC <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Deshabilitar completamente XML-RPC
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">🚪 Clausura de Puerta XML-RPC</strong>
+                                    <span class="ng-tooltip-desc">XML-RPC es un protocolo legado muy abusado por ciberdelincuentes para ataques masivos de fuerza bruta a contraseñas y ataques de amplificación DDoS. Cerrarlo blinda tu servidor.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: ACTIVO (salvo si usas la app móvil clásica)</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Bloquea el archivo xmlrpc.php para detener ataques automatizados de fuerza bruta a contraseñas y ataques de amplificación DDoS.</p>
                     </div>
                     <input type="checkbox" name="disable_xmlrpc" value="1" <?php checked(!empty($settings['disable_xmlrpc'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -608,7 +648,17 @@ $rollback_count = count($backup_history);
                 <!-- Ocultar versión de WordPress -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Ocultar versión de WordPress (wp_generator) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Ocultar versión de WordPress (wp_generator)
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">🙈 Ocultamiento de Metadatos</strong>
+                                    <span class="ng-tooltip-desc">Elimina la etiqueta pública del código HTML que revela la versión exacta de tu WordPress. Dificulta que robots maliciosos detecten si tienes vulnerabilidades sin parchear.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: ACTIVO</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Elimina la etiqueta meta generator que expone la versión exacta de tu WordPress a bots que buscan vulnerabilidades conocidas.</p>
                     </div>
                     <input type="checkbox" name="hide_wp_version" value="1" <?php checked(!empty($settings['hide_wp_version'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -617,7 +667,17 @@ $rollback_count = count($backup_history);
                 <!-- Modo Aislamiento de Emergencia -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="border-left: 3px solid #ff4560;">
                     <div class="toggle-info">
-                        <b>Modo Aislamiento de Emergencia / Cuarentena de Tráfico <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Modo Aislamiento de Emergencia / Cuarentena de Tráfico
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">🚨 Modo Rescate y Cuarentena</strong>
+                                    <span class="ng-tooltip-desc">Desvía visitas públicas a una pantalla limpia 503 de mantenimiento. Evita que visitantes vean la web dañada o que Google penalice tu dominio con alertas rojas mientras limpias el sitio. Solo permite acceso al admin.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: Usar SOLO durante desinfecciones activas</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Desvía visitas públicas y rastreadores a una pantalla limpia de 503 Mantenimiento de Seguridad para evitar contagios o alertas de Google Safe Browsing durante limpiezas, permitiendo el acceso exclusivo a los administradores logueados.</p>
                     </div>
                     <input type="checkbox" name="emergency_lockdown" value="1" <?php checked(!empty($settings['emergency_lockdown'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -626,7 +686,17 @@ $rollback_count = count($backup_history);
                 <!-- Deshabilitar Editor de Temas y Plugins -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Deshabilitar Editor de Temas y Plugins (DISALLOW_FILE_EDIT) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Deshabilitar Editor de Temas y Plugins (DISALLOW_FILE_EDIT)
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">🔒 Bloqueo de Edición en Escritorio</strong>
+                                    <span class="ng-tooltip-desc">Deshabilita la opción de editar archivos de plantillas y plugins desde el panel de WordPress. Si un hacker consigue la clave de un admin, no podrá inyectar código PHP malicioso por ahí.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO en sitios en producción</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Impide que cualquier usuario modifique archivos PHP desde el panel de administración. Cierra la puerta principal a atacantes que intenten inyectar webshells si comprometen una cuenta admin.</p>
                     </div>
                     <input type="checkbox" name="disallow_file_edit" value="1" <?php checked(!empty($settings['disallow_file_edit'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -635,7 +705,17 @@ $rollback_count = count($backup_history);
                 <!-- Prevenir Listado de Directorios -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Bloquear Listado de Directorios Apache (Options -Indexes) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Bloquear Listado de Directorios Apache (Options -Indexes)
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">📂 Prevenir Espionaje de Carpetas</strong>
+                                    <span class="ng-tooltip-desc">Impide que cualquier persona o robot curioso navegue por tus carpetas y vea listas de archivos, copias de seguridad .zip o archivos privados alojados en el servidor.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Añade directiva en .htaccess para que ningún visitante ni escáner automatizado pueda ver el listado de archivos dentro de carpetas de tu servidor.</p>
                     </div>
                     <input type="checkbox" name="disable_dir_browsing" value="1" <?php checked(!empty($settings['disable_dir_browsing'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -644,7 +724,17 @@ $rollback_count = count($backup_history);
                 <!-- Protección Anti Fuerza Bruta Local -->
                 <div class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Protección Anti Fuerza Bruta Local (Bloqueo IP Automático) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Protección Anti Fuerza Bruta Local (Bloqueo IP Automático)
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">🛑 Escudo de Contraseñas por IP</strong>
+                                    <span class="ng-tooltip-desc">Monitorea los intentos de login erróneos. Si una IP supera el límite de intentos consecutivos, se le bloquea el acceso temporalmente para frustrar ataques de diccionario automatizados.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Bloquea temporalmente el acceso por IP tras reiterados intentos fallidos de autenticación para mitigar ataques de diccionario masivos.</p>
                         <?php if ($total_lockouts > 0): ?>
                             <div style="margin-top:6px;"><span class="badge-v" style="background:rgba(61,232,164,.15);color:#3de8a4;font-size:0.75rem;">🛡️ <?php echo $total_lockouts; ?> bloqueo(s) perimetral(es) registrados</span></div>
@@ -662,7 +752,17 @@ $rollback_count = count($backup_history);
                 <!-- Ocultar URL de Acceso (Hide Backend) -->
                 <div class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Ocultar URL de Acceso al Panel (Hide wp-login.php) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Ocultar URL de Acceso al Panel (Hide wp-login.php)
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">🕵️ Ruta de Acceso Secreta</strong>
+                                    <span class="ng-tooltip-desc">Oculta la dirección estándar 'wp-login.php' y la sustituye por una ruta personalizada que solo tú conoces. Los bots que intenten entrar por la puerta común recibirán un error 404.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: Excelente para frenar bots molestos</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Reemplaza el acceso estándar a <code>wp-login.php</code> por una ruta secreta personalizada. Bots automatizados y atacantes que intenten acceder directamente recibirán un error 404 No Encontrado.</p>
                         <div class="ng-subcontrols">
                             <label>Ruta Personalizada: <span class="ng-slug-prefix"><?php echo esc_url(home_url('/')); ?></span><input type="text" name="login_slug" value="<?php echo esc_attr($settings['login_slug']); ?>" placeholder="acceso-seguro" class="ng-input-slug" style="width:140px;" <?php disabled(!$is_pro); ?>><span class="ng-slug-prefix">/</span></label>
@@ -677,7 +777,17 @@ $rollback_count = count($backup_history);
                 <div class="toggle-row toggle-row-customizer <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="border-left: 3px solid #ffcf33; flex-direction: column; align-items: stretch; gap: 14px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <div class="toggle-info">
-                            <b>Personalizador y Embellecedor Visual de Login (Login Customizer & Branding) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                            <b>Personalizador y Embellecedor Visual de Login (Login Customizer & Branding)
+                                <span class="ng-tooltip-btn" tabindex="0">
+                                    <span class="ng-tooltip-icon">ℹ️</span>
+                                    <span class="ng-tooltip-popover">
+                                        <strong class="ng-tooltip-title">✨ Branding e Imagen de Seguridad</strong>
+                                        <span class="ng-tooltip-desc">Sustituye la pantalla genérica de WordPress por un diseño profesional de alta tecnología con tu logo, fondos modernos y un sello de seguridad que certifica la protección de NexaGuard.</span>
+                                        <span class="ng-tooltip-rec">💡 Recomendado: Para imagen corporativa y confianza</span>
+                                    </span>
+                                </span>
+                                <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                            </b>
                             <p class="ng-hint">Transforma la pantalla estándar de <code>wp-login.php</code> con una experiencia visual moderna y elegante: añade tu propio fondo de pantalla, sustituye el icono de WordPress por tu logo y muestra un aviso de seguridad que indica que el sitio está protegido por NexaGuard.</p>
                         </div>
                         <label style="cursor:pointer; display:flex; align-items:center; margin-left: 14px;">
@@ -781,7 +891,17 @@ $rollback_count = count($backup_history);
                 <!-- Bloquear Enumeración de Usuarios -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Bloquear Enumeración de Usuarios (Anti-Reconnaissance) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Bloquear Enumeración de Usuarios (Anti-Reconnaissance)
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">👤 Ocultar Nombres de Usuarios</strong>
+                                    <span class="ng-tooltip-desc">Impide que escáneres automáticos descubran tus nombres de usuario reales a través de la API REST o enlaces de autor. Si los hackers no conocen el usuario, no pueden adivinar la contraseña.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Prohíbe a escáneres y visitantes anónimos extraer los nombres de usuario reales del sitio a través del endpoint REST API (<code>/wp-json/wp/v2/users</code>) y parámetros de autor (<code>/?author=1</code>).</p>
                     </div>
                     <input type="checkbox" name="block_user_enumeration" value="1" <?php checked(!empty($settings['block_user_enumeration'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -790,7 +910,17 @@ $rollback_count = count($backup_history);
                 <!-- Ofuscación Genérica de Errores de Acceso -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Ofuscación Genérica de Errores de Inicio de Sesión <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Ofuscación Genérica de Errores de Inicio de Sesión
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">🎭 Respuestas Neutras en Login</strong>
+                                    <span class="ng-tooltip-desc">Evita que WordPress revele si el usuario existe o si falló la contraseña. Muestra un único mensaje genérico para no dar pistas que ayuden a los atacantes en su intento de intrusión.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: ACTIVO</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Sustituye mensajes detallados como <em>"El usuario no existe"</em> o <em>"Contraseña incorrecta"</em> por un mensaje genérico. Evita que un atacante determine si un usuario específico existe en la web.</p>
                     </div>
                     <input type="checkbox" name="generic_login_errors" value="1" <?php checked(!empty($settings['generic_login_errors'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -799,7 +929,17 @@ $rollback_count = count($backup_history);
                 <!-- Blindaje de Archivos del Sistema y wp-includes -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Blindaje de Archivos del Sistema y wp-includes (.htaccess) <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Blindaje de Archivos del Sistema y wp-includes (.htaccess)
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">🏛️ Blindaje de Archivos Críticos</strong>
+                                    <span class="ng-tooltip-desc">Protege a nivel de servidor web tus archivos más sensibles: bloquea el acceso a wp-config.php, prohíbe llamadas directas a scripts en /wp-includes/ y bloquea métodos HTTP peligrosos.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Bloquea la ejecución directa de scripts PHP en la carpeta interna <code>/wp-includes/</code>, deniega el acceso a <code>wp-config.php</code>, <code>readme.html</code> y bloquea métodos HTTP no seguros (TRACE, TRACK, DEBUG).</p>
                     </div>
                     <input type="checkbox" name="protect_system_files" value="1" <?php checked(!empty($settings['protect_system_files'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
@@ -808,7 +948,17 @@ $rollback_count = count($backup_history);
                 <!-- Alertas de Acceso de Administrador por Email -->
                 <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
                     <div class="toggle-info">
-                        <b>Alertas por Correo ante Inicio de Sesión de Administrador desde Nueva IP <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?></b>
+                        <b>Alertas por Correo ante Inicio de Sesión de Administrador desde Nueva IP
+                            <span class="ng-tooltip-btn" tabindex="0">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover">
+                                    <strong class="ng-tooltip-title">📧 Notificaciones de Seguridad Inmediatas</strong>
+                                    <span class="ng-tooltip-desc">Te envía un email al instante cada vez que alguien inicie sesión como administrador desde una dirección IP o dispositivo no reconocido previamente, permitiéndote reaccionar a tiempo.</span>
+                                    <span class="ng-tooltip-rec">💡 Recomendado: ACTIVO para monitoreo en vivo</span>
+                                </span>
+                            </span>
+                            <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        </b>
                         <p class="ng-hint">Envía una alerta inmediata al correo del administrador cada vez que se inicie sesión con privilegios de gestión desde una dirección IP no reconocida previamente.</p>
                     </div>
                     <input type="checkbox" name="admin_login_alerts" value="1" <?php checked(!empty($settings['admin_login_alerts'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>

@@ -152,7 +152,25 @@ class NexaGuard_Firewall {
         }
 
         $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        $settings = get_option('nexaguard_settings', array());
+        $login_slug = !empty($settings['login_slug']) ? sanitize_title($settings['login_slug']) : '';
+
+        // Excepciones obligatorias para permitir el acceso y login del Administrador:
+        // 1. Acceso nativo a wp-login.php o llamadas AJAX
         if (strpos($uri, 'wp-login.php') !== false || strpos($uri, 'admin-ajax.php') !== false) {
+            return;
+        }
+
+        // 2. Ruta de acceso personalizada si está activa (ej: /acceso-seguro/)
+        if (!empty($login_slug)) {
+            $req_path = trim((string)parse_url($uri, PHP_URL_PATH), '/');
+            if ($req_path === $login_slug || strpos($uri, '/' . $login_slug) !== false) {
+                return;
+            }
+        }
+
+        // 3. Acceso directo a /wp-admin (WordPress redirigirá al login si no está autenticado)
+        if (strpos($uri, 'wp-admin') !== false) {
             return;
         }
 
@@ -185,7 +203,7 @@ class NexaGuard_Firewall {
                 <h1>Sitio en Modo Mantenimiento de Seguridad</h1>
                 <p>Este sitio web se encuentra en aislamiento de seguridad temporal mientras se completan tareas de auditoría y desinfección forense con <strong>NexaGuard Security</strong>.</p>
                 <p><small style="color:#7888b5">Si eres el administrador, puedes iniciar sesión normalmente para gestionar el sitio:</small></p>
-                <a href="<?php echo esc_url(wp_login_url()); ?>" class="admin-link">Acceso para Administradores ›</a>
+                <a href="<?php echo esc_url(wp_login_url(admin_url())); ?>" class="admin-link">Acceso para Administradores ›</a>
             </div>
         </body>
         </html>
