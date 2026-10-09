@@ -241,7 +241,7 @@ class NexaGuard_Updater {
         $remote = self::get_remote_info(true, $err);
         if (!$remote || empty($remote->version)) {
             $err_msg = !empty($err) ? ' (' . $err . ')' : '';
-            wp_send_json_error(array('message' => 'No se pudo conectar con el repositorio de NexaGuard' . $err_msg));
+            wp_send_json_error(array('message' => 'No se pudo conectar con los servidores de NexaGuard Cloud' . $err_msg));
         }
 
         $current_ver = defined('NEXAGUARD_VERSION') ? NEXAGUARD_VERSION : '1.0.0';

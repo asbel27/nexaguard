@@ -1785,7 +1785,7 @@ jQuery(document).ready(function ($) {
         }
 
         $btn.prop('disabled', true);
-        $status.html('<span style="color:#b6c4eb;">Buscando versión remota en GitHub...</span>');
+        $status.html('<span style="color:#b6c4eb;">Consultando red global de NexaGuard Cloud...</span>');
 
         $.ajax({
             url: ngData.ajax_url,
@@ -1810,8 +1810,8 @@ jQuery(document).ready(function ($) {
                     } else {
                         $status.html(
                             '<span style="color:#10b981; font-weight:600;">✓ ' + res.data.message + '</span> ' +
-                            '<button type="button" id="btn-do-plugin-update" class="btn-ng btn-ng-outline" style="padding:2px 8px; font-size:0.72rem; margin-left:6px; cursor:pointer; color:#b6c4eb; border:1px solid rgba(255,255,255,0.2);" title="Reinstalar o sincronizar con los últimos cambios de GitHub">' +
-                            '🔄 Reinstalar / Sincronizar' +
+                            '<button type="button" id="btn-do-plugin-update" class="btn-ng btn-ng-outline" style="padding:2px 8px; font-size:0.72rem; margin-left:6px; cursor:pointer; color:#b6c4eb; border:1px solid rgba(255,255,255,0.2);" title="Sincronizar con los paquetes oficiales de NexaGuard Cloud">' +
+                            '🔄 Sincronizar con la Nube' +
                             '</button>'
                         );
                     }
@@ -1842,10 +1842,10 @@ jQuery(document).ready(function ($) {
         var ngData = window.nexaguardData || window.nexaguard_data || {};
 
         showConfirm(
-            '¿Deseas sincronizar y actualizar NexaGuard Security con los archivos más recientes de GitHub?\n\n✓ Se actualizará el núcleo de blindaje, la consola y las reglas WAF.\n✓ Tus ajustes y configuraciones se conservarán intactos.\n✓ No necesitas desinstalar ni volver a subir ningún archivo ZIP.',
+            '¿Deseas sincronizar y actualizar NexaGuard Security con la versión oficial más reciente desde la Nube?\n\n✓ Descarga directa y verificada desde la Red Global de NexaGuard Cloud.\n✓ Se actualizarán el motor forense, la consola táctica y las reglas perimetrales WAF.\n✓ Tus registros de seguridad y configuraciones se conservarán intactos.\n✓ Despliegue en caliente en 1 clic sin interrupciones para tu sitio web.',
             function () {
                 $btn.prop('disabled', true).text('Actualizando...');
-                $status.html('<span style="color:#ffcf33;">Descargando e instalando nueva versión desde GitHub...</span>');
+                $status.html('<span style="color:#ffcf33;">Descargando e instalando versión oficial desde NexaGuard Cloud...</span>');
 
                 $.ajax({
                     url: ngData.ajax_url,
@@ -1882,9 +1882,9 @@ jQuery(document).ready(function ($) {
             },
             null,
             {
-                title: 'Actualizar NexaGuard Security',
-                icon: '⚡',
-                btnOkText: 'Actualizar ahora',
+                title: 'Actualización Oficial NexaGuard Cloud',
+                icon: '☁️',
+                btnOkText: 'Actualizar desde la Nube',
                 btnCancelText: 'Cancelar'
             }
         );

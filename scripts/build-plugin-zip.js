@@ -202,7 +202,7 @@ function generateUpdateInfo(sourceDir, downloadsDir) {
     last_updated: new Date().toISOString().split('T')[0],
     sections: {
       description: "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
-      changelog: `<h4>Versión ${version}</h4><ul><li>Sirena electrónica de hospital (4s) y locución de voz estilo Avast al interceptar intrusiones en el Radar.</li><li>Alertas forenses inmediatas por correo electrónico con reporte completo del atacante (IP, vector, payload y herramienta).</li><li>Controles en vivo para silenciar o probar la alarma sonora en la consola de telemetría.</li><li>Protección y mitigación continua contra escáneres de Kali Linux (SQLMap, Nikto, WPScan) y botnets.</li></ul>`
+      changelog: `<h4>Versión ${version}</h4><ul><li>Sincronización y despliegue en caliente directo desde la Red Global de NexaGuard Cloud.</li><li>Sirena electrónica de hospital (4s) y locución de voz de alerta estilo Avast al interceptar intrusiones en el Radar.</li><li>Alertas forenses inmediatas por correo electrónico con reporte completo del atacante (IP, vector, payload y herramienta).</li><li>Consola táctica de telemetría con registros de tráfico malicioso en vivo y mitigación WAF.</li></ul>`
     }
   };
 
