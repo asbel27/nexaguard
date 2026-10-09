@@ -1362,4 +1362,86 @@ jQuery(document).ready(function ($) {
 
     // Inicializar previsualización al cargar
     updateLoginPreview();
+
+    /* =========================================================================
+     * AUTO-ACTUALIZADOR DE NEXAGUARD (COMPROBACIÓN Y UPGRADE EN VIVO)
+     * ========================================================================= */
+    $(document).on('click', '#btn-check-plugin-update', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var $status = $('#update-check-status');
+
+        $btn.prop('disabled', true);
+        $status.html('<span style="color:#b6c4eb;">Buscando versión...</span>');
+
+        $.ajax({
+            url: nexaguard_data.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'nexaguard_check_update',
+                nonce: nexaguard_data.nonce
+            },
+            success: function (res) {
+                $btn.prop('disabled', false);
+
+                if (res && res.success && res.data) {
+                    if (res.data.has_update) {
+                        $status.html(
+                            '<span style="color:#ffcf33; font-weight:700;">⚡ ¡Nueva versión v' + res.data.remote_version + ' disponible!</span> ' +
+                            '<button type="button" id="btn-do-plugin-update" class="btn-ng btn-ng-primary" style="padding:3px 10px; font-size:0.75rem; margin-left:6px; font-weight:700;">' +
+                            'Actualizar ahora' +
+                            '</button>'
+                        );
+                    } else {
+                        $status.html('<span style="color:#10b981; font-weight:600;">✓ ' + res.data.message + '</span>');
+                    }
+                } else {
+                    var err = (res && res.data && res.data.message) ? res.data.message : 'Error al consultar actualizaciones.';
+                    $status.html('<span style="color:#ef4444;">' + err + '</span>');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false);
+                $status.html('<span style="color:#ef4444;">Error de conexión con el servidor.</span>');
+            }
+        });
+    });
+
+    $(document).on('click', '#btn-do-plugin-update', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var $status = $('#update-check-status');
+
+        if (!confirm('¿Deseas actualizar NexaGuard Security a la última versión disponible ahora mismo? Los archivos del plugin serán reemplazados de forma segura.')) {
+            return;
+        }
+
+        $btn.prop('disabled', true).text('Actualizando...');
+        $status.html('<span style="color:#ffcf33;">Descargando e instalando nueva versión...</span>');
+
+        $.ajax({
+            url: nexaguard_data.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'nexaguard_perform_update',
+                nonce: nexaguard_data.nonce
+            },
+            success: function (res) {
+                if (res && res.success && res.data) {
+                    $status.html('<span style="color:#10b981; font-weight:700;">✓ ' + res.data.message + ' Recargando...</span>');
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1800);
+                } else {
+                    $btn.prop('disabled', false).text('Reintentar');
+                    var err = (res && res.data && res.data.message) ? res.data.message : 'La actualización falló.';
+                    $status.html('<span style="color:#ef4444;">' + err + '</span>');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).text('Reintentar');
+                $status.html('<span style="color:#ef4444;">Error durante el proceso de actualización.</span>');
+            }
+        });
+    });
 });

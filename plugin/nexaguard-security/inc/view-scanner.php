@@ -59,7 +59,13 @@ $rollback_count = count($backup_history);
                 <path d="m9 12 2 2 4-4"/>
             </svg>
             <div>
-                <h1>NexaGuard Security <span class="badge-v">v<?php echo NEXAGUARD_VERSION; ?></span></h1>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <h1>NexaGuard Security <span class="badge-v">v<?php echo NEXAGUARD_VERSION; ?></span></h1>
+                    <button type="button" id="btn-check-plugin-update" class="btn-ng btn-ng-outline" style="padding:3px 10px; font-size:0.75rem; border-radius:6px; background:rgba(255,207,51,0.08); border:1px solid rgba(255,207,51,0.3); color:#ffcf33; cursor:pointer;" title="Buscar nuevas actualizaciones de NexaGuard">
+                        <span class="icon-refresh">🔄</span> Comprobar Actualización
+                    </button>
+                    <span id="update-check-status" style="font-size:0.8rem; font-weight:600;"></span>
+                </div>
                 <p class="sub">Auditoría forense profunda, erradicación de malware e inteligencia en la nube</p>
             </div>
         </div>

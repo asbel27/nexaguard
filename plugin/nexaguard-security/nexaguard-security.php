@@ -21,6 +21,7 @@ define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
 require_once NEXAGUARD_DIR . 'inc/firewall.php';
 require_once NEXAGUARD_DIR . 'inc/scanner.php';
 require_once NEXAGUARD_DIR . 'inc/cleaner.php';
+require_once NEXAGUARD_DIR . 'inc/updater.php';
 
 class NexaGuard_Plugin {
     private static $instance = null;
@@ -33,8 +34,9 @@ class NexaGuard_Plugin {
     }
 
     private function __construct() {
-        // Inicializar Firewall antes de que carguen otros componentes
+        // Inicializar Firewall y Auto-Updater antes de que carguen otros componentes
         NexaGuard_Firewall::init();
+        NexaGuard_Updater::init();
 
         add_action('admin_menu', array($this, 'register_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));

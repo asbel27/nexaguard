@@ -6,8 +6,10 @@ const files = [
   'inc/scanner.php',
   'inc/cleaner.php',
   'inc/firewall.php',
+  'inc/updater.php',
   'inc/view-scanner.php',
-  'inc/view-waf.php'
+  'inc/view-waf.php',
+  'inc/view-modals.php'
 ];
 
 files.forEach(file => {

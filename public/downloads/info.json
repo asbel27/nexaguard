@@ -1,0 +1,15 @@
+{
+  "name": "NexaGuard Security · Antimalware & Blindaje Forense",
+  "slug": "nexaguard-security",
+  "version": "1.2.5",
+  "homepage": "https://www.nexaguards.com",
+  "download_url": "https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/nexaguard-security.zip",
+  "fallback_download_url": "https://www.nexaguards.com/downloads/nexaguard-security.zip",
+  "tested": "6.7",
+  "requires_php": "7.4",
+  "last_updated": "2026-10-09",
+  "sections": {
+    "description": "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
+    "changelog": "<h4>Versión 1.2.5</h4><ul><li>Sistema de auto-actualización remota sincronizado con GitHub y nexaguards.com.</li><li>Pantalla de aislamiento preventivo con canales de soporte y asistencia técnica.</li><li>Corrección de persistencia en URL de login personalizada.</li></ul>"
+  }
+}

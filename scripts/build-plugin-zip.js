@@ -165,6 +165,7 @@ function generateIntegrityManifest(sourceDir) {
     'inc/firewall.php',
     'inc/scanner.php',
     'inc/cleaner.php',
+    'inc/updater.php',
     'inc/view-scanner.php',
     'inc/view-waf.php',
     'inc/view-modals.php'
@@ -184,14 +185,44 @@ function generateIntegrityManifest(sourceDir) {
   console.log(`🔒 Manifiesto de integridad criptográfica generado con éxito (${Object.keys(manifest).length} archivos protegidos).`);
 }
 
+function generateUpdateInfo(sourceDir, downloadsDir) {
+  const mainPhp = fs.readFileSync(path.join(sourceDir, 'nexaguard-security.php'), 'utf8');
+  const match = mainPhp.match(/define\(\s*['"]NEXAGUARD_VERSION['"]\s*,\s*['"]([^'"]+)['"]\s*\)/i);
+  const version = match ? match[1] : '1.0.0';
+
+  const info = {
+    name: "NexaGuard Security · Antimalware & Blindaje Forense",
+    slug: "nexaguard-security",
+    version: version,
+    homepage: "https://www.nexaguards.com",
+    download_url: "https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/nexaguard-security.zip",
+    fallback_download_url: "https://www.nexaguards.com/downloads/nexaguard-security.zip",
+    tested: "6.7",
+    requires_php: "7.4",
+    last_updated: new Date().toISOString().split('T')[0],
+    sections: {
+      description: "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
+      changelog: `<h4>Versión ${version}</h4><ul><li>Sistema de auto-actualización remota sincronizado con GitHub y nexaguards.com.</li><li>Pantalla de aislamiento preventivo con canales de soporte y asistencia técnica.</li><li>Corrección de persistencia en URL de login personalizada.</li></ul>`
+    }
+  };
+
+  const infoPath = path.join(downloadsDir, 'info.json');
+  fs.writeFileSync(infoPath, JSON.stringify(info, null, 2), 'utf8');
+  console.log(`📡 Manifiesto de actualización generado con éxito para v${version} en ${infoPath}`);
+}
+
 const rootDir = path.resolve(__dirname, '..');
 const pluginSourceDir = path.join(rootDir, 'plugin', 'nexaguard-security');
+const downloadsDir = path.join(rootDir, 'public', 'downloads');
 
 // Generar manifiesto de integridad antes de comprimir
 generateIntegrityManifest(pluginSourceDir);
 
 createZip(
   pluginSourceDir,
-  path.join(rootDir, 'public', 'downloads', 'nexaguard-security.zip'),
+  path.join(downloadsDir, 'nexaguard-security.zip'),
   'nexaguard-security'
 );
+
+// Generar info.json para el auto-updater nativo de WordPress
+generateUpdateInfo(pluginSourceDir, downloadsDir);

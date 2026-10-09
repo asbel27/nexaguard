@@ -186,15 +186,30 @@ class NexaGuard_Firewall {
         <html lang="es">
         <head>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>Mantenimiento de Seguridad · NexaGuard</title>
             <style>
-                body{background:#0b1030;color:#eaf0ff;font-family:system-ui,-apple-system,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
-                .box{background:#111a44;border:1px solid rgba(255,207,51,.4);border-radius:16px;padding:36px;max-width:540px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.6)}
-                .ic{font-size:3.2rem;margin-bottom:12px}
-                h1{font-size:1.6rem;margin:0 0 10px;color:#ffcf33}
-                p{color:#b6c4eb;font-size:1rem;line-height:1.6;margin:0 0 20px}
-                .badge{font-size:.82rem;font-weight:700;background:rgba(255,207,51,.15);color:#ffcf33;padding:.5em 1.2em;border-radius:999px;display:inline-block;margin-bottom:15px}
-                .admin-link{display:inline-block;color:#ffcf33;text-decoration:none;font-weight:600;font-size:.9rem;border-bottom:1px dashed #ffcf33}
+                body{background:#0b1030;color:#eaf0ff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;padding:24px;box-sizing:border-box}
+                .box{background:#111a44;border:1px solid rgba(255,207,51,.35);border-radius:18px;padding:36px 30px;max-width:540px;width:100%;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.65);box-sizing:border-box}
+                .ic{font-size:3.2rem;margin-bottom:12px;filter:drop-shadow(0 4px 12px rgba(255,207,51,.3))}
+                h1{font-size:1.55rem;margin:0 0 12px;color:#ffcf33;font-weight:700;line-height:1.3}
+                p{color:#b6c4eb;font-size:.95rem;line-height:1.6;margin:0 0 18px}
+                .badge{font-size:.78rem;font-weight:700;letter-spacing:.05em;background:rgba(255,207,51,.15);color:#ffcf33;border:1px solid rgba(255,207,51,.3);padding:.4em 1.1em;border-radius:999px;display:inline-block;margin-bottom:16px}
+                .actions{display:flex;flex-direction:column;gap:12px;margin:20px 0 16px}
+                .btn-admin{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#ffcf33,#f0b90b);color:#0b1030;font-weight:700;font-size:.95rem;text-decoration:none;padding:12px 20px;border-radius:10px;box-shadow:0 4px 15px rgba(255,207,51,.3);transition:transform .15s ease,box-shadow .15s ease}
+                .btn-admin:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,207,51,.45)}
+                .divider{display:flex;align-items:center;text-align:center;color:#4c5b8a;font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;margin:24px 0 18px}
+                .divider::before,.divider::after{content:'';flex:1;border-bottom:1px solid rgba(255,255,255,.1)}
+                .divider:not(:empty)::before{margin-right:12px}
+                .divider:not(:empty)::after{margin-left:12px}
+                .support-box{background:rgba(15,24,65,.6);border:1px solid rgba(107,140,255,.2);border-radius:12px;padding:18px;text-align:left}
+                .support-title{display:flex;align-items:center;gap:8px;font-size:.88rem;font-weight:600;color:#eaf0ff;margin-bottom:6px}
+                .support-desc{font-size:.82rem;color:#8fa2d4;line-height:1.5;margin:0 0 14px}
+                .support-links{display:flex;flex-wrap:wrap;gap:10px}
+                .btn-support{display:inline-flex;align-items:center;gap:6px;background:rgba(107,140,255,.15);border:1px solid rgba(107,140,255,.35);color:#b6c4eb;text-decoration:none;font-size:.82rem;font-weight:600;padding:8px 14px;border-radius:8px;transition:all .15s ease}
+                .btn-support:hover{background:rgba(107,140,255,.28);color:#fff;border-color:rgba(107,140,255,.6)}
+                .footer-brand{margin-top:22px;font-size:.78rem;color:#5a6b99}
+                .footer-brand a{color:#ffcf33;text-decoration:none}
             </style>
         </head>
         <body>
@@ -202,9 +217,36 @@ class NexaGuard_Firewall {
                 <div class="ic">🛡️</div>
                 <div class="badge">AISLAMIENTO PREVENTIVO ACTIVO</div>
                 <h1>Sitio en Modo Mantenimiento de Seguridad</h1>
-                <p>Este sitio web se encuentra en aislamiento de seguridad temporal mientras se completan tareas de auditoría y desinfección forense con <strong>NexaGuard Security</strong>.</p>
-                <p><small style="color:#7888b5">Si eres el administrador, puedes iniciar sesión normalmente para gestionar el sitio:</small></p>
-                <a href="<?php echo esc_url(wp_login_url(admin_url())); ?>" class="admin-link">Acceso para Administradores ›</a>
+                <p>Este sitio web se encuentra en aislamiento de seguridad temporal mientras se completan tareas de auditoría, desinfección forense o mitigación de incidentes con <strong>NexaGuard Security</strong>.</p>
+                
+                <div class="actions">
+                    <a href="<?php echo esc_url(wp_login_url(admin_url())); ?>" class="btn-admin">
+                        <span>🔐</span> Acceso para Administradores
+                    </a>
+                </div>
+
+                <div class="divider">Soporte y Asistencia</div>
+
+                <div class="support-box">
+                    <div class="support-title">
+                        <span>💬</span> ¿Necesitas ayuda o eres el propietario?
+                    </div>
+                    <div class="support-desc">
+                        Si este aislamiento fue activado por una emergencia de seguridad o requieres soporte técnico para desinfectar tu web, contacta directamente con nuestro equipo de respuesta a incidentes.
+                    </div>
+                    <div class="support-links">
+                        <a href="https://www.nexaguards.com/#contacto" target="_blank" rel="noopener noreferrer" class="btn-support">
+                            <span>🚀</span> Enviar Mensaje a Soporte
+                        </a>
+                        <a href="mailto:contacto@nexaguards.com?subject=Soporte%20NexaGuard%20-%20Aislamiento%20de%20Seguridad" class="btn-support">
+                            <span>✉️</span> contacto@nexaguards.com
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-brand">
+                    Protegido por <a href="https://www.nexaguards.com" target="_blank" rel="noopener noreferrer">NexaGuard Security</a> · Respuesta a Incidentes
+                </div>
             </div>
         </body>
         </html>
