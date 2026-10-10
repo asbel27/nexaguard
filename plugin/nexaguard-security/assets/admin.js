@@ -1343,10 +1343,7 @@ jQuery(document).ready(function ($) {
             }
 
             // Frase táctica y directa de ciberseguridad solicitada por el usuario
-            var text = 'Alerta, alerta. Un intruso ha sido detectado queriendo inyectar código malicioso en ' + cleanAttack + ', la amenaza ha sido bloqueada.';
-            if (!cleanAttack || cleanAttack === 'petición maliciosa') {
-                text = 'Alerta, alerta. Un intruso ha sido detectado queriendo inyectar código malicioso, la amenaza ha sido bloqueada.';
-            }
+            var text = 'Alerta, alerta. Un intruso ha sido detectado queriendo inyectar código malicioso, Amenaza Bloqueada.';
             var utter = new SpeechSynthesisUtterance(text);
             utter.lang = 'es-ES';
             utter.rate = 0.90; // Ritmo pausado, suave y claro
