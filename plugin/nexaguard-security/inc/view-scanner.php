@@ -560,7 +560,9 @@ $rollback_count = count($backup_history);
                             <input type="range" id="radar-volume-slider" class="radar-vol-slider" min="0" max="100" value="35" title="Desliza para subir o bajar el volumen de la voz (0% - 100%)">
                             <span id="radar-volume-label" class="radar-vol-pct">35%</span>
                         </div>
-                        <span class="t-counter-badge"><strong id="terminal-threat-count">0</strong> ATAQUES REGISTRADOS</span>
+                        <button type="button" class="t-counter-badge t-counter-badge-btn" id="btn-open-threat-summary" title="Haz clic para ver el resumen detallado de amenazas detectadas">
+                            <strong id="terminal-threat-count">0</strong> ATAQUES REGISTRADOS <span class="t-btn-cta">📊 Ver Resumen</span>
+                        </button>
                         <span class="t-pulse"></span>
                     </div>
                 </div>

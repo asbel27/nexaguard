@@ -133,3 +133,78 @@ $has_license = !empty($license) && !empty($license['valid']) && !empty($license[
         </div>
     </div>
 </div>
+
+<!-- ======================================================================= -->
+<!-- MODAL INTERACTIVO: RESUMEN FORENSE DE AMENAZAS EN EL RADAR             -->
+<!-- ======================================================================= -->
+<div id="threat-summary-modal" class="ng-modal" style="display:none; z-index:9999999 !important;">
+    <div class="ng-modal-box threat-summary-box">
+        <!-- Encabezado táctico de alto contraste -->
+        <div class="tsm-header">
+            <div class="tsm-title-area">
+                <div class="tsm-icon-box">🛡️</div>
+                <div>
+                    <div class="tsm-badge">RADAR FORENSE ACTIVO // RESUMEN TÁCTICO</div>
+                    <h3 class="tsm-heading">Amenazas e Intrusiones Interceptadas</h3>
+                    <p class="tsm-subheading">Auditoría perimetral de vectores hostiles mitigados en tiempo real por NexaGuard WAF.</p>
+                </div>
+            </div>
+            <button type="button" class="tsm-close" id="btn-close-threat-summary" title="Cerrar resumen">✕</button>
+        </div>
+
+        <!-- Tarjetas KPI de alto contraste -->
+        <div class="tsm-stats-grid">
+            <div class="tsm-stat-card tsm-stat-total">
+                <div class="tsm-stat-icon">🚨</div>
+                <div class="tsm-stat-content">
+                    <span class="tsm-stat-num" id="tsm-stat-total">0</span>
+                    <span class="tsm-stat-title">Ataques Bloqueados</span>
+                </div>
+            </div>
+            <div class="tsm-stat-card tsm-stat-scanners">
+                <div class="tsm-stat-icon">🐉</div>
+                <div class="tsm-stat-content">
+                    <span class="tsm-stat-num" id="tsm-stat-scanners">0</span>
+                    <span class="tsm-stat-title">Kali Linux / Scanners</span>
+                </div>
+            </div>
+            <div class="tsm-stat-card tsm-stat-waf">
+                <div class="tsm-stat-icon">⚡</div>
+                <div class="tsm-stat-content">
+                    <span class="tsm-stat-num" id="tsm-stat-waf" style="color:#00ff88;">100%</span>
+                    <span class="tsm-stat-title">Mitigación WAF (403)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de herramientas de la lista -->
+        <div class="tsm-toolbar">
+            <div class="tsm-toolbar-label">
+                <span>📋 HISTORIAL CRONOLÓGICO DE INTRUSIONES</span>
+                <span class="tsm-badge-count" id="tsm-badge-count">0 eventos</span>
+            </div>
+            <div class="tsm-toolbar-actions">
+                <button type="button" class="btn-ng btn-ng-outline btn-tsm-clear" id="btn-tsm-clear-logs" title="Vaciar registro del radar">
+                    🗑️ Vaciar Historial
+                </button>
+            </div>
+        </div>
+
+        <!-- Feed scrollable con diseño hacker de alto contraste -->
+        <div class="tsm-feed-scroll" id="tsm-feed-container">
+            <!-- Inyectado dinámicamente vía JavaScript -->
+        </div>
+
+        <!-- Pie de modal -->
+        <div class="tsm-footer">
+            <div class="tsm-footer-meta">
+                <span class="tsm-dot-live"></span>
+                <span class="tsm-footer-text">Sensores perimetrales monitoreando puertos HTTP/HTTPS y REST API activamente.</span>
+            </div>
+            <button type="button" class="btn-ng btn-ng-primary" id="btn-close-threat-summary-foot">
+                Entendido / Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+

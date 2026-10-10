@@ -1213,6 +1213,7 @@ jQuery(document).ready(function ($) {
      * ========================================================================= */
     var radarStreamTimer = null;
     var displayedThreatIds = {};
+    var currentRadarThreatLogs = [];
 
     var patrolTelemetryPool = [
         { type: 'telemetry', text: 'PERIMETER SWEEP: Inspecting PHP core integrity against WordPress.org API... [0 TAMPERING]' },
@@ -1418,7 +1419,72 @@ jQuery(document).ready(function ($) {
         $screen.stop().animate({ scrollTop: $screen[0].scrollHeight }, 180);
     }
 
-    function fetchAndRenderRealThreatLogs() {
+    function renderThreatSummaryModal(logs) {
+        logs = logs || currentRadarThreatLogs || [];
+        var total = logs.length;
+        var kaliCount = 0;
+
+        for (var k = 0; k < logs.length; k++) {
+            var tag = (logs[k].tool_tag || '').toLowerCase();
+            var rsn = (logs[k].reason || '').toLowerCase();
+            if (tag.indexOf('kali') !== -1 || tag.indexOf('wpscan') !== -1 || tag.indexOf('sqlmap') !== -1 || tag.indexOf('nikto') !== -1 || tag.indexOf('nmap') !== -1 || rsn.indexOf('kali') !== -1 || rsn.indexOf('wpscan') !== -1 || rsn.indexOf('sqlmap') !== -1) {
+                kaliCount++;
+            }
+        }
+
+        $('#tsm-stat-total').text(total);
+        $('#tsm-stat-scanners').text(kaliCount);
+        $('#tsm-badge-count').text(total + (total === 1 ? ' evento' : ' eventos'));
+
+        var $container = $('#tsm-feed-container');
+        $container.empty();
+
+        if (total === 0) {
+            $container.html(
+                '<div class="tsm-empty-state">' +
+                    '<div class="tsm-empty-icon">🛡️</div>' +
+                    '<div class="tsm-empty-title">Perímetro 100% Protegido</div>' +
+                    '<p class="tsm-empty-desc">No se han registrado amenazas ni intrusiones hostiles en esta sesión. Los sensores de NexaGuard WAF están patrullando normalmente.</p>' +
+                '</div>'
+            );
+            return;
+        }
+
+        for (var i = 0; i < logs.length; i++) {
+            var item = logs[i];
+            var kaliBadge = '';
+            if (item.tool_tag && item.tool_tag.indexOf('Kali Linux') !== -1) {
+                kaliBadge = '<span class="tsm-tag-kali">🐉 KALI LINUX DETECTED</span>';
+            } else if (item.tool_tag) {
+                kaliBadge = '<span class="tsm-tag-scanner">' + escapeHtml(item.tool_tag) + '</span>';
+            }
+
+            var timeDisplay = item.timestamp || item.time_short || 'Reciente';
+            var methodUri = (item.method || 'GET') + ' ' + (item.uri || '/');
+
+            var cardHtml = $(
+                '<div class="tsm-item">' +
+                    '<div class="tsm-item-top">' +
+                        '<div class="tsm-item-tags">' +
+                            kaliBadge +
+                            '<span class="tsm-tag-blocked">HTTP ' + escapeHtml(item.status || 403) + ' BLOQUEADO</span>' +
+                        '</div>' +
+                        '<span class="tsm-item-time">🕒 ' + escapeHtml(timeDisplay) + '</span>' +
+                    '</div>' +
+                    '<div class="tsm-item-reason">' +
+                        '<span>🚨</span> <span>' + escapeHtml(item.reason || 'Petición bloqueada por cortafuegos') + '</span>' +
+                    '</div>' +
+                    '<div class="tsm-item-details">' +
+                        '<span>IP Origen: <strong class="tsm-item-ip">' + escapeHtml(item.ip || 'Desconocida') + '</strong></span>' +
+                        '<span>Solicitud: <code class="tsm-item-req">' + escapeHtml(methodUri) + '</code></span>' +
+                    '</div>' +
+                '</div>'
+            );
+            $container.append(cardHtml);
+        }
+    }
+
+    function fetchAndRenderRealThreatLogs(callback) {
         if (!nexaguardData || !nexaguardData.ajax_url) return;
         $.ajax({
             url: nexaguardData.ajax_url,
@@ -1431,6 +1497,7 @@ jQuery(document).ready(function ($) {
             success: function (res) {
                 if (res && res.success && res.data && res.data.logs) {
                     var logs = res.data.logs;
+                    currentRadarThreatLogs = logs;
                     var threatCount = logs.length;
                     $('#terminal-threat-count').text(threatCount);
 
@@ -1466,7 +1533,15 @@ jQuery(document).ready(function ($) {
                         triggerIntrusionAlert(newThreatToAlert);
                     }
 
+                    // Si el modal de resumen de amenazas está abierto, refrescarlo en vivo
+                    if ($('#threat-summary-modal').is(':visible')) {
+                        renderThreatSummaryModal(logs);
+                    }
+
                     isInitialRadarLoad = false;
+                    if (typeof callback === 'function') {
+                        callback(logs);
+                    }
                 }
             }
         });
@@ -1517,9 +1592,11 @@ jQuery(document).ready(function ($) {
                         nonce: nexaguardData.nonce
                     },
                     success: function () {
+                        currentRadarThreatLogs = [];
                         $('#terminal-stream-inner').html('<div class="term-line term-system">[TERMINAL RESET] Registro vaciado por el operador. Sensores restablecidos.</div>');
                         $('#terminal-threat-count').text('0');
                         displayedThreatIds = {};
+                        renderThreatSummaryModal([]);
                         showToast('Registro de telemetría y consola vaciados correctamente.', 'success', 'Terminal Reiniciada');
                     },
                     error: function () {
@@ -1530,6 +1607,72 @@ jQuery(document).ready(function ($) {
             null,
             {
                 title: 'Vaciar Telemetría del Radar',
+                icon: '🗑️',
+                btnOkText: 'Sí, vaciar',
+                btnCancelText: 'Cancelar',
+                danger: true
+            }
+        );
+    });
+
+    // ============ MODAL DE RESUMEN DE AMENAZAS DEL RADAR ============
+    $(document).on('click', '#btn-open-threat-summary, .t-counter-badge-btn', function (e) {
+        e.preventDefault();
+        $('#threat-summary-modal').css('display', 'flex').hide().fadeIn(220);
+        renderThreatSummaryModal(currentRadarThreatLogs);
+        // Traer datos frescos inmediatamente del servidor
+        fetchAndRenderRealThreatLogs(function (logs) {
+            renderThreatSummaryModal(logs);
+        });
+    });
+
+    $(document).on('click', '#btn-close-threat-summary, #btn-close-threat-summary-foot', function (e) {
+        e.preventDefault();
+        $('#threat-summary-modal').fadeOut(200);
+    });
+
+    $(document).on('click', '#threat-summary-modal', function (e) {
+        if ($(e.target).is('#threat-summary-modal')) {
+            $(this).fadeOut(200);
+        }
+    });
+
+    $(document).on('keyup', function (e) {
+        if (e.key === 'Escape' || e.keyCode === 27) {
+            if ($('#threat-summary-modal').is(':visible')) {
+                $('#threat-summary-modal').fadeOut(200);
+            }
+        }
+    });
+
+    $(document).on('click', '#btn-tsm-clear-logs, #btn-clear-threats-summary', function (e) {
+        e.preventDefault();
+        showConfirm(
+            '¿Deseas vaciar por completo el registro forense de amenazas detectadas por el radar?',
+            function () {
+                $.ajax({
+                    url: nexaguardData.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'nexaguard_clear_radar_logs',
+                        nonce: nexaguardData.nonce
+                    },
+                    success: function () {
+                        currentRadarThreatLogs = [];
+                        $('#terminal-stream-inner').html('<div class="term-line term-system">[TERMINAL RESET] Registro vaciado por el operador. Sensores restablecidos.</div>');
+                        $('#terminal-threat-count').text('0');
+                        displayedThreatIds = {};
+                        renderThreatSummaryModal([]);
+                        showToast('Historial forense vaciado con éxito.', 'success', 'Registro Reiniciado');
+                    },
+                    error: function () {
+                        showAlert('Error al vaciar el registro de amenazas.', 'error', 'Error');
+                    }
+                });
+            },
+            null,
+            {
+                title: 'Vaciar Historial de Amenazas',
                 icon: '🗑️',
                 btnOkText: 'Sí, vaciar',
                 btnCancelText: 'Cancelar',
