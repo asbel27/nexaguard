@@ -363,6 +363,8 @@ class NexaGuard_Firewall {
         }
 
         if (!headers_sent()) {
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0', true);
+            header('Pragma: no-cache', true);
             if (function_exists('status_header')) {
                 status_header(403);
             } else {
@@ -437,7 +439,7 @@ class NexaGuard_Firewall {
         }
 
         $new_log = array(
-            'id' => uniqid('th_'),
+            'id' => uniqid('th_', true),
             'timestamp' => current_time('mysql'),
             'time_short' => current_time('H:i:s'),
             'ip' => $ip,
