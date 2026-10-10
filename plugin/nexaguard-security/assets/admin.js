@@ -220,10 +220,11 @@ jQuery(document).ready(function ($) {
         try { sessionStorage.setItem('nexaguard_active_tab', target); } catch(e) {}
 
         if (target === 'vigilance') {
+            if (typeof fetchAndRenderRealThreatLogs === 'function') {
+                fetchAndRenderRealThreatLogs();
+            }
             if (typeof startRadarTerminalStream === 'function' && $('#vigilance-radar-box').hasClass('radar-scanning')) {
                 startRadarTerminalStream();
-            } else if (typeof fetchAndRenderRealThreatLogs === 'function') {
-                fetchAndRenderRealThreatLogs();
             }
         }
     }
@@ -1489,8 +1490,8 @@ jQuery(document).ready(function ($) {
             patrolIndex++;
             appendTerminalLine(item.type === 'warn' ? 'term-warn' : 'term-telemetry', item.text);
 
-            // Cada 4 ciclos verificar si entraron nuevos ataques reales
-            if (patrolIndex % 4 === 0) {
+            // Cada 2 ciclos (5s) verificar si entraron nuevos ataques reales
+            if (patrolIndex % 2 === 0) {
                 fetchAndRenderRealThreatLogs();
             }
         }, 2500);
@@ -1597,12 +1598,12 @@ jQuery(document).ready(function ($) {
         fetchAndRenderRealThreatLogs();
     }
 
-    // Monitoreo periódico en segundo plano si la pestaña de vigilancia está abierta
+    // Monitoreo periódico en segundo plano si la pestaña de vigilancia está abierta (cada 3s para respuesta inmediata)
     setInterval(function () {
         if ($('#tab-vigilance').hasClass('is-active')) {
             fetchAndRenderRealThreatLogs();
         }
-    }, 8000);
+    }, 3000);
 
     // ============ GESTIÓN DE LICENCIA PRO ============
     $('#btn-edit-license').on('click', function (e) {
