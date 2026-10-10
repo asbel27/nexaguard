@@ -184,6 +184,12 @@ $has_license = !empty($license) && !empty($license['valid']) && !empty($license[
                 <span class="tsm-badge-count" id="tsm-badge-count">0 eventos</span>
             </div>
             <div class="tsm-toolbar-actions">
+                <button type="button" class="btn-tsm-export" id="btn-tsm-export-csv" title="Descargar informe forense completo en formato CSV">
+                    📥 Exportar CSV
+                </button>
+                <button type="button" class="btn-tsm-export" id="btn-tsm-export-json" title="Descargar registro forense en formato JSON">
+                    📥 Exportar JSON
+                </button>
                 <button type="button" class="btn-ng btn-ng-outline btn-tsm-clear" id="btn-tsm-clear-logs" title="Vaciar registro del radar">
                     🗑️ Vaciar Historial
                 </button>

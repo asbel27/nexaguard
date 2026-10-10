@@ -239,6 +239,66 @@ $settings = get_option('nexaguard_settings', array(
                 </div>
                 <input type="checkbox" name="threat_email_alerts" value="1" <?php checked(!isset($settings['threat_email_alerts']) || !empty($settings['threat_email_alerts'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
             </label>
+
+            <!-- Cárcel Automática de IPs por Reincidencia (IP Auto-Jail 24H) -->
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <div class="toggle-info">
+                    <b>Cárcel Automática de IPs por Reincidencia (IP Auto-Jail 24 Horas)
+                        <span class="ng-tooltip-btn" tabindex="0">
+                            <span class="ng-tooltip-icon">ℹ️</span>
+                            <span class="ng-tooltip-popover">
+                                <strong class="ng-tooltip-title">🚨 Cuarentena Perimetral Automática</strong>
+                                <span class="ng-tooltip-desc">Aísla automáticamente por 24 horas a cualquier IP que acumule 3 o más ataques o inyecciones hostiles en menos de 10 minutos. Corta sus peticiones directamente en el encabezado sin consumir CPU ni memoria de WordPress.</span>
+                                <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
+                            </span>
+                        </span>
+                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                    </b>
+                    <p class="ng-hint">Aísla por 24 horas a cualquier atacante o bot que acumule 3 o más intentos de intrusión en 10 minutos, cortando la conexión antes de que consuma recursos del servidor.</p>
+                </div>
+                <input type="checkbox" name="waf_auto_jail" value="1" <?php checked(!isset($settings['waf_auto_jail']) || !empty($settings['waf_auto_jail'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+            </label>
+
+            <!-- Centinela de Integridad de Archivos Críticos (Tripwire Sentinel) -->
+            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <div class="toggle-info">
+                    <b>Centinela de Integridad de Archivos Críticos (Tripwire Sentinel)
+                        <span class="ng-tooltip-btn" tabindex="0">
+                            <span class="ng-tooltip-icon">ℹ️</span>
+                            <span class="ng-tooltip-popover">
+                                <strong class="ng-tooltip-title">🪤 Trampa Criptográfica de Archivos</strong>
+                                <span class="ng-tooltip-desc">Monitorea firmas SHA-256 de wp-config.php, .htaccess e index.php. Si un hacker o script logra alterar uno de estos archivos, el radar de NexaGuard dispara una alarma crítica en el acto.</span>
+                                <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
+                            </span>
+                        </span>
+                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                    </b>
+                    <p class="ng-hint">Inspecciona continuamente los hashes SHA-256 de wp-config.php, .htaccess e index.php contra su línea base, alertando al instante si detecta manipulaciones clandestinas.</p>
+                </div>
+                <input type="checkbox" name="tripwire_enabled" value="1" <?php checked(!isset($settings['tripwire_enabled']) || !empty($settings['tripwire_enabled'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+            </label>
+
+            <!-- Alertas Instantáneas por Webhook (Discord / Slack / Telegram) -->
+            <div class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="display:flex; flex-direction:column; gap:10px;">
+                <div class="toggle-info">
+                    <b>Alertas Instantáneas por Webhook (Discord / Slack / Teams)
+                        <span class="ng-tooltip-btn" tabindex="0">
+                            <span class="ng-tooltip-icon">ℹ️</span>
+                            <span class="ng-tooltip-popover">
+                                <strong class="ng-tooltip-title">⚡ Integración Webhook en Tiempo Real</strong>
+                                <span class="ng-tooltip-desc">Envía notificaciones enriquecidas con detalles del ataque (IP, vector, herramienta, hora) directamente a tu canal de Discord o Slack en el mismo milisegundo en que la intrusión es neutralizada.</span>
+                                <span class="ng-tooltip-rec">💡 Recomendado: Para monitoreo 24/7 y equipos SOC</span>
+                            </span>
+                        </span>
+                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                    </b>
+                    <p class="ng-hint">Recibe un reporte táctico con la IP, vector y herramienta atacante en tu canal de Discord o Slack inmediatamente tras cada bloqueo.</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px;">
+                    <input type="url" name="threat_webhook_url" id="threat_webhook_url" value="<?php echo esc_attr(!empty($settings['threat_webhook_url']) ? $settings['threat_webhook_url'] : ''); ?>" placeholder="https://discord.com/api/webhooks/... o https://hooks.slack.com/..." class="in-ng" style="flex:1; min-width:280px; font-size:0.85rem; padding:8px 12px;" <?php disabled(!$is_pro); ?>>
+                    <button type="button" id="btn-test-webhook" class="btn-ng btn-ng-outline" style="padding:7px 14px; font-size:0.82rem;" <?php disabled(!$is_pro); ?>>⚡ Probar Webhook</button>
+                </div>
+            </div>
         </div>
 
         <div class="form-actions" style="margin-top:24px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;">

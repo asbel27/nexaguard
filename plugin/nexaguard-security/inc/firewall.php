@@ -53,6 +53,11 @@ class NexaGuard_Firewall {
             'generic_login_errors'  => true,
             'protect_system_files'  => true,
             'admin_login_alerts'    => true,
+            'threat_email_alerts'   => true,
+            'alert_email'           => '',
+            'waf_auto_jail'         => true,
+            'tripwire_enabled'      => true,
+            'threat_webhook_url'    => '',
             'login_custom_design'   => false,
             'login_bg_image'        => '',
             'login_bg_preset'       => 'deep-navy',
@@ -63,6 +68,19 @@ class NexaGuard_Firewall {
         // 0. Modo Aislamiento de Emergencia / Lockdown
         if (!empty($settings['emergency_lockdown'])) {
             add_action('init', array(__CLASS__, 'enforce_emergency_lockdown'), 1);
+        }
+
+        // 0.1 Cárcel Automática de IPs por Reincidencia (IP Auto-Jail 24h)
+        if (!empty($settings['waf_auto_jail'])) {
+            add_action('init', array(__CLASS__, 'check_ip_jail'), 0);
+            if (!is_admin()) {
+                self::check_ip_jail();
+            }
+        }
+
+        // 0.2 Centinela de Integridad de Archivos (Tripwire Sentinel)
+        if (!empty($settings['tripwire_enabled'])) {
+            add_action('init', array(__CLASS__, 'check_file_tripwire'), 5);
         }
 
         // 1. Bloqueo de edición de temas y plugins desde el panel de WordPress (Hardening)
@@ -285,6 +303,11 @@ class NexaGuard_Firewall {
     }
 
     private static function inspect_request() {
+        $ip = self::get_client_ip();
+        if (self::is_ip_jailed($ip)) {
+            self::render_jail_screen($ip, self::get_jail_hours_left($ip));
+        }
+
         // 1. Bloqueo perimetral inmediato de escáneres hostiles, Burp Suite y herramientas de Kali Linux
         $ua = isset($_SERVER['HTTP_USER_AGENT']) ? strtolower($_SERVER['HTTP_USER_AGENT']) : '';
         if (!empty($ua)) {
@@ -395,6 +418,9 @@ class NexaGuard_Firewall {
     }
 
     private static function block_access($reason) {
+        $ip = self::get_client_ip();
+        self::record_waf_strike($ip, $reason);
+
         try {
             self::log_threat($reason, 'WAF Perimeter Interceptor', 403);
         } catch (\Throwable $e) {
@@ -507,6 +533,9 @@ class NexaGuard_Firewall {
 
         // Enviar alerta inmediata por correo al administrador
         self::send_threat_alert_email($new_log);
+
+        // Enviar alerta instantánea vía Webhook (Discord / Slack / Telegram)
+        self::send_threat_webhook($new_log);
     }
 
     /**
@@ -670,6 +699,356 @@ class NexaGuard_Firewall {
 
         update_option('nexaguard_threat_logs', array(), false);
         wp_send_json_success(array('message' => 'Logs de amenazas limpiados.'));
+    }
+
+    /* =========================================================================
+     * CÁRCEL AUTOMÁTICA DE IPS POR REINCIDENCIA (IP AUTO-JAIL 24H)
+     * ========================================================================= */
+
+    public static function is_ip_jailed($ip) {
+        $hash = md5($ip);
+        $exp = get_transient('nexaguard_jail_' . $hash);
+        if ($exp && is_numeric($exp)) {
+            if ($exp > time()) {
+                return (int) $exp;
+            }
+            delete_transient('nexaguard_jail_' . $hash);
+        }
+        return false;
+    }
+
+    public static function get_jail_hours_left($ip) {
+        $exp = self::is_ip_jailed($ip);
+        if ($exp) {
+            return max(1, ceil(($exp - time()) / 3600));
+        }
+        return 24;
+    }
+
+    public static function record_waf_strike($ip, $reason = '') {
+        $settings = get_option('nexaguard_settings', array());
+        if (isset($settings['waf_auto_jail']) && empty($settings['waf_auto_jail'])) {
+            return;
+        }
+
+        if (self::is_ip_jailed($ip)) {
+            return;
+        }
+
+        $hash = md5($ip);
+        $strike_key = 'ng_waf_stk_' . $hash;
+        $strikes = (int) get_transient($strike_key);
+        $strikes++;
+
+        // Ventana de reincidencia: 10 minutos
+        set_transient($strike_key, $strikes, 10 * MINUTE_IN_SECONDS);
+
+        if ($strikes >= 3) {
+            $expires = time() + (24 * HOUR_IN_SECONDS);
+            set_transient('nexaguard_jail_' . $hash, $expires, 24 * HOUR_IN_SECONDS);
+            delete_transient($strike_key);
+
+            $total = (int) get_option('nexaguard_total_jailed_ips', 0);
+            update_option('nexaguard_total_jailed_ips', $total + 1, false);
+
+            self::log_threat(
+                'IP enviada a Cárcel Digital 24H por reincidencia hostil (3 ataques en 10 min): ' . $reason,
+                'Auto-Jail Protocol',
+                403
+            );
+        }
+    }
+
+    public static function check_ip_jail() {
+        if (function_exists('is_user_logged_in') && function_exists('current_user_can')) {
+            if (is_user_logged_in() && current_user_can('manage_options')) {
+                return;
+            }
+        }
+
+        $ip = self::get_client_ip();
+        $jail_exp = self::is_ip_jailed($ip);
+        if ($jail_exp) {
+            $hours = max(1, ceil(($jail_exp - time()) / 3600));
+            self::render_jail_screen($ip, $hours);
+        }
+    }
+
+    public static function render_jail_screen($ip, $hours_left = 24) {
+        if (!headers_sent()) {
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0', true);
+            header('Pragma: no-cache', true);
+            header('Retry-After: ' . ($hours_left * 3600), true);
+            if (function_exists('status_header')) {
+                status_header(403);
+            } else {
+                header('HTTP/1.1 403 Forbidden', true, 403);
+            }
+        }
+        ?>
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>403 Aislamiento Disciplinario · NexaGuard Cyber Jail</title>
+            <style>
+                body{background:#060818;color:#eaf0ff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
+                .box{background:#0e1333;border:2px solid #ff4560;border-radius:18px;padding:36px 30px;max-width:540px;width:100%;text-align:center;box-shadow:0 0 50px rgba(255,69,96,0.35);box-sizing:border-box}
+                .ic{font-size:3.4rem;margin-bottom:12px;filter:drop-shadow(0 0 20px rgba(255,69,96,0.6))}
+                h1{font-size:1.6rem;margin:0 0 12px;color:#ff6b82;font-weight:800;letter-spacing:0.02em}
+                p{color:#b6c4eb;font-size:0.95rem;line-height:1.6;margin:0 0 18px}
+                .badge{font-size:0.76rem;font-weight:800;letter-spacing:0.08em;background:rgba(255,69,96,0.2);color:#ff6b82;border:1px solid rgba(255,69,96,0.45);padding:0.45em 1.2em;border-radius:999px;display:inline-block;margin-bottom:18px;text-transform:uppercase}
+                .jail-card{background:rgba(6,8,24,0.7);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;margin:20px 0;text-align:left;font-size:0.86rem}
+                .jail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+                .jail-row:last-child{border-bottom:none}
+                .jail-label{color:#8fa2d4;font-weight:600}
+                .jail-val{color:#ffffff;font-family:monospace;font-weight:700}
+                .jail-countdown{color:#ffcf33;font-weight:800}
+                .footer-brand{margin-top:22px;font-size:0.78rem;color:#5a6b99}
+                .footer-brand a{color:#ffcf33;text-decoration:none}
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <div class="ic">🚨</div>
+                <div class="badge">NEXAGUARD CYBER JAIL // AISLAMIENTO DISCIPLINARIO</div>
+                <h1>IP Bloqueada en Cárcel Digital (24 Horas)</h1>
+                <p>Tu dirección IP ha sido aislada perimetralmente debido a la <strong>reincidencia continuada de solicitudes maliciosas o inyecciones de código</strong> detectadas y neutralizadas por el motor WAF de NexaGuard Security.</p>
+                
+                <div class="jail-card">
+                    <div class="jail-row">
+                        <span class="jail-label">IP Aislada:</span>
+                        <span class="jail-val"><?php echo esc_html($ip); ?></span>
+                    </div>
+                    <div class="jail-row">
+                        <span class="jail-label">Motivo de Aislamiento:</span>
+                        <span class="jail-val" style="color:#ff6b82;">Reincidencia hostil (3+ ataques en 10 min)</span>
+                    </div>
+                    <div class="jail-row">
+                        <span class="jail-label">Duración del Bloqueo:</span>
+                        <span class="jail-val jail-countdown">Aprox. <?php echo intval($hours_left); ?> hora(s) restantes</span>
+                    </div>
+                    <div class="jail-row">
+                        <span class="jail-label">Acción Perimetral:</span>
+                        <span class="jail-val" style="color:#3de8a4;">Conexión cortada sin carga de PHP</span>
+                    </div>
+                </div>
+
+                <p style="font-size:0.84rem;color:#8fa2d4;margin:0;">
+                    Si eres un usuario legítimo y consideras que tu IP fue bloqueada por error debido a una regla de seguridad estricta, contacta con el administrador del sitio para solicitar la liberación de tu IP.
+                </p>
+
+                <div class="footer-brand">
+                    Blindaje perimetral activo por <a href="https://www.nexaguards.com" target="_blank" rel="noopener noreferrer">NexaGuard Security</a>
+                </div>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
+    }
+
+    /* =========================================================================
+     * CENTINELA DE INTEGRIDAD DE ARCHIVOS CRÍTICOS (TRIPWIRE SENTINEL)
+     * ========================================================================= */
+
+    public static function check_file_tripwire() {
+        $settings = get_option('nexaguard_settings', array());
+        if (isset($settings['tripwire_enabled']) && empty($settings['tripwire_enabled'])) {
+            return;
+        }
+
+        // Control de rendimiento: verificación cada 5 minutos
+        $throttle = get_transient('nexaguard_tripwire_check_cache');
+        if ($throttle) {
+            return;
+        }
+        set_transient('nexaguard_tripwire_check_cache', 1, 5 * MINUTE_IN_SECONDS);
+
+        $critical_files = array(
+            'wp-config.php'   => file_exists(ABSPATH . 'wp-config.php') ? ABSPATH . 'wp-config.php' : (file_exists(dirname(ABSPATH) . '/wp-config.php') ? dirname(ABSPATH) . '/wp-config.php' : null),
+            '.htaccess'       => file_exists(ABSPATH . '.htaccess') ? ABSPATH . '.htaccess' : null,
+            'index.php'       => file_exists(ABSPATH . 'index.php') ? ABSPATH . 'index.php' : null,
+            'wp-settings.php' => file_exists(ABSPATH . 'wp-settings.php') ? ABSPATH . 'wp-settings.php' : null,
+            'wp-load.php'     => file_exists(ABSPATH . 'wp-load.php') ? ABSPATH . 'wp-load.php' : null
+        );
+
+        $baseline = get_option('nexaguard_tripwire_baseline', null);
+        if (!is_array($baseline)) {
+            $baseline = array();
+            foreach ($critical_files as $name => $path) {
+                if ($path && file_exists($path)) {
+                    $baseline[$name] = hash_file('sha256', $path);
+                }
+            }
+            update_option('nexaguard_tripwire_baseline', $baseline, false);
+            return;
+        }
+
+        $tampered = array();
+        foreach ($critical_files as $name => $path) {
+            if (!$path || !file_exists($path)) {
+                if (isset($baseline[$name])) {
+                    $tampered[] = $name . ' (eliminado)';
+                }
+                continue;
+            }
+
+            if (!isset($baseline[$name])) {
+                $baseline[$name] = hash_file('sha256', $path);
+                update_option('nexaguard_tripwire_baseline', $baseline, false);
+                continue;
+            }
+
+            $current_hash = hash_file('sha256', $path);
+            if ($current_hash !== $baseline[$name]) {
+                $tampered[] = $name . ' (código modificado)';
+            }
+        }
+
+        if (!empty($tampered)) {
+            $alert_throttle = 'ng_tripwire_alert_sent';
+            if (!get_transient($alert_throttle)) {
+                set_transient($alert_throttle, 1, 30 * MINUTE_IN_SECONDS);
+                $msg = '¡Alerta Tripwire! Alteración crítica no autorizada en archivos del núcleo: ' . implode(', ', $tampered);
+                self::log_threat($msg, 'Tripwire Sentinel', 403);
+            }
+        }
+    }
+
+    public static function ajax_rebaseline_tripwire() {
+        if (!check_ajax_referer('nexaguard_security_nonce', 'nonce', false) && !check_ajax_referer('nexaguard_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Token de seguridad inválido.'));
+        }
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Sin permisos suficientes.'));
+        }
+
+        delete_option('nexaguard_tripwire_baseline');
+        delete_transient('nexaguard_tripwire_check_cache');
+        delete_transient('ng_tripwire_alert_sent');
+        self::check_file_tripwire();
+
+        wp_send_json_success(array('message' => 'Línea base criptográfica del Tripwire recalculada con éxito.'));
+    }
+
+    /* =========================================================================
+     * ALERTAS EN TIEMPO REAL VÍA WEBHOOK (DISCORD / SLACK)
+     * ========================================================================= */
+
+    public static function send_threat_webhook($log) {
+        try {
+            $settings = get_option('nexaguard_settings', array());
+            $webhook_url = !empty($settings['threat_webhook_url']) ? trim($settings['threat_webhook_url']) : '';
+            if (empty($webhook_url) || !filter_var($webhook_url, FILTER_VALIDATE_URL)) {
+                return;
+            }
+
+            // Anti-saturación: máximo 1 webhook cada 60s por IP y vector
+            $throttle_key = 'ng_wbhk_thr_' . md5($log['ip'] . $log['reason']);
+            if (function_exists('get_transient') && get_transient($throttle_key)) {
+                return;
+            }
+            if (function_exists('set_transient')) {
+                set_transient($throttle_key, 1, 60);
+            }
+
+            $site_name = function_exists('get_bloginfo') ? get_bloginfo('name') : 'WordPress';
+            $site_url = function_exists('site_url') ? site_url() : '';
+            $radar_url = function_exists('admin_url') ? admin_url('admin.php?page=nexaguard-security&tab=vigilance') : '';
+
+            $payload = array(
+                'username' => 'NexaGuard Security Radar',
+                'avatar_url' => 'https://www.nexaguards.com/assets/img/nexaguard-icon.png',
+                'content' => '🚨 **[ALERTA DE SEGURIDAD NEXAGUARD]** Intrusión interceptada en **' . $site_name . '**',
+                'embeds' => array(
+                    array(
+                        'title' => '🛡️ Amenaza Bloqueada: ' . $log['reason'],
+                        'url' => $radar_url,
+                        'description' => 'El Cortafuegos WAF de **NexaGuard Security** interceptó y neutralizó con éxito una petición hostil.',
+                        'color' => 16729440,
+                        'fields' => array(
+                            array('name' => '🌐 IP Atacante', 'value' => '`' . $log['ip'] . '`', 'inline' => true),
+                            array('name' => '🛠️ Agente / Herramienta', 'value' => $log['tool_tag'], 'inline' => true),
+                            array('name' => '⚡ Estado HTTP', 'value' => '`' . ($log['status'] ? $log['status'] : 403) . ' Forbidden`', 'inline' => true),
+                            array('name' => '🎯 Solicitud Bloqueada', 'value' => '`' . $log['method'] . ' ' . substr($log['uri'], 0, 150) . '`', 'inline' => false),
+                            array('name' => '📡 Sitio Protegido', 'value' => '[' . $site_name . '](' . $site_url . ')', 'inline' => true),
+                            array('name' => '🕒 Fecha y Hora', 'value' => $log['timestamp'], 'inline' => true)
+                        ),
+                        'footer' => array(
+                            'text' => 'NexaGuard Security · Telemetría y Blindaje Forense en Tiempo Real'
+                        ),
+                        'timestamp' => gmdate('Y-m-d\TH:i:s\Z')
+                    )
+                ),
+                'text' => '🚨 [NexaGuard WAF] Intrusión bloqueada desde ' . $log['ip'] . ': ' . $log['reason']
+            );
+
+            wp_remote_post($webhook_url, array(
+                'method' => 'POST',
+                'timeout' => 5,
+                'blocking' => false,
+                'headers' => array(
+                    'Content-Type' => 'application/json; charset=utf-8'
+                ),
+                'body' => json_encode($payload)
+            ));
+        } catch (\Throwable $e) {
+            error_log('NexaGuard webhook error: ' . $e->getMessage());
+        }
+    }
+
+    public static function ajax_test_webhook() {
+        if (!check_ajax_referer('nexaguard_security_nonce', 'nonce', false) && !check_ajax_referer('nexaguard_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Token de seguridad inválido.'));
+        }
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Sin permisos suficientes.'));
+        }
+
+        $url = isset($_POST['webhook_url']) ? esc_url_raw(trim($_POST['webhook_url'])) : '';
+        if (empty($url)) {
+            wp_send_json_error(array('message' => 'Por favor introduce una URL válida de webhook.'));
+        }
+
+        $site_name = get_bloginfo('name');
+        $payload = array(
+            'username' => 'NexaGuard Security Radar',
+            'content' => '✅ **[TEST DE CONEXIÓN EXITOSO]** NexaGuard Security se ha conectado correctamente a este canal en **' . $site_name . '**.',
+            'embeds' => array(
+                array(
+                    'title' => '🛡️ Canal de Alertas Vinculado Correctamente',
+                    'description' => 'A partir de este momento, todas las intrusiones e intentos de inyección detectados por el radar serán notificados inmediatamente a este canal.',
+                    'color' => 4057252,
+                    'fields' => array(
+                        array('name' => '📡 Estado', 'value' => 'Activo y Operativo', 'inline' => true),
+                        array('name' => '🕒 Fecha de Prueba', 'value' => current_time('mysql'), 'inline' => true)
+                    ),
+                    'footer' => array('text' => 'NexaGuard Security · Sistema de Alertas Automáticas')
+                )
+            ),
+            'text' => '✅ [TEST EXITOSO] NexaGuard Security conectado a este canal.'
+        );
+
+        $response = wp_remote_post($url, array(
+            'method' => 'POST',
+            'timeout' => 8,
+            'blocking' => true,
+            'headers' => array('Content-Type' => 'application/json; charset=utf-8'),
+            'body' => json_encode($payload)
+        ));
+
+        if (is_wp_error($response)) {
+            wp_send_json_error(array('message' => 'Error al conectar con el Webhook: ' . $response->get_error_message()));
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        if ($code >= 200 && $code < 300) {
+            wp_send_json_success(array('message' => '¡Notificación de prueba enviada con éxito a tu webhook!'));
+        } else {
+            wp_send_json_error(array('message' => 'El servidor del Webhook respondió con código HTTP ' . $code . '. Verifica la URL.'));
+        }
     }
 
     /* =========================================================================

@@ -2896,5 +2896,28 @@
     color: #94a3b8;
 }
 
-
-
+.btn-tsm-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+.btn-tsm-export:hover {
+    background: rgba(56, 189, 248, 0.22);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+    transform: translateY(-1px);
+}
+.btn-tsm-clear {
+    font-size: 0.78rem !important;
+    padding: 6px 12px !important;
+}

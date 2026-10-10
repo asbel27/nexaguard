@@ -1685,6 +1685,125 @@ jQuery(document).ready(function ($) {
         );
     });
 
+    // ============ EXPORTACIÓN FORENSE (CSV Y JSON) ============
+    function downloadBlobFile(blob, filename) {
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 200);
+    }
+
+    function exportThreatLogsCSV() {
+        var logs = currentRadarThreatLogs || [];
+        if (!logs.length) {
+            showAlert('No hay registros de amenazas en el historial para exportar.', 'warning', 'Historial Vacío');
+            return;
+        }
+
+        var headers = ['ID Registro', 'Fecha y Hora', 'IP Atacante', 'Vector / Motivo', 'Herramienta / Agente', 'Método HTTP', 'Ruta Solicitada', 'Estado HTTP', 'Origen del Sensor'];
+        var rows = [headers.join(',')];
+
+        for (var i = 0; i < logs.length; i++) {
+            var item = logs[i];
+            var row = [
+                '"' + (item.id || '').replace(/"/g, '""') + '"',
+                '"' + (item.timestamp || item.time_short || '').replace(/"/g, '""') + '"',
+                '"' + (item.ip || '').replace(/"/g, '""') + '"',
+                '"' + (item.reason || '').replace(/"/g, '""') + '"',
+                '"' + (item.tool_tag || '').replace(/"/g, '""') + '"',
+                '"' + (item.method || 'GET').replace(/"/g, '""') + '"',
+                '"' + (item.uri || '/').replace(/"/g, '""') + '"',
+                '"' + (item.status || 403) + '"',
+                '"' + (item.source || 'WAF').replace(/"/g, '""') + '"'
+            ];
+            rows.push(row.join(','));
+        }
+
+        var csvContent = '\uFEFF' + rows.join('\r\n');
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        var filename = 'NexaGuard-Forensic-Report-' + new Date().toISOString().slice(0, 10) + '.csv';
+
+        downloadBlobFile(blob, filename);
+        showToast('Informe forense CSV descargado (' + logs.length + ' registros).', 'success', 'Exportación Exitosa');
+    }
+
+    function exportThreatLogsJSON() {
+        var logs = currentRadarThreatLogs || [];
+        if (!logs.length) {
+            showAlert('No hay registros de amenazas en el historial para exportar.', 'warning', 'Historial Vacío');
+            return;
+        }
+
+        var report = {
+            report_name: 'NexaGuard Security Forensic Telemetry Report',
+            generated_at: new Date().toISOString(),
+            total_events: logs.length,
+            events: logs
+        };
+
+        var jsonStr = JSON.stringify(report, null, 2);
+        var blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+        var filename = 'NexaGuard-Forensic-Report-' + new Date().toISOString().slice(0, 10) + '.json';
+
+        downloadBlobFile(blob, filename);
+        showToast('Informe forense JSON descargado (' + logs.length + ' registros).', 'success', 'Exportación Exitosa');
+    }
+
+    $(document).on('click', '#btn-tsm-export-csv', function (e) {
+        e.preventDefault();
+        exportThreatLogsCSV();
+    });
+
+    $(document).on('click', '#btn-tsm-export-json', function (e) {
+        e.preventDefault();
+        exportThreatLogsJSON();
+    });
+
+    // ============ PRUEBA DE WEBHOOK EN TIEMPO REAL ============
+    $(document).on('click', '#btn-test-webhook', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var webhookUrl = ($('#threat_webhook_url').val() || '').trim();
+
+        if (!webhookUrl) {
+            showAlert('Por favor escribe la URL de tu Webhook de Discord o Slack antes de enviar la prueba.', 'warning', 'Webhook Requerido');
+            return;
+        }
+
+        $btn.prop('disabled', true).text('Probando conexión...');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_test_webhook',
+                webhook_url: webhookUrl,
+                nonce: nexaguardData.nonce
+            },
+            success: function (res) {
+                if (res && res.success) {
+                    showToast(res.data.message || 'Notificación de prueba enviada con éxito.', 'success', 'Webhook Conectado');
+                } else {
+                    var msg = (res && res.data && res.data.message) ? res.data.message : 'Error al conectar con el Webhook.';
+                    showAlert(msg, 'error', 'Fallo de Webhook');
+                }
+            },
+            error: function () {
+                showAlert('Error de conexión al enviar el paquete de prueba al servidor.', 'error', 'Error de Red');
+            },
+            complete: function () {
+                $btn.prop('disabled', false).text('⚡ Probar Webhook');
+            }
+        });
+    });
+
     // Control de Silencio / Sonido (botón de altavoz)
     $(document).on('click', '#btn-toggle-radar-sound', function (e) {
         e.preventDefault();

@@ -3,7 +3,7 @@
  * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
  * Plugin URI: https://nexaguards.com
  * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
- * Version: 1.3.7
+ * Version: 1.4.0
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://nexaguards.com
  * License: GPLv2 or later
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.3.7');
+define('NEXAGUARD_VERSION', '1.4.0');
 define('NEXAGUARD_FILE', __FILE__);
 define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
 define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
@@ -54,6 +54,8 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_toggle_vigilance', array($this, 'ajax_toggle_vigilance'));
         add_action('wp_ajax_nexaguard_get_radar_logs', array('NexaGuard_Firewall', 'ajax_get_radar_logs'));
         add_action('wp_ajax_nexaguard_clear_radar_logs', array('NexaGuard_Firewall', 'ajax_clear_radar_logs'));
+        add_action('wp_ajax_nexaguard_test_webhook', array('NexaGuard_Firewall', 'ajax_test_webhook'));
+        add_action('wp_ajax_nexaguard_rebaseline_tripwire', array('NexaGuard_Firewall', 'ajax_rebaseline_tripwire'));
         add_action('wp_ajax_nexaguard_validate_license', array($this, 'ajax_validate_license'));
         add_action('wp_ajax_nexaguard_auto_remediate_all', array($this, 'ajax_auto_remediate_all'));
         add_action('wp_ajax_nexaguard_revert_snapshot', array($this, 'ajax_revert_snapshot'));
@@ -346,6 +348,9 @@ class NexaGuard_Plugin {
             'admin_login_alerts'    => !empty($_POST['admin_login_alerts']),
             'threat_email_alerts'   => !empty($_POST['threat_email_alerts']),
             'alert_email'           => !empty($_POST['alert_email']) ? sanitize_email($_POST['alert_email']) : '',
+            'waf_auto_jail'         => !empty($_POST['waf_auto_jail']),
+            'tripwire_enabled'      => !empty($_POST['tripwire_enabled']),
+            'threat_webhook_url'    => !empty($_POST['threat_webhook_url']) ? esc_url_raw(trim($_POST['threat_webhook_url'])) : '',
             'login_custom_design'   => !empty($_POST['login_custom_design']),
             'login_bg_image'        => isset($_POST['login_bg_image']) ? esc_url_raw(trim($_POST['login_bg_image'])) : '',
             'login_bg_preset'       => isset($_POST['login_bg_preset']) ? sanitize_key($_POST['login_bg_preset']) : 'deep-navy',
