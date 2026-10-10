@@ -1341,8 +1341,11 @@ jQuery(document).ready(function ($) {
                 cleanAttack = 'fuerza bruta';
             }
 
-            // Frase suave y reconfortante solicitada por el usuario
-            var text = 'Alerta, alerta. Se ha encontrado un intruso queriendo introducir código malicioso en ' + cleanAttack + '. Ten confianza, el ataque ha sido erradicado y bloqueado.';
+            // Frase táctica y directa de ciberseguridad solicitada por el usuario
+            var text = 'Alerta, alerta. Un intruso ha sido detectado queriendo inyectar código malicioso en ' + cleanAttack + ', la amenaza ha sido bloqueada.';
+            if (!cleanAttack || cleanAttack === 'petición maliciosa') {
+                text = 'Alerta, alerta. Un intruso ha sido detectado queriendo inyectar código malicioso, la amenaza ha sido bloqueada.';
+            }
             var utter = new SpeechSynthesisUtterance(text);
             utter.lang = 'es-ES';
             utter.rate = 0.90; // Ritmo pausado, suave y claro

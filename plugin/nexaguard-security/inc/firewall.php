@@ -356,8 +356,19 @@ class NexaGuard_Firewall {
     }
 
     private static function block_access($reason) {
-        self::log_threat($reason, 'WAF Perimeter Interceptor', 403);
-        status_header(403);
+        try {
+            self::log_threat($reason, 'WAF Perimeter Interceptor', 403);
+        } catch (\Throwable $e) {
+            error_log('NexaGuard log_threat error: ' . $e->getMessage());
+        }
+
+        if (!headers_sent()) {
+            if (function_exists('status_header')) {
+                status_header(403);
+            } else {
+                header('HTTP/1.1 403 Forbidden', true, 403);
+            }
+        }
         ?>
         <!DOCTYPE html>
         <html lang="es">
@@ -453,28 +464,41 @@ class NexaGuard_Firewall {
      * Envía notificación inmediata por correo ante intrusiones o ataques
      */
     public static function send_threat_alert_email($log) {
-        $settings = get_option('nexaguard_settings', array());
+        try {
+            if (!function_exists('is_email') || !function_exists('wp_mail')) {
+                if (defined('ABSPATH') && file_exists(ABSPATH . 'wp-includes/pluggable.php')) {
+                    require_once ABSPATH . 'wp-includes/pluggable.php';
+                }
+            }
 
-        // Permitir desactivar alertas por correo en configuración si el usuario lo desea
-        if (isset($settings['threat_email_alerts']) && empty($settings['threat_email_alerts'])) {
-            return;
-        }
+            if (!function_exists('is_email') || !function_exists('wp_mail')) {
+                return;
+            }
 
-        $to = !empty($settings['alert_email']) ? sanitize_email($settings['alert_email']) : get_option('admin_email');
-        if (empty($to) || !is_email($to)) {
-            return;
-        }
+            $settings = get_option('nexaguard_settings', array());
 
-        // Control anti-saturación: máximo 1 correo cada 10 min para la misma IP y tipo de ataque
-        $throttle_key = 'ng_mail_thr_' . md5($log['ip'] . $log['reason']);
-        if (get_transient($throttle_key)) {
-            return;
-        }
-        set_transient($throttle_key, 1, 10 * MINUTE_IN_SECONDS);
+            // Permitir desactivar alertas por correo en configuración si el usuario lo desea
+            if (isset($settings['threat_email_alerts']) && empty($settings['threat_email_alerts'])) {
+                return;
+            }
 
-        $site_name = get_bloginfo('name');
-        $site_url = site_url();
-        $radar_url = admin_url('admin.php?page=nexaguard-security');
+            $to = !empty($settings['alert_email']) ? sanitize_email($settings['alert_email']) : get_option('admin_email');
+            if (empty($to) || !is_email($to)) {
+                return;
+            }
+
+            // Control anti-saturación: máximo 1 correo cada 10 min para la misma IP y tipo de ataque
+            $throttle_key = 'ng_mail_thr_' . md5($log['ip'] . $log['reason']);
+            if (function_exists('get_transient') && get_transient($throttle_key)) {
+                return;
+            }
+            if (function_exists('set_transient')) {
+                set_transient($throttle_key, 1, 10 * MINUTE_IN_SECONDS);
+            }
+
+            $site_name = function_exists('get_bloginfo') ? get_bloginfo('name') : 'WordPress';
+            $site_url = function_exists('site_url') ? site_url() : '';
+            $radar_url = function_exists('admin_url') ? admin_url('admin.php?page=nexaguard-security') : '';
 
         $subject = '🚨 [NexaGuard] Intrusión Bloqueada: ' . sanitize_text_field($log['reason']) . ' en ' . $site_name;
 
@@ -558,7 +582,10 @@ class NexaGuard_Firewall {
             'From: NexaGuard Security <' . get_option('admin_email') . '>'
         );
 
-        wp_mail($to, $subject, $body, $headers);
+        @wp_mail($to, $subject, $body, $headers);
+    } catch (\Throwable $e) {
+        error_log('NexaGuard email alert error: ' . $e->getMessage());
+    }
     }
 
     public static function get_threat_logs() {

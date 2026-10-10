@@ -202,7 +202,7 @@ function generateUpdateInfo(sourceDir, downloadsDir) {
     last_updated: new Date().toISOString().split('T')[0],
     sections: {
       description: "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
-      changelog: `<h4>Versión ${version}</h4><ul><li>Bloqueo perimetral activo contra escáneres de Kali Linux (SQLMap, WPScan, Nikto, Nmap, Gobuster, Hydra, Metasploit).</li><li>Normalización multicapa contra técnicas de evasión de codificación (+, %20, doble URL encode).</li><li>Detección hermética de comandos PowerShell encubiertos, ClickFix, inyecciones SQL y rutas sensibles (.env, .git).</li><li>Control interactivo de volumen y locución suave ante intrusiones bloqueadas.</li></ul>`
+      changelog: `<h4>Versión ${version}</h4><ul><li>Blindaje del despachador de alertas y carga preventiva de pluggable.php para erradicar errores críticos.</li><li>Locución de voz refinada, directa y táctica ante intrusiones bloqueadas.</li><li>Bloqueo perimetral activo contra escáneres de Kali Linux (SQLMap, WPScan, Nikto, Nmap, Gobuster, Hydra, Metasploit).</li><li>Normalización multicapa contra técnicas de evasión de codificación (+, %20, doble URL encode).</li></ul>`
     }
   };
 
