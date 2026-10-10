@@ -285,7 +285,7 @@ class NexaGuard_Firewall {
     }
 
     private static function inspect_request() {
-        // 1. Bloqueo perimetral inmediato de escáneres hostiles y herramientas de Kali Linux
+        // 1. Bloqueo perimetral inmediato de escáneres hostiles, Burp Suite y herramientas de Kali Linux
         $ua = isset($_SERVER['HTTP_USER_AGENT']) ? strtolower($_SERVER['HTTP_USER_AGENT']) : '';
         if (!empty($ua)) {
             $scanner_signatures = array(
@@ -300,7 +300,13 @@ class NexaGuard_Firewall {
                 'metasploit'    => 'Framework de explotación [Metasploit]',
                 'havij'         => 'Herramienta de inyección SQL [Havij]',
                 'acunetix'      => 'Escáner automatizado [Acunetix]',
-                'nessus'        => 'Escáner de vulnerabilidades [Nessus]'
+                'nessus'        => 'Escáner de vulnerabilidades [Nessus]',
+                'burp'          => 'Interceptador / Auditoría avanzada [Burp Suite / PortSwigger]',
+                'portswigger'   => 'Escáner automatizado [PortSwigger Burp Scanner]',
+                'ffuf'          => 'Fuzzing de rutas y parámetros [FFUF Fuzzer]',
+                'wfuzz'         => 'Fuzzing de parámetros web [Wfuzz Tool]',
+                'nuclei'        => 'Escáner de vulnerabilidades [ProjectDiscovery Nuclei]',
+                'commix'        => 'Inyección de comandos automatizada [Commix Tool]'
             );
 
             foreach ($scanner_signatures as $sig => $desc) {
@@ -312,8 +318,9 @@ class NexaGuard_Firewall {
 
         $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
         $query = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
+        $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
 
-        $raw_inputs = array($uri, $query);
+        $raw_inputs = array($uri, $query, $referer);
         if (!empty($_GET)) {
             $raw_inputs[] = json_encode($_GET);
         }
@@ -321,11 +328,37 @@ class NexaGuard_Firewall {
             $raw_inputs[] = json_encode($_POST);
         }
 
+        // 2. Inspección de Cookies ($_COOKIE) para detectar inyecciones en Burp Repeater o cabeceras
+        if (!empty($_COOKIE)) {
+            $cookie_vals = array();
+            foreach ($_COOKIE as $ck_key => $ck_val) {
+                // Preservar hashes estándar de sesión de WordPress para evitar falsos positivos
+                if (strpos($ck_key, 'wordpress_logged_in_') === 0 || strpos($ck_key, 'wordpress_sec_') === 0) {
+                    continue;
+                }
+                $cookie_vals[] = is_array($ck_val) ? json_encode($ck_val) : (string) $ck_val;
+            }
+            if (!empty($cookie_vals)) {
+                $raw_inputs[] = implode(' ', $cookie_vals);
+            }
+        }
+
+        // 3. Inspección del cuerpo crudo (Raw JSON / php://input) para APIs REST y Burp Suite
+        $method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : 'GET';
+        $content_type = isset($_SERVER['CONTENT_TYPE']) ? strtolower($_SERVER['CONTENT_TYPE']) : '';
+        if (in_array($method, array('POST', 'PUT', 'PATCH', 'DELETE'), true) && (strpos($content_type, 'json') !== false || strpos($content_type, 'xml') !== false)) {
+            $raw_body = @file_get_contents('php://input');
+            if (!empty($raw_body)) {
+                $raw_inputs[] = substr($raw_body, 0, 8192);
+            }
+        }
+
         $combined = implode(' ', $raw_inputs);
 
         $suspicious_patterns = array(
             '/(\%27)|(\')|(\-\-)|(\%23)|(#)/i' => 'SQLi comment injection',
             '/(union[\s\+]+select|select[\s\+]+.*[\s\+]+from|concat\s*\(|information_schema)/i' => 'SQL Injection attempt',
+            '/(sleep\s*\(\s*\d+\s*\)|benchmark\s*\(\s*\d+|waitfor\s+delay|extractvalue\s*\(|updatexml\s*\(|load_file\s*\()/i' => 'Blind / Time-Based SQL Injection',
             '/(\.\.\/|\.\.\\\\|\%2e\%2e\%2f|\%2e\%2e\/|\.\.%2f)/i' => 'Directory Traversal attempt',
             '/(base64_decode|eval\s*\(|gzinflate|passthru|shell_exec|system\s*\()/i' => 'Remote Code Execution attempt',
             '/(<script|%3cscript|javascript:|alert\s*\(|onerror=)/i' => 'Cross-Site Scripting (XSS) payload',
@@ -333,7 +366,13 @@ class NexaGuard_Firewall {
             '/(powershell[\s\+]+(-e|-enc|-encodedcommand|-w[\s\+]+hidden)|mshta[\s\+]+https?:\/\/|certutil[\s\+]+-urlcache)/i' => 'ClickFix PowerShell payload smuggling',
             '/(mainnet\.infura\.io|rpc\.ankr\.com|alchemy\.com\/v2|cloudflare-eth\.com|eth_call)/i' => 'Blockchain C2 RPC traffic hijacking',
             '/(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*([\'"][^\'"]*[\r\n]+[^\'"]*[\'"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*[\'"]?\s*javascript:)/is' => 'Comment2Shell XSS exploitation (CVE-2026-93485)',
-            '/(\/|\\\\)(\.env|\.git|\.htaccess|wp-config\.php\.bak|wp-config\.old|wp-config\.txt)/i' => 'Sensitive configuration file probe'
+            '/(\/|\\\\)(\.env|\.git|\.htaccess|wp-config\.php\.bak|wp-config\.old|wp-config\.txt)/i' => 'Sensitive configuration file probe',
+            '/(burpcollaborator\.net|oastify\.com|oast\.fun|oast\.me|interact\.sh|canarytokens\.com)/i' => 'Burp Collaborator / OAST SSRF probe',
+            '/(169\.254\.169\.254|metadata\.google\.internal)/i' => 'SSRF Cloud Instance Metadata probe',
+            '/(\$\{jndi:(ldap|rmi|dns|nis|iiop|corba):)/i' => 'JNDI / Log4j Remote Code Execution exploit',
+            '/(\{\{\s*(\d+[\*\+\-\/]\d+|config|self|app|request|process)\s*\}\}|\$\{.*\}|<#.*>|\[%.*%\])/i' => 'Server-Side Template Injection (SSTI)',
+            '/(O:\d+:"[^"]+":\d+:\{|a:\d+:\{.*O:\d+:)/i' => 'PHP Insecure Deserialization / Object Injection',
+            '/(\%00|\\0|%2500)/i' => 'Null Byte string termination bypass attempt'
         );
 
         // Normalización multicapa WAF para evitar evasiones de codificación (+, %20, doble URL encode)
@@ -413,10 +452,12 @@ class NexaGuard_Firewall {
         $method = isset($_SERVER['REQUEST_METHOD']) ? sanitize_text_field($_SERVER['REQUEST_METHOD']) : 'GET';
         $uri = isset($_SERVER['REQUEST_URI']) ? substr(sanitize_text_field($_SERVER['REQUEST_URI']), 0, 180) : '/';
 
-        // Clasificación de origen de la amenaza (Kali Linux, Botnet, Browser Exploit, etc.)
+        // Clasificación de origen de la amenaza (Burp Suite, Kali Linux, Botnet, Browser Exploit, etc.)
         $tool_tag = 'Browser / Custom Payload';
         $ua_lower = strtolower($ua);
-        if (strpos($ua_lower, 'sqlmap') !== false) {
+        if (strpos($ua_lower, 'burp') !== false || strpos($ua_lower, 'portswigger') !== false || strpos($reason, 'Burp Collaborator') !== false) {
+            $tool_tag = 'Burp Suite / PortSwigger';
+        } elseif (strpos($ua_lower, 'sqlmap') !== false) {
             $tool_tag = 'Kali Linux [SQLMap Scanner]';
         } elseif (strpos($ua_lower, 'nikto') !== false) {
             $tool_tag = 'Kali Linux [Nikto Web Scanner]';
@@ -430,6 +471,12 @@ class NexaGuard_Firewall {
             $tool_tag = 'Kali Linux [Hydra Brute-Forcer]';
         } elseif (strpos($ua_lower, 'metasploit') !== false) {
             $tool_tag = 'Kali Linux [Metasploit Framework]';
+        } elseif (strpos($ua_lower, 'nuclei') !== false) {
+            $tool_tag = 'ProjectDiscovery [Nuclei Scanner]';
+        } elseif (strpos($ua_lower, 'ffuf') !== false || strpos($ua_lower, 'wfuzz') !== false) {
+            $tool_tag = 'Web Fuzzer [FFUF / Wfuzz]';
+        } elseif (strpos($ua_lower, 'commix') !== false) {
+            $tool_tag = 'Kali Linux [Commix Tool]';
         } elseif (strpos($ua_lower, 'python-requests') !== false || strpos($ua_lower, 'aiohttp') !== false) {
             $tool_tag = 'Automated Exploit Bot (Python)';
         } elseif (strpos($ua_lower, 'curl') !== false || strpos($ua_lower, 'wget') !== false) {

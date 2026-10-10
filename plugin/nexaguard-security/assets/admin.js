@@ -1427,7 +1427,7 @@ jQuery(document).ready(function ($) {
         for (var k = 0; k < logs.length; k++) {
             var tag = (logs[k].tool_tag || '').toLowerCase();
             var rsn = (logs[k].reason || '').toLowerCase();
-            if (tag.indexOf('kali') !== -1 || tag.indexOf('wpscan') !== -1 || tag.indexOf('sqlmap') !== -1 || tag.indexOf('nikto') !== -1 || tag.indexOf('nmap') !== -1 || rsn.indexOf('kali') !== -1 || rsn.indexOf('wpscan') !== -1 || rsn.indexOf('sqlmap') !== -1) {
+            if (tag.indexOf('kali') !== -1 || tag.indexOf('wpscan') !== -1 || tag.indexOf('sqlmap') !== -1 || tag.indexOf('nikto') !== -1 || tag.indexOf('nmap') !== -1 || tag.indexOf('burp') !== -1 || tag.indexOf('portswigger') !== -1 || tag.indexOf('nuclei') !== -1 || rsn.indexOf('kali') !== -1 || rsn.indexOf('wpscan') !== -1 || rsn.indexOf('sqlmap') !== -1 || rsn.indexOf('burp') !== -1) {
                 kaliCount++;
             }
         }
@@ -1453,7 +1453,9 @@ jQuery(document).ready(function ($) {
         for (var i = 0; i < logs.length; i++) {
             var item = logs[i];
             var kaliBadge = '';
-            if (item.tool_tag && item.tool_tag.indexOf('Kali Linux') !== -1) {
+            if (item.tool_tag && item.tool_tag.indexOf('Burp Suite') !== -1) {
+                kaliBadge = '<span class="tsm-tag-kali" style="background:linear-gradient(135deg, #ff6600 0%, #ff4500 100%);box-shadow:0 0 10px rgba(255,102,0,0.5);">🟧 BURP SUITE DETECTED</span>';
+            } else if (item.tool_tag && item.tool_tag.indexOf('Kali Linux') !== -1) {
                 kaliBadge = '<span class="tsm-tag-kali">🐉 KALI LINUX DETECTED</span>';
             } else if (item.tool_tag) {
                 kaliBadge = '<span class="tsm-tag-scanner">' + escapeHtml(item.tool_tag) + '</span>';
@@ -1510,7 +1512,9 @@ jQuery(document).ready(function ($) {
                             displayedThreatIds[log.id] = true;
 
                             var kaliBadge = '';
-                            if (log.tool_tag && log.tool_tag.indexOf('Kali Linux') !== -1) {
+                            if (log.tool_tag && log.tool_tag.indexOf('Burp Suite') !== -1) {
+                                kaliBadge = '<span class="term-tag-kali" style="background:#ff6600;color:#fff;">BURP SUITE DETECTED</span> ';
+                            } else if (log.tool_tag && log.tool_tag.indexOf('Kali Linux') !== -1) {
                                 kaliBadge = '<span class="term-tag-kali">KALI LINUX DETECTED</span> ';
                             } else if (log.tool_tag) {
                                 kaliBadge = '<span class="term-tag-kali" style="background:#ffbd2e;color:#000;">' + log.tool_tag + '</span> ';
