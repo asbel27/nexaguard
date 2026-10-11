@@ -2281,6 +2281,8 @@ jQuery(document).ready(function ($) {
     var polyPulseSpike = 0;
     var polyTimeSinceLastPulse = 0;
     var polyLastTimestamp = 0;
+    var polyShiftAccumulator = 0;
+    var polyPointsPerSec = 16; // 16 puntos por segundo: movimiento horizontal lento, pausado y fluido
     var polyInitialized = false;
 
     // Inicializar y pre-poblar los historiales para que NUNCA aparezca la pantalla vacía o congelada
@@ -2288,10 +2290,10 @@ jQuery(document).ready(function ($) {
         if (polyInitialized) return;
         polyInitialized = true;
         for (var i = 0; i < polyPointsCount; i++) {
-            var t = i * 0.12;
-            polyCardio[i] = Math.sin(t * 1.6) * 6;
-            polyGalvanic[i] = Math.sin(t * 0.55) * 14 + Math.cos(t * 0.22) * 8;
-            polyResp[i] = Math.sin(t * 0.32) * 16;
+            var t = i * 0.08;
+            polyCardio[i] = Math.sin(t * 1.3) * 3.5;
+            polyGalvanic[i] = Math.sin(t * 0.3) * 8 + Math.cos(t * 0.15) * 5;
+            polyResp[i] = Math.sin(t * 0.18) * 10;
         }
     }
     initPolygraphBuffers();
@@ -2337,56 +2339,60 @@ jQuery(document).ready(function ($) {
         polyLastTimestamp = timestamp || performance.now();
 
         if (!sentinelPaused) {
-            polyPhase += dt;
-            polyCardioPhase += dt * 3.8; // Frecuencia cardíaca rítmica
+            polyPhase += (dt * 0.45); // Evolución orgánica suave y lenta
+            polyCardioPhase += (dt * 1.6); // Frecuencia cardíaca pausada y relajada
             polyTimeSinceLastPulse += dt;
 
-            // Cada ~2.3 segundos, disparar evaluación del siguiente archivo crítico
-            if (polyTimeSinceLastPulse >= 2.3) {
+            // Cada ~3.2 segundos, disparar evaluación del siguiente archivo crítico
+            if (polyTimeSinceLastPulse >= 3.2) {
                 polyTimeSinceLastPulse = 0;
                 polyPulseSpike = 1.0; // Iniciar pico agudo de detector de mentiras
                 triggerSentinelFilePulse();
             }
 
-            // 1. Canal Cardio / Pulso EKG (Onda P-Q-R-S-T + Micro-vibraciones de aguja de polígrafo)
-            var cardioBase = Math.sin(polyCardioPhase) * (5.5 * dpr);
+            // 1. Canal Cardio / Pulso EKG (Onda P-Q-R-S-T suave + micro-vibración sutil)
+            var cardioBase = Math.sin(polyCardioPhase) * (3.5 * dpr);
             var cardioSpike = 0;
             if (polyPulseSpike > 0) {
                 var p = 1.0 - polyPulseSpike; // 0.0 a 1.0
                 if (p < 0.16) {
-                    cardioSpike = -Math.sin((p / 0.16) * Math.PI) * (12 * dpr); // Onda P
+                    cardioSpike = -Math.sin((p / 0.16) * Math.PI) * (7 * dpr); // Onda P suave
                 } else if (p < 0.28) {
-                    cardioSpike = Math.sin(((p - 0.16) / 0.12) * Math.PI) * (14 * dpr); // Onda Q
+                    cardioSpike = Math.sin(((p - 0.16) / 0.12) * Math.PI) * (8 * dpr); // Onda Q
                 } else if (p < 0.48) {
-                    cardioSpike = -Math.sin(((p - 0.28) / 0.20) * Math.PI) * (48 * dpr); // PICO ALTO R
+                    cardioSpike = -Math.sin(((p - 0.28) / 0.20) * Math.PI) * (26 * dpr); // Pico R nítido y controlado
                 } else if (p < 0.68) {
-                    cardioSpike = Math.sin(((p - 0.48) / 0.20) * Math.PI) * (30 * dpr); // PICO PROFUNDO S
+                    cardioSpike = Math.sin(((p - 0.48) / 0.20) * Math.PI) * (15 * dpr); // Pico S
                 } else if (p < 0.88) {
-                    cardioSpike = -Math.sin(((p - 0.68) / 0.20) * Math.PI) * (15 * dpr); // Onda T
+                    cardioSpike = -Math.sin(((p - 0.68) / 0.20) * Math.PI) * (8 * dpr); // Onda T
                 }
-                polyPulseSpike -= dt * 1.7;
+                polyPulseSpike -= (dt * 1.1); // Disolución suave y progresiva
                 if (polyPulseSpike < 0) polyPulseSpike = 0;
             }
-            var cardioJitter = (Math.random() - 0.5) * (2.2 * dpr);
+            var cardioJitter = (Math.random() - 0.5) * (0.8 * dpr);
             var newCardio = cardioBase + cardioSpike + cardioJitter;
 
-            // 2. Canal Galvánico (Detector de mentiras - oscilación lenta con saltos de veracidad)
-            var galvanicBase = Math.sin(polyPhase * 0.75) * (14 * dpr) + Math.cos(polyPhase * 0.28) * (9 * dpr);
-            var galvanicSpike = (polyPulseSpike > 0) ? Math.sin(polyPulseSpike * Math.PI) * (20 * dpr) : 0;
-            var newGalvanic = galvanicBase + galvanicSpike + ((Math.random() - 0.5) * (1.6 * dpr));
+            // 2. Canal Galvánico (Detector de mentiras - oscilación lenta con saltos de veracidad suaves)
+            var galvanicBase = Math.sin(polyPhase * 0.65) * (8 * dpr) + Math.cos(polyPhase * 0.28) * (5 * dpr);
+            var galvanicSpike = (polyPulseSpike > 0) ? Math.sin(polyPulseSpike * Math.PI) * (10 * dpr) : 0;
+            var newGalvanic = galvanicBase + galvanicSpike + ((Math.random() - 0.5) * (0.6 * dpr));
 
-            // 3. Canal de Respiración / Flujo I/O (Onda sinusoidal amplia y cadenciosa)
-            var newResp = Math.sin(polyPhase * 0.38) * (18 * dpr) + Math.cos(polyPhase * 0.82) * (5 * dpr);
+            // 3. Canal de Respiración / Flujo I/O (Respiración profunda, cadenciosa y suave)
+            var newResp = Math.sin(polyPhase * 0.38) * (10 * dpr) + Math.cos(polyPhase * 0.85) * (3 * dpr);
 
-            // Desplazar historiales hacia la izquierda (papel continuo de polígrafo en movimiento)
-            for (var i = 0; i < polyPointsCount - 1; i++) {
-                polyCardio[i] = polyCardio[i + 1];
-                polyGalvanic[i] = polyGalvanic[i + 1];
-                polyResp[i] = polyResp[i + 1];
+            // Desplazamiento horizontal controlado a velocidad constante e independiente de los Hz del monitor
+            polyShiftAccumulator += dt * polyPointsPerSec;
+            while (polyShiftAccumulator >= 1.0) {
+                polyShiftAccumulator -= 1.0;
+                for (var i = 0; i < polyPointsCount - 1; i++) {
+                    polyCardio[i] = polyCardio[i + 1];
+                    polyGalvanic[i] = polyGalvanic[i + 1];
+                    polyResp[i] = polyResp[i + 1];
+                }
+                polyCardio[polyPointsCount - 1] = newCardio;
+                polyGalvanic[polyPointsCount - 1] = newGalvanic;
+                polyResp[polyPointsCount - 1] = newResp;
             }
-            polyCardio[polyPointsCount - 1] = newCardio;
-            polyGalvanic[polyPointsCount - 1] = newGalvanic;
-            polyResp[polyPointsCount - 1] = newResp;
         }
 
         // ================= RENDERIZADO VISUAL EN EL CANVAS =================
