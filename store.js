@@ -31,13 +31,15 @@ function createStore() {
   const ALL_KEYS = [
     'users', 'orders', 'sites', 'scans', 'tickets',
     'payments', 'activity', 'sessions',
-    'settings', 'paypalOrders', 'meta'
+    'settings', 'paypalOrders', 'meta',
+    'wafEvents', 'wafJail', 'wafStats'
   ];
 
   const empty = () => ({
     users: [], orders: [], sites: [], scans: [], tickets: [],
     payments: [], activity: [], sessions: [],
-    settings: {}, paypalOrders: {}, meta: { v: 1 }
+    settings: {}, paypalOrders: {}, meta: { v: 1 },
+    wafEvents: [], wafJail: [], wafStats: { inspected: 0, blocked: 0, todayBlocked: 0, lastDay: new Date().toDateString() }
   });
 
   const db = empty();

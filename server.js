@@ -20,6 +20,7 @@ const scanner = require('./scanner.js');
 const { CFG, runScan, parseTarget } = scanner;
 const { createStore } = require('./store.js');
 const { createApp } = require('./app.js');
+const { createWaf } = require('./waf.js');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.zip': 'application/zip' };
 const SEC = { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'same-origin' };
@@ -34,8 +35,9 @@ function createServer(opts = {}) {
   const staticDir = opts.staticDir || CFG.staticDir;
   const store = opts.store;
   if (!store) throw new Error('Falta opts.store. Usa createStore() + await store.load() antes de crear el servidor.');
+  const waf = opts.waf || createWaf({ store, config: { trustProxy: CFG.trustProxy } });
   const app = createApp({
-    store, scanner,
+    store, scanner, waf,
     config: {
       trustProxy: CFG.trustProxy, maxConcurrent: CFG.maxConcurrent,
       secureCookie: process.env.SECURE_COOKIE === '1' ? true : process.env.SECURE_COOKIE === '0' ? false : null,
@@ -90,6 +92,9 @@ function createServer(opts = {}) {
   }
 
   const server = http.createServer(async (req, res) => {
+    // 1. Escudo Perimetral WAF (NexaGuard Web Defense): Inspección en tiempo real
+    if (waf.inspect(req, res)) return;
+
     const url = req.url.split('?')[0];
     if (url.startsWith('/api/')) { if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); } return app.handle(req, res); }
     if (req.method === 'OPTIONS') { if (!corsOk(req, res)) return sendJson(res, 403, { error: 'Origen no permitido' }); res.writeHead(204); return res.end(); }
@@ -119,7 +124,7 @@ function createServer(opts = {}) {
     });
   });
   server.requestTimeout = 0; server.headersTimeout = 20000; server.keepAliveTimeout = 5000;
-  return { server, app, store };
+  return { server, app, store, waf };
 }
 
 /* ---- Latido (keep-alive) ---- */

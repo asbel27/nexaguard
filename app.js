@@ -45,7 +45,7 @@ async function checkPw(pw, rec) {
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 const tempPassword = () => crypto.randomBytes(9).toString('base64').replace(/[+/=]/g, 'x').slice(0, 12);
 
-function createApp({ store, scanner, config }) {
+function createApp({ store, scanner, waf, config }) {
   const { db, save, id } = store;
   const cfg = Object.assign({ trustProxy: false, secureCookie: null, maxConcurrent: 4, schedulerMs: 15 * 60e3, cooldownMs: 45e3 }, config || {});
   let running = 0, dummy = null;
@@ -1112,6 +1112,60 @@ function createApp({ store, scanner, config }) {
     clientsAll().map(clientSummary).forEach(c => rows.push([c.name, c.email, c.phone, c.company, c.planName || '', c.level, c.sites, c.health || '', c.createdAt]));
     ctx.res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="clientes.csv"', 'Cache-Control': 'no-store' });
     ctx.res.end('\ufeff' + rows.map(r => r.map(cell).join(',')).join('\r\n'));
+  });
+
+  /* ---------- WAF Radar & Telemetría Perimetral Central ---------- */
+  route('GET', '/api/admin/waf/stats', 'admin', (ctx) => {
+    if (!waf) return send(ctx.res, 200, { ok: true, stats: {} });
+    send(ctx.res, 200, { ok: true, stats: waf.getStats() });
+  });
+
+  route('GET', '/api/admin/waf/events', 'admin', (ctx) => {
+    if (!waf) return send(ctx.res, 200, { ok: true, events: [] });
+    const limit = parseInt(ctx.query.get('limit') || '100', 10);
+    send(ctx.res, 200, { ok: true, events: waf.getEvents(limit) });
+  });
+
+  route('GET', '/api/admin/waf/jail', 'admin', (ctx) => {
+    if (!waf) return send(ctx.res, 200, { ok: true, jail: [] });
+    send(ctx.res, 200, { ok: true, jail: waf.getJail() });
+  });
+
+  route('POST', '/api/admin/waf/jail', 'admin', (ctx) => {
+    if (!waf) return fail(ctx.res, 500, 'WAF no inicializado.');
+    const ip = clean(ctx.body.ip, 60);
+    const reason = clean(ctx.body.reason || 'Aislamiento manual por administrador', 160);
+    const hours = parseInt(ctx.body.hours || '24', 10);
+    if (!ip) return fail(ctx.res, 400, 'IP requerida');
+    waf.jailIp(ip, reason, hours);
+    record(ctx.user.name, null, 'IP aislada manualmente en WAF: ' + ip + ' (' + reason + ')', 'alert');
+    save();
+    send(ctx.res, 200, { ok: true, message: 'IP ' + ip + ' aislada con éxito durante ' + hours + ' horas.' });
+  });
+
+  route('POST', '/api/admin/waf/unjail', 'admin', (ctx) => {
+    if (!waf) return fail(ctx.res, 500, 'WAF no inicializado.');
+    const ip = clean(ctx.body.ip, 60);
+    if (!ip) return fail(ctx.res, 400, 'IP requerida');
+    const ok = waf.unjailIp(ip);
+    record(ctx.user.name, null, 'IP liberada de la cárcel WAF: ' + ip, 'info');
+    save();
+    send(ctx.res, 200, { ok: true, message: ok ? 'IP liberada con éxito.' : 'La IP no estaba en la cárcel.' });
+  });
+
+  route('POST', '/api/admin/waf/simulate', 'admin', (ctx) => {
+    if (!waf) return fail(ctx.res, 500, 'WAF no inicializado.');
+    const type = clean(ctx.body.type || 'sqli', 20);
+    const ev = waf.simulateAttack(type);
+    send(ctx.res, 200, { ok: true, event: ev });
+  });
+
+  route('POST', '/api/admin/waf/clear', 'admin', (ctx) => {
+    if (!waf) return fail(ctx.res, 500, 'WAF no inicializado.');
+    waf.clearLogs();
+    record(ctx.user.name, null, 'Registros de ataques del WAF reiniciados', 'info');
+    save();
+    send(ctx.res, 200, { ok: true, message: 'Historial de ataques limpiado.' });
   });
 
   /* ---------- Entrada: devuelve true si la petición fue para /api ---------- */
