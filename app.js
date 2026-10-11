@@ -80,7 +80,7 @@ function createApp({ store, scanner, config }) {
     res.writeHead(code, Object.assign({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }, headers || {}));
     res.end(JSON.stringify(obj));
   }
-  const fail = (res, code, message) => send(res, code, { error: message });
+  const fail = (res, code, message) => send(res, code, { error: message, message: message });
   function readBody(req, max = 65536) {
     return new Promise((resolve, reject) => {
       let raw = '';
@@ -747,20 +747,45 @@ function createApp({ store, scanner, config }) {
       return fail(res, 404, 'Clave de licencia no reconocida en el sistema de NexaGuard.');
     }
 
-    // Comprobación de vinculación por dominio (1 Licencia = 1 Dominio activo)
-    db.settings.licenseActivations = db.settings.licenseActivations || {};
-    const boundDomain = order ? (order.activatedDomain || null) : (db.settings.licenseActivations[key] || null);
+    // Comprobación de vinculación por dominio (Monositio vs Multidominio)
+    const isMasterAdmin = key.includes('ADMIN-MASTER');
+    const isSingleTest = key === 'NXG-PRO-1SITE-TEST';
+    const isMultiDomain = !isSingleTest && ((order && (order.maxSites > 1 || order.plan === 'guardian')) || key.includes('MULTI') || isMasterAdmin || isTestExpiring || isTestExpired);
+    const maxAllowed = isMultiDomain ? (order ? (order.maxSites || 5) : 5) : 1;
 
-    if (boundDomain && boundDomain !== domain) {
-      return fail(res, 403, 'Esta licencia ya se encuentra activa en el sitio web "' + boundDomain + '". Cada licencia protege 1 dominio web a la vez. Desvincula la licencia del sitio anterior para usarla en "' + domain + '", o adquiere una licencia adicional.');
+    db.settings.licenseActivations = db.settings.licenseActivations || {};
+
+    let activeList = [];
+    if (order) {
+      if (Array.isArray(order.activatedDomains)) {
+        activeList = order.activatedDomains.map(d => String(d).trim().toLowerCase());
+      } else if (order.activatedDomain) {
+        activeList = [String(order.activatedDomain).trim().toLowerCase()];
+      }
+    } else {
+      const rawVal = db.settings.licenseActivations[key];
+      if (Array.isArray(rawVal)) {
+        activeList = rawVal.map(d => String(d).trim().toLowerCase());
+      } else if (typeof rawVal === 'string' && rawVal) {
+        activeList = [String(rawVal).trim().toLowerCase()];
+      }
     }
 
-    // Vincular por primera vez a este dominio
-    if (!boundDomain) {
+    // Si este dominio no está ya en la lista de activos
+    if (!activeList.includes(domain)) {
+      if (activeList.length >= maxAllowed) {
+        if (maxAllowed === 1) {
+          return fail(res, 403, 'Esta licencia ya se encuentra activa en el sitio web "' + activeList[0] + '". Cada licencia monositio protege 1 dominio web a la vez. Desvincula la licencia del sitio anterior para usarla en "' + domain + '", o adquiere una licencia multidominio o adicional.');
+        } else {
+          return fail(res, 403, 'Esta licencia ya alcanzó el límite máximo de ' + maxAllowed + ' sitios autorizados (' + activeList.join(', ') + '). Desvincula uno de los sitios anteriores para activar "' + domain + '".');
+        }
+      }
+      activeList.push(domain);
       if (order) {
-        order.activatedDomain = domain;
+        order.activatedDomains = activeList;
+        order.activatedDomain = activeList[0] || null;
       } else {
-        db.settings.licenseActivations[key] = domain;
+        db.settings.licenseActivations[key] = activeList;
       }
       save();
     }
@@ -816,20 +841,38 @@ function createApp({ store, scanner, config }) {
     const { body, res } = ctx;
     const key = clean(body.key || '', 60).toUpperCase();
     const rawDomain = clean(body.domain || '', 120).toLowerCase();
-    const domain = rawDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '').trim();
+    const domain = rawDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').split(':')[0].replace(/^www\./, '').trim();
 
     if (!key) return fail(res, 400, 'Clave requerida.');
 
     let released = false;
     const order = db.orders.find(o => (o.licenseKey === key || (o.id && key.includes(o.id.toUpperCase()))));
-    if (order && (!domain || order.activatedDomain === domain)) {
-      delete order.activatedDomain;
+    if (order) {
+      let list = Array.isArray(order.activatedDomains) ? order.activatedDomains : (order.activatedDomain ? [order.activatedDomain] : []);
+      if (domain) {
+        list = list.filter(d => d.toLowerCase() !== domain.toLowerCase());
+      } else {
+        list = [];
+      }
+      order.activatedDomains = list;
+      order.activatedDomain = list[0] || null;
       released = true;
     }
 
     db.settings.licenseActivations = db.settings.licenseActivations || {};
-    if (db.settings.licenseActivations[key] && (!domain || db.settings.licenseActivations[key] === domain)) {
-      delete db.settings.licenseActivations[key];
+    if (db.settings.licenseActivations[key]) {
+      let rawVal = db.settings.licenseActivations[key];
+      let list = Array.isArray(rawVal) ? rawVal : [rawVal];
+      if (domain) {
+        list = list.filter(d => String(d).toLowerCase() !== domain.toLowerCase());
+      } else {
+        list = [];
+      }
+      if (list.length > 0) {
+        db.settings.licenseActivations[key] = list;
+      } else {
+        delete db.settings.licenseActivations[key];
+      }
       released = true;
     }
 
@@ -841,17 +884,42 @@ function createApp({ store, scanner, config }) {
   route('POST', '/api/admin/licenses/reset-domain', 'admin', (ctx) => {
     const { body, res } = ctx;
     const key = clean(body.key || '', 60).toUpperCase();
+    const rawDomain = clean(body.domain || '', 120).toLowerCase();
+    const domain = rawDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').split(':')[0].replace(/^www\./, '').trim();
+
     if (!key) return fail(res, 400, 'Clave requerida.');
 
     const order = db.orders.find(o => (o.licenseKey === key || (o.id && key.includes(o.id.toUpperCase()))));
     if (order) {
-      delete order.activatedDomain;
+      if (domain) {
+        let list = Array.isArray(order.activatedDomains) ? order.activatedDomains : (order.activatedDomain ? [order.activatedDomain] : []);
+        list = list.filter(d => d.toLowerCase() !== domain.toLowerCase());
+        order.activatedDomains = list;
+        order.activatedDomain = list[0] || null;
+      } else {
+        delete order.activatedDomains;
+        delete order.activatedDomain;
+      }
     }
+
     db.settings.licenseActivations = db.settings.licenseActivations || {};
-    delete db.settings.licenseActivations[key];
+    if (db.settings.licenseActivations[key]) {
+      if (domain) {
+        let rawVal = db.settings.licenseActivations[key];
+        let list = Array.isArray(rawVal) ? rawVal : [rawVal];
+        list = list.filter(d => String(d).toLowerCase() !== domain.toLowerCase());
+        if (list.length > 0) {
+          db.settings.licenseActivations[key] = list;
+        } else {
+          delete db.settings.licenseActivations[key];
+        }
+      } else {
+        delete db.settings.licenseActivations[key];
+      }
+    }
 
     save();
-    record(ctx.user.name, null, 'Liberó el dominio de la licencia ' + key);
+    record(ctx.user.name, null, 'Liberó el dominio de la licencia ' + key + (domain ? ' (' + domain + ')' : ''));
     send(res, 200, { success: true, message: 'Dominio liberado. La clave ahora puede activarse en cualquier otra web.' });
   });
 
@@ -859,30 +927,55 @@ function createApp({ store, scanner, config }) {
   route('GET', '/api/admin/licenses', 'admin', (ctx) => {
     db.settings.licenseActivations = db.settings.licenseActivations || {};
 
+    const getActivations = (k) => {
+      const val = db.settings.licenseActivations[k];
+      if (Array.isArray(val)) return val;
+      if (typeof val === 'string' && val) return [val];
+      return [];
+    };
+
     const testKeys = [
       {
-        id: 'pro_monthly',
-        name: 'Licencia PRO Mensual (30 días)',
+        id: 'pro_monthly_master',
+        name: 'Licencia PRO Multidominio Admin (Hasta 5 sitios)',
         key: 'NXG-PRO-ADMIN-MASTER',
-        plan: 'Plan NexaGuard Security Pro (Mensual)',
+        plan: 'Plan NexaGuard Security Pro (Multisitio Admin)',
         period: 'monthly',
         days: 30,
         status: 'active',
-        badge: 'ACTIVA · 30 DÍAS',
-        desc: 'Activa la vigilancia continua 24H, el radar táctico y las actualizaciones por 1 mes.',
-        activatedDomain: db.settings.licenseActivations['NXG-PRO-ADMIN-MASTER'] || null
+        badge: 'ACTIVA · 30 DÍAS · MULTISITIO',
+        desc: 'Clave maestra multidominio (hasta 5 sitios). Te permite probar simultáneamente en goldwp.net, mensajerodelcielo.com y otras webs sin que se bloqueen entre sí.',
+        maxSites: 5,
+        activatedDomains: getActivations('NXG-PRO-ADMIN-MASTER'),
+        activatedDomain: getActivations('NXG-PRO-ADMIN-MASTER').join(', ') || null
+      },
+      {
+        id: 'pro_single_test',
+        name: 'Licencia PRO Monositio (1 solo sitio estricto)',
+        key: 'NXG-PRO-1SITE-TEST',
+        plan: 'Plan NexaGuard Security Pro (1 Sitio)',
+        period: 'monthly',
+        days: 30,
+        status: 'active',
+        badge: 'ACTIVA · 30 DÍAS · MONOSITIO',
+        desc: 'Clave monositio estricta (1 dominio). Te permite verificar el bloqueo cuando intentas colocarla en un 2do sitio sin haberla desvinculado del 1ero.',
+        maxSites: 1,
+        activatedDomains: getActivations('NXG-PRO-1SITE-TEST'),
+        activatedDomain: getActivations('NXG-PRO-1SITE-TEST').join(', ') || null
       },
       {
         id: 'annual',
-        name: 'Licencia Anual (365 días - Blindaje)',
+        name: 'Licencia Anual Multidominio (365 días - Blindaje)',
         key: 'NXG-ANNUAL-ADMIN-MASTER',
         plan: 'Licencia Anual (1 Año) · NexaGuard Pro',
         period: 'annual',
         days: 365,
         status: 'active',
-        badge: 'ACTIVA · 365 DÍAS',
-        desc: 'Activa la vigilancia 24H durante 1 año completo.',
-        activatedDomain: db.settings.licenseActivations['NXG-ANNUAL-ADMIN-MASTER'] || null
+        badge: 'ACTIVA · 365 DÍAS · MULTISITIO',
+        desc: 'Activa la vigilancia 24H durante 1 año completo en hasta 5 sitios simultáneos.',
+        maxSites: 5,
+        activatedDomains: getActivations('NXG-ANNUAL-ADMIN-MASTER'),
+        activatedDomain: getActivations('NXG-ANNUAL-ADMIN-MASTER').join(', ') || null
       },
       {
         id: 'expiring',
@@ -894,7 +987,9 @@ function createApp({ store, scanner, config }) {
         status: 'expiring_soon',
         badge: 'POR VENCER · 3 DÍAS',
         desc: 'Simula el estado preventivo en el plugin con el banner amarillo de advertencia.',
-        activatedDomain: db.settings.licenseActivations['NXG-TEST-SOON'] || null
+        maxSites: 5,
+        activatedDomains: getActivations('NXG-TEST-SOON'),
+        activatedDomain: getActivations('NXG-TEST-SOON').join(', ') || null
       },
       {
         id: 'expired',
@@ -906,7 +1001,9 @@ function createApp({ store, scanner, config }) {
         status: 'expired',
         badge: 'VENCIDA · 0 DÍAS',
         desc: 'Simula que venció el mes: radar bloqueado, banner rojo y aviso de renovación.',
-        activatedDomain: db.settings.licenseActivations['NXG-TEST-EXPIRED'] || null
+        maxSites: 5,
+        activatedDomains: getActivations('NXG-TEST-EXPIRED'),
+        activatedDomain: getActivations('NXG-TEST-EXPIRED').join(', ') || null
       }
     ];
 
@@ -915,6 +1012,8 @@ function createApp({ store, scanner, config }) {
       .map(o => {
         const u = db.users.find(u => u.id === o.userId) || {};
         const p = PLANS[o.plan] || {};
+        const domains = Array.isArray(o.activatedDomains) ? o.activatedDomains : (o.activatedDomain ? [o.activatedDomain] : []);
+        const maxSites = o.maxSites || p.sites || 1;
         return {
           orderId: o.id,
           clientName: u.name || 'Cliente',
@@ -923,7 +1022,9 @@ function createApp({ store, scanner, config }) {
           planName: p.name || o.plan,
           licenseKey: o.licenseKey,
           status: o.status,
-          activatedDomain: o.activatedDomain || null,
+          maxSites: maxSites,
+          activatedDomains: domains,
+          activatedDomain: domains.join(', ') || null,
           createdAt: iso(o.createdAt),
           paidAt: iso(o.paidAt)
         };

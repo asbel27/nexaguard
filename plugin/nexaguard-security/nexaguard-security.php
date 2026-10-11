@@ -3,7 +3,7 @@
  * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
  * Plugin URI: https://nexaguards.com
  * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
- * Version: 1.4.2
+ * Version: 1.4.3
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://nexaguards.com
  * License: GPLv2 or later
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.4.2');
+define('NEXAGUARD_VERSION', '1.4.3');
 define('NEXAGUARD_FILE', __FILE__);
 define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
 define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
@@ -495,8 +495,16 @@ class NexaGuard_Plugin {
         }
 
         $license_key = isset($_POST['license_key']) ? sanitize_text_field(trim($_POST['license_key'])) : '';
+        
+        // Obtener dominio limpio del sitio actual (sin protocolo, sin puerto y sin www.)
+        $raw_host = wp_parse_url(home_url(), PHP_URL_HOST);
+        if (!$raw_host && !empty($_SERVER['HTTP_HOST'])) {
+            $raw_host = sanitize_text_field($_SERVER['HTTP_HOST']);
+        }
+        $site_domain = strtolower(preg_replace('/^www\./i', '', trim(explode(':', (string)$raw_host)[0])));
+
         if (empty($license_key)) {
-            // Notificar a la nube de NexaGuard para liberar el dominio
+            // Notificar a la nube de NexaGuard para liberar este dominio
             $prev_data = get_option('nexaguard_license_data', array());
             $prev_key = !empty($prev_data['key']) ? $prev_data['key'] : '';
             if (!empty($prev_key)) {
@@ -505,7 +513,7 @@ class NexaGuard_Plugin {
                     'headers' => array('Content-Type' => 'application/json'),
                     'body'    => wp_json_encode(array(
                         'key'    => $prev_key,
-                        'domain' => home_url()
+                        'domain' => $site_domain
                     ))
                 ));
             }
@@ -520,7 +528,7 @@ class NexaGuard_Plugin {
             'headers' => array('Content-Type' => 'application/json'),
             'body'    => wp_json_encode(array(
                 'key'    => $license_key,
-                'domain' => home_url()
+                'domain' => $site_domain
             ))
         ));
 

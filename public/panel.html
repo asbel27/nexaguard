@@ -1276,26 +1276,28 @@ AV.licencias = async function () {
     h('div', { class: 'stack', style: 'gap:12px' },
       data.testKeys.map(function (k) {
         var pillCls = k.status === 'active' ? 'ok' : (k.status === 'expiring_soon' ? 'warn' : 'crit');
-        var domBadge = k.activatedDomain
-          ? h('span', { class: 'pill warn', style: 'margin-left:6px;font-size:0.75rem' }, '🌐 Activa en: ' + k.activatedDomain)
-          : h('span', { class: 'pill ok', style: 'margin-left:6px;font-size:0.75rem' }, '🌐 Disponible (Sin vincular)');
+        var doms = (k.activatedDomains && k.activatedDomains.length) ? k.activatedDomains : (k.activatedDomain ? [k.activatedDomain] : []);
+        var maxS = k.maxSites || 1;
+        var domBadge = doms.length
+          ? h('span', { class: 'pill warn', style: 'margin-left:6px;font-size:0.75rem' }, '🌐 Activa en: ' + doms.join(', ') + ' (' + doms.length + '/' + maxS + ' sitios)')
+          : h('span', { class: 'pill ok', style: 'margin-left:6px;font-size:0.75rem' }, '🌐 Disponible (0/' + maxS + ' sitios)');
 
-        var unlinkBtn = k.activatedDomain
+        var unlinkBtn = doms.length
           ? h('button', {
               class: 'btn btn-o sm',
               type: 'button',
               style: 'color:#ff8ba0;border-color:rgba(255,107,138,.4)',
               on: {
                 click: async function () {
-                  if (!confirm('¿Deseas liberar la licencia del dominio "' + k.activatedDomain + '" para que pueda usarse en otra web?')) return;
+                  if (!confirm('¿Deseas liberar la licencia de los dominios vinculados (' + doms.join(', ') + ')?')) return;
                   try {
                     await api('POST', '/api/admin/licenses/reset-domain', { key: k.key });
-                    toast('Dominio liberado con éxito.');
+                    toast('Dominio(s) liberado(s) con éxito.');
                     go('licencias');
                   } catch (e) { toast(e.message); }
                 }
               }
-            }, '🔓 Liberar Dominio')
+            }, '🔓 Liberar Dominio' + (doms.length > 1 ? 's (' + doms.length + ')' : ''))
           : null;
 
         return h('div', { style: 'background:rgba(255,255,255,.03);border:1px solid var(--line2);border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px' },
@@ -1314,23 +1316,29 @@ AV.licencias = async function () {
 
   // Tabla de licencias generadas para clientes
   var clientRows = data.clientOrders.map(function (o) {
-    var unlinkClientBtn = o.activatedDomain
+    var cDoms = (o.activatedDomains && o.activatedDomains.length) ? o.activatedDomains : (o.activatedDomain ? [o.activatedDomain] : []);
+    var maxS = o.maxSites || 1;
+    var unlinkClientBtn = cDoms.length
       ? h('button', {
           class: 'btn btn-o sm',
           type: 'button',
           style: 'color:#ff8ba0;border-color:rgba(255,107,138,.4)',
           on: {
             click: async function () {
-              if (!confirm('¿Deseas desvincular la licencia del dominio "' + o.activatedDomain + '"?')) return;
+              if (!confirm('¿Deseas desvincular la licencia de ' + cDoms.join(', ') + '?')) return;
               try {
                 await api('POST', '/api/admin/licenses/reset-domain', { key: o.licenseKey });
-                toast('Dominio desvinculado con éxito.');
+                toast('Dominio(s) desvinculado(s) con éxito.');
                 go('licencias');
               } catch (e) { toast(e.message); }
             }
           }
-        }, '🔓 Liberar')
+        }, '🔓 Liberar' + (cDoms.length > 1 ? ' (' + cDoms.length + ')' : ''))
       : null;
+
+    var domainDisplay = cDoms.length
+      ? h('span', { class: 'pill ok', style: 'font-size:0.8rem' }, '🌐 ' + cDoms.join(', ') + ' (' + cDoms.length + '/' + maxS + ')')
+      : h('span', { class: 'hint', style: 'font-size:0.8rem' }, 'Sin vincular');
 
     return {
       cells: [
@@ -1338,7 +1346,7 @@ AV.licencias = async function () {
         o.clientEmail,
         o.planName,
         h('code', { style: 'font-family:var(--fm);font-size:.84rem;color:var(--yellow);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, o.licenseKey),
-        o.activatedDomain ? h('span', { class: 'pill ok', style: 'font-size:0.8rem' }, '🌐 ' + o.activatedDomain) : h('span', { class: 'hint', style: 'font-size:0.8rem' }, 'Sin vincular'),
+        domainDisplay,
         pill(ORDER_ST[o.status] || o.status),
         h('div', { style: 'display:flex;gap:6px;align-items:center' },
           unlinkClientBtn,
