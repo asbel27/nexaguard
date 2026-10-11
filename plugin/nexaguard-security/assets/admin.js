@@ -2267,31 +2267,78 @@ jQuery(document).ready(function ($) {
     ];
 
     // Datos del Osciloscopio
+    // Variables del Electrocardiograma (EKG)
     var canvasEl = null;
     var canvasCtx = null;
-    var wavePoints = [];
-    var maxWavePoints = 120;
-    var waveOffset = 0;
-    var waveSpike = 0;
+    var ecgBuffer = [];      // Array de valores Y para cada coordenada X
+    var sweepX = 0;          // Posición actual del cabezal de barrido (0 a width)
+    var sweepSpeed = 2.0;    // Píxeles de avance por cuadro (lento, rítmico y pausado)
+    var eraserWidth = 40;    // Espacio en blanco borrador delante del cabezal
+    var pulseActive = false;
+    var pulseProgress = 0;   // Progreso del latido actual (0.0 a 1.0)
+    var pulseLength = 70;    // Longitud en píxeles del complejo P-Q-R-S-T
+    var pixelsSinceLastPulse = 0;
+    var pulseDistance = 150; // Distancia entre latidos en píxeles (~2.2 segundos)
+    var pulseAuditFired = false;
 
-    function initWavePoints() {
-        wavePoints = [];
-        for (var i = 0; i < maxWavePoints; i++) {
-            wavePoints.push(100);
+    function initEcgBuffer(w) {
+        ecgBuffer = new Array(w);
+        for (var i = 0; i < w; i++) {
+            ecgBuffer[i] = null;
         }
+        sweepX = 0;
+        pixelsSinceLastPulse = 0;
+        pulseActive = false;
+    }
+
+    function calculateEcgOffset(progress, h) {
+        // Onda P (pequeña elevación previa)
+        if (progress < 0.14) {
+            var p = progress / 0.14;
+            return -Math.sin(p * Math.PI) * (h * 0.08);
+        }
+        // Segmento PR plano
+        if (progress < 0.22) {
+            return 0;
+        }
+        // Onda Q (pequeña deflexión negativa)
+        if (progress < 0.30) {
+            var q = (progress - 0.22) / 0.08;
+            return Math.sin(q * Math.PI) * (h * 0.10);
+        }
+        // Onda R (GRAN PICO ALTO VERTICAL DEL LATIDO)
+        if (progress < 0.46) {
+            var r = (progress - 0.30) / 0.16;
+            return -Math.sin(r * Math.PI) * (h * 0.40);
+        }
+        // Onda S (PICO PROFUNDO NEGATIVO TRAS EL PICO ALTO)
+        if (progress < 0.60) {
+            var s = (progress - 0.46) / 0.14;
+            return Math.sin(s * Math.PI) * (h * 0.22);
+        }
+        // Segmento ST plano
+        if (progress < 0.70) {
+            return 0;
+        }
+        // Onda T (elevación suave de recuperación)
+        if (progress < 0.90) {
+            var t = (progress - 0.70) / 0.20;
+            return -Math.sin(t * Math.PI) * (h * 0.12);
+        }
+        // Retorno a línea base
+        return 0;
     }
 
     function drawSentinelWaveform() {
         if (!canvasEl) {
             canvasEl = document.getElementById('sentinel-waveform-canvas');
             if (canvasEl) {
-                // Ajustar resolución según tamaño visual real
                 var rect = canvasEl.getBoundingClientRect();
-                if (rect.width > 0) {
-                    canvasEl.width = rect.width * (window.devicePixelRatio || 1);
-                    canvasEl.height = 200 * (window.devicePixelRatio || 1);
-                }
+                var dpr = window.devicePixelRatio || 1;
+                canvasEl.width = (rect.width > 0 ? rect.width : 1000) * dpr;
+                canvasEl.height = 200 * dpr;
                 canvasCtx = canvasEl.getContext('2d');
+                initEcgBuffer(canvasEl.width);
             }
         }
         if (!canvasEl || !canvasCtx) return;
@@ -2299,107 +2346,146 @@ jQuery(document).ready(function ($) {
         var w = canvasEl.width;
         var h = canvasEl.height;
         var ctx = canvasCtx;
+        var dpr = window.devicePixelRatio || 1;
 
+        if (ecgBuffer.length !== w) {
+            initEcgBuffer(w);
+        }
+
+        // Si no está pausado, calcular el siguiente paso de avance de la aguja EKG
+        if (!sentinelPaused) {
+            var prevX = sweepX;
+            sweepX += sweepSpeed * dpr;
+
+            // Al llegar al borde derecho, vuelve a la izquierda (barrido cíclico de monitor)
+            if (sweepX >= w) {
+                sweepX = 0;
+                prevX = 0;
+            }
+
+            // Borrar delante del cabezal para crear el efecto del haz de fósforo de monitor
+            var eraseStart = Math.floor(sweepX);
+            var eraseCount = Math.floor(eraserWidth * dpr);
+            for (var e = 0; e < eraseCount; e++) {
+                var eraseIdx = (eraseStart + e) % w;
+                ecgBuffer[eraseIdx] = null;
+            }
+
+            // Gestión del latido rítmico
+            pixelsSinceLastPulse += (sweepSpeed * dpr);
+            if (!pulseActive && pixelsSinceLastPulse >= (pulseDistance * dpr)) {
+                pulseActive = true;
+                pulseProgress = 0;
+                pulseAuditFired = false;
+                pixelsSinceLastPulse = 0;
+            }
+
+            var currentY = h / 2;
+            if (pulseActive) {
+                pulseProgress += ((sweepSpeed * dpr) / (pulseLength * dpr));
+                var ecgDev = calculateEcgOffset(pulseProgress, h);
+                currentY = (h / 2) + ecgDev;
+
+                // En el punto máximo de la onda R (~0.36), disparar la evaluación del siguiente archivo!
+                if (!pulseAuditFired && pulseProgress >= 0.36) {
+                    pulseAuditFired = true;
+                    triggerSentinelFilePulse();
+                }
+
+                if (pulseProgress >= 1.0) {
+                    pulseActive = false;
+                }
+            } else {
+                // Línea base viva con respiración microscópica (vital baseline)
+                currentY = (h / 2) + Math.sin(sweepX * 0.04) * (2 * dpr) + ((Math.random() - 0.5) * (1.5 * dpr));
+            }
+
+            // Interpolar entre prevX y sweepX para que el trazo sea continuo y perfecto
+            var startPx = Math.floor(prevX);
+            var endPx = Math.floor(sweepX);
+            for (var p = startPx; p <= endPx; p++) {
+                if (p >= 0 && p < w) {
+                    ecgBuffer[p] = currentY;
+                }
+            }
+        }
+
+        // --- RENDERIZADO VISUAL EN EL CANVAS ---
         ctx.clearRect(0, 0, w, h);
 
         // 1. Rejilla Táctica de Fondo
-        ctx.strokeStyle = 'rgba(61, 232, 164, 0.08)';
+        ctx.strokeStyle = 'rgba(61, 232, 164, 0.06)';
         ctx.lineWidth = 1;
-        var gridStepX = w / 20;
-        var gridStepY = h / 8;
+        var gridX = w / 24;
+        var gridY = h / 8;
 
         ctx.beginPath();
-        for (var x = 0; x <= w; x += gridStepX) {
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, h);
+        for (var gx = 0; gx <= w; gx += gridX) {
+            ctx.moveTo(gx, 0);
+            ctx.lineTo(gx, h);
         }
-        for (var y = 0; y <= h; y += gridStepY) {
-            ctx.moveTo(0, y);
-            ctx.lineTo(w, y);
+        for (var gy = 0; gy <= h; gy += gridY) {
+            ctx.moveTo(0, gy);
+            ctx.lineTo(w, gy);
         }
         ctx.stroke();
 
         // Línea central de referencia
-        ctx.strokeStyle = 'rgba(255, 207, 51, 0.15)';
-        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(255, 207, 51, 0.12)';
+        ctx.setLineDash([4 * dpr, 4 * dpr]);
         ctx.beginPath();
         ctx.moveTo(0, h / 2);
         ctx.lineTo(w, h / 2);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        if (!sentinelPaused) {
-            waveOffset += 0.08;
-
-            // Calcular nuevo punto dinámico
-            var baseVal = Math.sin(waveOffset * 1.5) * (h * 0.08) + Math.cos(waveOffset * 0.7) * (h * 0.04);
-            var noise = (Math.random() - 0.5) * (h * 0.04);
-            var currentVal = (h / 2) + baseVal + noise;
-
-            if (waveSpike !== 0) {
-                currentVal += waveSpike;
-                waveSpike *= 0.75;
-                if (Math.abs(waveSpike) < 1) waveSpike = 0;
-            }
-
-            wavePoints.push(currentVal);
-            if (wavePoints.length > maxWavePoints) {
-                wavePoints.shift();
-            }
-        }
-
-        // 2. Dibujar Área degradada bajo la onda
-        var step = w / (maxWavePoints - 1);
-        ctx.beginPath();
-        ctx.moveTo(0, h);
-        for (var i = 0; i < wavePoints.length; i++) {
-            var px = i * step;
-            var py = wavePoints[i];
-            if (i === 0) ctx.lineTo(px, py);
-            else ctx.lineTo(px, py);
-        }
-        ctx.lineTo(w, h);
-        ctx.closePath();
-
-        var gradFill = ctx.createLinearGradient(0, 0, 0, h);
-        gradFill.addColorStop(0, 'rgba(61, 232, 164, 0.28)');
-        gradFill.addColorStop(0.5, 'rgba(255, 207, 51, 0.12)');
-        gradFill.addColorStop(1, 'rgba(6, 11, 34, 0.02)');
-        ctx.fillStyle = gradFill;
-        ctx.fill();
-
-        // 3. Dibujar Línea de Onda Neón
-        ctx.beginPath();
-        for (var i = 0; i < wavePoints.length; i++) {
-            var px = i * step;
-            var py = wavePoints[i];
-            if (i === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
-        }
+        // 2. Dibujar Trazo de la Onda EKG continua
         var gradStroke = ctx.createLinearGradient(0, 0, w, 0);
         gradStroke.addColorStop(0, '#3de8a4');
         gradStroke.addColorStop(0.5, '#ffd859');
         gradStroke.addColorStop(1, '#3de8a4');
 
         ctx.strokeStyle = gradStroke;
-        ctx.lineWidth = 2.4 * (window.devicePixelRatio || 1);
+        ctx.lineWidth = 2.4 * dpr;
         ctx.shadowColor = '#3de8a4';
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 10 * dpr;
+
+        var inPath = false;
+        ctx.beginPath();
+        for (var x = 0; x < w; x++) {
+            var y = ecgBuffer[x];
+            if (y !== null) {
+                if (!inPath) {
+                    ctx.moveTo(x, y);
+                    inPath = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            } else {
+                inPath = false;
+            }
+        }
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // 4. Punto Guía de la Cabeza de Escaneo (Último punto a la derecha)
-        if (wavePoints.length > 0) {
-            var headX = (wavePoints.length - 1) * step;
-            var headY = wavePoints[wavePoints.length - 1];
-            ctx.fillStyle = '#ffcf33';
-            ctx.shadowColor = '#ffcf33';
-            ctx.shadowBlur = 15;
-            ctx.beginPath();
-            ctx.arc(headX, headY, 5 * (window.devicePixelRatio || 1), 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-        }
+        // 3. Dibujar el Cabezal de Escritura en Vivo (Sweeping Neon Bead)
+        var headX = Math.floor(sweepX);
+        var headY = ecgBuffer[headX] || (h / 2);
+
+        // Halo resplandeciente externo
+        ctx.fillStyle = 'rgba(255, 207, 51, 0.25)';
+        ctx.beginPath();
+        ctx.arc(headX, headY, 10 * dpr, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Núcleo brillante neón
+        ctx.fillStyle = '#ffcf33';
+        ctx.shadowColor = '#ffcf33';
+        ctx.shadowBlur = 15 * dpr;
+        ctx.beginPath();
+        ctx.arc(headX, headY, 4.5 * dpr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
 
         if (sentinelActive) {
             sentinelAnimFrame = requestAnimationFrame(drawSentinelWaveform);
@@ -2411,10 +2497,6 @@ jQuery(document).ready(function ($) {
 
         var f = sentinelFiles[sentinelFileIdx];
         sentinelFileIdx = (sentinelFileIdx + 1) % sentinelFiles.length;
-
-        // Provocar pico dinámico en la onda
-        var canvasH = canvasEl ? canvasEl.height : 200;
-        waveSpike = (Math.random() > 0.5 ? -1 : 1) * (canvasH * 0.25 + Math.random() * (canvasH * 0.15));
 
         // Generar hash visual
         var dummyHash = 'sha256:' + Math.random().toString(16).substr(2, 8) + '...' + Math.random().toString(16).substr(2, 6);
@@ -2506,13 +2588,7 @@ jQuery(document).ready(function ($) {
     function startSentinelEngine() {
         if (sentinelActive) return;
         sentinelActive = true;
-        initWavePoints();
         drawSentinelWaveform();
-
-        if (!sentinelPulseTimer) {
-            sentinelPulseTimer = setInterval(triggerSentinelFilePulse, 1800);
-        }
-
         runBackendSentinelScan(false);
 
         if (!sentinelScanTimer) {
@@ -2527,10 +2603,6 @@ jQuery(document).ready(function ($) {
         if (sentinelAnimFrame) {
             cancelAnimationFrame(sentinelAnimFrame);
             sentinelAnimFrame = null;
-        }
-        if (sentinelPulseTimer) {
-            clearInterval(sentinelPulseTimer);
-            sentinelPulseTimer = null;
         }
         if (sentinelScanTimer) {
             clearInterval(sentinelScanTimer);
