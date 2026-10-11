@@ -1347,6 +1347,7 @@ AV.licencias = async function () {
         o.planName,
         h('code', { style: 'font-family:var(--fm);font-size:.84rem;color:var(--yellow);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, o.licenseKey),
         domainDisplay,
+        o.maxSites > 1 ? h('span', { class: 'pill ok', style: 'font-size:.78rem' }, 'Multisitio') : h('span', { class: 'pill ' + (o.transferCount >= 2 ? 'crit' : 'info'), style: 'font-size:.78rem' }, o.transferCount + '/2 usadas'),
         pill(ORDER_ST[o.status] || o.status),
         h('div', { style: 'display:flex;gap:6px;align-items:center' },
           unlinkClientBtn,
@@ -1357,8 +1358,8 @@ AV.licencias = async function () {
 
   root.appendChild(h('div', { class: 'card' },
     h('h3', null, '📋 Licencias de Clientes Emitidas'),
-    h('p', { class: 'hint', style: 'margin-bottom:12px' }, 'Licencias asignadas automáticamente tras compras de planes Security Pro, Rescate + Blindaje y Guardián.'),
-    clientRows.length ? table(['Cliente', 'Correo', 'Plan', 'Clave de Licencia', 'Dominio Vinculado', 'Estado', 'Acción'], clientRows)
+    h('p', { class: 'hint', style: 'margin-bottom:12px' }, 'Licencias asignadas automáticamente tras compras de planes Security Pro, Rescate + Blindaje y Guardián con escudo antifraude (máximo 2 transferencias y cooldown de 30 días).'),
+    clientRows.length ? table(['Cliente', 'Correo', 'Plan', 'Clave de Licencia', 'Dominio Vinculado', 'Transferencias', 'Estado', 'Acción'], clientRows)
       : h('div', { class: 'empty' }, 'Aún no hay licencias de clientes generadas.')));
 
   return root;

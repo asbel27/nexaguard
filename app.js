@@ -780,6 +780,39 @@ function createApp({ store, scanner, config }) {
           return fail(res, 403, 'Esta licencia ya alcanzó el límite máximo de ' + maxAllowed + ' sitios autorizados (' + activeList.join(', ') + '). Desvincula uno de los sitios anteriores para activar "' + domain + '".');
         }
       }
+
+      // Escudo Antifraude para licencias Monositio de clientes (Límite de transferencias y Cooldown de 30 días)
+      if (maxAllowed === 1 && order) {
+        order.transferredDomains = order.transferredDomains || (order.activatedDomain ? [order.activatedDomain] : []);
+        order.transferCount = typeof order.transferCount === 'number' ? order.transferCount : 0;
+
+        const isNewTransfer = order.transferredDomains.length > 0 && !order.transferredDomains.includes(domain);
+        if (isNewTransfer) {
+          // Candado 1: Límite de por vida (máximo 2 transferencias)
+          if (order.transferCount >= 2) {
+            return fail(res, 403, 'Límite de transferencias alcanzado: Esta licencia monositio ya ha consumido su límite máximo de 2 transferencias de dominio autorizadas (' + order.transferredDomains.join(' → ') + '). Para proteger sitios web adicionales o de clientes, adquiere una nueva licencia o actualiza al Plan Multisitio en nexaguards.com.');
+          }
+
+          // Candado 2: Cooldown de 30 días entre transferencias
+          if (order.lastTransferAt) {
+            const timeDiff = Date.now() - order.lastTransferAt;
+            if (timeDiff < 30 * DAY) {
+              const daysPassed = Math.floor(timeDiff / DAY);
+              const daysLeft = Math.max(1, 30 - daysPassed);
+              return fail(res, 403, 'Protección antifraude: Esta licencia monositio fue vinculada a otro dominio hace ' + daysPassed + ' día(s). Por seguridad y políticas de uso, solo se permite 1 transferencia cada 30 días (días restantes: ' + daysLeft + '). Para proteger múltiples sitios simultáneamente, adquiere el Plan Multisitio.');
+            }
+          }
+
+          order.transferCount++;
+          order.lastTransferAt = Date.now();
+        }
+
+        if (!order.transferredDomains.includes(domain)) {
+          order.transferredDomains.push(domain);
+          if (!order.lastTransferAt) order.lastTransferAt = Date.now();
+        }
+      }
+
       activeList.push(domain);
       if (order) {
         order.activatedDomains = activeList;
@@ -899,6 +932,9 @@ function createApp({ store, scanner, config }) {
       } else {
         delete order.activatedDomains;
         delete order.activatedDomain;
+        order.transferCount = 0;
+        order.transferredDomains = [];
+        delete order.lastTransferAt;
       }
     }
 
@@ -1025,6 +1061,10 @@ function createApp({ store, scanner, config }) {
           maxSites: maxSites,
           activatedDomains: domains,
           activatedDomain: domains.join(', ') || null,
+          transferCount: typeof o.transferCount === 'number' ? o.transferCount : 0,
+          maxTransfers: 2,
+          lastTransferAt: o.lastTransferAt ? iso(o.lastTransferAt) : null,
+          transferredDomains: o.transferredDomains || domains,
           createdAt: iso(o.createdAt),
           paidAt: iso(o.paidAt)
         };
