@@ -1216,10 +1216,13 @@ $rollback_count = count($backup_history);
                 </div>
             </div>
 
-            <!-- Osciloscopio / Gráfico de Ondas de Pulso Forense (Canvas) -->
+            <!-- Polígrafo Forense / Detector de Mentiras de Integridad del Núcleo (Canvas) -->
             <div class="sentinel-chart-container" style="position:relative;background:#05091e;border:1px solid rgba(61,232,164,0.35);border-radius:14px;padding:14px;overflow:hidden;box-shadow:inset 0 0 35px rgba(0,0,0,0.7);">
-                <div style="position:absolute;top:12px;left:16px;z-index:2;display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:0.72rem;font-weight:800;letter-spacing:1px;color:#3de8a4;text-transform:uppercase;">NEXAGUARD FORENSIC CORE OSCILLOSCOPE · 60 FPS</span>
+                <div style="position:absolute;top:12px;left:16px;z-index:2;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <span style="font-size:0.72rem;font-weight:800;letter-spacing:1px;color:#3de8a4;text-transform:uppercase;">POLÍGRAFO FORENSE · DETECTOR DE MENTIRAS DEL NÚCLEO</span>
+                    <span style="font-size:0.68rem;font-weight:700;color:#3de8a4;background:rgba(61,232,164,0.12);padding:2px 7px;border-radius:8px;border:1px solid rgba(61,232,164,0.3);">● Pulso EKG</span>
+                    <span style="font-size:0.68rem;font-weight:700;color:#ffd859;background:rgba(255,216,89,0.12);padding:2px 7px;border-radius:8px;border:1px solid rgba(255,216,89,0.3);">● Integridad SHA-256</span>
+                    <span style="font-size:0.68rem;font-weight:700;color:#8a9bff;background:rgba(138,155,255,0.12);padding:2px 7px;border-radius:8px;border:1px solid rgba(138,155,255,0.3);">● Flujo I/O</span>
                 </div>
                 <div style="position:absolute;top:12px;right:16px;z-index:2;display:flex;align-items:center;gap:14px;font-size:0.78rem;color:#8fa0cf;font-family:monospace;">
                     <span>Rendimiento: <strong id="sentinel-chart-throughput" style="color:#ffcf33;">142 I/O seg</strong></span>

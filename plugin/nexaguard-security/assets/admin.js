@@ -2266,226 +2266,236 @@ jQuery(document).ready(function ($) {
         { path: '/wp-content/index.php', perms: '0644', desc: 'Protección de listado de directorios' }
     ];
 
-    // Datos del Osciloscopio
-    // Variables del Electrocardiograma (EKG)
+    // =========================================================================
+    // MOTOR DE POLÍGRAFO FORENSE / DETECTOR DE MENTIRAS (NEXAGUARD SENTINEL)
+    // =========================================================================
     var canvasEl = null;
     var canvasCtx = null;
-    var ecgBuffer = [];      // Array de valores Y para cada coordenada X
-    var sweepX = 0;          // Posición actual del cabezal de barrido (0 a width)
-    var sweepSpeed = 2.0;    // Píxeles de avance por cuadro (lento, rítmico y pausado)
-    var eraserWidth = 40;    // Espacio en blanco borrador delante del cabezal
-    var pulseActive = false;
-    var pulseProgress = 0;   // Progreso del latido actual (0.0 a 1.0)
-    var pulseLength = 70;    // Longitud en píxeles del complejo P-Q-R-S-T
-    var pixelsSinceLastPulse = 0;
-    var pulseDistance = 150; // Distancia entre latidos en píxeles (~2.2 segundos)
-    var pulseAuditFired = false;
+    var polyPointsCount = 200; // Resolución continua a través de la pantalla
+    var polyCardio = new Float32Array(polyPointsCount);
+    var polyGalvanic = new Float32Array(polyPointsCount);
+    var polyResp = new Float32Array(polyPointsCount);
 
-    function initEcgBuffer(w) {
-        ecgBuffer = new Array(w);
-        for (var i = 0; i < w; i++) {
-            ecgBuffer[i] = null;
+    var polyPhase = 0;
+    var polyCardioPhase = 0;
+    var polyPulseSpike = 0;
+    var polyTimeSinceLastPulse = 0;
+    var polyLastTimestamp = 0;
+    var polyInitialized = false;
+
+    // Inicializar y pre-poblar los historiales para que NUNCA aparezca la pantalla vacía o congelada
+    function initPolygraphBuffers() {
+        if (polyInitialized) return;
+        polyInitialized = true;
+        for (var i = 0; i < polyPointsCount; i++) {
+            var t = i * 0.12;
+            polyCardio[i] = Math.sin(t * 1.6) * 6;
+            polyGalvanic[i] = Math.sin(t * 0.55) * 14 + Math.cos(t * 0.22) * 8;
+            polyResp[i] = Math.sin(t * 0.32) * 16;
         }
-        sweepX = 0;
-        pixelsSinceLastPulse = 0;
-        pulseActive = false;
     }
+    initPolygraphBuffers();
 
-    function calculateEcgOffset(progress, h) {
-        // Onda P (pequeña elevación previa)
-        if (progress < 0.14) {
-            var p = progress / 0.14;
-            return -Math.sin(p * Math.PI) * (h * 0.08);
-        }
-        // Segmento PR plano
-        if (progress < 0.22) {
-            return 0;
-        }
-        // Onda Q (pequeña deflexión negativa)
-        if (progress < 0.30) {
-            var q = (progress - 0.22) / 0.08;
-            return Math.sin(q * Math.PI) * (h * 0.10);
-        }
-        // Onda R (GRAN PICO ALTO VERTICAL DEL LATIDO)
-        if (progress < 0.46) {
-            var r = (progress - 0.30) / 0.16;
-            return -Math.sin(r * Math.PI) * (h * 0.40);
-        }
-        // Onda S (PICO PROFUNDO NEGATIVO TRAS EL PICO ALTO)
-        if (progress < 0.60) {
-            var s = (progress - 0.46) / 0.14;
-            return Math.sin(s * Math.PI) * (h * 0.22);
-        }
-        // Segmento ST plano
-        if (progress < 0.70) {
-            return 0;
-        }
-        // Onda T (elevación suave de recuperación)
-        if (progress < 0.90) {
-            var t = (progress - 0.70) / 0.20;
-            return -Math.sin(t * Math.PI) * (h * 0.12);
-        }
-        // Retorno a línea base
-        return 0;
-    }
-
-    function drawSentinelWaveform() {
+    function ensureSentinelCanvas() {
         if (!canvasEl) {
             canvasEl = document.getElementById('sentinel-waveform-canvas');
-            if (canvasEl) {
-                var rect = canvasEl.getBoundingClientRect();
-                var dpr = window.devicePixelRatio || 1;
-                canvasEl.width = (rect.width > 0 ? rect.width : 1000) * dpr;
-                canvasEl.height = 200 * dpr;
-                canvasCtx = canvasEl.getContext('2d');
-                initEcgBuffer(canvasEl.width);
-            }
         }
-        if (!canvasEl || !canvasCtx) return;
+        if (!canvasEl) return false;
+
+        var rect = canvasEl.getBoundingClientRect();
+        var dpr = window.devicePixelRatio || 1;
+        var targetW = Math.round((rect.width > 50 ? rect.width : 1000) * dpr);
+        var targetH = Math.round(200 * dpr);
+
+        if (canvasEl.width !== targetW || canvasEl.height !== targetH) {
+            canvasEl.width = targetW;
+            canvasEl.height = targetH;
+            canvasCtx = canvasEl.getContext('2d');
+        }
+        if (!canvasCtx) {
+            canvasCtx = canvasEl.getContext('2d');
+        }
+        return !!canvasCtx;
+    }
+
+    function drawSentinelWaveform(timestamp) {
+        if (!ensureSentinelCanvas()) {
+            if (sentinelActive) {
+                sentinelAnimFrame = requestAnimationFrame(drawSentinelWaveform);
+            }
+            return;
+        }
 
         var w = canvasEl.width;
         var h = canvasEl.height;
         var ctx = canvasCtx;
         var dpr = window.devicePixelRatio || 1;
 
-        if (ecgBuffer.length !== w) {
-            initEcgBuffer(w);
-        }
+        // Cálculo de paso de tiempo delta suave
+        if (!polyLastTimestamp) polyLastTimestamp = timestamp || performance.now();
+        var dt = Math.min(((timestamp || performance.now()) - polyLastTimestamp) / 1000, 0.05);
+        polyLastTimestamp = timestamp || performance.now();
 
-        // Si no está pausado, calcular el siguiente paso de avance de la aguja EKG
         if (!sentinelPaused) {
-            var prevX = sweepX;
-            sweepX += sweepSpeed * dpr;
+            polyPhase += dt;
+            polyCardioPhase += dt * 3.8; // Frecuencia cardíaca rítmica
+            polyTimeSinceLastPulse += dt;
 
-            // Al llegar al borde derecho, vuelve a la izquierda (barrido cíclico de monitor)
-            if (sweepX >= w) {
-                sweepX = 0;
-                prevX = 0;
+            // Cada ~2.3 segundos, disparar evaluación del siguiente archivo crítico
+            if (polyTimeSinceLastPulse >= 2.3) {
+                polyTimeSinceLastPulse = 0;
+                polyPulseSpike = 1.0; // Iniciar pico agudo de detector de mentiras
+                triggerSentinelFilePulse();
             }
 
-            // Borrar delante del cabezal para crear el efecto del haz de fósforo de monitor
-            var eraseStart = Math.floor(sweepX);
-            var eraseCount = Math.floor(eraserWidth * dpr);
-            for (var e = 0; e < eraseCount; e++) {
-                var eraseIdx = (eraseStart + e) % w;
-                ecgBuffer[eraseIdx] = null;
-            }
-
-            // Gestión del latido rítmico
-            pixelsSinceLastPulse += (sweepSpeed * dpr);
-            if (!pulseActive && pixelsSinceLastPulse >= (pulseDistance * dpr)) {
-                pulseActive = true;
-                pulseProgress = 0;
-                pulseAuditFired = false;
-                pixelsSinceLastPulse = 0;
-            }
-
-            var currentY = h / 2;
-            if (pulseActive) {
-                pulseProgress += ((sweepSpeed * dpr) / (pulseLength * dpr));
-                var ecgDev = calculateEcgOffset(pulseProgress, h);
-                currentY = (h / 2) + ecgDev;
-
-                // En el punto máximo de la onda R (~0.36), disparar la evaluación del siguiente archivo!
-                if (!pulseAuditFired && pulseProgress >= 0.36) {
-                    pulseAuditFired = true;
-                    triggerSentinelFilePulse();
+            // 1. Canal Cardio / Pulso EKG (Onda P-Q-R-S-T + Micro-vibraciones de aguja de polígrafo)
+            var cardioBase = Math.sin(polyCardioPhase) * (5.5 * dpr);
+            var cardioSpike = 0;
+            if (polyPulseSpike > 0) {
+                var p = 1.0 - polyPulseSpike; // 0.0 a 1.0
+                if (p < 0.16) {
+                    cardioSpike = -Math.sin((p / 0.16) * Math.PI) * (12 * dpr); // Onda P
+                } else if (p < 0.28) {
+                    cardioSpike = Math.sin(((p - 0.16) / 0.12) * Math.PI) * (14 * dpr); // Onda Q
+                } else if (p < 0.48) {
+                    cardioSpike = -Math.sin(((p - 0.28) / 0.20) * Math.PI) * (48 * dpr); // PICO ALTO R
+                } else if (p < 0.68) {
+                    cardioSpike = Math.sin(((p - 0.48) / 0.20) * Math.PI) * (30 * dpr); // PICO PROFUNDO S
+                } else if (p < 0.88) {
+                    cardioSpike = -Math.sin(((p - 0.68) / 0.20) * Math.PI) * (15 * dpr); // Onda T
                 }
-
-                if (pulseProgress >= 1.0) {
-                    pulseActive = false;
-                }
-            } else {
-                // Línea base viva con respiración microscópica (vital baseline)
-                currentY = (h / 2) + Math.sin(sweepX * 0.04) * (2 * dpr) + ((Math.random() - 0.5) * (1.5 * dpr));
+                polyPulseSpike -= dt * 1.7;
+                if (polyPulseSpike < 0) polyPulseSpike = 0;
             }
+            var cardioJitter = (Math.random() - 0.5) * (2.2 * dpr);
+            var newCardio = cardioBase + cardioSpike + cardioJitter;
 
-            // Interpolar entre prevX y sweepX para que el trazo sea continuo y perfecto
-            var startPx = Math.floor(prevX);
-            var endPx = Math.floor(sweepX);
-            for (var p = startPx; p <= endPx; p++) {
-                if (p >= 0 && p < w) {
-                    ecgBuffer[p] = currentY;
-                }
+            // 2. Canal Galvánico (Detector de mentiras - oscilación lenta con saltos de veracidad)
+            var galvanicBase = Math.sin(polyPhase * 0.75) * (14 * dpr) + Math.cos(polyPhase * 0.28) * (9 * dpr);
+            var galvanicSpike = (polyPulseSpike > 0) ? Math.sin(polyPulseSpike * Math.PI) * (20 * dpr) : 0;
+            var newGalvanic = galvanicBase + galvanicSpike + ((Math.random() - 0.5) * (1.6 * dpr));
+
+            // 3. Canal de Respiración / Flujo I/O (Onda sinusoidal amplia y cadenciosa)
+            var newResp = Math.sin(polyPhase * 0.38) * (18 * dpr) + Math.cos(polyPhase * 0.82) * (5 * dpr);
+
+            // Desplazar historiales hacia la izquierda (papel continuo de polígrafo en movimiento)
+            for (var i = 0; i < polyPointsCount - 1; i++) {
+                polyCardio[i] = polyCardio[i + 1];
+                polyGalvanic[i] = polyGalvanic[i + 1];
+                polyResp[i] = polyResp[i + 1];
             }
+            polyCardio[polyPointsCount - 1] = newCardio;
+            polyGalvanic[polyPointsCount - 1] = newGalvanic;
+            polyResp[polyPointsCount - 1] = newResp;
         }
 
-        // --- RENDERIZADO VISUAL EN EL CANVAS ---
+        // ================= RENDERIZADO VISUAL EN EL CANVAS =================
         ctx.clearRect(0, 0, w, h);
 
-        // 1. Rejilla Táctica de Fondo
-        ctx.strokeStyle = 'rgba(61, 232, 164, 0.06)';
+        // 1. Rejilla Táctica de Fondo estilo Papel Milimetrado de Polígrafo
+        ctx.strokeStyle = 'rgba(61, 232, 164, 0.05)';
         ctx.lineWidth = 1;
-        var gridX = w / 24;
-        var gridY = h / 8;
+        var stepX = w / 32;
+        var stepY = h / 12;
 
         ctx.beginPath();
-        for (var gx = 0; gx <= w; gx += gridX) {
+        for (var gx = 0; gx <= w; gx += stepX) {
             ctx.moveTo(gx, 0);
             ctx.lineTo(gx, h);
         }
-        for (var gy = 0; gy <= h; gy += gridY) {
+        for (var gy = 0; gy <= h; gy += stepY) {
             ctx.moveTo(0, gy);
             ctx.lineTo(w, gy);
         }
         ctx.stroke();
 
-        // Línea central de referencia
-        ctx.strokeStyle = 'rgba(255, 207, 51, 0.12)';
-        ctx.setLineDash([4 * dpr, 4 * dpr]);
+        // Líneas base horizontales de referencia de los 3 canales
+        var baseCardioY = h * 0.26;
+        var baseGalvanicY = h * 0.52;
+        var baseRespY = h * 0.78;
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+        ctx.setLineDash([3 * dpr, 3 * dpr]);
         ctx.beginPath();
-        ctx.moveTo(0, h / 2);
-        ctx.lineTo(w, h / 2);
+        ctx.moveTo(0, baseCardioY);
+        ctx.lineTo(w, baseCardioY);
+        ctx.moveTo(0, baseGalvanicY);
+        ctx.lineTo(w, baseGalvanicY);
+        ctx.moveTo(0, baseRespY);
+        ctx.lineTo(w, baseRespY);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // 2. Dibujar Trazo de la Onda EKG continua
-        var gradStroke = ctx.createLinearGradient(0, 0, w, 0);
-        gradStroke.addColorStop(0, '#3de8a4');
-        gradStroke.addColorStop(0.5, '#ffd859');
-        gradStroke.addColorStop(1, '#3de8a4');
+        // Coordenada X del cabezal de aguja registradora (margen derecho)
+        var stylusMargin = 22 * dpr;
+        var chartW = w - stylusMargin;
+        var pointSpacing = chartW / (polyPointsCount - 1);
 
-        ctx.strokeStyle = gradStroke;
-        ctx.lineWidth = 2.4 * dpr;
-        ctx.shadowColor = '#3de8a4';
-        ctx.shadowBlur = 10 * dpr;
+        // Función auxiliar para trazar una onda continua
+        function renderPolyTrack(history, baseY, color, glowColor, lineWidth) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth * dpr;
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = 8 * dpr;
 
-        var inPath = false;
-        ctx.beginPath();
-        for (var x = 0; x < w; x++) {
-            var y = ecgBuffer[x];
-            if (y !== null) {
-                if (!inPath) {
-                    ctx.moveTo(x, y);
-                    inPath = true;
+            ctx.beginPath();
+            for (var idx = 0; idx < polyPointsCount; idx++) {
+                var px = idx * pointSpacing;
+                var py = baseY + history[idx];
+                if (idx === 0) {
+                    ctx.moveTo(px, py);
                 } else {
-                    ctx.lineTo(x, y);
+                    ctx.lineTo(px, py);
                 }
-            } else {
-                inPath = false;
             }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
         }
+
+        // 2. Dibujar los 3 Canales del Detector de Mentiras
+        // Canal 3: Respiración / I/O (#8a9bff)
+        renderPolyTrack(polyResp, baseRespY, '#8a9bff', 'rgba(138, 155, 255, 0.4)', 2.0);
+
+        // Canal 2: Respuesta Galvánica / Hash (#ffd859)
+        renderPolyTrack(polyGalvanic, baseGalvanicY, '#ffd859', 'rgba(255, 216, 89, 0.5)', 2.2);
+
+        // Canal 1: Pulso Cardíaco EKG (#3de8a4)
+        renderPolyTrack(polyCardio, baseCardioY, '#3de8a4', 'rgba(61, 232, 164, 0.6)', 2.4);
+
+        // 3. Regla / Aguja Guía Vertical del Polígrafo
+        var stylusX = chartW;
+        ctx.strokeStyle = 'rgba(61, 232, 164, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(stylusX, 10);
+        ctx.lineTo(stylusX, h - 10);
         ctx.stroke();
-        ctx.shadowBlur = 0;
 
-        // 3. Dibujar el Cabezal de Escritura en Vivo (Sweeping Neon Bead)
-        var headX = Math.floor(sweepX);
-        var headY = ecgBuffer[headX] || (h / 2);
+        // 4. Cabezales Neón de las 3 Agujas Registradoras (Stylus Beads)
+        var headCardioY = baseCardioY + polyCardio[polyPointsCount - 1];
+        var headGalvanicY = baseGalvanicY + polyGalvanic[polyPointsCount - 1];
+        var headRespY = baseRespY + polyResp[polyPointsCount - 1];
 
-        // Halo resplandeciente externo
-        ctx.fillStyle = 'rgba(255, 207, 51, 0.25)';
-        ctx.beginPath();
-        ctx.arc(headX, headY, 10 * dpr, 0, Math.PI * 2);
-        ctx.fill();
+        function drawNeedleHead(x, y, color, glowColor) {
+            // Halo externo
+            ctx.fillStyle = glowColor;
+            ctx.beginPath();
+            ctx.arc(x, y, 7 * dpr, 0, Math.PI * 2);
+            ctx.fill();
 
-        // Núcleo brillante neón
-        ctx.fillStyle = '#ffcf33';
-        ctx.shadowColor = '#ffcf33';
-        ctx.shadowBlur = 15 * dpr;
-        ctx.beginPath();
-        ctx.arc(headX, headY, 4.5 * dpr, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+            // Núcleo brillante
+            ctx.fillStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 12 * dpr;
+            ctx.beginPath();
+            ctx.arc(x, y, 3.8 * dpr, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        drawNeedleHead(stylusX, headCardioY, '#3de8a4', 'rgba(61, 232, 164, 0.3)');
+        drawNeedleHead(stylusX, headGalvanicY, '#ffd859', 'rgba(255, 216, 89, 0.3)');
+        drawNeedleHead(stylusX, headRespY, '#8a9bff', 'rgba(138, 155, 255, 0.3)');
 
         if (sentinelActive) {
             sentinelAnimFrame = requestAnimationFrame(drawSentinelWaveform);
@@ -2498,7 +2508,7 @@ jQuery(document).ready(function ($) {
         var f = sentinelFiles[sentinelFileIdx];
         sentinelFileIdx = (sentinelFileIdx + 1) % sentinelFiles.length;
 
-        // Generar hash visual
+        // Generar hash visual verificado
         var dummyHash = 'sha256:' + Math.random().toString(16).substr(2, 8) + '...' + Math.random().toString(16).substr(2, 6);
 
         // Actualizar Ticker Superior
@@ -2506,6 +2516,17 @@ jQuery(document).ready(function ($) {
         $('#sentinel-curr-hash').text('SHA-256: [' + dummyHash + ']');
         $('#sentinel-curr-perms').text('Permisos: ' + (f.perms || '0644'));
         $('#sentinel-curr-badge').html('✓ INTACTO').css({ color: '#3de8a4', borderColor: 'rgba(61,232,164,0.4)' });
+
+        // Resaltar fila en la tabla de archivos vitales de forma sincronizada
+        $('#sentinel-vital-files-tbody tr').each(function () {
+            var $row = $(this);
+            if ($row.find('code').text() === f.path) {
+                $row.css('background', 'rgba(61, 232, 164, 0.18)');
+                setTimeout(function () {
+                    $row.css('background', '');
+                }, 1300);
+            }
+        });
 
         // Añadir línea a la Consola Táctica
         var now = new Date();
@@ -2520,7 +2541,6 @@ jQuery(document).ready(function ($) {
         var $term = $('#sentinel-terminal-stream');
         if ($term.length) {
             $term.append(lineHtml);
-
             var $lines = $term.children('div');
             if ($lines.length > 40) {
                 $lines.slice(0, $lines.length - 40).remove();
@@ -2588,6 +2608,8 @@ jQuery(document).ready(function ($) {
     function startSentinelEngine() {
         if (sentinelActive) return;
         sentinelActive = true;
+        polyLastTimestamp = 0;
+        initPolygraphBuffers();
         drawSentinelWaveform();
         runBackendSentinelScan(false);
 
@@ -2665,11 +2687,17 @@ jQuery(document).ready(function ($) {
     // Redimensionar canvas al cambiar tamaño de ventana
     window.addEventListener('resize', function () {
         if (canvasEl && sentinelActive) {
-            var rect = canvasEl.getBoundingClientRect();
-            if (rect.width > 0) {
-                canvasEl.width = rect.width * (window.devicePixelRatio || 1);
-                canvasEl.height = 200 * (window.devicePixelRatio || 1);
-            }
+            ensureSentinelCanvas();
         }
     });
+
+    // Guardián Sentinel: Iniciar inmediatamente si la pestaña ya está activa al cargar o asegurar ejecución continua
+    if ($('#tab-sentinel').hasClass('is-active')) {
+        startSentinelEngine();
+    }
+    setInterval(function () {
+        if ($('#tab-sentinel').hasClass('is-active') && !sentinelActive) {
+            startSentinelEngine();
+        }
+    }, 1200);
 });
