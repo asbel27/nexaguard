@@ -2921,3 +2921,49 @@
     font-size: 0.78rem !important;
     padding: 6px 12px !important;
 }
+
+/* ========================================================================= */
+/* NEXAGUARD SENTINEL: MONITOR DE NÚCLEO EN TIEMPO REAL                      */
+/* ========================================================================= */
+.sentinel-hero-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.sentinel-hero-card::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(61, 232, 164, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.sentinel-kpi-box {
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.sentinel-kpi-box:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 207, 51, 0.45) !important;
+}
+
+#sentinel-terminal-stream::-webkit-scrollbar {
+    width: 6px;
+}
+
+#sentinel-terminal-stream::-webkit-scrollbar-track {
+    background: #040818;
+}
+
+#sentinel-terminal-stream::-webkit-scrollbar-thumb {
+    background: rgba(61, 232, 164, 0.3);
+    border-radius: 4px;
+}
+
+#sentinel-terminal-stream::-webkit-scrollbar-thumb:hover {
+    background: rgba(61, 232, 164, 0.6);
+}

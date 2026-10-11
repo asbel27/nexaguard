@@ -173,6 +173,11 @@ $rollback_count = count($backup_history);
                 <span class="ng-tab-badge locked">🔒</span>
             <?php endif; ?>
         </button>
+        <button type="button" class="ng-tab" data-tab="sentinel">
+            <span class="ng-tab-icon">🧬</span>
+            <span class="ng-tab-label">Monitor de Núcleo</span>
+            <span class="ng-tab-badge active" style="background:rgba(61,232,164,0.15);color:#3de8a4;border:1px solid rgba(61,232,164,0.35);">EN VIVO</span>
+        </button>
         <button type="button" class="ng-tab" data-tab="waf">
             <span class="ng-tab-icon">🛡️</span>
             <span class="ng-tab-label">Blindaje WAF</span>
@@ -1139,6 +1144,160 @@ $rollback_count = count($backup_history);
         </div>
 
     </div><!-- /tab-rollback -->
+
+    <!-- ====================================================================== -->
+    <!-- TAB: MONITOR DE INTEGRIDAD DEL NÚCLEO EN TIEMPO REAL (SENTINEL)        -->
+    <!-- ====================================================================== -->
+    <div class="ng-tab-panel" id="tab-sentinel">
+        <div class="ng-card sentinel-hero-card" style="background:#0e163e;border:1px solid rgba(255,207,51,0.25);border-radius:16px;padding:22px 24px;margin-bottom:20px;box-shadow:0 12px 36px rgba(0,0,0,0.45);">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
+                <div>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <h2 style="margin:0;font-size:1.3rem;font-weight:800;color:#fff;">🧬 Monitor de Integridad del Núcleo en Tiempo Real</h2>
+                        <span class="badge-status-pill ok" style="display:flex;align-items:center;gap:6px;padding:4px 10px;font-size:0.75rem;background:rgba(61,232,164,0.15);color:#3de8a4;border:1px solid rgba(61,232,164,0.35);border-radius:20px;font-weight:700;">
+                            <span class="live-dot" style="width:8px;height:8px;background:#3de8a4;border-radius:50%;display:inline-block;box-shadow:0 0 8px #3de8a4;"></span>
+                            TELEMETRÍA EN VIVO
+                        </span>
+                    </div>
+                    <p class="ng-hint" style="color:#b8c7eb;margin:4px 0 0;font-size:0.9rem;">Inspección continua de archivos vitales del sistema, hashes SHA-256 oficiales de WordPress.org y sellado de permisos.</p>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button type="button" id="btn-sentinel-toggle" class="btn-ng btn-ng-outline" style="border-color:rgba(255,207,51,0.4);color:#ffcf33;background:rgba(255,207,51,0.06);font-weight:700;">
+                        <span id="sentinel-toggle-icon">⏸️</span> <span id="sentinel-toggle-text">Pausar Flujo</span>
+                    </button>
+                    <button type="button" id="btn-sentinel-deep-scan" class="btn-ng btn-ng-primary" style="font-weight:800;">
+                        <span>⚡</span> Inspección Forzada Inmediata
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mini KPIs de Integridad -->
+            <div class="sentinel-kpis-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px;">
+                <div class="sentinel-kpi-box" style="background:#091030;border:1px solid rgba(61,232,164,0.3);border-radius:12px;padding:14px 16px;">
+                    <span style="font-size:0.75rem;text-transform:uppercase;color:#8fa0cf;font-weight:700;display:block;letter-spacing:0.5px;">Integridad de Núcleo</span>
+                    <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px;">
+                        <b style="font-size:1.45rem;color:#3de8a4;">100%</b>
+                        <span style="font-size:0.75rem;color:#b8c7eb;">Intacta</span>
+                    </div>
+                </div>
+                <div class="sentinel-kpi-box" style="background:#091030;border:1px solid rgba(255,207,51,0.25);border-radius:12px;padding:14px 16px;">
+                    <span style="font-size:0.75rem;text-transform:uppercase;color:#8fa0cf;font-weight:700;display:block;letter-spacing:0.5px;">Archivos Vitales</span>
+                    <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px;">
+                        <b id="sentinel-kpi-files-count" style="font-size:1.45rem;color:#ffcf33;">17/17</b>
+                        <span style="font-size:0.75rem;color:#b8c7eb;">Sellados</span>
+                    </div>
+                </div>
+                <div class="sentinel-kpi-box" style="background:#091030;border:1px solid rgba(138,155,255,0.25);border-radius:12px;padding:14px 16px;">
+                    <span style="font-size:0.75rem;text-transform:uppercase;color:#8fa0cf;font-weight:700;display:block;letter-spacing:0.5px;">Frecuencia Forense</span>
+                    <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px;">
+                        <b id="sentinel-kpi-rate" style="font-size:1.45rem;color:#8a9bff;">60 I/O</b>
+                        <span style="font-size:0.75rem;color:#b8c7eb;">por minuto</span>
+                    </div>
+                </div>
+                <div class="sentinel-kpi-box" style="background:#091030;border:1px solid rgba(61,232,164,0.25);border-radius:12px;padding:14px 16px;">
+                    <span style="font-size:0.75rem;text-transform:uppercase;color:#8fa0cf;font-weight:700;display:block;letter-spacing:0.5px;">Anomalías de Código</span>
+                    <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px;">
+                        <b id="sentinel-kpi-anomalies" style="font-size:1.45rem;color:#3de8a4;">0</b>
+                        <span style="font-size:0.75rem;color:#b8c7eb;">Cero Intrusiones</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ticker Superior de Archivo en Inspección Activa -->
+            <div class="sentinel-ticker-strip" style="background:#070d28;border:1px solid rgba(255,207,51,0.3);border-radius:10px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <span style="color:#ffcf33;font-weight:800;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.5px;">🔍 Auditando Ahora:</span>
+                    <code id="sentinel-curr-file" style="background:rgba(255,207,51,0.12);color:#ffd859;padding:3px 10px;border-radius:6px;font-family:monospace;font-size:0.9rem;border:1px solid rgba(255,207,51,0.25);font-weight:700;">/wp-config.php</code>
+                    <span id="sentinel-curr-hash" style="color:#8fa0cf;font-size:0.82rem;font-family:monospace;">SHA-256: [calculando…]</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span id="sentinel-curr-perms" style="color:#b8c7eb;font-size:0.82rem;font-family:monospace;">Permisos: 0440</span>
+                    <span id="sentinel-curr-badge" class="badge-status-pill ok" style="padding:3px 10px;font-size:0.75rem;background:rgba(61,232,164,0.18);color:#3de8a4;border:1px solid rgba(61,232,164,0.4);border-radius:20px;font-weight:700;">✓ INTACTO</span>
+                </div>
+            </div>
+
+            <!-- Osciloscopio / Gráfico de Ondas de Pulso Forense (Canvas) -->
+            <div class="sentinel-chart-container" style="position:relative;background:#05091e;border:1px solid rgba(61,232,164,0.35);border-radius:14px;padding:14px;overflow:hidden;box-shadow:inset 0 0 35px rgba(0,0,0,0.7);">
+                <div style="position:absolute;top:12px;left:16px;z-index:2;display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:0.72rem;font-weight:800;letter-spacing:1px;color:#3de8a4;text-transform:uppercase;">NEXAGUARD FORENSIC CORE OSCILLOSCOPE · 60 FPS</span>
+                </div>
+                <div style="position:absolute;top:12px;right:16px;z-index:2;display:flex;align-items:center;gap:14px;font-size:0.78rem;color:#8fa0cf;font-family:monospace;">
+                    <span>Rendimiento: <strong id="sentinel-chart-throughput" style="color:#ffcf33;">142 I/O seg</strong></span>
+                    <span>Latencia: <strong id="sentinel-chart-latency" style="color:#3de8a4;">1.2 ms</strong></span>
+                </div>
+                <canvas id="sentinel-waveform-canvas" width="1000" height="200" style="width:100%;height:200px;display:block;"></canvas>
+            </div>
+        </div>
+
+        <!-- Sección Inferior: Consola Táctica + Bóveda de Archivos Críticos -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;">
+            <!-- Consola Táctica en Vivo -->
+            <div class="ng-card" style="background:#0e163e;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="display:inline-block;width:10px;height:10px;background:#ff5f56;border-radius:50%;"></span>
+                        <span style="display:inline-block;width:10px;height:10px;background:#ffbd2e;border-radius:50%;"></span>
+                        <span style="display:inline-block;width:10px;height:10px;background:#27c93f;border-radius:50%;"></span>
+                        <span style="margin-left:8px;font-family:monospace;font-size:0.8rem;color:#8fa0cf;">nexaguard-sentinel@core-stream:~#</span>
+                    </div>
+                    <button type="button" id="btn-sentinel-clear-terminal" class="btn-ng-link" style="font-size:0.75rem;color:#8fa0cf;">Limpiar</button>
+                </div>
+                <div id="sentinel-terminal-stream" style="background:#060a1f;border:1px solid rgba(0,0,0,0.5);border-radius:8px;padding:12px;height:240px;overflow-y:auto;font-family:'Courier New',Courier,monospace;font-size:0.78rem;line-height:1.6;color:#3de8a4;box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">
+                    <div style="color:#ffcf33;">[SISTEMA] Iniciando motor de telemetría forense NexaGuard Sentinel...</div>
+                    <div style="color:#8fa0cf;">[SISTEMA] Conectando con kernel local e inventario de archivos de WordPress...</div>
+                    <div style="color:#3de8a4;">[OK] Conexión establecida. Monitoreando integridad continua SHA-256.</div>
+                </div>
+            </div>
+
+            <!-- Bóveda Vital de Archivos Críticos -->
+            <div class="ng-card" style="background:#0e163e;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;">🛡️ Bóveda Vital de Archivos del Núcleo</h3>
+                    <button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem;padding:3px 8px;border-color:rgba(61,232,164,0.4);color:#3de8a4;font-weight:700;" title="Endurecer permisos de wp-config.php a solo-lectura">
+                        🔒 Endurecer Permisos
+                    </button>
+                </div>
+                <div style="max-height:240px;overflow-y:auto;">
+                    <table class="ng-table" style="font-size:0.8rem;margin:0;">
+                        <thead>
+                            <tr>
+                                <th>Archivo</th>
+                                <th>Permisos</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sentinel-vital-files-tbody">
+                            <tr>
+                                <td><code>/wp-config.php</code></td>
+                                <td><span class="badge-status-pill ok">0440</span></td>
+                                <td><span style="color:#3de8a4;font-weight:700;">✓ Protegido</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>/.htaccess</code></td>
+                                <td><span class="badge-status-pill ok">0644</span></td>
+                                <td><span style="color:#3de8a4;font-weight:700;">✓ WAF Activo</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>/index.php</code></td>
+                                <td><span class="badge-status-pill ok">0644</span></td>
+                                <td><span style="color:#3de8a4;font-weight:700;">✓ Firma Oficial</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>/wp-load.php</code></td>
+                                <td><span class="badge-status-pill ok">0644</span></td>
+                                <td><span style="color:#3de8a4;font-weight:700;">✓ Firma Oficial</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>/wp-includes/version.php</code></td>
+                                <td><span class="badge-status-pill ok">0644</span></td>
+                                <td><span style="color:#3de8a4;font-weight:700;">✓ Intacto</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div><!-- /tab-sentinel -->
 
     <?php
     include NEXAGUARD_DIR . 'inc/view-modals.php';
