@@ -1,7 +1,7 @@
 {
   "name": "NexaGuard Security · Antimalware & Blindaje Forense",
   "slug": "nexaguard-security",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "homepage": "https://www.nexaguards.com",
   "download_url": "https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/nexaguard-security.zip",
   "fallback_download_url": "https://www.nexaguards.com/downloads/nexaguard-security.zip",
@@ -10,6 +10,6 @@
   "last_updated": "2026-10-11",
   "sections": {
     "description": "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
-    "changelog": "<h4>Versión 1.4.0</h4><ul><li><strong>Cárcel Automática de IPs por Reincidencia (IP Auto-Jail 24H):</strong> Aísla perimetralmente durante 24 horas a cualquier IP que acumule 3 o más intentos de ataque en menos de 10 minutos.</li><li><strong>Centinela de Integridad de Archivos (Tripwire Sentinel):</strong> Monitoreo criptográfico en tiempo real de hashes SHA-256 de wp-config.php, .htaccess e index.php con alerta inmediata al radar ante manipulaciones.</li><li><strong>Exportación Forense en 1 Clic (CSV & JSON):</strong> Descarga instantánea de informes forenses completos de telemetría de amenazas directamente desde el modal del radar.</li><li><strong>Alertas Instantáneas por Webhook:</strong> Notificaciones enriquecidas en tiempo real para canales de Discord, Slack y Microsoft Teams ante cualquier intrusión neutralizada.</li><li>Blindaje contra herramientas de Kali Linux y Burp Suite con normalización multicapa anti-evasión.</li></ul>"
+    "changelog": "<h4>Versión 1.4.1</h4><ul><li><strong>Ajuste Visual de Interfaz:</strong> Color de fondo sólido (#0e163e) de alto contraste en la barra de licencia y estado de protección perimetral.</li><li><strong>Cárcel Automática de IPs por Reincidencia (IP Auto-Jail 24H):</strong> Aísla perimetralmente durante 24 horas a cualquier IP que acumule 3 o más intentos de ataque en menos de 10 minutos.</li><li><strong>Centinela de Integridad de Archivos (Tripwire Sentinel):</strong> Monitoreo criptográfico en tiempo real de hashes SHA-256 de wp-config.php, .htaccess e index.php con alerta inmediata al radar ante manipulaciones.</li><li><strong>Exportación Forense en 1 Clic (CSV & JSON):</strong> Descarga instantánea de informes forenses completos de telemetría de amenazas directamente desde el modal del radar.</li><li><strong>Alertas Instantáneas por Webhook:</strong> Notificaciones enriquecidas en tiempo real para canales de Discord, Slack y Microsoft Teams ante cualquier intrusión neutralizada.</li><li>Blindaje contra herramientas de Kali Linux y Burp Suite con normalización multicapa anti-evasión.</li></ul>"
   }
 }
