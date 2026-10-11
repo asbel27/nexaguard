@@ -731,9 +731,11 @@ function createApp({ store, scanner, config }) {
   route('POST', '/api/license/validate', null, (ctx) => {
     const { body, res } = ctx;
     const key = clean(body.key || '', 60).toUpperCase();
-    const domain = clean(body.domain || '', 120).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    const rawDomain = clean(body.domain || '', 120).toLowerCase();
+    const domain = rawDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '').trim();
 
     if (!key) return fail(res, 400, 'Clave de licencia requerida.');
+    if (!domain) return fail(res, 400, 'Dominio web requerido para validar la licencia.');
 
     const order = db.orders.find(o => (o.licenseKey === key || (o.id && key.includes(o.id.toUpperCase()))));
     const isTestExpiring = key.startsWith('NXG-TEST-SOON') || key.includes('EXPIRING') || key.includes('SOON');
@@ -743,6 +745,24 @@ function createApp({ store, scanner, config }) {
 
     if (!order && !isTestExpiring && !isTestExpired && !isAnnual && !isPro) {
       return fail(res, 404, 'Clave de licencia no reconocida en el sistema de NexaGuard.');
+    }
+
+    // Comprobación de vinculación por dominio (1 Licencia = 1 Dominio activo)
+    db.settings.licenseActivations = db.settings.licenseActivations || {};
+    const boundDomain = order ? (order.activatedDomain || null) : (db.settings.licenseActivations[key] || null);
+
+    if (boundDomain && boundDomain !== domain) {
+      return fail(res, 403, 'Esta licencia ya se encuentra activa en el sitio web "' + boundDomain + '". Cada licencia protege 1 dominio web a la vez. Desvincula la licencia del sitio anterior para usarla en "' + domain + '", o adquiere una licencia adicional.');
+    }
+
+    // Vincular por primera vez a este dominio
+    if (!boundDomain) {
+      if (order) {
+        order.activatedDomain = domain;
+      } else {
+        db.settings.licenseActivations[key] = domain;
+      }
+      save();
     }
 
     const now = T();
@@ -781,7 +801,7 @@ function createApp({ store, scanner, config }) {
         ? 'Tu suscripción a NexaGuard Security Pro ha vencido. Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
         : isExpiringSoon
           ? 'Atención: Tu suscripción a NexaGuard Security Pro vencerá en ' + daysLeft + ' días. Renueva a tiempo en nexaguards.com para mantener el escudo activo.'
-          : 'Licencia activa y sincronizada con NexaGuard Threat Cloud.',
+          : 'Licencia activa y sincronizada con NexaGuard Threat Cloud en ' + domain + '.',
       renew_url: 'https://www.nexaguards.com/#planes',
       features: {
         vigilance_24h: !isExpired,
@@ -791,8 +811,54 @@ function createApp({ store, scanner, config }) {
     });
   });
 
+  /* ---------- Desvinculación de Licencia desde WordPress ---------- */
+  route('POST', '/api/license/deactivate', null, (ctx) => {
+    const { body, res } = ctx;
+    const key = clean(body.key || '', 60).toUpperCase();
+    const rawDomain = clean(body.domain || '', 120).toLowerCase();
+    const domain = rawDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '').trim();
+
+    if (!key) return fail(res, 400, 'Clave requerida.');
+
+    let released = false;
+    const order = db.orders.find(o => (o.licenseKey === key || (o.id && key.includes(o.id.toUpperCase()))));
+    if (order && (!domain || order.activatedDomain === domain)) {
+      delete order.activatedDomain;
+      released = true;
+    }
+
+    db.settings.licenseActivations = db.settings.licenseActivations || {};
+    if (db.settings.licenseActivations[key] && (!domain || db.settings.licenseActivations[key] === domain)) {
+      delete db.settings.licenseActivations[key];
+      released = true;
+    }
+
+    save();
+    send(res, 200, { success: true, released, message: 'Licencia desvinculada exitosamente.' });
+  });
+
+  /* ---------- Liberar Dominio Vinculado desde Panel Admin ---------- */
+  route('POST', '/api/admin/licenses/reset-domain', 'admin', (ctx) => {
+    const { body, res } = ctx;
+    const key = clean(body.key || '', 60).toUpperCase();
+    if (!key) return fail(res, 400, 'Clave requerida.');
+
+    const order = db.orders.find(o => (o.licenseKey === key || (o.id && key.includes(o.id.toUpperCase()))));
+    if (order) {
+      delete order.activatedDomain;
+    }
+    db.settings.licenseActivations = db.settings.licenseActivations || {};
+    delete db.settings.licenseActivations[key];
+
+    save();
+    record(ctx.user.name, null, 'Liberó el dominio de la licencia ' + key);
+    send(res, 200, { success: true, message: 'Dominio liberado. La clave ahora puede activarse en cualquier otra web.' });
+  });
+
   /* ---------- Panel de Administración: Gestión y Banco de Licencias ---------- */
   route('GET', '/api/admin/licenses', 'admin', (ctx) => {
+    db.settings.licenseActivations = db.settings.licenseActivations || {};
+
     const testKeys = [
       {
         id: 'pro_monthly',
@@ -803,7 +869,8 @@ function createApp({ store, scanner, config }) {
         days: 30,
         status: 'active',
         badge: 'ACTIVA · 30 DÍAS',
-        desc: 'Activa la vigilancia continua 24H, el radar táctico y las actualizaciones por 1 mes.'
+        desc: 'Activa la vigilancia continua 24H, el radar táctico y las actualizaciones por 1 mes.',
+        activatedDomain: db.settings.licenseActivations['NXG-PRO-ADMIN-MASTER'] || null
       },
       {
         id: 'annual',
@@ -814,7 +881,8 @@ function createApp({ store, scanner, config }) {
         days: 365,
         status: 'active',
         badge: 'ACTIVA · 365 DÍAS',
-        desc: 'Activa la vigilancia 24H durante 1 año completo.'
+        desc: 'Activa la vigilancia 24H durante 1 año completo.',
+        activatedDomain: db.settings.licenseActivations['NXG-ANNUAL-ADMIN-MASTER'] || null
       },
       {
         id: 'expiring',
@@ -825,7 +893,8 @@ function createApp({ store, scanner, config }) {
         days: 3,
         status: 'expiring_soon',
         badge: 'POR VENCER · 3 DÍAS',
-        desc: 'Simula el estado preventivo en el plugin con el banner amarillo de advertencia.'
+        desc: 'Simula el estado preventivo en el plugin con el banner amarillo de advertencia.',
+        activatedDomain: db.settings.licenseActivations['NXG-TEST-SOON'] || null
       },
       {
         id: 'expired',
@@ -836,7 +905,8 @@ function createApp({ store, scanner, config }) {
         days: 0,
         status: 'expired',
         badge: 'VENCIDA · 0 DÍAS',
-        desc: 'Simula que venció el mes: radar bloqueado, banner rojo y aviso de renovación.'
+        desc: 'Simula que venció el mes: radar bloqueado, banner rojo y aviso de renovación.',
+        activatedDomain: db.settings.licenseActivations['NXG-TEST-EXPIRED'] || null
       }
     ];
 
@@ -853,6 +923,7 @@ function createApp({ store, scanner, config }) {
           planName: p.name || o.plan,
           licenseKey: o.licenseKey,
           status: o.status,
+          activatedDomain: o.activatedDomain || null,
           createdAt: iso(o.createdAt),
           paidAt: iso(o.paidAt)
         };

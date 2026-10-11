@@ -1276,27 +1276,73 @@ AV.licencias = async function () {
     h('div', { class: 'stack', style: 'gap:12px' },
       data.testKeys.map(function (k) {
         var pillCls = k.status === 'active' ? 'ok' : (k.status === 'expiring_soon' ? 'warn' : 'crit');
+        var domBadge = k.activatedDomain
+          ? h('span', { class: 'pill warn', style: 'margin-left:6px;font-size:0.75rem' }, '🌐 Activa en: ' + k.activatedDomain)
+          : h('span', { class: 'pill ok', style: 'margin-left:6px;font-size:0.75rem' }, '🌐 Disponible (Sin vincular)');
+
+        var unlinkBtn = k.activatedDomain
+          ? h('button', {
+              class: 'btn btn-o sm',
+              type: 'button',
+              style: 'color:#ff8ba0;border-color:rgba(255,107,138,.4)',
+              on: {
+                click: async function () {
+                  if (!confirm('¿Deseas liberar la licencia del dominio "' + k.activatedDomain + '" para que pueda usarse en otra web?')) return;
+                  try {
+                    await api('POST', '/api/admin/licenses/reset-domain', { key: k.key });
+                    toast('Dominio liberado con éxito.');
+                    go('licencias');
+                  } catch (e) { toast(e.message); }
+                }
+              }
+            }, '🔓 Liberar Dominio')
+          : null;
+
         return h('div', { style: 'background:rgba(255,255,255,.03);border:1px solid var(--line2);border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px' },
           h('div', { style: 'flex:1;min-width:240px' },
-            h('div', { style: 'display:flex;align-items:center;gap:8px;margin-bottom:4px' },
+            h('div', { style: 'display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap' },
               h('span', { class: 'pill ' + pillCls }, k.badge),
-              h('b', { style: 'font-size:.95rem;color:#fff' }, k.name)),
+              h('b', { style: 'font-size:.95rem;color:#fff' }, k.name),
+              domBadge),
             h('p', { class: 'hint', style: 'margin:2px 0 6px;font-size:.85rem' }, k.desc),
             h('code', { style: 'font-family:var(--fm);font-size:.9rem;color:var(--yellow);background:rgba(255,207,51,.1);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,207,51,.25);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(k.key, this); toast('Clave copiada: ' + k.key); } } }, k.key)),
-          h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(k.key, this); toast('Clave copiada: ' + k.key); } } }, 'Copiar Clave'));
+          h('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' },
+            unlinkBtn,
+            h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(k.key, this); toast('Clave copiada: ' + k.key); } } }, 'Copiar Clave')));
       })));
   root.appendChild(testCard);
 
   // Tabla de licencias generadas para clientes
   var clientRows = data.clientOrders.map(function (o) {
+    var unlinkClientBtn = o.activatedDomain
+      ? h('button', {
+          class: 'btn btn-o sm',
+          type: 'button',
+          style: 'color:#ff8ba0;border-color:rgba(255,107,138,.4)',
+          on: {
+            click: async function () {
+              if (!confirm('¿Deseas desvincular la licencia del dominio "' + o.activatedDomain + '"?')) return;
+              try {
+                await api('POST', '/api/admin/licenses/reset-domain', { key: o.licenseKey });
+                toast('Dominio desvinculado con éxito.');
+                go('licencias');
+              } catch (e) { toast(e.message); }
+            }
+          }
+        }, '🔓 Liberar')
+      : null;
+
     return {
       cells: [
         h('b', null, o.clientName),
         o.clientEmail,
         o.planName,
         h('code', { style: 'font-family:var(--fm);font-size:.84rem;color:var(--yellow);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, o.licenseKey),
+        o.activatedDomain ? h('span', { class: 'pill ok', style: 'font-size:0.8rem' }, '🌐 ' + o.activatedDomain) : h('span', { class: 'hint', style: 'font-size:0.8rem' }, 'Sin vincular'),
         pill(ORDER_ST[o.status] || o.status),
-        h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, 'Copiar')
+        h('div', { style: 'display:flex;gap:6px;align-items:center' },
+          unlinkClientBtn,
+          h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, 'Copiar'))
       ]
     };
   });
@@ -1304,7 +1350,7 @@ AV.licencias = async function () {
   root.appendChild(h('div', { class: 'card' },
     h('h3', null, '📋 Licencias de Clientes Emitidas'),
     h('p', { class: 'hint', style: 'margin-bottom:12px' }, 'Licencias asignadas automáticamente tras compras de planes Security Pro, Rescate + Blindaje y Guardián.'),
-    clientRows.length ? table(['Cliente', 'Correo', 'Plan', 'Clave de Licencia', 'Estado', 'Acción'], clientRows)
+    clientRows.length ? table(['Cliente', 'Correo', 'Plan', 'Clave de Licencia', 'Dominio Vinculado', 'Estado', 'Acción'], clientRows)
       : h('div', { class: 'empty' }, 'Aún no hay licencias de clientes generadas.')));
 
   return root;

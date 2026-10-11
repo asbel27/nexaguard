@@ -3,7 +3,7 @@
  * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
  * Plugin URI: https://nexaguards.com
  * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
- * Version: 1.4.1
+ * Version: 1.4.2
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://nexaguards.com
  * License: GPLv2 or later
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.4.1');
+define('NEXAGUARD_VERSION', '1.4.2');
 define('NEXAGUARD_FILE', __FILE__);
 define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
 define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
@@ -496,8 +496,22 @@ class NexaGuard_Plugin {
 
         $license_key = isset($_POST['license_key']) ? sanitize_text_field(trim($_POST['license_key'])) : '';
         if (empty($license_key)) {
+            // Notificar a la nube de NexaGuard para liberar el dominio
+            $prev_data = get_option('nexaguard_license_data', array());
+            $prev_key = !empty($prev_data['key']) ? $prev_data['key'] : '';
+            if (!empty($prev_key)) {
+                @wp_remote_post('https://www.nexaguards.com/api/license/deactivate', array(
+                    'timeout' => 8,
+                    'headers' => array('Content-Type' => 'application/json'),
+                    'body'    => wp_json_encode(array(
+                        'key'    => $prev_key,
+                        'domain' => home_url()
+                    ))
+                ));
+            }
+
             delete_option('nexaguard_license_data');
-            wp_send_json_success(array('status' => 'inactive', 'message' => 'Licencia desvinculada.'));
+            wp_send_json_success(array('status' => 'inactive', 'message' => 'Licencia desvinculada exitosamente.'));
         }
 
         // Consultar API en https://www.nexaguards.com/api/license/validate
@@ -511,36 +525,32 @@ class NexaGuard_Plugin {
         ));
 
         if (!is_wp_error($response)) {
+            $code = wp_remote_retrieve_response_code($response);
             $body = wp_remote_retrieve_body($response);
             $data = json_decode($body, true);
-            if ($data && isset($data['valid'])) {
+
+            if ($code === 200 && $data && !empty($data['valid'])) {
                 $data['key'] = $license_key;
                 update_option('nexaguard_license_data', $data);
                 wp_send_json_success($data);
                 return;
             }
+
+            // Si el servidor de NexaGuard rechazó la clave (403 ya en uso en otro dominio, 404 no existe, 400 inválida)
+            $error_message = (!empty($data) && !empty($data['message'])) ? $data['message'] : 'La clave de licencia fue rechazada por NexaGuard Cloud.';
+            delete_option('nexaguard_license_data');
+            wp_send_json_error(array(
+                'message' => $error_message,
+                'code'    => 'license_rejected'
+            ));
+            return;
         }
 
-        // Modo offline / fallback seguro con cálculo de periodicidad
-        $is_annual = (stripos($license_key, 'ANNUAL') !== false);
-        $days = $is_annual ? 365 : 30;
-        $exp_time = time() + ($days * 86400);
-
-        $data = array(
-            'valid'             => true,
-            'status'            => 'active',
-            'plan'              => $is_annual ? 'Licencia Anual (1 Año) · NexaGuard Pro' : 'Plan NexaGuard Security Pro (Mensual)',
-            'period'            => $is_annual ? 'annual' : 'monthly',
-            'days_left'         => $days,
-            'expires_at'        => $exp_time * 1000,
-            'expires_formatted' => date('d/m/Y', $exp_time),
-            'notice'            => 'Licencia oficial verificada. Escudo de firmas y radar 24h activos.',
-            'renew_url'         => 'https://nexaguards.com/#planes',
-            'key'               => $license_key
-        );
-
-        update_option('nexaguard_license_data', $data);
-        wp_send_json_success($data);
+        // Si falló por error de conexión de red hacia nexaguards.com:
+        wp_send_json_error(array(
+            'message' => 'No se pudo conectar con el servidor de licencias en nexaguards.com. Comprueba la conexión a Internet de tu servidor.',
+            'code'    => 'connection_error'
+        ));
     }
 
     public function admin_footer_text($text) {
