@@ -1407,6 +1407,11 @@ AV.radar = async function () {
     var resJail = await api('GET', '/api/admin/waf/jail');
     if (resJail && resJail.jailed) jailed = resJail.jailed;
   } catch (e) {}
+  var sentinelData = null;
+  try {
+    var resSent = await api('GET', '/api/admin/sentinel/status');
+    if (resSent && resSent.status) sentinelData = resSent.status;
+  } catch (e) {}
 
   var audioEnabled = false;
   function playSonarPing() {
@@ -1794,6 +1799,95 @@ AV.radar = async function () {
       evRows.length ? table(['Hora', 'IP Origen', 'País', 'Ruta Solicitada', 'Regla de Detección', 'Respuesta Perimetral', 'Acción'], evRows)
         : h('div', { class: 'empty' }, 'No hay ataques registrados recientemente.')
     ));
+
+    // 3. Centinela de Integridad del Núcleo & Anti-Webshell Watchdog
+    var sentHeader = h('div', { style: 'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px' },
+      h('div', null,
+        h('div', { style: 'display:flex;align-items:center;gap:10px' },
+          h('h3', { style: 'margin:0' }, '🛡️ Centinela de Integridad del Núcleo (Server Sentinel & Anti-Webshell)'),
+          pill(sentinelData && sentinelData.healthy ? ['Núcleo 100% Intacto', 'ok'] : ['Alteración Detectada', 'crit'])
+        ),
+        h('p', { class: 'hint', style: 'margin:4px 0 0' }, 'Vigilancia criptográfica continua (SHA-256) de los archivos vitales del servidor Node.js y detección en tiempo real de infiltración de scripts (.php, .sh, webshells).')
+      ),
+      h('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' },
+        h('button', { class: 'btn btn-y sm', type: 'button', on: {
+          click: async function () {
+            try {
+              var r = await api('POST', '/api/admin/sentinel/verify');
+              if (r && r.audit) {
+                toast(r.audit.healthy ? '✓ Núcleo verificado: 100% intacto.' : '⚠️ Alerta: Se detectaron alteraciones.');
+                await reloadWafData();
+              }
+            } catch (e) { toast(e.message); }
+          }
+        } }, '🔍 Auditar Núcleo Ahora'),
+        h('button', { class: 'btn btn-o sm', type: 'button', on: {
+          click: async function () {
+            if (!confirm('¿Establecer los archivos actuales como la nueva línea base autorizada? Haz esto solo después de realizar actualizaciones legítimas.')) return;
+            try {
+              var r = await api('POST', '/api/admin/sentinel/rebaseline');
+              toast(r.message || 'Línea base actualizada.');
+              await reloadWafData();
+            } catch (e) { toast(e.message); }
+          }
+        } }, '🔄 Actualizar Línea Base')
+      )
+    );
+
+    var sentRows = (sentinelData && sentinelData.monitoredFiles ? sentinelData.monitoredFiles : []).map(function (f) {
+      return {
+        cells: [
+          h('b', { style: 'font-family:var(--fm);color:var(--yellow)' }, f.path),
+          f.category || 'Sistema',
+          h('code', { style: 'font-family:var(--fm);font-size:.76rem;color:var(--cyan)' }, f.hashShort + '…'),
+          (f.size ? Math.round(f.size / 1024 * 10) / 10 + ' KB' : '—'),
+          h('span', { class: 'pill ok', style: 'font-size:.74rem' }, 'Verificado')
+        ]
+      };
+    });
+
+    var sentCard = h('div', { class: 'card' }, sentHeader);
+
+    if (sentinelData && sentinelData.rogues && sentinelData.rogues.length) {
+      sentCard.appendChild(h('div', { class: 'banner crit', style: 'margin-bottom:14px' },
+        ico('alert'),
+        h('div', null,
+          h('b', null, 'ALERTA CRÍTICA: Archivo intruso / no autorizado detectado en el servidor: '),
+          sentinelData.rogues.map(function (r) { return r.file + ' (' + r.reason + ')'; }).join(', ')
+        )
+      ));
+    }
+
+    if (sentinelData && sentinelData.tampered && sentinelData.tampered.length) {
+      sentCard.appendChild(h('div', { class: 'banner crit', style: 'margin-bottom:14px' },
+        ico('alert'),
+        h('div', null,
+          h('b', null, 'ALERTA DE MANIPULACIÓN: Se detectó alteración en archivo vital: '),
+          sentinelData.tampered.map(function (t) { return t.file + ' (' + t.reason + ')'; }).join(', ')
+        )
+      ));
+    }
+
+    sentCard.appendChild(sentRows.length
+      ? table(['Archivo Monitoreado', 'Categoría', 'Firma SHA-256', 'Tamaño', 'Estado'], sentRows)
+      : h('div', { class: 'empty' }, 'Iniciando centinela de archivos...')
+    );
+
+    // 4. Banner de Blindaje Antifraude de Membresías & Burp Suite Shield
+    var antifraudBanner = h('div', { class: 'card', style: 'border:1px solid rgba(61,232,164,.35);background:linear-gradient(135deg,rgba(6,22,60,.7),rgba(61,232,164,.05))' },
+      h('div', { style: 'display:flex;align-items:flex-start;gap:12px' },
+        h('span', { style: 'font-size:1.4rem;line-height:1' }, '🔒'),
+        h('div', { style: 'flex:1' },
+          h('h4', { style: 'margin:0 0 4px;color:var(--green);font-size:.95rem' }, 'Escudo Antifraude de Membresías & Protección Anti-Burp Suite'),
+          h('p', { class: 'hint', style: 'margin:0;line-height:1.5;color:#c8d4ff' },
+            'El sistema valida estrictamente que cada licencia corresponda a una orden pagada y activa en la base de datos (rechazando prefijos inventados o IDs manipulados con Burp Suite). Cada respuesta incluye una firma criptográfica HMAC-SHA256, se bloquean ataques de repetición (Replay Attacks) en transacciones y las IPs con intentos reiterados de falsificación son encarceladas automáticamente por el WAF.'
+          )
+        )
+      )
+    );
+
+    tablesContainer.appendChild(sentCard);
+    tablesContainer.appendChild(antifraudBanner);
   }
 
   renderTables();
@@ -1806,6 +1900,10 @@ AV.radar = async function () {
     try {
       var resJ = await api('GET', '/api/admin/waf/jail');
       if (resJ && resJ.jailed) jailed = resJ.jailed;
+    } catch (e) {}
+    try {
+      var resSent = await api('GET', '/api/admin/sentinel/status');
+      if (resSent && resSent.status) sentinelData = resSent.status;
     } catch (e) {}
     try {
       var resE = await api('GET', '/api/admin/waf/events');

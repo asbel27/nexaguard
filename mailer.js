@@ -5,7 +5,8 @@
    - Copia de seguridad y bienvenida automática al Cliente
    - Compatible con Resend HTTPS API (Render Free) y SMTP con Nodemailer
    ===================================================================== */
-const nodemailer = require('nodemailer');
+let nodemailer = null;
+try { nodemailer = require('nodemailer'); } catch {}
 
 function createMailer(options = {}) {
   const host = options.host || process.env.SMTP_HOST || 'smtp.titan.email';
@@ -22,7 +23,7 @@ function createMailer(options = {}) {
   const isConfigured = !!resendApiKey || !!(host && user && pass);
 
   let transporter = null;
-  if (!resendApiKey && isConfigured) {
+  if (!resendApiKey && isConfigured && nodemailer) {
     transporter = nodemailer.createTransport({
       host,
       port,

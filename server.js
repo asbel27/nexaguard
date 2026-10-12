@@ -21,6 +21,7 @@ const { CFG, runScan, parseTarget } = scanner;
 const { createStore } = require('./store.js');
 const { createApp } = require('./app.js');
 const { createWaf } = require('./waf.js');
+const { createSentinel } = require('./sentinel.js');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.zip': 'application/zip' };
 const SEC = { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'same-origin' };
@@ -36,8 +37,17 @@ function createServer(opts = {}) {
   const store = opts.store;
   if (!store) throw new Error('Falta opts.store. Usa createStore() + await store.load() antes de crear el servidor.');
   const waf = opts.waf || createWaf({ store, config: { trustProxy: CFG.trustProxy } });
+  const sentinel = opts.sentinel || createSentinel({
+    rootDir: path.resolve(__dirname),
+    waf,
+    onAlert: (alert) => {
+      console.warn('⚠️ [SENTINEL ALERT] Anomalía en integridad de archivos:', alert);
+    }
+  });
+  sentinel.startWatchdog();
+
   const app = createApp({
-    store, scanner, waf,
+    store, scanner, waf, sentinel,
     config: {
       trustProxy: CFG.trustProxy, maxConcurrent: CFG.maxConcurrent,
       secureCookie: process.env.SECURE_COOKIE === '1' ? true : process.env.SECURE_COOKIE === '0' ? false : null,
@@ -83,6 +93,15 @@ function createServer(opts = {}) {
     if (p.endsWith('/')) p += 'index.html';
     const file = path.normalize(path.join(staticDir, p));
     if (!file.startsWith(path.normalize(staticDir))) return sendJson(res, 403, { error: 'Prohibido' });
+
+    // Blindaje de archivos estáticos: Bloqueo estricto de dotfiles, archivos de entorno y extensiones peligrosas
+    const baseName = path.basename(file).toLowerCase();
+    const ext = path.extname(file).toLowerCase();
+    const forbiddenExts = ['.env', '.git', '.sql', '.bak', '.php', '.sh', '.py', '.bat', '.cmd', '.exe', '.yml', '.yaml', '.log'];
+    if (baseName.startsWith('.') || forbiddenExts.includes(ext) || (ext === '.json' && baseName !== 'info.json')) {
+      return sendJson(res, 403, { error: 'Acceso denegado por política de seguridad' });
+    }
+
     fs.readFile(file, (err, data) => {
       if (err) return sendJson(res, 404, { error: 'No encontrado' });
       const h = Object.assign({ 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' }, SEC);
@@ -124,7 +143,7 @@ function createServer(opts = {}) {
     });
   });
   server.requestTimeout = 0; server.headersTimeout = 20000; server.keepAliveTimeout = 5000;
-  return { server, app, store, waf };
+  return { server, app, store, waf, sentinel };
 }
 
 /* ---- Latido (keep-alive) ---- */

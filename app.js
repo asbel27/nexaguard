@@ -45,7 +45,7 @@ async function checkPw(pw, rec) {
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 const tempPassword = () => crypto.randomBytes(9).toString('base64').replace(/[+/=]/g, 'x').slice(0, 12);
 
-function createApp({ store, scanner, waf, config }) {
+function createApp({ store, scanner, waf, sentinel, config }) {
   const { db, save, id } = store;
   const cfg = Object.assign({ trustProxy: false, secureCookie: null, maxConcurrent: 4, schedulerMs: 15 * 60e3, cooldownMs: 45e3 }, config || {});
   let running = 0, dummy = null;
@@ -66,7 +66,7 @@ function createApp({ store, scanner, waf, config }) {
   }
   function clientIp(req) {
     if (cfg.trustProxy && req.headers['x-forwarded-for']) return String(req.headers['x-forwarded-for']).split(',')[0].trim();
-    return req.socket.remoteAddress || '0';
+    return (req.socket && req.socket.remoteAddress) || '0';
   }
   function limited(key, max, windowMs) {
     const now = T(), list = (buckets.get(key) || []).filter(t => t > now - windowMs);
@@ -680,14 +680,14 @@ function createApp({ store, scanner, waf, config }) {
     if (limited('pp-x|' + ip, 20, 3600e3)) return fail(res, 429, 'Demasiados intentos. Espera un momento.');
     hit('pp-x|' + ip);
 
-    // Esta orden de PayPal ya se procesó antes (doble clic, reintento de red, etc.):
-    // se responde con el mismo resultado SIN volver a pedirle nada a PayPal.
+    // Blindaje contra ataques de repetición (Replay Attacks con Burp Suite):
     const seen = db.paypalOrders[paypalOrderId];
     if (seen) {
-      const su = db.users.find(x => x.id === seen.userId);
-      if (!su) return fail(res, 409, 'Esa orden ya se procesó, pero la cuenta asociada ya no existe.');
-      const headers = user ? {} : startSession(req, res, su.id);
-      return send(res, 200, { ok: true, user: publicUser(su), alreadyProcessed: true }, headers);
+      if (user && user.id === seen.userId) {
+        const su = db.users.find(x => x.id === seen.userId);
+        return send(res, 200, { ok: true, user: publicUser(su), alreadyProcessed: true });
+      }
+      return fail(res, 409, 'Esta orden de PayPal ya fue procesada anteriormente.');
     }
 
     let cap;
@@ -727,9 +727,9 @@ function createApp({ store, scanner, waf, config }) {
     send(res, 201, { ok: true, user: publicUser(target), order: orderView(order), tempPassword: newTempPass }, headers);
   });
 
-  /* ---------- Validación de Licencias para el Plugin WordPress ---------- */
+  /* ---------- Validación de Licencias para el Plugin WordPress (Blindaje Antifraude & Anti-Burp) ---------- */
   route('POST', '/api/license/validate', null, (ctx) => {
-    const { body, res } = ctx;
+    const { req, res, body } = ctx, ip = clientIp(req);
     const key = clean(body.key || '', 60).toUpperCase();
     const rawDomain = clean(body.domain || '', 120).toLowerCase();
     const domain = rawDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '').trim();
@@ -737,20 +737,57 @@ function createApp({ store, scanner, waf, config }) {
     if (!key) return fail(res, 400, 'Clave de licencia requerida.');
     if (!domain) return fail(res, 400, 'Dominio web requerido para validar la licencia.');
 
-    const order = db.orders.find(o => (o.licenseKey === key || (o.id && key.includes(o.id.toUpperCase()))));
-    const isTestExpiring = key.startsWith('NXG-TEST-SOON') || key.includes('EXPIRING') || key.includes('SOON');
-    const isTestExpired = key.startsWith('NXG-TEST-EXPIRED') || key.includes('EXPIRED');
-    const isAnnual = key.startsWith('NXG-ANNUAL') || (order && order.plan === 'blindaje');
-    const isPro = key.startsWith('NXG-PRO') || (order && (order.plan === 'security_pro' || order.plan === 'guardian'));
+    // 1. Escudo Anti-Fuerza Bruta & Burp Suite Intruder
+    const bruteKey = 'lic_fail|' + ip;
+    if (limited(bruteKey, 12, 60e3)) {
+      if (waf && typeof waf.recordThreat === 'function') {
+        waf.recordThreat({
+          ip, method: 'POST', url: '/api/license/validate',
+          rule: 'BURP_SUITE_LICENSE_BRUTEFORCE', action: 'BLOCKED_403',
+          headers: req.headers
+        });
+      }
+      return fail(res, 429, 'Demasiados intentos fallidos de validación. IP registrada por WAF.');
+    }
 
-    if (!order && !isTestExpiring && !isTestExpired && !isAnnual && !isPro) {
+    // 2. Lista blanca estricta de licencias de prueba / administrativas (SIN comodines ni prefijos abiertos)
+    const ADMIN_DEMO_KEYS = new Set([
+      'NXG-PRO-ADMIN-MASTER',
+      'NXG-ANNUAL-ADMIN-MASTER',
+      'NXG-PRO-1SITE-TEST',
+      'NXG-TEST-SOON',
+      'NXG-TEST-EXPIRED'
+    ]);
+
+    const isAdminDemo = ADMIN_DEMO_KEYS.has(key);
+    // Búsqueda estricta en la base de datos: ÚNICAMENTE claves reales emitidas tras pago
+    const order = db.orders.find(o => o.licenseKey === key);
+
+    // Si no está en la base de datos y no es una clave demo explícita, es un intento de falsificación
+    if (!order && !isAdminDemo) {
+      hit(bruteKey);
       return fail(res, 404, 'Clave de licencia no reconocida en el sistema de NexaGuard.');
     }
 
+    // 3. Blindaje Antifraude: Si es una orden, DEBE estar pagada y activa
+    if (order) {
+      if (order.status === 'pending_payment' || order.status === 'cancelled') {
+        return fail(res, 403, 'Esta orden se encuentra pendiente de pago. La membresía no está activa.');
+      }
+      if (!order.paidAt && order.status !== 'active') {
+        return fail(res, 403, 'No se ha acreditado ningún pago para esta licencia.');
+      }
+    }
+
+    const isTestExpiring = key === 'NXG-TEST-SOON';
+    const isTestExpired = key === 'NXG-TEST-EXPIRED';
+    const isAnnual = key === 'NXG-ANNUAL-ADMIN-MASTER' || (order && order.plan === 'blindaje');
+    const isPro = !isAnnual;
+
     // Comprobación de vinculación por dominio (Monositio vs Multidominio)
-    const isMasterAdmin = key.includes('ADMIN-MASTER');
+    const isMasterAdmin = key === 'NXG-PRO-ADMIN-MASTER' || key === 'NXG-ANNUAL-ADMIN-MASTER';
     const isSingleTest = key === 'NXG-PRO-1SITE-TEST';
-    const isMultiDomain = !isSingleTest && ((order && (order.maxSites > 1 || order.plan === 'guardian')) || key.includes('MULTI') || isMasterAdmin || isTestExpiring || isTestExpired);
+    const isMultiDomain = !isSingleTest && ((order && (order.maxSites > 1 || order.plan === 'guardian')) || isMasterAdmin || isTestExpiring || isTestExpired);
     const maxAllowed = isMultiDomain ? (order ? (order.maxSites || 5) : 5) : 1;
 
     db.settings.licenseActivations = db.settings.licenseActivations || {};
@@ -846,6 +883,11 @@ function createApp({ store, scanner, waf, config }) {
     const status = isExpired ? 'expired' : isExpiringSoon ? 'expiring_soon' : 'active';
     const planName = isAnnual ? 'Licencia Anual (1 Año) · NexaGuard Pro' : 'Plan NexaGuard Security Pro (Mensual)';
 
+    // Firma criptográfica HMAC-SHA256 contra manipulación de respuesta en Burp Suite
+    const hmacSecret = cfg.adminPassword || 'nexaguard-vault-integrity-key-2026';
+    const sigPayload = `${key}:${domain}:${status}:${expiresAt}`;
+    const signature = crypto.createHmac('sha256', hmacSecret).update(sigPayload).digest('hex');
+
     send(res, 200, {
       valid: !isExpired,
       status,
@@ -855,6 +897,7 @@ function createApp({ store, scanner, waf, config }) {
       expires_formatted: new Date(expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
       days_left: daysLeft,
       domain: domain,
+      signature: signature,
       notice: isExpired
         ? 'Tu suscripción a NexaGuard Security Pro ha vencido. Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
         : isExpiringSoon
@@ -879,7 +922,7 @@ function createApp({ store, scanner, waf, config }) {
     if (!key) return fail(res, 400, 'Clave requerida.');
 
     let released = false;
-    const order = db.orders.find(o => (o.licenseKey === key || (o.id && key.includes(o.id.toUpperCase()))));
+    const order = db.orders.find(o => o.licenseKey === key);
     if (order) {
       let list = Array.isArray(order.activatedDomains) ? order.activatedDomains : (order.activatedDomain ? [order.activatedDomain] : []);
       if (domain) {
@@ -1166,6 +1209,28 @@ function createApp({ store, scanner, waf, config }) {
     record(ctx.user.name, null, 'Registros de ataques del WAF reiniciados', 'info');
     save();
     send(ctx.res, 200, { ok: true, message: 'Historial de ataques limpiado.' });
+  });
+
+  /* ---------- Centinela de Integridad del Núcleo (Server Sentinel) ---------- */
+  route('GET', '/api/admin/sentinel/status', 'admin', (ctx) => {
+    if (!sentinel) return send(ctx.res, 200, { ok: true, status: { healthy: true, status: 'NO_ACTIVO' } });
+    send(ctx.res, 200, { ok: true, status: sentinel.getStatus() });
+  });
+
+  route('POST', '/api/admin/sentinel/verify', 'admin', (ctx) => {
+    if (!sentinel) return fail(ctx.res, 500, 'Centinela no inicializado.');
+    const audit = sentinel.verifyIntegrity();
+    record(ctx.user.name, null, 'Auditoría de integridad del servidor ejecutada: ' + (audit.healthy ? '100% Intacto' : 'Alteraciones detectadas'), audit.healthy ? 'info' : 'alert');
+    save();
+    send(ctx.res, 200, { ok: true, audit });
+  });
+
+  route('POST', '/api/admin/sentinel/rebaseline', 'admin', (ctx) => {
+    if (!sentinel) return fail(ctx.res, 500, 'Centinela no inicializado.');
+    const res = sentinel.captureBaseline();
+    record(ctx.user.name, null, 'Nueva línea base criptográfica SHA-256 establecida (' + res.totalFiles + ' archivos protegidos)', 'info');
+    save();
+    send(ctx.res, 200, { ok: true, message: 'Línea base criptográfica actualizada con éxito.', baseline: res });
   });
 
   /* ---------- Entrada: devuelve true si la petición fue para /api ---------- */
