@@ -1158,6 +1158,41 @@ class NexaGuard_Scanner {
     }
 
     /**
+     * Validador Forense Heurístico: Comment2Shell (CVE-2026-93485)
+     * Discrimina sintácticamente si un atributo href="javascript:..." contiene
+     * una carga útil de explotación ejecutable real o si es un enlace nulo de interfaz inofensivo (ej: Loginizer).
+     */
+    private function is_dangerous_comment2shell($snippet) {
+        if (!preg_match('/javascript:\s*([^"\'><\r\n\s]+|\'[^\']*\'|"[^"]*")/i', $snippet, $m)) {
+            return false;
+        }
+        $payload = trim($m[1], " \t\n\r\0\x0B'\"");
+        if (empty($payload) || preg_match('/^(void\s*\(?\s*0\s*\)?|;|#|void|return\s+false\s*;?|history\.(back|go)\s*\(\s*-?1?\s*\))?$/i', $payload)) {
+            return false;
+        }
+        $has_execution_target = (bool) preg_match('/(eval|alert|fetch|document|window|location|XMLHttpRequest|script|atob|fromCharCode|String\.fromCharCode|\bFunction\b|\bexecScript\b|\bsetTimeout\b|\bsetInterval\b)/i', $payload);
+        $has_active_expression = (bool) preg_match('/[\(\$\+\=\[]/', $payload);
+        return ($has_execution_target && $has_active_expression);
+    }
+
+    /**
+     * Validador Forense Heurístico: Falso Captcha Turnstile (ClearFake)
+     * Verifica si existe ingeniería social de portapapeles (PowerShell / Win+R) o si es un widget legítimo.
+     */
+    private function is_dangerous_fake_captcha($content, $snippet) {
+        return (bool) preg_match('/(powershell|clipboard\.writeText|execCommand\s*\(\s*[\'"]copy[\'"]|fake-turnstile|verify-turnstile-overlay)/i', $content);
+    }
+
+    /**
+     * Validador Forense Heurístico: Formjacking / Magecart
+     * Comprueba si el destino de la petición es una pasarela certificada o un servidor sospechoso externo.
+     */
+    private function is_dangerous_formjacking($content, $snippet) {
+        $is_official_gateway = (bool) preg_match('/(api\.stripe\.com|paypal\.com|mercadopago\.com|authorizenet\.com|squareup\.com|braintreegateway\.com|admin-ajax\.php|\/wp-json\/)/i', $snippet);
+        return !$is_official_gateway;
+    }
+
+    /**
      * Análisis forense de contenido de un archivo
      */
     private function check_file_content($filepath, $location = '') {
@@ -1205,11 +1240,6 @@ class NexaGuard_Scanner {
                 continue;
             }
 
-            // 3. Comment2Shell (CVE-2026-93485) es un exploit de almacenamiento en BD (comentarios/posts) y archivos de Uploads.
-            // En código fuente PHP de plugins, temas y core, los desarrolladores escriben botones JS legítimos (location.reload(), window.print(), close notices).
-            if ($key === 'comment2shell_xss' && ($location === 'plugins' || $location === 'themes' || $location === 'core')) {
-                continue;
-            }
 
             // 4. Omitir falsos positivos en plugins oficiales y formularios con Cloudflare Turnstile
             if ($key === 'fake_captcha_turnstile' && (
@@ -1288,6 +1318,22 @@ class NexaGuard_Scanner {
             }
 
             if (preg_match($p['regex'], $content, $matches, PREG_OFFSET_CAPTURE)) {
+                $matched_raw = $matches[0][0];
+
+                // Validación Heurística Profunda de Carga Útil (Deep Payload Analyzer):
+                // Discrimina sintácticamente entre código legítimo de WordPress y malware activo.
+                if ($key === 'comment2shell_xss' && !$this->is_dangerous_comment2shell($matched_raw)) {
+                    continue; // No es un ataque: es un enlace de interfaz nulo o inofensivo.
+                }
+
+                if ($key === 'fake_captcha_turnstile' && !$this->is_dangerous_fake_captcha($content, $matched_raw)) {
+                    continue;
+                }
+
+                if ($key === 'magecart_formjacking' && !$this->is_dangerous_formjacking($content, $matched_raw)) {
+                    continue;
+                }
+
                 $offset = $matches[0][1];
                 $line = substr_count(substr($content, 0, $offset), "\n") + 1;
                 $snippet = substr($content, max(0, $offset - 40), 180);
@@ -1377,6 +1423,9 @@ class NexaGuard_Scanner {
                 $val = $row->option_value;
                 foreach ($this->patterns as $key => $p) {
                     if (preg_match($p['regex'], $val, $matches)) {
+                        if ($key === 'comment2shell_xss' && !$this->is_dangerous_comment2shell($matches[0])) {
+                            continue;
+                        }
                         $this->add_threat(array(
                             'id'          => md5('db_opt_' . $row->option_name . '_' . $key),
                             'category'    => 'db_' . $key,
@@ -1424,6 +1473,9 @@ class NexaGuard_Scanner {
                 $this->breakdown['database']['files']++;
                 foreach ($this->patterns as $key => $p) {
                     if (preg_match($p['regex'], $post->post_content, $matches)) {
+                        if ($key === 'comment2shell_xss' && !$this->is_dangerous_comment2shell($matches[0])) {
+                            continue;
+                        }
                         $this->add_threat(array(
                             'id'          => md5('post_' . $post->ID . '_' . $key),
                             'category'    => 'post_' . $key,
