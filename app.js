@@ -788,7 +788,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const isMasterAdmin = key === 'NXG-PRO-ADMIN-MASTER' || key === 'NXG-ANNUAL-ADMIN-MASTER';
     const isSingleTest = key === 'NXG-PRO-1SITE-TEST';
     const isMultiDomain = !isSingleTest && ((order && (order.maxSites > 1 || order.plan === 'guardian')) || isMasterAdmin || isTestExpiring || isTestExpired);
-    const maxAllowed = isMultiDomain ? (order ? (order.maxSites || 5) : 5) : 1;
+    const maxAllowed = isMasterAdmin ? 999 : (isMultiDomain ? (order ? (order.maxSites || 5) : 5) : 1);
 
     db.settings.licenseActivations = db.settings.licenseActivations || {};
 

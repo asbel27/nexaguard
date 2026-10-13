@@ -315,3 +315,4 @@ function createSentinel(opts = {}) {
 }
 
 module.exports = { createSentinel, CRITICAL_FILES };
+

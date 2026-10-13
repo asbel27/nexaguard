@@ -491,9 +491,13 @@ class NexaGuard_Plugin {
     }
 
     public function ajax_validate_license() {
-        check_ajax_referer('nexaguard_security_nonce', 'nonce');
+        if (!check_ajax_referer('nexaguard_security_nonce', 'nonce', false) && !check_ajax_referer('nexaguard_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Sesión o token de seguridad expirado. Por favor recarga la página e intenta de nuevo.'));
+            return;
+        }
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+            return;
         }
 
         $license_key = isset($_POST['license_key']) ? sanitize_text_field(trim($_POST['license_key'])) : '';
@@ -511,9 +515,10 @@ class NexaGuard_Plugin {
             $prev_key = !empty($prev_data['key']) ? $prev_data['key'] : '';
             if (!empty($prev_key)) {
                 @wp_remote_post('https://www.nexaguards.com/api/license/deactivate', array(
-                    'timeout' => 8,
-                    'headers' => array('Content-Type' => 'application/json'),
-                    'body'    => wp_json_encode(array(
+                    'timeout'   => 8,
+                    'sslverify' => false,
+                    'headers'   => array('Content-Type' => 'application/json'),
+                    'body'      => wp_json_encode(array(
                         'key'    => $prev_key,
                         'domain' => $site_domain
                     ))
@@ -522,17 +527,27 @@ class NexaGuard_Plugin {
 
             delete_option('nexaguard_license_data');
             wp_send_json_success(array('status' => 'inactive', 'message' => 'Licencia desvinculada exitosamente.'));
+            return;
         }
 
         // Consultar API en https://www.nexaguards.com/api/license/validate
-        $response = wp_remote_post('https://www.nexaguards.com/api/license/validate', array(
-            'timeout' => 12,
-            'headers' => array('Content-Type' => 'application/json'),
-            'body'    => wp_json_encode(array(
+        $req_args = array(
+            'timeout'   => 15,
+            'sslverify' => true,
+            'headers'   => array('Content-Type' => 'application/json'),
+            'body'      => wp_json_encode(array(
                 'key'    => $license_key,
                 'domain' => $site_domain
             ))
-        ));
+        );
+
+        $response = wp_remote_post('https://www.nexaguards.com/api/license/validate', $req_args);
+
+        // Fallback si cURL local del hosting falla en la verificación de certificados SSL (frecuente en hosting compartido)
+        if (is_wp_error($response)) {
+            $req_args['sslverify'] = false;
+            $response = wp_remote_post('https://www.nexaguards.com/api/license/validate', $req_args);
+        }
 
         if (!is_wp_error($response)) {
             $code = wp_remote_retrieve_response_code($response);
@@ -546,8 +561,8 @@ class NexaGuard_Plugin {
                 return;
             }
 
-            // Si el servidor de NexaGuard rechazó la clave (403 ya en uso en otro dominio, 404 no existe, 400 inválida)
-            $error_message = (!empty($data) && !empty($data['message'])) ? $data['message'] : 'La clave de licencia fue rechazada por NexaGuard Cloud.';
+            // Si el servidor de NexaGuard rechazó la clave (403 límite alcanzado/otro dominio, 404 no existe, 400 inválida)
+            $error_message = (!empty($data) && !empty($data['message'])) ? $data['message'] : 'La clave de licencia fue rechazada por NexaGuard Cloud (Código HTTP ' . $code . ').';
             delete_option('nexaguard_license_data');
             wp_send_json_error(array(
                 'message' => $error_message,
@@ -557,8 +572,9 @@ class NexaGuard_Plugin {
         }
 
         // Si falló por error de conexión de red hacia nexaguards.com:
+        $err_msg = is_wp_error($response) ? $response->get_error_message() : 'Error de socket o red';
         wp_send_json_error(array(
-            'message' => 'No se pudo conectar con el servidor de licencias en nexaguards.com. Comprueba la conexión a Internet de tu servidor.',
+            'message' => 'No se pudo conectar con el servidor de licencias en nexaguards.com (' . $err_msg . '). Comprueba la conexión saliente de tu servidor.',
             'code'    => 'connection_error'
         ));
     }

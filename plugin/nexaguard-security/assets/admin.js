@@ -1814,6 +1814,48 @@ jQuery(document).ready(function ($) {
         });
     });
 
+    // ============ RECALCULAR LÍNEA BASE TRIPWIRE ============
+    $(document).on('click', '#btn-rebaseline-tripwire', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var $status = $('#tripwire-rebaseline-status');
+
+        $btn.prop('disabled', true).text('Recalculando...');
+        if ($status.length) $status.text('Generando nuevas firmas SHA-256...').css('color', '#38bdf8');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_rebaseline_tripwire',
+                nonce: nexaguardData.nonce
+            },
+            success: function (res) {
+                if (res && res.success) {
+                    var msg = (res.data && res.data.message) ? res.data.message : 'Línea base recalculada con éxito.';
+                    if ($status.length) $status.text('✓ ' + msg).css('color', '#3de8a4');
+                    showToast(msg, 'success', 'Tripwire Actualizado');
+                } else {
+                    var errMsg = (res && res.data && res.data.message) ? res.data.message : 'Error al recalcular la línea base.';
+                    if ($status.length) $status.text('✗ ' + errMsg).css('color', '#ff8ba0');
+                    showAlert(errMsg, 'error', 'Error Tripwire');
+                }
+            },
+            error: function (xhr) {
+                var err = 'Error al comunicar con WordPress.';
+                if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                    err = xhr.responseJSON.data.message;
+                }
+                if ($status.length) $status.text('✗ ' + err).css('color', '#ff8ba0');
+                showAlert(err, 'error', 'Error de Conexión');
+            },
+            complete: function () {
+                $btn.prop('disabled', false).text('🔄 Recalcular Línea Base Tripwire');
+            }
+        });
+    });
+
     // Control de Silencio / Sonido (botón de altavoz)
     $(document).on('click', '#btn-toggle-radar-sound', function (e) {
         e.preventDefault();
@@ -1953,8 +1995,16 @@ jQuery(document).ready(function ($) {
                     $msg.text(errTxt).css('color', '#ff8ba0');
                 }
             },
-            error: function () {
-                $msg.text('Error de conexión con el servidor.').css('color', '#ff8ba0');
+            error: function (xhr) {
+                var errTxt = 'Error de conexión con el servidor.';
+                if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                    errTxt = xhr.responseJSON.data.message;
+                } else if (xhr && xhr.status === 403) {
+                    errTxt = 'Sesión o token de seguridad expirado. Por favor recarga la página.';
+                } else if (xhr && xhr.statusText && xhr.statusText !== 'error') {
+                    errTxt += ' (' + xhr.status + ': ' + xhr.statusText + ')';
+                }
+                $msg.text(errTxt).css('color', '#ff8ba0');
             },
             complete: function () {
                 $btn.prop('disabled', false).text('Verificar y Guardar');
