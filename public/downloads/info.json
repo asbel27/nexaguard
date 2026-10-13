@@ -1,7 +1,7 @@
 {
   "name": "NexaGuard Security · Antimalware & Blindaje Forense",
   "slug": "nexaguard-security",
-  "version": "1.4.9",
+  "version": "1.5.0",
   "homepage": "https://www.nexaguards.com",
   "download_url": "https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/nexaguard-security.zip",
   "fallback_download_url": "https://www.nexaguards.com/downloads/nexaguard-security.zip",
@@ -10,6 +10,6 @@
   "last_updated": "2026-10-13",
   "sections": {
     "description": "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
-    "changelog": "<h4>Versión 1.4.9</h4><ul><li><strong>Eliminación de Falsos Positivos en Comment2Shell (CVE-2026-93485):</strong> Refinamiento del motor heurístico del escáner forense para discriminar botones legítimos e inofensivos de JavaScript (como el cierre de avisos de 2FA en Loginizer y plugins populares) de vectores reales de ataque XSS con inyección de código ejecutable.</li><li><strong>Desvinculación y Validación Centralizada de Licencias:</strong> Comunicación instantánea con la API de NexaGuard para liberar dominios al desvincular sin bloqueos residuales.</li><li><strong>Recálculo de Línea Base Tripwire en 1 Clic:</strong> Nuevo botón interactivo en la pestaña Blindaje & WAF para regenerar firmas criptográficas SHA-256 de archivos vitales y suprimir falsas alarmas.</li><li><strong>Cárcel Automática de IPs (Auto-Jail 24H) y Webhooks:</strong> Aislamiento de atacantes en tiempo real con alertas forenses a Discord, Slack y Teams.</li></ul>"
+    "changelog": "<h4>Versión 1.5.0</h4><ul><li><strong>Motor Heurístico de Inmunidad contra Falsos Positivos:</strong> Discriminación contextual avanzada que diferencia código benigno de WordPress (Loginizer, WooCommerce, Cloudflare Turnstile, pasarelas de pago oficiales, plugins de caché y librerías PDF/fuentes) de ataques maliciosos reales.</li><li><strong>Enfoque Quirúrgico de Detección:</strong> La regla Comment2Shell (CVE-2026-93485) ahora se enfoca estrictamente en bases de datos (comentarios/posts) y archivos subidos (Uploads), eliminando de raíz falsas alarmas sobre botones o plantillas JavaScript en código fuente PHP.</li><li><strong>Dropper Remoto Blindado:</strong> Exigencia estricta de extensiones ejecutables (.php, .phtml, .phar) para no interferir con descargas de fuentes tipográficas o paquetes de traducción legítimos.</li><li><strong>Desvinculación Instantánea de Licencias:</strong> Liberación automática de dominios en la nube de NexaGuard al desvincular sin dejar registros bloqueados.</li><li><strong>Recálculo de Línea Base Tripwire en 1 Clic:</strong> Regeneración de firmas SHA-256 en la pestaña WAF para silenciar alarmas erróneas.</li></ul>"
   }
 }

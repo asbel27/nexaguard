@@ -78,9 +78,9 @@ class NexaGuard_Scanner {
             'type'     => 'backdoor'
         ),
         'nulled_remote_dropper' => array(
-            'regex'    => '/(file_put_contents|fwrite)\s*\([^,]+,\s*(wp_remote_retrieve_body\s*\(|file_get_contents\s*\(\s*[\'"]https?:\/\/|curl_exec\s*\()/i',
-            'title'    => 'Dropper Remoto (Descarga y escritura de scripts)',
-            'desc'     => 'Mecanismo que descarga archivos de servidores externos de cibercriminales y los escribe como ejecutables locales.',
+            'regex'    => '/(file_put_contents|fwrite)\s*\([^,]*\.(php|phtml|phar|ico)[\'"]?\s*,\s*(wp_remote_retrieve_body\s*\(|file_get_contents\s*\(\s*[\'"]https?:\/\/|curl_exec\s*\()/i',
+            'title'    => 'Dropper Remoto (Descarga y escritura de scripts ejecutables)',
+            'desc'     => 'Mecanismo que descarga archivos ejecutables desde servidores externos y los escribe localmente en el servidor.',
             'severity' => 'crit',
             'type'     => 'dropper'
         ),
@@ -733,7 +733,12 @@ class NexaGuard_Scanner {
             if (preg_match('/(auto_prepend_file|auto_append_file)\s*=\s*[\'"]?([^\r\n\'"]+)[\'"]?/i', $content, $matches)) {
                 $target_target = trim($matches[2]);
                 // Si apunta a un script dentro de la instalación o fuera de vendor estándar
-                if (!empty($target_target) && stripos($target_target, 'wordfence-waf.php') === false) {
+                if (!empty($target_target) && 
+                    stripos($target_target, 'wordfence-waf.php') === false && 
+                    stripos($target_target, 'ninjafirewall') === false && 
+                    stripos($target_target, 'malcare') === false &&
+                    stripos($target_target, 'secupress') === false
+                ) {
                     $this->add_threat(array(
                         'id'          => md5('php_config_prepend_' . $file),
                         'category'    => 'auto_prepend_hijack',
@@ -1200,23 +1205,85 @@ class NexaGuard_Scanner {
                 continue;
             }
 
-            // 3. Omitir falsos positivos en plugins oficiales de Cloudflare Turnstile
-            if ($key === 'fake_captcha_turnstile' && (strpos($rel, 'cloudflare') !== false || strpos($rel, 'turnstile') !== false)) {
+            // 3. Comment2Shell (CVE-2026-93485) es un exploit de almacenamiento en BD (comentarios/posts) y archivos de Uploads.
+            // En código fuente PHP de plugins, temas y core, los desarrolladores escriben botones JS legítimos (location.reload(), window.print(), close notices).
+            if ($key === 'comment2shell_xss' && ($location === 'plugins' || $location === 'themes' || $location === 'core')) {
                 continue;
             }
 
-            // 4. Omitir llamadas blockchain en plugins legítimos de Web3 / Crypto
-            if ($key === 'smart_contract_rpc' && (strpos($rel, 'web3') !== false || strpos($rel, 'crypto') !== false || strpos($rel, 'metamask') !== false)) {
+            // 4. Omitir falsos positivos en plugins oficiales y formularios con Cloudflare Turnstile
+            if ($key === 'fake_captcha_turnstile' && (
+                strpos($rel, 'cloudflare') !== false || 
+                strpos($rel, 'turnstile') !== false ||
+                strpos($rel, 'contact-form-7') !== false ||
+                strpos($rel, 'wpforms') !== false ||
+                strpos($rel, 'fluentform') !== false ||
+                strpos($rel, 'ninja-forms') !== false ||
+                strpos($rel, 'formidable') !== false ||
+                strpos($rel, 'gravityforms') !== false
+            )) {
                 continue;
             }
 
-            // 5. La manipulación de Core no aplica a los propios archivos del Core
-            if ($key === 'file_tampering_core' && $location === 'core') {
+            // 5. Omitir llamadas blockchain en plugins legítimos de Web3 / Crypto
+            if (($key === 'blockchain_c2_eth_rpc' || $key === 'smart_contract_rpc') && (
+                strpos($rel, 'web3') !== false || 
+                strpos($rel, 'crypto') !== false || 
+                strpos($rel, 'metamask') !== false ||
+                strpos($rel, 'coinbase') !== false ||
+                strpos($rel, 'binance') !== false
+            )) {
                 continue;
             }
 
-            // 6. Omitir falsos positivos de empaquetado en librerías de fuentes o vendor conocidas
-            if ($key === 'nulled_hex_octal_pack' && (strpos($rel, '/vendor/') !== false || strpos($rel, '/composer/') !== false || strpos($rel, 'ReduxFramework') !== false)) {
+            // 6. La manipulación de Core no aplica a los propios archivos del Core ni a plugins de seguridad, caché o backup
+            if ($key === 'file_tampering_core' && (
+                $location === 'core' ||
+                strpos($rel, 'cache') !== false || 
+                strpos($rel, 'security') !== false || 
+                strpos($rel, 'backup') !== false || 
+                strpos($rel, 'wordfence') !== false || 
+                strpos($rel, 'loginizer') !== false ||
+                strpos($rel, 'ithemes') !== false ||
+                strpos($rel, 'better-wp-security') !== false ||
+                strpos($rel, 'updraftplus') !== false
+            )) {
+                continue;
+            }
+
+            // 7. Omitir falsos positivos en pasarelas de pago oficiales para Formjacking / Magecart
+            if ($key === 'magecart_formjacking' && (
+                strpos($rel, 'woocommerce') !== false ||
+                strpos($rel, 'stripe') !== false ||
+                strpos($rel, 'paypal') !== false ||
+                strpos($rel, 'square') !== false ||
+                strpos($rel, 'authorizenet') !== false ||
+                strpos($rel, 'braintree') !== false ||
+                strpos($rel, 'mercadopago') !== false
+            )) {
+                continue;
+            }
+
+            // 8. Omitir memoria compartida shmop legítima en plugins de caché y optimización de rendimiento
+            if ($key === 'shared_memory_persistence' && (
+                strpos($rel, 'cache') !== false || 
+                strpos($rel, 'redis') !== false || 
+                strpos($rel, 'memcached') !== false || 
+                strpos($rel, 'litespeed') !== false ||
+                strpos($rel, 'rocket') !== false
+            )) {
+                continue;
+            }
+
+            // 9. Omitir empaquetado en librerías de fuentes, PDF o vendor conocidas (tcpdf, composer, etc.)
+            if ($key === 'nulled_hex_octal_pack' && (
+                strpos($rel, '/vendor/') !== false || 
+                strpos($rel, '/composer/') !== false || 
+                strpos($rel, 'ReduxFramework') !== false ||
+                strpos($rel, 'tcpdf') !== false ||
+                strpos($rel, 'fpdf') !== false ||
+                strpos($rel, 'dompdf') !== false
+            )) {
                 continue;
             }
 
@@ -1295,8 +1362,13 @@ class NexaGuard_Scanner {
 
         if ($options) {
             foreach ($options as $row) {
-                // Doble salvaguarda: ignorar cualquier opción interna o transitorio de NexaGuard
-                if (stripos($row->option_name, 'nexaguard') !== false) {
+                // Doble salvaguarda: ignorar cualquier opción interna de NexaGuard o tablas de reglas de plugins de seguridad
+                if (stripos($row->option_name, 'nexaguard') !== false ||
+                    stripos($row->option_name, 'wordfence') !== false ||
+                    stripos($row->option_name, 'loginizer') !== false ||
+                    stripos($row->option_name, 'ithemes') !== false ||
+                    stripos($row->option_name, 'sucuri') !== false
+                ) {
                     continue;
                 }
 
