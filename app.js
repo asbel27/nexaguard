@@ -926,7 +926,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     if (order) {
       let list = Array.isArray(order.activatedDomains) ? order.activatedDomains : (order.activatedDomain ? [order.activatedDomain] : []);
       if (domain) {
-        list = list.filter(d => d.toLowerCase() !== domain.toLowerCase());
+        list = list.filter(d => String(d).toLowerCase().replace(/^www\./, '').split(':')[0] !== domain);
       } else {
         list = [];
       }
@@ -940,7 +940,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       let rawVal = db.settings.licenseActivations[key];
       let list = Array.isArray(rawVal) ? rawVal : [rawVal];
       if (domain) {
-        list = list.filter(d => String(d).toLowerCase() !== domain.toLowerCase());
+        list = list.filter(d => String(d).toLowerCase().replace(/^www\./, '').split(':')[0] !== domain);
       } else {
         list = [];
       }
@@ -1238,7 +1238,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const u = new URL(req.url, 'http://x'), pathname = u.pathname;
     if (!pathname.startsWith('/api/')) return false;
     try {
-      const isPublicExternalApi = pathname === '/api/license/validate' || pathname === '/api/threat-intel';
+      const isPublicExternalApi = pathname === '/api/license/validate' || pathname === '/api/license/deactivate' || pathname === '/api/threat-intel';
       const origin = req.headers.origin;
       if (isPublicExternalApi) {
         res.setHeader('Access-Control-Allow-Origin', '*');

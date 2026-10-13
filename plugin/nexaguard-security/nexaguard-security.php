@@ -515,9 +515,12 @@ class NexaGuard_Plugin {
             $prev_key = !empty($prev_data['key']) ? $prev_data['key'] : '';
             if (!empty($prev_key)) {
                 @wp_remote_post('https://www.nexaguards.com/api/license/deactivate', array(
-                    'timeout'   => 8,
+                    'timeout'   => 12,
                     'sslverify' => false,
-                    'headers'   => array('Content-Type' => 'application/json'),
+                    'headers'   => array(
+                        'Content-Type' => 'application/json',
+                        'Accept'       => 'application/json'
+                    ),
                     'body'      => wp_json_encode(array(
                         'key'    => $prev_key,
                         'domain' => $site_domain
