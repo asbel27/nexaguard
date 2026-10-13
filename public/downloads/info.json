@@ -1,7 +1,7 @@
 {
   "name": "NexaGuard Security · Antimalware & Blindaje Forense",
   "slug": "nexaguard-security",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "homepage": "https://www.nexaguards.com",
   "download_url": "https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/nexaguard-security.zip",
   "fallback_download_url": "https://www.nexaguards.com/downloads/nexaguard-security.zip",
@@ -10,6 +10,6 @@
   "last_updated": "2026-10-13",
   "sections": {
     "description": "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
-    "changelog": "<h4>Versión 1.4.8</h4><ul><li><strong>Reparación de Licencia Multisitio & Conexión SSL:</strong> Corrección en la validación remota con la nube de NexaGuard para evitar errores de conexión por certificados en hostings compartidos y soporte ilimitado para licencias maestras de administración.</li><li><strong>Recálculo de Línea Base Tripwire en 1 Clic:</strong> Nuevo botón interactivo en la pestaña Blindaje & WAF para regenerar firmas criptográficas SHA-256 de wp-config.php, .htaccess e index.php, eliminando falsos positivos y silenciando alarmas erróneas.</li><li><strong>Cárcel Automática de IPs por Reincidencia (IP Auto-Jail 24H):</strong> Aísla perimetralmente durante 24 horas a cualquier atacante con 3 o más intentos de intrusión.</li><li><strong>Alertas Instantáneas por Webhook:</strong> Notificaciones forenses a Discord, Slack y Teams en tiempo real.</li><li><strong>Blindaje Anti-Burp Suite & Anti-Manipulación:</strong> Protección contra alteración de solicitudes y falsificación de membresías.</li></ul>"
+    "changelog": "<h4>Versión 1.4.9</h4><ul><li><strong>Eliminación de Falsos Positivos en Comment2Shell (CVE-2026-93485):</strong> Refinamiento del motor heurístico del escáner forense para discriminar botones legítimos e inofensivos de JavaScript (como el cierre de avisos de 2FA en Loginizer y plugins populares) de vectores reales de ataque XSS con inyección de código ejecutable.</li><li><strong>Desvinculación y Validación Centralizada de Licencias:</strong> Comunicación instantánea con la API de NexaGuard para liberar dominios al desvincular sin bloqueos residuales.</li><li><strong>Recálculo de Línea Base Tripwire en 1 Clic:</strong> Nuevo botón interactivo en la pestaña Blindaje & WAF para regenerar firmas criptográficas SHA-256 de archivos vitales y suprimir falsas alarmas.</li><li><strong>Cárcel Automática de IPs (Auto-Jail 24H) y Webhooks:</strong> Aislamiento de atacantes en tiempo real con alertas forenses a Discord, Slack y Teams.</li></ul>"
   }
 }

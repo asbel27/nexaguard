@@ -187,7 +187,7 @@ class NexaGuard_Scanner {
             'type'     => 'clickfix'
         ),
         'comment2shell_xss' => array(
-            'regex'    => '/(<[a-z0-9_-]+(\s+[a-z0-9_-]+(\s*=\s*([\'"][^\'"]*[\r\n]+[^\'"]*[\'"]|[^\s>]+))?)*\s*(href|src|action)\s*=\s*[\'"]?\s*javascript:(?!\s*(void\s*\(\s*0\s*\)|;|void\s*0|history\.(back|go)\s*\(\s*-?1?\s*\)|return\s+false\s*;?)\s*[\'"]?)|\bhref\s*=\s*[\r\n]+\s*[\'"]?\s*javascript:|<[a-z]+[^>]*[\r\n]+[^>]*\bjavascript:(?!\s*(void\s*\(\s*0\s*\)|;|void\s*0|history\.(back|go)\s*\(\s*-?1?\s*\)|return\s+false\s*;?)\s*[\'"]?)(alert|eval|fetch|location|document|window|XMLHttpRequest|script|atob|fromCharCode|\(|\$|\+))/is',
+            'regex'    => '/(<[a-z0-9_-]+[^>]*[\r\n]+[^>]*\b(href|src|action)\s*=\s*[\'"]?\s*javascript:(?!\s*(void\s*\(\s*0\s*\)|;|void\s*0|#|history\.(back|go)\s*\(\s*-?1?\s*\)|return\s+false\s*;?|[\'"])\s*[\'"]?)[^\'\"\s>]*\s*(alert|eval|fetch|location|document|window|XMLHttpRequest|script|atob|fromCharCode|\(|\$|\+)|<[a-z0-9_-]+[^>]*\b(href|src|action)\s*=\s*[\r\n]+\s*[\'"]?\s*javascript:(?!\s*(void\s*\(\s*0\s*\)|;|void\s*0|#|history\.(back|go)\s*\(\s*-?1?\s*\)|return\s+false\s*;?|[\'"])\s*[\'"]?)[^\'\"\s>]*\s*(alert|eval|fetch|location|document|window|XMLHttpRequest|script|atob|fromCharCode|\(|\$|\+))/is',
             'title'    => 'Explotación Comment2Shell / XSS con Salto de Línea (CVE-2026-93485)',
             'desc'     => 'Vulnerabilidad reportada por Patchstack que burla el filtrado KSES mediante saltos de línea dentro de atributos HTML para ejecutar JavaScript en la sesión del administrador.',
             'severity' => 'crit',
