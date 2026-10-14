@@ -213,7 +213,7 @@ $rollback_count = count($backup_history);
                     <span id="status-icon"><?php echo ($last_report && $last_report['threats_count'] > 0) ? '⚠️' : '✓'; ?></span>
                 </div>
                 <div>
-                    <h3 id="status-heading">
+                    <h3 id="status-heading" style="letter-spacing: 0.6px; word-spacing: 2px; line-height: 1.45; font-weight: 700;">
                         <?php 
                         if (!$last_report) {
                             echo 'Listo para Iniciar Análisis en Tiempo Real';
@@ -234,7 +234,7 @@ $rollback_count = count($backup_history);
                         ?>
                     </p>
                     <div class="scan-card-actions" style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                        <button type="button" id="btn-start-scan" class="btn-ng btn-ng-primary">
+                        <button type="button" id="btn-start-scan" class="btn-ng btn-ng-primary" style="letter-spacing: 0.4px; word-spacing: 1.5px;">
                             ⚡ Iniciar Análisis Forense
                         </button>
                         <button type="button" id="btn-reset-scan" class="btn-ng btn-ng-outline" title="Borrar historial anterior e iniciar vista limpia">

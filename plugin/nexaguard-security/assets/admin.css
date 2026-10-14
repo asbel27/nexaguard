@@ -223,6 +223,8 @@
     text-decoration: none;
     transition: all 0.2s ease;
     border: 1px solid transparent;
+    letter-spacing: 0.3px;
+    word-spacing: 1px;
 }
 
 .btn-ng.sm {
@@ -374,12 +376,15 @@
     border-color: #3de8a4;
 }
 
-.summary-left h3 {
-    margin: 0 0 8px;
-    font-size: 1.45rem;
-    font-weight: 800;
+.summary-left h3,
+#status-heading {
+    margin: 0 0 10px;
+    font-size: 1.4rem;
+    font-weight: 700;
     color: #ffffff !important;
-    letter-spacing: -0.3px;
+    letter-spacing: 0.6px !important;
+    word-spacing: 2.5px !important;
+    line-height: 1.45 !important;
 }
 
 .status-desc-text {
