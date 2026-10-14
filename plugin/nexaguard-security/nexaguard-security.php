@@ -139,8 +139,10 @@ class NexaGuard_Plugin {
             return;
         }
 
-        // Ejecutar re-verificación cada 12 horas mediante transient
-        if (get_transient('nexaguard_license_sync_lock')) {
+        // Si estamos dentro del panel de NexaGuard, sincronizar cada 5 minutos; en el resto de WordPress, cada 12 horas
+        $is_nexaguard_page = (isset($_GET['page']) && strpos(sanitize_text_field($_GET['page']), 'nexaguard') !== false);
+        $sync_lock_key = $is_nexaguard_page ? 'nexaguard_lic_sync_quick' : 'nexaguard_license_sync_lock';
+        if (get_transient($sync_lock_key)) {
             return;
         }
 
@@ -151,7 +153,7 @@ class NexaGuard_Plugin {
         $site_domain = strtolower(preg_replace('/^www\./i', '', trim(explode(':', (string)$raw_host)[0])));
 
         // Bloqueo temporal para no saturar con peticiones en cada recarga
-        set_transient('nexaguard_license_sync_lock', 1, 12 * HOUR_IN_SECONDS);
+        set_transient($sync_lock_key, 1, $is_nexaguard_page ? 300 : 12 * HOUR_IN_SECONDS);
 
         $response = wp_remote_post('https://www.nexaguards.com/api/license/validate', array(
             'timeout'   => 12,
@@ -582,12 +584,18 @@ class NexaGuard_Plugin {
         $site_domain = strtolower(preg_replace('/^www\./i', '', trim(explode(':', (string)$raw_host)[0])));
 
         if (empty($license_key)) {
-            // Notificar a la nube de NexaGuard para liberar este dominio
             $prev_data = get_option('nexaguard_license_data', array());
             $prev_key = !empty($prev_data['key']) ? $prev_data['key'] : '';
+
+            // 1. Borrar de inmediato en la base de datos local de WordPress (garantía instantánea)
+            delete_option('nexaguard_license_data');
+            delete_transient('nexaguard_license_sync_lock');
+            delete_transient('nexaguard_license_revoked_notice');
+
+            // 2. Notificar a la nube de NexaGuard para liberar este dominio
             if (!empty($prev_key)) {
                 @wp_remote_post('https://www.nexaguards.com/api/license/deactivate', array(
-                    'timeout'   => 12,
+                    'timeout'   => 8,
                     'sslverify' => false,
                     'headers'   => array(
                         'Content-Type' => 'application/json',
@@ -600,9 +608,6 @@ class NexaGuard_Plugin {
                 ));
             }
 
-            delete_option('nexaguard_license_data');
-            delete_transient('nexaguard_license_sync_lock');
-            delete_transient('nexaguard_license_revoked_notice');
             wp_send_json_success(array('status' => 'inactive', 'message' => 'Licencia desvinculada exitosamente.'));
             return;
         }
