@@ -732,7 +732,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const { req, res, body } = ctx, ip = clientIp(req);
     const key = clean(body.key || '', 60).toUpperCase();
     const rawDomain = clean(body.domain || '', 120).toLowerCase();
-    const domain = rawDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '').trim();
+    const domain = rawDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').split(':')[0].replace(/^www\./, '').trim();
 
     if (!key) return fail(res, 400, 'Clave de licencia requerida.');
     if (!domain) return fail(res, 400, 'Dominio web requerido para validar la licencia.');
@@ -967,9 +967,10 @@ function createApp({ store, scanner, waf, sentinel, config }) {
 
     const order = db.orders.find(o => (o.licenseKey === key || (o.id && key.includes(o.id.toUpperCase()))));
     if (order) {
+      const cleanDom = d => String(d).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').split(':')[0].replace(/^www\./, '').trim();
       if (domain) {
         let list = Array.isArray(order.activatedDomains) ? order.activatedDomains : (order.activatedDomain ? [order.activatedDomain] : []);
-        list = list.filter(d => d.toLowerCase() !== domain.toLowerCase());
+        list = list.filter(d => cleanDom(d) !== domain);
         order.activatedDomains = list;
         order.activatedDomain = list[0] || null;
       } else {
@@ -983,10 +984,11 @@ function createApp({ store, scanner, waf, sentinel, config }) {
 
     db.settings.licenseActivations = db.settings.licenseActivations || {};
     if (db.settings.licenseActivations[key]) {
+      const cleanDom = d => String(d).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').split(':')[0].replace(/^www\./, '').trim();
       if (domain) {
         let rawVal = db.settings.licenseActivations[key];
         let list = Array.isArray(rawVal) ? rawVal : [rawVal];
-        list = list.filter(d => String(d).toLowerCase() !== domain.toLowerCase());
+        list = list.filter(d => cleanDom(d) !== domain);
         if (list.length > 0) {
           db.settings.licenseActivations[key] = list;
         } else {

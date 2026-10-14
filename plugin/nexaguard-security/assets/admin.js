@@ -1938,6 +1938,8 @@ jQuery(document).ready(function ($) {
         showConfirm(
             '¿Deseas desvincular la licencia de este WordPress y regresar a la Edición Estándar?',
             function () {
+                var $btn = $('#btn-unlink-license');
+                $btn.prop('disabled', true).text('Desvinculando...');
                 $.ajax({
                     url: nexaguardData.ajax_url,
                     type: 'POST',

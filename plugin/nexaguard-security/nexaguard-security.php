@@ -67,6 +67,10 @@ class NexaGuard_Plugin {
 
         // Autoprotección activa: Verificación de Integridad del Núcleo NexaGuard (Self-Defense Anti-Tampering)
         add_action('admin_notices', array($this, 'check_plugin_integrity_notice'));
+
+        // Sincronización periódica de estado de licencia con NexaGuard Threat Cloud
+        add_action('admin_init', array($this, 'maybe_sync_license'));
+        add_action('admin_notices', array($this, 'check_license_revocation_notice'));
     }
 
     /**
@@ -116,6 +120,74 @@ class NexaGuard_Plugin {
             echo '<div class="notice notice-error" style="background:#2a1226 !important; border-left-color:#ff4560 !important; color:#ffffff !important; padding:14px 18px; margin:20px 0;">';
             echo '<p style="margin:0 0 6px; font-weight:800; font-size:1.05rem; color:#ff8ba0;">🚨 ALERTA DE AUTOPROTECCIÓN: SABOTAJE O ALTERACIÓN DETECTADA EN NEXAGUARD</p>';
             echo '<p style="margin:0; font-size:0.9rem; color:#e2eafc;">El sistema de auto-inmunidad detectó que los archivos de seguridad del plugin fueron alterados o parchados externamente (' . esc_html(implode(', ', $check['files'])) . '). Se recomienda reinstalar el plugin oficial desde <a href="https://nexaguards.com" target="_blank" style="color:#ffcf33; font-weight:700;">nexaguards.com</a> para restaurar la protección activa.</p>';
+            echo '</div>';
+        }
+    }
+
+    /**
+     * Sincronización periódica de estado de licencia con NexaGuard Threat Cloud.
+     * Si la licencia fue transferida a otro dominio o liberada en la nube,
+     * el plugin revoca inmediatamente el estado PRO en este sitio para evitar licencias duplicadas.
+     */
+    public function maybe_sync_license() {
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
+        }
+
+        $license = get_option('nexaguard_license_data', null);
+        if (empty($license) || empty($license['valid']) || empty($license['key'])) {
+            return;
+        }
+
+        // Ejecutar re-verificación cada 12 horas mediante transient
+        if (get_transient('nexaguard_license_sync_lock')) {
+            return;
+        }
+
+        $raw_host = wp_parse_url(home_url(), PHP_URL_HOST);
+        if (!$raw_host && !empty($_SERVER['HTTP_HOST'])) {
+            $raw_host = sanitize_text_field($_SERVER['HTTP_HOST']);
+        }
+        $site_domain = strtolower(preg_replace('/^www\./i', '', trim(explode(':', (string)$raw_host)[0])));
+
+        // Bloqueo temporal para no saturar con peticiones en cada recarga
+        set_transient('nexaguard_license_sync_lock', 1, 12 * HOUR_IN_SECONDS);
+
+        $response = wp_remote_post('https://www.nexaguards.com/api/license/validate', array(
+            'timeout'   => 12,
+            'sslverify' => false,
+            'headers'   => array('Content-Type' => 'application/json'),
+            'body'      => wp_json_encode(array(
+                'key'    => $license['key'],
+                'domain' => $site_domain
+            ))
+        ));
+
+        if (!is_wp_error($response)) {
+            $code = wp_remote_retrieve_response_code($response);
+            $body = wp_remote_retrieve_body($response);
+            $data = json_decode($body, true);
+
+            if ($code === 200 && !empty($data) && !empty($data['valid'])) {
+                $data['key'] = $license['key'];
+                update_option('nexaguard_license_data', $data);
+            } elseif ($code === 403 || $code === 404) {
+                // La licencia ya no pertenece a este dominio o fue liberada en la nube
+                delete_option('nexaguard_license_data');
+                delete_transient('nexaguard_license_sync_lock');
+                $msg = (!empty($data) && !empty($data['message'])) ? $data['message'] : 'Tu licencia NexaGuard PRO ha sido desvinculada o transferida a otro dominio en la nube.';
+                set_transient('nexaguard_license_revoked_notice', $msg, 120);
+            }
+        }
+    }
+
+    public function check_license_revocation_notice() {
+        $msg = get_transient('nexaguard_license_revoked_notice');
+        if ($msg) {
+            delete_transient('nexaguard_license_revoked_notice');
+            echo '<div class="notice notice-warning is-dismissible" style="background:#201910 !important; border-left-color:#ffaa00 !important; color:#ffffff !important; padding:14px 18px; margin:20px 0;">';
+            echo '<p style="margin:0 0 6px; font-weight:800; font-size:1.05rem; color:#ffaa00;">⚠️ NEXAGUARD SECURITY: LICENCIA DESVINCULADA EN LA NUBE</p>';
+            echo '<p style="margin:0; font-size:0.9rem; color:#e2eafc;">' . esc_html($msg) . '</p>';
             echo '</div>';
         }
     }
@@ -529,6 +601,8 @@ class NexaGuard_Plugin {
             }
 
             delete_option('nexaguard_license_data');
+            delete_transient('nexaguard_license_sync_lock');
+            delete_transient('nexaguard_license_revoked_notice');
             wp_send_json_success(array('status' => 'inactive', 'message' => 'Licencia desvinculada exitosamente.'));
             return;
         }
@@ -560,6 +634,8 @@ class NexaGuard_Plugin {
             if ($code === 200 && $data && !empty($data['valid'])) {
                 $data['key'] = $license_key;
                 update_option('nexaguard_license_data', $data);
+                delete_transient('nexaguard_license_sync_lock');
+                delete_transient('nexaguard_license_revoked_notice');
                 wp_send_json_success($data);
                 return;
             }
@@ -567,6 +643,8 @@ class NexaGuard_Plugin {
             // Si el servidor de NexaGuard rechazó la clave (403 límite alcanzado/otro dominio, 404 no existe, 400 inválida)
             $error_message = (!empty($data) && !empty($data['message'])) ? $data['message'] : 'La clave de licencia fue rechazada por NexaGuard Cloud (Código HTTP ' . $code . ').';
             delete_option('nexaguard_license_data');
+            delete_transient('nexaguard_license_sync_lock');
+            delete_transient('nexaguard_license_revoked_notice');
             wp_send_json_error(array(
                 'message' => $error_message,
                 'code'    => 'license_rejected'
