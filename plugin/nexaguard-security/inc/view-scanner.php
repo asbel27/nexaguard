@@ -1232,6 +1232,44 @@ $rollback_count = count($backup_history);
             </div>
         </div>
 
+        <!-- Contenedor Dinámico: Archivos Vitales Alterados & Consejo de Reconstrucción -->
+        <div id="sentinel-anomalies-card" class="ng-card" style="display:none; background:#1e1022; border:1.5px solid #ff4560; border-radius:14px; padding:20px 24px; margin-bottom:20px; box-shadow:0 8px 30px rgba(255,69,96,0.18);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px; margin-bottom:14px;">
+                <div style="flex:1; min-width:280px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="font-size:1.3rem;">🚨</span>
+                        <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#ff8ba0;">ARCHIVOS VITALES ALTERADOS EN EL NÚCLEO</h3>
+                    </div>
+                    <p style="margin:0; font-size:0.92rem; color:#ffd2dc; line-height:1.55;">
+                        <strong>Aviso de Integridad:</strong> El análisis de firmas detectó modificaciones o anomalías en los siguientes archivos críticos de WordPress. 
+                        Para garantizar la seguridad, evitar backdoors y preservar la integridad del sistema, <strong>se aconseja reconstruir estos archivos</strong> restaurando sus copias oficiales originales de WordPress.org.
+                    </p>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline" style="border-color:#ff8ba0; color:#ff8ba0; font-size:0.8rem; padding:6px 14px; font-weight:700;">
+                        🔄 Reinstalar Núcleo Oficial de WordPress
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tabla de Archivos Alterados -->
+            <div style="overflow-x:auto; background:#0e0818; border-radius:10px; border:1px solid rgba(255,69,96,0.25);">
+                <table class="ng-table" style="font-size:0.82rem; margin:0; width:100%;">
+                    <thead>
+                        <tr style="background:rgba(255,69,96,0.12); border-bottom:1px solid rgba(255,69,96,0.25);">
+                            <th style="color:#ff8ba0; padding:10px 14px;">Archivo Vital</th>
+                            <th style="color:#ff8ba0; padding:10px 14px;">Firma / Hash</th>
+                            <th style="color:#ff8ba0; padding:10px 14px;">Diagnóstico de Integridad</th>
+                            <th style="color:#ff8ba0; padding:10px 14px; text-align:right;">Acción Aconsejada</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sentinel-anomalies-tbody">
+                        <!-- Se rellena dinámicamente con JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Sección Inferior: Consola Táctica + Bóveda de Archivos Críticos -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;">
             <!-- Consola Táctica en Vivo -->

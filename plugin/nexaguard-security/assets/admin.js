@@ -2634,16 +2634,51 @@ jQuery(document).ready(function ($) {
                     $('#sentinel-kpi-files-count').text(d.intact_count + '/' + d.total);
                     $('#sentinel-kpi-anomalies').text(d.warnings.length);
 
+                    // 1. Mostrar u ocultar Tarjeta y Tabla de Archivos Vitales Alterados (con Consejo de Reconstrucción)
+                    if (d.has_anomalies && d.anomalies && d.anomalies.length > 0) {
+                        var anomHtml = '';
+                        d.anomalies.forEach(function (anom) {
+                            var actionBtn = '';
+                            if (anom.can_rebuild) {
+                                actionBtn = '<button type="button" class="btn-ng btn-ng-primary btn-sentinel-rebuild" data-file="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; border:none; border-radius:6px; cursor:pointer;" title="Descargar y restaurar la copia oficial limpia de WordPress.org">' +
+                                    '🛠️ Reconstruir Archivo Oficial</button>';
+                            } else if (anom.can_harden) {
+                                actionBtn = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;">' +
+                                    '🔒 Endurecer Permisos</button>';
+                            } else {
+                                actionBtn = '<a href="' + (d.reinstall_url || 'update-core.php') + '" class="btn-ng btn-ng-link" style="color:#ffcf33; font-weight:700; font-size:0.78rem;">🔄 Reinstalar Núcleo</a>';
+                            }
+
+                            anomHtml += '<tr style="border-bottom:1px solid rgba(255,69,96,0.15);">' +
+                                '<td style="padding:10px 14px;"><code style="color:#ff8ba0; font-weight:700; font-size:0.85rem;">' + anom.path + '</code></td>' +
+                                '<td style="padding:10px 14px; font-family:monospace; color:#8fa0cf; font-size:0.8rem;">' + (anom.hash || '—') + '</td>' +
+                                '<td style="padding:10px 14px;"><span style="color:#ff8ba0; font-weight:700;">' + (anom.verdict || 'Alteración detectada') + '</span></td>' +
+                                '<td style="padding:10px 14px; text-align:right;">' + actionBtn + '</td>' +
+                                '</tr>';
+                        });
+                        $('#sentinel-anomalies-tbody').html(anomHtml);
+                        $('#sentinel-anomalies-card').slideDown(250);
+                        $('#sentinel-curr-badge').html('⚠️ ANOMALÍA').css({ color: '#ff5f56', borderColor: 'rgba(255,95,86,0.5)', background: 'rgba(255,95,86,0.15)' });
+                    } else {
+                        $('#sentinel-anomalies-card').slideUp(200);
+                        $('#sentinel-curr-badge').html('✓ INTACTO').css({ color: '#3de8a4', borderColor: 'rgba(61,232,164,0.4)', background: 'rgba(61,232,164,0.18)' });
+                    }
+
+                    // 2. Renderizar Bóveda Vital Completa
                     if (d.files && d.files.length) {
                         sentinelFiles = d.files;
                         var rowsHtml = '';
                         d.files.forEach(function (file) {
                             var statusCol = file.exists
-                                ? '<span style="color:#3de8a4;font-weight:700;">✓ ' + (file.verdict || 'Intacto') + '</span>'
+                                ? (file.status === 'tampered'
+                                    ? '<span style="color:#ff8ba0;font-weight:700;">🚨 ' + (file.verdict || 'Modificado') + '</span>'
+                                    : (file.status === 'warning'
+                                        ? '<span style="color:#ffcf33;font-weight:700;">⚠️ ' + (file.verdict || 'Advertencia') + '</span>'
+                                        : '<span style="color:#3de8a4;font-weight:700;">✓ ' + (file.verdict || 'Intacto') + '</span>'))
                                 : '<span style="color:#ff8ba0;font-weight:700;">⚠️ Ausente</span>';
                             rowsHtml += '<tr>' +
                                 '<td><code>' + file.path + '</code></td>' +
-                                '<td><span class="badge-status-pill ' + (file.status === 'warning' ? 'danger' : 'ok') + '">' + file.perms + '</span></td>' +
+                                '<td><span class="badge-status-pill ' + (file.status === 'warning' || file.status === 'tampered' ? 'danger' : 'ok') + '">' + file.perms + '</span></td>' +
                                 '<td>' + statusCol + '</td>' +
                                 '</tr>';
                         });
@@ -2651,7 +2686,11 @@ jQuery(document).ready(function ($) {
                     }
 
                     if (force) {
-                        showToast('Inspección de integridad completada con éxito. Todos los archivos vitales verificados.', 'success', 'Sentinel Núcleo');
+                        if (d.has_anomalies) {
+                            showAlert('Atención: Se detectaron ' + d.warnings.length + ' anomalía(s) en archivos del núcleo. Revisa la tabla de reconstrucción aconsejada.', 'warning', 'Sentinel Alerta');
+                        } else {
+                            showToast('Inspección de integridad completada con éxito. Todos los archivos vitales verificados e intactos.', 'success', 'Sentinel Núcleo');
+                        }
                     }
                 }
             },
@@ -2740,6 +2779,46 @@ jQuery(document).ready(function ($) {
                 $btn.prop('disabled', false).text('🔒 Endurecer Permisos');
             }
         });
+    });
+
+    // Reconstruir archivo vital con copia oficial de WordPress.org
+    $(document).on('click', '.btn-sentinel-rebuild', function () {
+        var $btn = $(this);
+        var file = $btn.data('file');
+        var ngData = window.nexaguardData || window.nexaguard_data || {};
+
+        showConfirm(
+            '¿Deseas reconstruir el archivo /' + file + ' restaurando la copia oficial limpia original de WordPress.org? Se creará una copia de respaldo en cuarentena por seguridad.',
+            function () {
+                $btn.prop('disabled', true).text('Reconstruyendo...');
+                $.ajax({
+                    url: ngData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_sentinel_restore_file',
+                        file: file,
+                        nonce: ngData.nonce
+                    },
+                    success: function (res) {
+                        if (res.success && res.data) {
+                            showToast(res.data.message || 'Archivo reconstruido exitosamente.', 'success', 'Reconstrucción de Núcleo');
+                            runBackendSentinelScan(true);
+                        } else {
+                            var msg = (res && res.data && res.data.message) ? res.data.message : 'Error al reconstruir archivo.';
+                            showAlert(msg, 'warning', 'Aviso de Reconstrucción');
+                            $btn.prop('disabled', false).text('🛠️ Reconstruir Archivo Oficial');
+                        }
+                    },
+                    error: function () {
+                        showAlert('Error de conexión al intentar reconstruir el archivo.', 'danger', 'Error');
+                        $btn.prop('disabled', false).text('🛠️ Reconstruir Archivo Oficial');
+                    }
+                });
+            },
+            null,
+            { title: 'Reconstruir Archivo Vital', icon: '🛠️', btnOkText: 'Reconstruir Ahora' }
+        );
     });
 
     // Redimensionar canvas al cambiar tamaño de ventana

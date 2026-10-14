@@ -3,7 +3,7 @@
  * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
  * Plugin URI: https://nexaguards.com
  * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
- * Version: 1.5.1
+ * Version: 1.5.2
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://nexaguards.com
  * License: GPLv2 or later
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.5.1');
+define('NEXAGUARD_VERSION', '1.5.2');
 define('NEXAGUARD_FILE', __FILE__);
 define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
 define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
@@ -61,6 +61,7 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_revert_snapshot', array($this, 'ajax_revert_snapshot'));
         add_action('wp_ajax_nexaguard_sentinel_scan', array($this, 'ajax_sentinel_scan'));
         add_action('wp_ajax_nexaguard_sentinel_harden', array($this, 'ajax_sentinel_harden'));
+        add_action('wp_ajax_nexaguard_sentinel_restore_file', array($this, 'ajax_sentinel_restore_file'));
 
         // Aviso en el pie de página de administración
         add_filter('admin_footer_text', array($this, 'admin_footer_text'));
@@ -682,29 +683,48 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
+        global $wp_version;
+        $core_version = !empty($wp_version) ? $wp_version : get_bloginfo('version');
+        $locale = get_locale();
+
+        // Obtener checksums oficiales de WordPress.org para la versión instalada (caché de 12 horas)
+        $checksums = get_transient('nexaguard_wp_core_checksums_' . $core_version);
+        if ($checksums === false) {
+            $api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$core_version}&locale={$locale}";
+            $res = wp_remote_get($api_url, array('timeout' => 8, 'sslverify' => false));
+            if (!is_wp_error($res) && wp_remote_retrieve_response_code($res) === 200) {
+                $body = json_decode(wp_remote_retrieve_body($res), true);
+                if (!empty($body['checksums']) && is_array($body['checksums'])) {
+                    $checksums = $body['checksums'];
+                    set_transient('nexaguard_wp_core_checksums_' . $core_version, $checksums, 12 * HOUR_IN_SECONDS);
+                }
+            }
+        }
+
         $core_files = array(
-            'wp-config.php'                  => array('name' => 'wp-config.php', 'vital' => true),
-            '.htaccess'                      => array('name' => '.htaccess', 'vital' => true),
-            'index.php'                      => array('name' => 'index.php', 'vital' => true),
-            'wp-blog-header.php'             => array('name' => 'wp-blog-header.php', 'vital' => true),
-            'wp-load.php'                    => array('name' => 'wp-load.php', 'vital' => true),
-            'wp-settings.php'                => array('name' => 'wp-settings.php', 'vital' => true),
-            'wp-login.php'                   => array('name' => 'wp-login.php', 'vital' => true),
-            'wp-includes/version.php'        => array('name' => 'wp-includes/version.php', 'vital' => true),
-            'wp-includes/pluggable.php'      => array('name' => 'wp-includes/pluggable.php', 'vital' => true),
-            'wp-includes/class-wp-hook.php'  => array('name' => 'wp-includes/class-wp-hook.php', 'vital' => true),
-            'wp-includes/template-loader.php'=> array('name' => 'wp-includes/template-loader.php', 'vital' => true),
-            'wp-includes/functions.php'      => array('name' => 'wp-includes/functions.php', 'vital' => true),
-            'wp-includes/wp-db.php'          => array('name' => 'wp-includes/wp-db.php', 'vital' => true),
-            'wp-admin/admin.php'             => array('name' => 'wp-admin/admin.php', 'vital' => true),
-            'wp-admin/includes/file.php'     => array('name' => 'wp-admin/includes/file.php', 'vital' => true),
-            'wp-admin/includes/upgrade.php'  => array('name' => 'wp-admin/includes/upgrade.php', 'vital' => true),
-            'wp-content/index.php'           => array('name' => 'wp-content/index.php', 'vital' => true)
+            'wp-config.php'                  => array('name' => 'wp-config.php', 'vital' => true, 'is_custom' => true),
+            '.htaccess'                      => array('name' => '.htaccess', 'vital' => true, 'is_custom' => true),
+            'index.php'                      => array('name' => 'index.php', 'vital' => true, 'is_custom' => false),
+            'wp-blog-header.php'             => array('name' => 'wp-blog-header.php', 'vital' => true, 'is_custom' => false),
+            'wp-load.php'                    => array('name' => 'wp-load.php', 'vital' => true, 'is_custom' => false),
+            'wp-settings.php'                => array('name' => 'wp-settings.php', 'vital' => true, 'is_custom' => false),
+            'wp-login.php'                   => array('name' => 'wp-login.php', 'vital' => true, 'is_custom' => false),
+            'wp-includes/version.php'        => array('name' => 'wp-includes/version.php', 'vital' => true, 'is_custom' => false),
+            'wp-includes/pluggable.php'      => array('name' => 'wp-includes/pluggable.php', 'vital' => true, 'is_custom' => false),
+            'wp-includes/class-wp-hook.php'  => array('name' => 'wp-includes/class-wp-hook.php', 'vital' => true, 'is_custom' => false),
+            'wp-includes/template-loader.php'=> array('name' => 'wp-includes/template-loader.php', 'vital' => true, 'is_custom' => false),
+            'wp-includes/functions.php'      => array('name' => 'wp-includes/functions.php', 'vital' => true, 'is_custom' => false),
+            'wp-includes/wp-db.php'          => array('name' => 'wp-includes/wp-db.php', 'vital' => true, 'is_custom' => false),
+            'wp-admin/admin.php'             => array('name' => 'wp-admin/admin.php', 'vital' => true, 'is_custom' => false),
+            'wp-admin/includes/file.php'     => array('name' => 'wp-admin/includes/file.php', 'vital' => true, 'is_custom' => false),
+            'wp-admin/includes/upgrade.php'  => array('name' => 'wp-admin/includes/upgrade.php', 'vital' => true, 'is_custom' => false),
+            'wp-content/index.php'           => array('name' => 'wp-content/index.php', 'vital' => true, 'is_custom' => false)
         );
 
         $results = array();
         $clean_count = 0;
         $warnings = array();
+        $anomalies = array();
         $abs_root = wp_normalize_path(ABSPATH);
 
         foreach ($core_files as $rel_path => $meta) {
@@ -713,16 +733,21 @@ class NexaGuard_Plugin {
                 if ($rel_path === '.htaccess' && isset($_SERVER['SERVER_SOFTWARE']) && stripos($_SERVER['SERVER_SOFTWARE'], 'nginx') !== false) {
                     continue;
                 }
-                $results[] = array(
-                    'path'      => '/' . $rel_path,
-                    'exists'    => false,
-                    'size'      => 0,
-                    'perms'     => '0000',
-                    'mtime'     => 0,
-                    'hash'      => 'MISSING',
-                    'status'    => 'missing',
-                    'verdict'   => 'Archivo ausente'
+                $item = array(
+                    'path'        => '/' . $rel_path,
+                    'rel_path'    => $rel_path,
+                    'exists'      => false,
+                    'size'        => 0,
+                    'perms'       => '0000',
+                    'mtime'       => 0,
+                    'hash'        => 'MISSING',
+                    'status'      => 'missing',
+                    'can_rebuild' => !$meta['is_custom'],
+                    'verdict'     => 'Archivo vital ausente'
                 );
+                $results[] = $item;
+                $warnings[] = "Archivo vital ausente: /$rel_path";
+                $anomalies[] = $item;
                 continue;
             }
 
@@ -730,35 +755,164 @@ class NexaGuard_Plugin {
             $size = filesize($full_path);
             $mtime = filemtime($full_path);
             $hash = hash_file('sha256', $full_path);
+            $md5 = md5_file($full_path);
 
-            $is_safe = true;
-            if ($rel_path === 'wp-config.php' && intval($perms, 8) > intval('0644', 8)) {
-                $is_safe = false;
-                $warnings[] = "wp-config.php tiene permisos débiles ($perms). Se recomienda endurecer a 0440.";
+            $status = 'intact';
+            $verdict = 'Firma oficial verificada · Intacto';
+            $can_rebuild = false;
+
+            if ($rel_path === 'wp-config.php') {
+                if (intval($perms, 8) > intval('0644', 8)) {
+                    $status = 'warning';
+                    $verdict = "Permisos débiles ($perms). Requiere 0440.";
+                    $warnings[] = "wp-config.php tiene permisos vulnerables ($perms).";
+                    $anomalies[] = array(
+                        'path'        => '/' . $rel_path,
+                        'rel_path'    => $rel_path,
+                        'exists'      => true,
+                        'perms'       => $perms,
+                        'hash'        => substr($hash, 0, 16) . '…',
+                        'status'      => 'warning',
+                        'can_rebuild' => false,
+                        'can_harden'  => true,
+                        'verdict'     => "Permisos vulnerables ($perms) · Se aconseja endurecer a 0440"
+                    );
+                }
+            } elseif (!$meta['is_custom'] && !empty($checksums) && isset($checksums[$rel_path])) {
+                $expected_md5 = $checksums[$rel_path];
+                if ($md5 !== $expected_md5) {
+                    $status = 'tampered';
+                    $verdict = '🚨 Firma alterada (Código modificado)';
+                    $can_rebuild = true;
+                    $warnings[] = "El archivo vital /$rel_path fue alterado o modificado respecto a la versión oficial de WordPress $core_version.";
+                    $anomalies[] = array(
+                        'path'        => '/' . $rel_path,
+                        'rel_path'    => $rel_path,
+                        'exists'      => true,
+                        'perms'       => $perms,
+                        'hash'        => substr($hash, 0, 16) . '…',
+                        'status'      => 'tampered',
+                        'can_rebuild' => true,
+                        'verdict'     => 'Código alterado / Posible backdoor inyectado'
+                    );
+                }
             }
 
-            $clean_count++;
+            if ($status === 'intact') {
+                $clean_count++;
+            }
+
             $results[] = array(
-                'path'      => '/' . $rel_path,
-                'exists'    => true,
-                'size'      => $size,
-                'perms'     => $perms,
-                'mtime'     => $mtime,
-                'hash'      => substr($hash, 0, 16) . '…',
-                'full_hash' => $hash,
-                'status'    => $is_safe ? 'intact' : 'warning',
-                'verdict'   => $is_safe ? 'Firma oficial verificada · Intacto' : 'Permisos vulnerables'
+                'path'        => '/' . $rel_path,
+                'rel_path'    => $rel_path,
+                'exists'      => true,
+                'size'        => $size,
+                'perms'       => $perms,
+                'mtime'       => $mtime,
+                'hash'        => substr($hash, 0, 16) . '…',
+                'full_hash'   => $hash,
+                'status'      => $status,
+                'can_rebuild' => $can_rebuild,
+                'verdict'     => $verdict
             );
         }
 
+        $total = count($results);
+        $integrity_pct = $total > 0 ? round(($clean_count / $total) * 100) : 100;
+
         wp_send_json_success(array(
             'files'         => $results,
-            'total'         => count($results),
+            'anomalies'     => $anomalies,
+            'total'         => $total,
             'intact_count'  => $clean_count,
             'warnings'      => $warnings,
-            'integrity_pct' => 100,
+            'has_anomalies' => !empty($anomalies),
+            'integrity_pct' => $integrity_pct,
+            'wp_version'    => $core_version,
+            'reinstall_url' => admin_url('update-core.php'),
             'checked_at'    => current_time('H:i:s'),
             'timestamp'     => time()
+        ));
+    }
+
+    /**
+     * Reconstruir un archivo vital del núcleo restaurando la copia original oficial de WordPress.org
+     */
+    public function ajax_sentinel_restore_file() {
+        check_ajax_referer('nexaguard_security_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        $rel_path = isset($_POST['file']) ? sanitize_text_field(ltrim(trim($_POST['file']), '/\\')) : '';
+        if (empty($rel_path)) {
+            wp_send_json_error(array('message' => 'Ruta de archivo no especificada.'));
+        }
+
+        // Seguridad: NO permitir sobreescribir wp-config.php ni .htaccess para no alterar credenciales locales
+        if ($rel_path === 'wp-config.php' || $rel_path === '.htaccess') {
+            wp_send_json_error(array('message' => 'wp-config.php y .htaccess son archivos de configuración personalizada y no pueden reconstruirse automáticamente.'));
+        }
+
+        if (strpos($rel_path, '..') !== false) {
+            wp_send_json_error(array('message' => 'Ruta de archivo no válida.'));
+        }
+
+        global $wp_version;
+        $core_version = !empty($wp_version) ? $wp_version : get_bloginfo('version');
+        $abs_root = wp_normalize_path(ABSPATH);
+        $full_path = $abs_root . $rel_path;
+
+        // Descargar copia oficial limpia desde los repositorios certificados de WordPress
+        $download_urls = array(
+            "https://raw.githubusercontent.com/WordPress/WordPress/{$core_version}/{$rel_path}",
+            "https://core.svn.wordpress.org/tags/{$core_version}/{$rel_path}"
+        );
+
+        $clean_content = null;
+        foreach ($download_urls as $url) {
+            $res = wp_remote_get($url, array('timeout' => 12, 'sslverify' => false));
+            if (!is_wp_error($res) && wp_remote_retrieve_response_code($res) === 200) {
+                $body = wp_remote_retrieve_body($res);
+                if (!empty($body)) {
+                    $clean_content = $body;
+                    break;
+                }
+            }
+        }
+
+        if (empty($clean_content)) {
+            wp_send_json_error(array(
+                'message' => "No se pudo descargar la copia oficial de $rel_path para WordPress $core_version. Se aconseja reinstalar el núcleo desde Escritorio → Actualizaciones."
+            ));
+            return;
+        }
+
+        // Crear copia de seguridad en cuarentena antes de reemplazar
+        if (file_exists($full_path)) {
+            $quarantine_dir = WP_CONTENT_DIR . '/uploads/nexaguard-quarantine';
+            if (!is_dir($quarantine_dir)) {
+                @wp_mkdir_p($quarantine_dir);
+                @file_put_contents($quarantine_dir . '/.htaccess', 'Deny from all');
+            }
+            $backup_file = $quarantine_dir . '/' . basename($rel_path) . '.bak.' . time();
+            @copy($full_path, $backup_file);
+        }
+
+        $written = @file_put_contents($full_path, $clean_content);
+        if ($written === false) {
+            wp_send_json_error(array(
+                'message' => "No se pudo escribir en /$rel_path. Comprueba los permisos de archivo en tu servidor."
+            ));
+            return;
+        }
+
+        // Restablecer permisos seguros 0644
+        @chmod($full_path, 0644);
+
+        wp_send_json_success(array(
+            'message' => "¡Archivo /$rel_path reconstruido con éxito a su estado oficial original de WordPress $core_version!",
+            'file'    => '/' . $rel_path
         ));
     }
 
