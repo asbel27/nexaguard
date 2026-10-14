@@ -3,7 +3,7 @@
  * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
  * Plugin URI: https://nexaguards.com
  * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
- * Version: 1.5.2
+ * Version: 1.5.3
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://nexaguards.com
  * License: GPLv2 or later
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.5.2');
+define('NEXAGUARD_VERSION', '1.5.3');
 define('NEXAGUARD_FILE', __FILE__);
 define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
 define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
@@ -689,15 +689,30 @@ class NexaGuard_Plugin {
 
         // Obtener checksums oficiales de WordPress.org para la versión instalada (caché de 12 horas)
         $checksums = get_transient('nexaguard_wp_core_checksums_' . $core_version);
-        if ($checksums === false) {
+        if ($checksums === false || empty($checksums)) {
             $api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$core_version}&locale={$locale}";
             $res = wp_remote_get($api_url, array('timeout' => 8, 'sslverify' => false));
             if (!is_wp_error($res) && wp_remote_retrieve_response_code($res) === 200) {
                 $body = json_decode(wp_remote_retrieve_body($res), true);
                 if (!empty($body['checksums']) && is_array($body['checksums'])) {
                     $checksums = $body['checksums'];
-                    set_transient('nexaguard_wp_core_checksums_' . $core_version, $checksums, 12 * HOUR_IN_SECONDS);
                 }
+            }
+
+            // Fallback a en_US si el locale actual no devuelve lista de checksums (habitual en versiones nuevas)
+            if (empty($checksums)) {
+                $api_url_en = "https://api.wordpress.org/core/checksums/1.0/?version={$core_version}&locale=en_US";
+                $res_en = wp_remote_get($api_url_en, array('timeout' => 8, 'sslverify' => false));
+                if (!is_wp_error($res_en) && wp_remote_retrieve_response_code($res_en) === 200) {
+                    $body_en = json_decode(wp_remote_retrieve_body($res_en), true);
+                    if (!empty($body_en['checksums']) && is_array($body_en['checksums'])) {
+                        $checksums = $body_en['checksums'];
+                    }
+                }
+            }
+
+            if (!empty($checksums)) {
+                set_transient('nexaguard_wp_core_checksums_' . $core_version, $checksums, 12 * HOUR_IN_SECONDS);
             }
         }
 
@@ -755,7 +770,6 @@ class NexaGuard_Plugin {
             $size = filesize($full_path);
             $mtime = filemtime($full_path);
             $hash = hash_file('sha256', $full_path);
-            $md5 = md5_file($full_path);
 
             $status = 'intact';
             $verdict = 'Firma oficial verificada · Intacto';
@@ -780,7 +794,22 @@ class NexaGuard_Plugin {
                 }
             } elseif (!$meta['is_custom'] && !empty($checksums) && isset($checksums[$rel_path])) {
                 $expected_md5 = $checksums[$rel_path];
-                if ($md5 !== $expected_md5) {
+                $content = @file_get_contents($full_path);
+                $md5_raw = md5($content);
+                $md5_normalized = md5(str_replace("\r\n", "\n", $content));
+
+                // Soporte para paquetes de idioma oficiales (como es_ES) en wp-includes/version.php
+                $is_clean_file = ($md5_raw === $expected_md5 || $md5_normalized === $expected_md5);
+                if (!$is_clean_file && $rel_path === 'wp-includes/version.php') {
+                    $content_no_locale = preg_replace('/\$wp_local_package\s*=\s*[\'"][^\'"]+[\'"];\s*/', '', str_replace("\r\n", "\n", $content));
+                    if (md5($content_no_locale) === $expected_md5) {
+                        $is_clean_file = true;
+                    } elseif (strpos($content, '$wp_version') !== false && !preg_match('/(eval|base64_decode|assert|create_function|passthru|shell_exec|system|exec)\s*\(/i', $content)) {
+                        $is_clean_file = true;
+                    }
+                }
+
+                if (!$is_clean_file) {
                     $status = 'tampered';
                     $verdict = '🚨 Firma alterada (Código modificado)';
                     $can_rebuild = true;

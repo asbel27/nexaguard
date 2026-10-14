@@ -1,7 +1,7 @@
 {
   "name": "NexaGuard Security · Antimalware & Blindaje Forense",
   "slug": "nexaguard-security",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "homepage": "https://www.nexaguards.com",
   "download_url": "https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/nexaguard-security.zip",
   "fallback_download_url": "https://www.nexaguards.com/downloads/nexaguard-security.zip",
@@ -10,6 +10,6 @@
   "last_updated": "2026-10-14",
   "sections": {
     "description": "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
-    "changelog": "<h4>Versión 1.5.2</h4><ul><li><strong>Motor Heurístico de Inmunidad contra Falsos Positivos:</strong> Discriminación contextual avanzada que diferencia código benigno de WordPress (Loginizer, WooCommerce, Cloudflare Turnstile, pasarelas de pago oficiales, plugins de caché y librerías PDF/fuentes) de ataques maliciosos reales.</li><li><strong>Enfoque Quirúrgico de Detección:</strong> La regla Comment2Shell (CVE-2026-93485) ahora se enfoca estrictamente en bases de datos (comentarios/posts) y archivos subidos (Uploads), eliminando de raíz falsas alarmas sobre botones o plantillas JavaScript en código fuente PHP.</li><li><strong>Dropper Remoto Blindado:</strong> Exigencia estricta de extensiones ejecutables (.php, .phtml, .phar) para no interferir con descargas de fuentes tipográficas o paquetes de traducción legítimos.</li><li><strong>Desvinculación Instantánea de Licencias:</strong> Liberación automática de dominios en la nube de NexaGuard al desvincular sin dejar registros bloqueados.</li><li><strong>Recálculo de Línea Base Tripwire en 1 Clic:</strong> Regeneración de firmas SHA-256 en la pestaña WAF para silenciar alarmas erróneas.</li></ul>"
+    "changelog": "<h4>Versión 1.5.3</h4><ul><li><strong>Monitor de Núcleo (Sentinel Forense):</strong> Detección precisa de alteraciones en archivos vitales de WordPress con tabla dedicada de anomalías y advertencias claras.</li><li><strong>Reconstrucción Quirúrgica en 1 Clic:</strong> Restauración automática de archivos alterados del núcleo con las copias originales de WordPress.org y respaldo automático previo en cuarentena.</li><li><strong>Soporte Oficial de Paquetes de Idioma (es_ES):</strong> Normalización de saltos de línea (CRLF/LF) y reconocimiento oficial de paquetes localizados en version.php para erradicar falsos positivos de integridad.</li><li><strong>Experiencia de Usuario Fluida:</strong> Notificaciones no intrusivas tipo toast tras la reconstrucción y recálculo automático de integridad.</li></ul>"
   }
 }

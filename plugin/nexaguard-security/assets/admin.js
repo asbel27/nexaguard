@@ -2687,7 +2687,7 @@ jQuery(document).ready(function ($) {
 
                     if (force) {
                         if (d.has_anomalies) {
-                            showAlert('Atención: Se detectaron ' + d.warnings.length + ' anomalía(s) en archivos del núcleo. Revisa la tabla de reconstrucción aconsejada.', 'warning', 'Sentinel Alerta');
+                            showToast('Atención: Se detectaron ' + d.warnings.length + ' anomalía(s) en archivos del núcleo.', 'warning', 'Sentinel Alerta');
                         } else {
                             showToast('Inspección de integridad completada con éxito. Todos los archivos vitales verificados e intactos.', 'success', 'Sentinel Núcleo');
                         }
@@ -2803,7 +2803,7 @@ jQuery(document).ready(function ($) {
                     success: function (res) {
                         if (res.success && res.data) {
                             showToast(res.data.message || 'Archivo reconstruido exitosamente.', 'success', 'Reconstrucción de Núcleo');
-                            runBackendSentinelScan(true);
+                            runBackendSentinelScan(false);
                         } else {
                             var msg = (res && res.data && res.data.message) ? res.data.message : 'Error al reconstruir archivo.';
                             showAlert(msg, 'warning', 'Aviso de Reconstrucción');
