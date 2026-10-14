@@ -3,7 +3,7 @@
  * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
  * Plugin URI: https://nexaguards.com
  * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
- * Version: 1.5.4
+ * Version: 1.5.5
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://nexaguards.com
  * License: GPLv2 or later
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.5.4');
+define('NEXAGUARD_VERSION', '1.5.5');
 define('NEXAGUARD_FILE', __FILE__);
 define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
 define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
@@ -637,7 +637,7 @@ class NexaGuard_Plugin {
             $body = wp_remote_retrieve_body($response);
             $data = json_decode($body, true);
 
-            if ($code === 200 && $data && !empty($data['valid'])) {
+            if ($code === 200 && $data && (!empty($data['valid']) || (isset($data['status']) && $data['status'] === 'expired'))) {
                 $data['key'] = $license_key;
                 update_option('nexaguard_license_data', $data);
                 delete_transient('nexaguard_license_sync_lock');
@@ -647,7 +647,11 @@ class NexaGuard_Plugin {
             }
 
             // Si el servidor de NexaGuard rechazó la clave (403 límite alcanzado/otro dominio, 404 no existe, 400 inválida)
-            $error_message = (!empty($data) && !empty($data['message'])) ? $data['message'] : 'La clave de licencia fue rechazada por NexaGuard Cloud (Código HTTP ' . $code . ').';
+            $error_message = (!empty($data) && !empty($data['message']))
+                ? $data['message']
+                : ((!empty($data) && !empty($data['notice']))
+                    ? $data['notice']
+                    : 'La clave de licencia fue rechazada por NexaGuard Cloud (Código HTTP ' . $code . ').');
             delete_option('nexaguard_license_data');
             delete_transient('nexaguard_license_sync_lock');
             delete_transient('nexaguard_license_revoked_notice');

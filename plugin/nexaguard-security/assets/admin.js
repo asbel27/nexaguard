@@ -1987,11 +1987,15 @@ jQuery(document).ready(function ($) {
                 nonce: nexaguardData.nonce
             },
             success: function (res) {
-                if (res.success && res.data && res.data.valid) {
-                    $msg.text('✓ ' + (res.data.notice || 'Licencia activada con éxito.')).css('color', '#3de8a4');
+                if (res.success && res.data && (res.data.valid || res.data.status === 'expired')) {
+                    if (res.data.status === 'expired') {
+                        $msg.text('⚠️ ' + (res.data.notice || 'Licencia guardada (Estado: Vencida / Expirada).')).css('color', '#ffcf33');
+                    } else {
+                        $msg.text('✓ ' + (res.data.notice || 'Licencia activada con éxito.')).css('color', '#3de8a4');
+                    }
                     setTimeout(function () {
                         location.reload();
-                    }, 1000);
+                    }, 1200);
                 } else {
                     var errTxt = (res.data && res.data.message) ? res.data.message : ((res.data && res.data.notice) ? res.data.notice : 'Clave de licencia no válida o expirada.');
                     $msg.text(errTxt).css('color', '#ff8ba0');
