@@ -11,8 +11,8 @@ if (!defined('ABSPATH')) {
 
 class NexaGuard_Updater {
     private static $remote_urls = array(
-        'https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/info.json',
-        'https://www.nexaguards.com/downloads/info.json'
+        'https://www.nexaguards.com/downloads/info.json',
+        'https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/info.json'
     );
 
     public static function get_plugin_file() {
@@ -45,6 +45,10 @@ class NexaGuard_Updater {
      */
     public static function get_remote_info($force = false, &$error = null) {
         $transient_key = 'nexaguard_update_info';
+        if (isset($_GET['force-check']) || (isset($_POST['action']) && $_POST['action'] === 'nexaguard_check_update')) {
+            $force = true;
+        }
+
         if (!$force) {
             $cached = get_transient($transient_key);
             if ($cached !== false && is_object($cached) && !empty($cached->version)) {
@@ -87,7 +91,7 @@ class NexaGuard_Updater {
         }
 
         if ($data) {
-            set_transient($transient_key, $data, 1 * HOUR_IN_SECONDS);
+            set_transient($transient_key, $data, 10 * MINUTE_IN_SECONDS);
             return $data;
         }
 
@@ -103,7 +107,7 @@ class NexaGuard_Updater {
             $transient = new stdClass();
         }
 
-        $remote = self::get_remote_info();
+        $remote = self::get_remote_info(isset($_GET['force-check']));
         if (!$remote || empty($remote->version)) {
             return $transient;
         }
