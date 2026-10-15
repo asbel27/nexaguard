@@ -2336,7 +2336,7 @@ function checkoutScreen(planId) {
           return acFetch('/api/checkout/paypal/orders/' + data.orderID + '/capture', { method: 'POST' })
             .then(function (r) {
               ACCOUNTS.user = r.user; $('#navPanel').textContent = 'Mi panel';
-              paidSuccessScreen(planId, r.tempPassword || null);
+              paidSuccessScreen(planId, r.tempPassword || null, r.order || null);
             })
             .catch(function (x) { err.textContent = x.message; });
         },
@@ -2414,19 +2414,52 @@ function confirmPlanScreen(planId) {
 }
 
 /* Pantalla final tras pagar con PayPal: ya no hace falta "realizar el pago" */
-function paidSuccessScreen(planId, tempPassword) {
+function paidSuccessScreen(planId, tempPassword, order) {
   var plan = PLAN_BY_ID[planId];
+  var licKey = order && order.licenseKey;
   authBody.innerHTML = '';
-  authBody.appendChild(acEl('h3', { class: 'ad-t' }, '¡Pago recibido! Tu plan ya está activo'));
-  authBody.appendChild(acEl('p', { class: 'ad-sub' }, plan ? plan.name + ' · ' + acMoney(plan.price, plan.currency) + ' · ' + plan.period : ''));
-  authBody.appendChild(acEl('ol', { class: 'ad-steps' },
-    acEl('li', null, acEl('span', null, acEl('b', null, 'Registra tu sitio. '), 'Desde tu panel, agrega la dirección del sitio que necesitas reparar.')),
-    acEl('li', null, acEl('span', null, acEl('b', null, 'Sigue el avance. '), 'Verás cada etapa del servicio y podrás escribirnos desde tu panel.'))));
+  authBody.appendChild(acEl('div', { style: 'text-align:center;font-size:2.4rem;margin-bottom:8px' }, '🎉'));
+  authBody.appendChild(acEl('h3', { class: 'ad-t', style: 'text-align:center' }, '¡Pago recibido con éxito! Tu licencia ya está activa'));
+  authBody.appendChild(acEl('p', { class: 'ad-sub', style: 'text-align:center' }, plan ? plan.name + ' · ' + acMoney(plan.price, plan.currency) + ' · ' + plan.period : ''));
+
+  if (licKey) {
+    var copyBtn = acEl('button', { class: 'btn btn-y sm', type: 'button' }, 'Copiar Licencia');
+    copyBtn.onclick = function () {
+      copyText(licKey).then(function (ok) {
+        copyBtn.textContent = ok ? '✓ ¡Copiada!' : 'Error al copiar';
+        setTimeout(function () { copyBtn.textContent = 'Copiar Licencia'; }, 2000);
+      });
+    };
+    var licBox = acEl('div', { style: 'background:rgba(255,207,51,.08);border:1.5px solid var(--yellow);border-radius:12px;padding:14px;margin:16px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px' },
+      acEl('div', null,
+        acEl('span', { class: 'hint', style: 'display:block;font-size:.75rem;text-transform:uppercase;color:var(--yellow);font-weight:700;margin-bottom:3px' }, 'Tu Clave de Licencia Oficial:'),
+        acEl('code', { style: 'font-family:var(--fm);font-size:1.05rem;color:#fff;font-weight:700;letter-spacing:1px' }, licKey)),
+      copyBtn);
+    authBody.appendChild(licBox);
+  }
+
   if (tempPassword) {
     authBody.appendChild(acEl('div', { class: 'ad-note' }, acEl('b', null, 'Creamos tu cuenta automáticamente. '), 'Usa esta contraseña temporal para entrar. Podrás cambiarla desde "Mi cuenta".'));
     authBody.appendChild(acEl('div', { class: 'ad-temp' }, tempPassword));
   }
-  authBody.appendChild(acEl('div', { class: 'ad-acts' }, acEl('a', { class: 'btn btn-y', href: '/panel' }, 'Ir a mi panel')));
+
+  var countdown = 4;
+  var countEl = acEl('b', { style: 'color:var(--yellow)' }, String(countdown));
+  var redMsg = acEl('p', { class: 'hint', style: 'margin:14px 0 10px;text-align:center' }, 'Redirigiendo a tu módulo de Mis Licencias en ', countEl, ' segundos…');
+  authBody.appendChild(redMsg);
+
+  var redTimer = setInterval(function () {
+    countdown--;
+    countEl.textContent = String(countdown);
+    if (countdown <= 0) {
+      clearInterval(redTimer);
+      window.location.href = '/panel#/licencias';
+    }
+  }, 1000);
+
+  authBody.appendChild(acEl('div', { class: 'ad-acts', style: 'flex-wrap:wrap;gap:10px;justify-content:center' },
+    acEl('a', { class: 'btn btn-y', href: '/panel#/licencias', on: { click: function () { clearInterval(redTimer); } } }, 'Ir a Mis Licencias ahora →'),
+    acEl('a', { class: 'btn btn-o', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip' }, 'Descargar Plugin (.zip)')));
 }
 
 /* Pantalla final: próximos pasos + instrucciones de pago (cuando se coordina el pago después) */

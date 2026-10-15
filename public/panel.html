@@ -464,7 +464,7 @@ function payWithPayPal(container, planId, msgEl) {
       },
       onApprove: function (data) {
         return api('POST', '/api/checkout/paypal/orders/' + data.orderID + '/capture', {}).then(function () {
-          toast('¡Pago recibido! Tu plan ya está activo.'); render();
+          toast('¡Pago recibido! Tu licencia ya está activa.'); go('licencias');
         }).catch(function (e) { toast(e.message); });
       },
       onError: function () { toast('Hubo un problema con PayPal. Puedes reintentar.'); }
@@ -530,7 +530,7 @@ function showAuth() {
 
 /* ================= Estructura ================= */
 var NAV = {
-  client: [['resumen', 'Resumen', 'home'], ['sitios', 'Mis sitios', 'globe'], ['analisis', 'Análisis', 'search'], ['soporte', 'Soporte', 'life'], ['pagos', 'Plan y pagos', 'card'], ['cuenta', 'Mi cuenta', 'user']],
+  client: [['resumen', 'Resumen', 'home'], ['licencias', 'Mis Licencias', 'shield'], ['sitios', 'Mis sitios', 'globe'], ['analisis', 'Análisis', 'search'], ['soporte', 'Soporte', 'life'], ['pagos', 'Plan y pagos', 'card'], ['cuenta', 'Mi cuenta', 'user']],
   admin: [['resumen', 'Resumen', 'home'], ['clientes', 'Clientes', 'users'], ['licencias', 'Licencias & Plugin', 'shield'], ['soporte', 'Soporte', 'life'], ['analisis', 'Análisis', 'search'], ['radar', 'Radar WAF Web', 'radar'], ['ajustes', 'Ajustes', 'cog']]
 };
 function go(p) { location.hash = '#/' + p; }
@@ -966,6 +966,23 @@ CV.resumen = async function () {
   if (u.mustChangePassword) root.appendChild(h('div', { class: 'banner warn' }, ico('alert'), h('div', null, 'Estás usando una contraseña temporal. ', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('cuenta'); } } }, 'Cambiarla ahora'))));
   var bad = d.sites.filter(function (s) { return s.lastScan && (s.lastScan.verdict === 'infected' || s.lastScan.verdict === 'suspicious'); });
   if (bad.length) root.appendChild(h('div', { class: 'banner crit' }, ico('alert'), h('div', null, h('b', null, 'Atención: '), 'el último análisis de ' + bad.map(function (s) { return s.host; }).join(', ') + ' encontró señales de infección. ', h('button', { class: 'btn btn-y sm', type: 'button', on: { click: function () { go('soporte'); } } }, 'Abrir una solicitud'))));
+
+  var licOrders = d.orders.filter(function (o) { return o.licenseKey; });
+  if (licOrders.length) {
+    var primaryLic = licOrders[0];
+    root.appendChild(h('div', { class: 'banner ok', style: 'border-left:4px solid var(--yellow);background:rgba(255,207,51,.05);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px' },
+      ico('shield'),
+      h('div', { style: 'flex:1;min-width:220px' },
+        h('b', { style: 'color:#fff' }, 'Tu Licencia NexaGuard Oficial: '),
+        h('code', { style: 'font-family:var(--fm);color:var(--yellow);background:rgba(255,207,51,.15);padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:700', title: 'Clic para copiar clave', on: { click: function () { copy(primaryLic.licenseKey, this); toast('Clave copiada: ' + primaryLic.licenseKey); } } }, primaryLic.licenseKey),
+        h('span', { class: 'hint', style: 'margin-left:8px' }, '(' + primaryLic.planName + ')')
+      ),
+      h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
+        h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(primaryLic.licenseKey, this); toast('Clave copiada: ' + primaryLic.licenseKey); } } }, 'Copiar Clave'),
+        h('button', { class: 'btn btn-y sm', type: 'button', on: { click: function () { go('licencias'); } } }, 'Mis Licencias →')
+      )
+    ));
+  }
   var cur = d.current;
   var isOneOff = cur && cur.type === 'oneoff';
   var hasActiveRescue = isOneOff && (cur.stage >= 1 || cur.status === 'in_progress' || cur.status === 'delivered');
@@ -1008,6 +1025,95 @@ CV.resumen = async function () {
   root.appendChild(h('div', { class: 'grid g2', style: 'margin-top:16px' },
     h('div', { class: 'card' }, h('h3', null, 'Tus sitios', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('sitios'); } } }, 'Administrar')), rowsS.length ? table(['Sitio', 'Estado', 'Último análisis'], rowsS) : h('div', { class: 'empty' }, 'Agrega tu sitio para poder analizarlo.')),
     h('div', { class: 'card' }, h('h3', null, 'Soporte', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('soporte'); } } }, 'Ver todo')), d.tickets.length ? table(['Asunto', 'Estado'], d.tickets.slice(0, 4).map(function (t) { return { id: t.id, cells: [t.subject, pill(TK[t.status])] }; }), function (r) { go('soporte/' + r.id); }) : h('div', { class: 'empty' }, 'No tienes solicitudes abiertas.'))));
+  return root;
+};
+
+CV.licencias = async function () {
+  var d = await loadDash(), root = h('div', null);
+  root.appendChild(head('Mis Licencias Oficiales', 'Gestiona las licencias adquiridas para tus sitios WordPress y descarga el plugin oficial.',
+    h('a', { class: 'btn btn-y', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
+
+  var licOrders = d.orders.filter(function (o) { return o.licenseKey; });
+
+  if (!licOrders.length) {
+    root.appendChild(h('div', { class: 'card', style: 'text-align:center;padding:40px 20px' },
+      h('div', { style: 'font-size:2.8rem;margin-bottom:14px' }, '🛡️'),
+      h('h3', { style: 'margin-bottom:8px;color:#fff;font-size:1.25rem' }, 'Aún no tienes licencias adquiridas'),
+      h('p', { class: 'hint', style: 'max-width:55ch;margin:0 auto 22px' }, 'Al contratar cualquier plan de seguridad oficial (Security Pro, Rescate + Blindaje o Guardián), se generará automáticamente tu clave de licencia para activar en WordPress.'),
+      h('button', { class: 'btn btn-y', type: 'button', on: { click: function () { go('pagos'); } } }, 'Ver Planes y Precios')
+    ));
+    return root;
+  }
+
+  // Guía rápida de activación
+  var guideCard = h('div', { class: 'card', style: 'border:1.5px solid var(--yellow);background:rgba(255,207,51,.04);margin-bottom:20px' },
+    h('div', { style: 'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px' },
+      h('div', null,
+        h('span', { class: 'pill ok', style: 'margin-bottom:6px;display:inline-block' }, '🚀 Activación en 3 Pasos'),
+        h('h3', { style: 'margin:4px 0 6px;color:#fff;font-size:1.15rem' }, '¿Cómo activar tu licencia en WordPress?'),
+        h('ol', { style: 'margin:8px 0 0 18px;font-size:.88rem;color:var(--muted);line-height:1.6' },
+          h('li', null, 'Descarga el paquete oficial ', h('b', { style: 'color:#fff' }, 'nexaguard-security.zip'), ' con el botón amarillo.'),
+          h('li', null, 'En tu panel de WordPress ve a ', h('b', { style: 'color:#fff' }, 'Plugins → Añadir nuevo → Subir plugin'), ' y actívalo.'),
+          h('li', null, 'Entra en el menú ', h('b', { style: 'color:var(--yellow)' }, 'NexaGuard Security'), ', pega tu clave de licencia y haz clic en ', h('b', { style: 'color:#fff' }, 'Activar Licencia'), '.'),
+          h('li', null, '¡Listo! Tu sitio quedará blindado con Vigilancia 24 Horas y sincronizado con NexaGuard Threat Cloud.'))),
+      h('a', { class: 'btn btn-y', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
+  root.appendChild(guideCard);
+
+  // Tarjetas de Licencias
+  licOrders.forEach(function (o) {
+    var cDoms = (o.activatedDomains && o.activatedDomains.length) ? o.activatedDomains : (o.activatedDomain ? [o.activatedDomain] : []);
+    var maxS = o.maxSites || 1;
+    var domainText = cDoms.length
+      ? h('span', { class: 'pill ok', style: 'font-size:.8rem' }, '🌐 Activa en: ' + cDoms.join(', ') + ' (' + cDoms.length + '/' + maxS + ' sitios)')
+      : h('span', { class: 'pill info', style: 'font-size:.8rem' }, '🌐 Disponible para vincular (0/' + maxS + ' sitios)');
+
+    var expBadge = o.isExpired
+      ? h('span', { class: 'pill crit' }, 'Vencida (' + o.expiresFormatted + ')')
+      : o.isExpiringSoon
+        ? h('span', { class: 'pill warn' }, '⚠️ Vence en ' + o.daysLeft + ' día(s)')
+        : h('span', { class: 'pill ok' }, 'Activa · ' + o.daysLeft + ' días restantes');
+
+    var card = h('div', { class: 'card', style: 'margin-bottom:18px;border:1px solid rgba(255,207,51,.35);background:rgba(255,207,51,.03)' },
+      h('div', { style: 'display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:12px' },
+        h('div', null,
+          h('div', { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px' },
+            expBadge,
+            domainText,
+            maxS > 1 ? h('span', { class: 'pill info' }, 'Multisitio') : null),
+          h('h3', { style: 'color:#fff;margin:0 0 4px;font-size:1.15rem' }, o.planName),
+          h('p', { class: 'hint', style: 'margin:0;font-size:.85rem' },
+            'Comprada el ' + fmtDate(o.paidAt || o.createdAt) +
+            (o.expiresFormatted ? ' · Vence: ' + o.expiresFormatted : ''))),
+        h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
+          h('button', {
+            class: 'btn btn-y sm',
+            type: 'button',
+            style: 'font-weight:700',
+            on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada al portapapeles: ' + o.licenseKey); } }
+          }, '📋 Copiar Licencia'),
+          h('a', {
+            class: 'btn btn-o sm',
+            href: '/downloads/nexaguard-security.zip',
+            download: 'nexaguard-security.zip'
+          }, ico('shield'), 'Descargar Plugin'))),
+      h('div', { style: 'background:rgba(0,0,0,.3);border:1px solid rgba(255,207,51,.25);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px' },
+        h('div', null,
+          h('span', { class: 'hint', style: 'display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:2px' }, 'Tu Clave de Licencia Oficial:'),
+          h('code', {
+            style: 'font-family:var(--fm);font-size:1.05rem;font-weight:700;color:var(--yellow);letter-spacing:1px;cursor:pointer',
+            title: 'Clic para copiar clave',
+            on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } }
+          }, o.licenseKey)),
+        h('button', {
+          class: 'btn btn-o sm',
+          type: 'button',
+          style: 'padding:4px 10px;font-size:.8rem',
+          on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } }
+        }, 'Copiar'))
+    );
+    root.appendChild(card);
+  });
+
   return root;
 };
 

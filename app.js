@@ -155,11 +155,24 @@ function createApp({ store, scanner, waf, sentinel, config }) {
   }
   function orderView(o) {
     const p = PLANS[o.plan], info = orderInfo(o);
+    const exp = getLicenseExpiration(o);
+    const domains = Array.isArray(o.activatedDomains) ? o.activatedDomains : (o.activatedDomain ? [o.activatedDomain] : []);
     return {
       id: o.id, plan: o.plan, planName: p.name, type: p.type, status: o.status, stage: o.stage || 0, amount: o.amount, currency: p.currency, period: p.period,
       createdAt: iso(o.createdAt), paidAt: iso(o.paidAt), deliveredAt: iso(o.deliveredAt), nextBilling: iso(o.nextBilling), notes: o.notes || '',
       access: info.access, accessUntil: iso(info.accessUntil), overdue: info.overdue,
-      licenseKey: o.licenseKey || null
+      licenseKey: o.licenseKey || null,
+      maxSites: o.maxSites || p.sites || 1,
+      activatedDomains: domains,
+      activatedDomain: domains.join(', ') || null,
+      transferCount: typeof o.transferCount === 'number' ? o.transferCount : 0,
+      transferredDomains: o.transferredDomains || domains,
+      expiresAt: exp.expiresAt,
+      expiresFormatted: exp.expiresFormatted,
+      daysLeft: exp.daysLeft,
+      isExpiringSoon: exp.isExpiringSoon,
+      isExpired: exp.isExpired,
+      licenseStatus: exp.licenseStatus
     };
   }
   function getLicenseExpiration(o) {
