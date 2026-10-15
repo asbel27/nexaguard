@@ -1461,23 +1461,54 @@ AV.licencias = async function () {
           class: 'btn btn-o sm',
           type: 'button',
           style: 'color:#ff8ba0;border-color:rgba(255,107,138,.4)',
-          title: 'Liberar dominio vinculado para permitir activación en otro sitio',
+          title: 'Liberar todos los dominios vinculados a esta clave',
           on: {
             click: async function () {
-              if (!confirm('¿Deseas liberar la licencia ' + o.licenseKey + ' del dominio (' + cDoms.join(', ') + ')? El cliente podrá volver a activarla en cualquier otro sitio.')) return;
+              if (!confirm('¿Deseas liberar TODOS los dominios de la licencia ' + o.licenseKey + ' (' + cDoms.join(', ') + ')? El cliente podrá volver a vincularlos.')) return;
               try {
                 await api('POST', '/api/admin/licenses/reset-domain', { key: o.licenseKey });
-                toast('Dominio(s) liberado(s) con éxito.');
+                toast('Todos los dominios han sido liberados.');
                 go('licencias');
               } catch (e) { toast(e.message); }
             }
           }
-        }, '🔓 Liberar Dominio' + (cDoms.length > 1 ? 's' : ''))
+        }, '🔓 Liberar Todo' + (cDoms.length > 1 ? ' (' + cDoms.length + ')' : ''))
       : null;
 
-    var domainDisplay = cDoms.length
-      ? h('span', { class: 'pill ok', style: 'font-size:0.8rem' }, '🌐 ' + cDoms.join(', ') + ' (' + cDoms.length + '/' + maxS + ')')
-      : h('span', { class: 'hint', style: 'font-size:0.8rem' }, 'Sin vincular aún');
+    var domainDisplay;
+    if (cDoms.length) {
+      domainDisplay = h('div', { style: 'display:flex;flex-direction:column;gap:4px' },
+        h('span', { class: 'pill ok', style: 'font-size:0.8rem;align-self:flex-start' },
+          (maxS > 1 ? '🌐 ' + cDoms.length + ' de ' + maxS + ' sitios usados' : '🌐 Activa en 1 sitio')
+        ),
+        h('div', { style: 'font-size:.78rem;margin-top:2px' },
+          cDoms.map(function (dm) {
+            return h('div', { style: 'display:flex;align-items:center;gap:6px;margin-top:2px' },
+              h('span', { style: 'color:#00f0ff;font-family:var(--fm)' }, dm),
+              maxS > 1 ? h('button', {
+                class: 'btn btn-o sm',
+                type: 'button',
+                style: 'padding:1px 5px;font-size:.68rem;color:#ff8ba0;border-color:rgba(255,107,138,.3)',
+                title: 'Liberar únicamente este sitio (' + dm + ')',
+                on: { click: async function () {
+                  if (!confirm('¿Liberar el sitio ' + dm + ' de la licencia ' + o.licenseKey + '?')) return;
+                  try {
+                    await api('POST', '/api/admin/licenses/reset-domain', { key: o.licenseKey, domain: dm });
+                    toast('Sitio ' + dm + ' liberado con éxito.');
+                    go('licencias');
+                  } catch (e) { toast(e.message); }
+                } }
+              }, '✕ Quitar') : null
+            );
+          })
+        )
+      );
+    } else {
+      domainDisplay = h('div', null,
+        h('span', { class: 'hint', style: 'font-size:0.8rem' }, '0 de ' + maxS + ' sitios vinculados'),
+        h('div', { class: 'hint', style: 'font-size:.72rem;color:var(--green)' }, 'Disponibles: ' + maxS + ' sitios')
+      );
+    }
 
     var expirationDisplay;
     if (o.isExpired) {

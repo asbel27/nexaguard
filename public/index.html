@@ -286,7 +286,7 @@ a[data-go],a[data-act]{cursor:pointer}
 .stat span{color:var(--muted);font-size:.92rem}
 
 /* ---------- Precios ---------- */
-.plans{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--panel)}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--panel)}
 .plan{padding:34px 28px 30px;display:flex;flex-direction:column;gap:16px;border-right:1px solid var(--line)}
 .plan:last-child{border-right:0}
 .plan h3{font-size:1.1rem}
@@ -1264,6 +1264,30 @@ a[data-go],a[data-act]{cursor:pointer}
           <li><svg class="ic"><use href="#i-check"/></svg>Actualizaciones continuas de firmas</li>
         </ul>
         <a class="btn btn-o" href="#contacto" data-plan="Plan NexaGuard Security Pro" data-pid="security_pro">Elegir Security Pro</a>
+      </article>
+      <article class="plan" id="planAgencyCard" style="border-top:3px solid #00f0ff">
+        <span class="tag-sub" style="color:#00f0ff;background:rgba(0,240,255,.08);border-color:rgba(0,240,255,.35)">⭐ Multidominio Agencias</span>
+        <h3>Plan Agencia / Dev</h3>
+        <p class="d">1 sola clave maestra para centralizar y proteger los sitios de tus clientes.</p>
+        <div class="price">$0<small>al mes</small></div>
+
+        <div style="margin:8px 0 4px;background:rgba(0,240,255,.05);border:1px solid rgba(0,240,255,.2);border-radius:8px;padding:8px">
+          <span style="display:block;font-size:.72rem;color:#00f0ff;font-weight:700;text-transform:uppercase;margin-bottom:6px">Selecciona sitios a proteger:</span>
+          <div style="display:flex;gap:4px;justify-content:center" id="agencyPillsHome">
+            <button type="button" class="btn btn-y sm btn-agency-opt" style="padding:3px 8px;font-size:.78rem;font-weight:700" data-sites="5">5 Webs</button>
+            <button type="button" class="btn btn-o sm btn-agency-opt" style="padding:3px 8px;font-size:.78rem" data-sites="10">10 Webs</button>
+            <button type="button" class="btn btn-o sm btn-agency-opt" style="padding:3px 8px;font-size:.78rem" data-sites="25">25 Webs</button>
+          </div>
+        </div>
+
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg><strong id="agencySitesText" style="color:#fff">Hasta 5 sitios simultáneos</strong></li>
+          <li><svg class="ic"><use href="#i-check"/></svg>1 Sola Clave Maestra Multisitio</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Vigilancia 24H y Erradicación en cada web</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Liberación de dominios desde tu panel</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Soporte prioritario para agencias</li>
+        </ul>
+        <a class="btn btn-o" href="#contacto" id="btnAgencyHome" data-plan="Plan Agencia / Freelancer" data-pid="agency" data-sites="5">Elegir Plan Agencia</a>
       </article>
       <article class="plan">
         <h3>Rescate</h3>
@@ -2251,12 +2275,12 @@ function acEl(tag, props) {
 }
 function acMoney(n, c) { try { return new Intl.NumberFormat('es', { style: 'currency', currency: c || 'USD' }).format(n); } catch (e) { return (c || '') + ' ' + n; } }
 
-function openAuth(planId) {
+function openAuth(planId, sites) {
   if (!ACCOUNTS.ok) { return notConnectedNotice(planId); }
   authBody.innerHTML = '';
-  if (ACCOUNTS.paypal) authBody.appendChild(checkoutScreen(planId));
+  if (ACCOUNTS.paypal) authBody.appendChild(checkoutScreen(planId, sites));
   else if (ACCOUNTS.user) authBody.appendChild(confirmPlanScreen(planId));
-  else authBody.appendChild(authScreen(planId, 'reg'));
+  else authBody.appendChild(authScreen(planId, 'reg', sites));
   if (!authDlg.open) authDlg.showModal();
 }
 function notConnectedNotice(planId) {
@@ -2298,11 +2322,36 @@ function ensurePayPalSdk() {
 }
 
 /* Pantalla: pagar con PayPal (o elegir otra vía) */
-function checkoutScreen(planId) {
+function checkoutScreen(planId, preselectedSites) {
   var plan = PLAN_BY_ID[planId], wrap = acEl('div', null), err = acEl('p', { class: 'err', role: 'alert' });
+  var chosenSites = Number(preselectedSites) || (plan && plan.sites) || 1;
   wrap.appendChild(acEl('h3', { class: 'ad-t' }, plan && plan.price <= 0 ? 'Activa tu plan gratis ($0)' : 'Paga tu plan'));
   wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Estás por contratar ' + plan.name + '. ' + (plan.price <= 0 ? 'Plan sin costo. Al activar, tu panel y tu licencia quedan habilitados al instante.' : 'Al confirmar el pago, tu panel se activa al instante.') : ''));
   if (plan) wrap.appendChild(planSummary(plan));
+
+  if (planId === 'agency') {
+    var sitesPillsWrap = acEl('div', { style: 'background:rgba(0,240,255,.06);border:1.5px solid rgba(0,240,255,.3);border-radius:12px;padding:14px;margin:14px 0' });
+    sitesPillsWrap.appendChild(acEl('label', { style: 'display:block;font-size:.85rem;font-weight:700;color:#00f0ff;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px' }, '🛡️ Cantidad de sitios web a proteger con tu clave maestra:'));
+    var pRow = acEl('div', { style: 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap' });
+    var pDesc = acEl('p', { class: 'hint', style: 'margin:8px 0 0;font-size:.82rem;text-align:center' }, 'Tu clave de licencia autorizará exactamente hasta ' + chosenSites + ' sitios web simultáneos.');
+    [5, 10, 25, 50].forEach(function (num) {
+      var pBtn = acEl('button', {
+        type: 'button',
+        class: 'btn ' + (num === chosenSites ? 'btn-y' : 'btn-o') + ' sm',
+        style: 'flex:1;min-width:70px;font-weight:700',
+        on: { click: function () {
+          chosenSites = num;
+          pRow.querySelectorAll('button').forEach(function (b) { b.className = 'btn btn-o sm'; });
+          pBtn.className = 'btn btn-y sm';
+          pDesc.textContent = 'Tu clave de licencia autorizará exactamente hasta ' + chosenSites + ' sitios web simultáneos.';
+        } }
+      }, num + ' Sitios');
+      pRow.appendChild(pBtn);
+    });
+    sitesPillsWrap.appendChild(pRow);
+    sitesPillsWrap.appendChild(pDesc);
+    wrap.appendChild(sitesPillsWrap);
+  }
 
   if (plan && plan.price <= 0) {
     var freeBox = acEl('div', { class: 'pp-wrap', style: 'margin-top:14px;display:flex;flex-direction:column;gap:10px' });
@@ -2310,7 +2359,7 @@ function checkoutScreen(planId) {
       var btnFree = acEl('button', { type: 'button', class: 'btn btn-y', style: 'width:100%;font-size:16px;padding:14px;font-weight:700', on: { click: async function () {
         btnFree.disabled = true; btnFree.textContent = 'Activando tu licencia...'; err.textContent = '';
         try {
-          var r = await acFetch('/api/checkout/free', { method: 'POST', body: JSON.stringify({ plan: planId }) });
+          var r = await acFetch('/api/checkout/free', { method: 'POST', body: JSON.stringify({ plan: planId, maxSites: (planId === 'agency' ? chosenSites : 1) }) });
           ACCOUNTS.user = r.user; $('#navPanel').textContent = 'Mi panel';
           paidSuccessScreen(planId, null, r.order || null);
         } catch (x) {
@@ -2320,10 +2369,10 @@ function checkoutScreen(planId) {
       freeBox.appendChild(btnFree);
     } else {
       var btnGoReg = acEl('button', { type: 'button', class: 'btn btn-y', style: 'width:100%;font-size:15px;padding:12px;font-weight:700', on: { click: function () {
-        authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'reg'));
+        authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'reg', chosenSites));
       } } }, 'Crear cuenta y activar gratis ($0)');
       var btnGoLogin = acEl('button', { type: 'button', class: 'linklike', style: 'display:block;margin:6px auto 0;text-align:center', on: { click: function () {
-        authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'login'));
+        authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'login', chosenSites));
       } } }, '¿Ya tienes cuenta? Ingresa aquí');
       freeBox.appendChild(btnGoReg);
       freeBox.appendChild(btnGoLogin);
@@ -2344,9 +2393,9 @@ function checkoutScreen(planId) {
       try { await requestPlanForUser(planId); afterAuth(planId, false); } catch (x) { err.textContent = x.message; }
     } } }, 'Prefiero coordinar el pago después'));
   } else {
-    alt.appendChild(acEl('button', { type: 'button', class: 'linklike', on: { click: function () { authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'login')); } } }, '¿Ya tienes cuenta? Ingresa'));
+    alt.appendChild(acEl('button', { type: 'button', class: 'linklike', on: { click: function () { authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'login', chosenSites)); } } }, '¿Ya tienes cuenta? Ingresa'));
     alt.appendChild(acEl('span', { class: 'ad-alt-sep' }, '·'));
-    alt.appendChild(acEl('button', { type: 'button', class: 'linklike', on: { click: function () { authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'reg')); } } }, 'Crear cuenta y pagar después'));
+    alt.appendChild(acEl('button', { type: 'button', class: 'linklike', on: { click: function () { authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'reg', chosenSites)); } } }, 'Crear cuenta y pagar después'));
   }
   wrap.appendChild(alt);
 
@@ -2357,7 +2406,7 @@ function checkoutScreen(planId) {
         style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal' },
         createOrder: function () {
           err.textContent = '';
-          return acFetch('/api/checkout/paypal/orders', { method: 'POST', body: JSON.stringify({ plan: planId }) })
+          return acFetch('/api/checkout/paypal/orders', { method: 'POST', body: JSON.stringify({ plan: planId, maxSites: (planId === 'agency' ? chosenSites : 1) }) })
             .then(function (r) { return r.id; })
             .catch(function (x) { err.textContent = x.message; throw x; });
         },
@@ -2379,12 +2428,13 @@ function checkoutScreen(planId) {
 }
 
 /* Pantalla: crear cuenta / ingresar (vía manual, sin pagar en el momento) */
-function authScreen(planId, mode) {
+function authScreen(planId, mode, preselectedSites) {
   var plan = PLAN_BY_ID[planId] || null, wrap = acEl('div', null), err = acEl('p', { class: 'err', role: 'alert' });
+  var chosenSites = Number(preselectedSites) || (plan && plan.sites) || 1;
   function draw() {
     wrap.innerHTML = '';
     wrap.appendChild(acEl('h3', { class: 'ad-t' }, mode === 'reg' ? 'Crea tu cuenta' : 'Ingresa a tu cuenta'));
-    wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Para el plan ' + plan.name + '. Con tu cuenta sigues el avance de tu servicio desde tu panel.' : 'Entra para elegir tu plan y ver tu panel.'));
+    wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Para el plan ' + plan.name + (planId === 'agency' ? ' (' + chosenSites + ' Sitios)' : '') + '. Con tu cuenta sigues el avance de tu servicio desde tu panel.' : 'Entra para elegir tu plan y ver tu panel.'));
     if (plan) wrap.appendChild(planSummary(plan));
     wrap.appendChild(acEl('div', { class: 'ad-tabs', role: 'tablist' },
       acEl('button', { type: 'button', role: 'tab', 'aria-selected': mode === 'reg', on: { click: function () { mode = 'reg'; draw(); } } }, 'Crear cuenta'),
@@ -2398,13 +2448,13 @@ function authScreen(planId, mode) {
       wrap.appendChild(acEl('form', { novalidate: true, on: { submit: async function (e) {
         e.preventDefault(); err.textContent = '';
         try {
-          var d = await acFetch('/api/register', { method: 'POST', body: JSON.stringify({ name: nm.value, email: em.value, phone: ph.value, password: pw.value, plan: planId || '', accept: ac.checked }) });
+          var d = await acFetch('/api/register', { method: 'POST', body: JSON.stringify({ name: nm.value, email: em.value, phone: ph.value, password: pw.value, plan: planId || '', maxSites: (planId === 'agency' ? chosenSites : 1), accept: ac.checked }) });
           ACCOUNTS.user = d.user; $('#navPanel').textContent = 'Mi panel';
           var curPlan = PLAN_BY_ID[planId];
           if (curPlan && curPlan.price <= 0 && d.order) {
             paidSuccessScreen(planId, null, d.order);
           } else if (ACCOUNTS.paypal) {
-            authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId));
+            authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId, chosenSites));
           } else afterAuth(planId, true);
         } catch (x) { err.textContent = x.message; }
       } } },
@@ -2422,9 +2472,9 @@ function authScreen(planId, mode) {
           ACCOUNTS.user = d.user; $('#navPanel').textContent = 'Mi panel';
           var curPlan = PLAN_BY_ID[planId];
           if (curPlan && curPlan.price <= 0) {
-            authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId)); return;
+            authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId, chosenSites)); return;
           }
-          if (ACCOUNTS.paypal) { authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId)); return; }
+          if (ACCOUNTS.paypal) { authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId, chosenSites)); return; }
           await requestPlanForUser(planId); afterAuth(planId, false);
         } catch (x) { err.textContent = x.message; }
       } } },
@@ -2521,8 +2571,22 @@ function afterAuth(planId, isNew) {
 $$('[data-plan]').forEach(function (a) {
   a.addEventListener('click', function (e) {
     e.preventDefault(); e.stopPropagation();
-    openAuth(a.dataset.pid || '');
+    openAuth(a.dataset.pid || '', Number(a.dataset.sites) || 1);
   });
+});
+
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('.btn-agency-opt');
+  if (!b) return;
+  e.preventDefault();
+  var p = b.parentElement;
+  if (p) p.querySelectorAll('.btn-agency-opt').forEach(function (x) { x.className = 'btn btn-o sm btn-agency-opt'; });
+  b.className = 'btn btn-y sm btn-agency-opt';
+  var s = Number(b.dataset.sites) || 5;
+  var txt = $('#agencySitesText');
+  if (txt) txt.textContent = 'Hasta ' + s + ' sitios simultáneos';
+  var aBtn = $('#btnAgencyHome');
+  if (aBtn) { aBtn.dataset.sites = s; }
 });
 
 function syncPlan() {

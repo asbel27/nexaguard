@@ -13,18 +13,23 @@ const PLANS = {
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
     features: ['Licencia Oficial NexaGuard Security PRO para WordPress', 'Sistema de Vigilancia 24 Horas contra amenazas activo', 'Auditoría forense y erradicación de malware con 1 clic', 'Sincronización en tiempo real con NexaGuard Threat Cloud', 'Actualizaciones continuas de firmas Zero-Day']
   },
+  agency: {
+    id: 'agency', tier: 2, name: 'Plan Agencia / Freelancer', price: 0, currency: 'USD', period: 'al mes', type: 'subscription',
+    sites: 5, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
+    features: ['Licencia Multidominio Oficial NexaGuard PRO', 'Protección para 5, 10 o 25 sitios web simultáneos', 'Radar de Vigilancia 24H y Erradicación en cada sitio', '1 sola clave de licencia para centralizar a tus clientes', 'Actualizaciones continuas y soporte prioritario']
+  },
   rescate: {
-    id: 'rescate', tier: 2, name: 'Rescate', price: 0, currency: 'USD', period: 'pago único', type: 'oneoff',
+    id: 'rescate', tier: 3, name: 'Rescate', price: 0, currency: 'USD', period: 'pago único', type: 'oneoff',
     sites: 1, scansPerMonth: 3, scheduled: false, priority: false, afterDeliveryDays: 14, response: '24 a 48 horas',
     features: ['Limpieza forense humana de archivos y base de datos', 'Plugin NexaGuard Security incluido para análisis interno', 'Reparación de errores críticos del sitio', 'Informe detallado de intrusiones', '3 análisis del escáner web por mes']
   },
   blindaje: {
-    id: 'blindaje', tier: 3, name: 'Rescate + Blindaje', price: 0, currency: 'USD', period: 'pago único', type: 'oneoff',
+    id: 'blindaje', tier: 4, name: 'Rescate + Blindaje', price: 0, currency: 'USD', period: 'pago único', type: 'oneoff',
     sites: 1, scansPerMonth: 10, scheduled: false, priority: true, afterDeliveryDays: 365, response: 'menos de 24 horas',
     features: ['Todo lo del plan Rescate', '1 Año Completo de Licencia NexaGuard Security PRO incluida', 'Firewall (WAF) y 2FA configurados por expertos', 'wp-config y permisos endurecidos', 'Revisión y deslistado de Google Safe Browsing', 'Garantía de 30 días y atención prioritaria']
   },
   guardian: {
-    id: 'guardian', tier: 4, name: 'Guardián', price: 0, currency: 'USD', period: 'al mes', type: 'subscription',
+    id: 'guardian', tier: 5, name: 'Guardián', price: 0, currency: 'USD', period: 'al mes', type: 'subscription',
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 24, priority: true, afterDeliveryDays: 0, response: 'menos de 24 horas',
     features: ['Licencia NexaGuard Security PRO siempre activa', 'Sistema de Vigilancia 24 Horas continuo', 'Monitoreo automático diario con el escáner', 'Backups diarios y actualizaciones probadas asistidas', 'Limpiezas y soporte prioritario incluidos']
   }
@@ -156,13 +161,14 @@ function createApp({ store, scanner, waf, sentinel, config }) {
   function orderView(o) {
     const p = PLANS[o.plan], info = orderInfo(o);
     const exp = getLicenseExpiration(o);
-    const domains = Array.isArray(o.activatedDomains) ? o.activatedDomains : (o.activatedDomain ? [o.activatedDomain] : []);
+    const maxSites = o.maxSites || (p && p.sites) || 1;
+    const planDisplayName = (maxSites > 1 && p && p.id === 'agency') ? (p.name + ' (' + maxSites + ' Sitios)') : (p ? p.name : o.plan);
     return {
-      id: o.id, plan: o.plan, planName: p.name, type: p.type, status: o.status, stage: o.stage || 0, amount: o.amount, currency: p.currency, period: p.period,
+      id: o.id, plan: o.plan, planName: planDisplayName, type: p ? p.type : 'subscription', status: o.status, stage: o.stage || 0, amount: o.amount, currency: p ? p.currency : 'USD', period: p ? p.period : 'al mes',
       createdAt: iso(o.createdAt), paidAt: iso(o.paidAt), deliveredAt: iso(o.deliveredAt), nextBilling: iso(o.nextBilling), notes: o.notes || '',
       access: info.access, accessUntil: iso(info.accessUntil), overdue: info.overdue,
       licenseKey: o.licenseKey || null,
-      maxSites: o.maxSites || p.sites || 1,
+      maxSites: maxSites,
       activatedDomains: domains,
       activatedDomain: domains.join(', ') || null,
       transferCount: typeof o.transferCount === 'number' ? o.transferCount : 0,
@@ -377,7 +383,8 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     db.users.push(u);
     let createdOrder = null;
     if (plan) {
-      const o = { id: id('ord'), userId: u.id, plan, status: 'pending_payment', stage: 0, amount: PLANS[plan].price, createdAt: T() };
+      const maxSites = Math.max(1, Math.min(100, Number(body.maxSites) || (PLANS[plan] ? PLANS[plan].sites : 1) || 1));
+      const o = { id: id('ord'), userId: u.id, plan, maxSites, status: 'pending_payment', stage: 0, amount: PLANS[plan].price, createdAt: T() };
       db.orders.push(o);
       if (PLANS[plan].price === 0) {
         applyPayment(o, 0, PLANS[plan].currency, 'free', 'PROMO-FREE', 'sistema');
@@ -510,12 +517,13 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     if (!PLANS[plan]) return fail(res, 400, 'Plan no válido.');
     if (ordersOf(user.id).some(o => o.plan === plan && o.status === 'pending_payment')) return fail(res, 409, 'Ya tienes ese plan pendiente de pago.');
     if (ordersOf(user.id).filter(o => o.status === 'pending_payment').length >= 3) return fail(res, 409, 'Ya tienes varios pedidos pendientes de pago.');
-    const o = { id: id('ord'), userId: user.id, plan, status: 'pending_payment', stage: 0, amount: PLANS[plan].price, createdAt: T() };
+    const maxSites = Math.max(1, Math.min(100, Number(body.maxSites) || (PLANS[plan] ? PLANS[plan].sites : 1) || 1));
+    const o = { id: id('ord'), userId: user.id, plan, maxSites, status: 'pending_payment', stage: 0, amount: PLANS[plan].price, createdAt: T() };
     db.orders.push(o);
     if (PLANS[plan].price === 0) {
       applyPayment(o, 0, PLANS[plan].currency, 'free', 'PROMO-FREE', user.name);
     }
-    record(user.name, user.id, (PLANS[plan].price === 0 ? 'Activó el plan ' : 'Solicitó el plan ') + PLANS[plan].name); save();
+    record(user.name, user.id, (PLANS[plan].price === 0 ? 'Activó el plan ' : 'Solicitó el plan ') + PLANS[plan].name + (maxSites > 1 ? ' (' + maxSites + ' sitios)' : '')); save();
     send(res, 201, { order: orderView(o) });
   });
   route('POST', '/api/sites', 'client', (ctx) => {
@@ -735,7 +743,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const pay = { id: id('pay'), userId: o.userId, orderId: o.id, amount: Math.round(amount * 100) / 100, currency: currency || p.currency, method: method || 'manual', reference: reference || '', at: T(), by: by || 'sistema' };
     db.payments.push(pay);
     if (!o.licenseKey) {
-      const pfx = (p.type === 'subscription') ? 'NXG-PRO' : (p.id === 'blindaje' ? 'NXG-ANNUAL' : 'NXG-LIC');
+      const pfx = (p && p.id === 'agency') || (o.maxSites && o.maxSites > 1) ? 'NXG-AGENCY' : ((p && p.type === 'subscription') ? 'NXG-PRO' : (p && p.id === 'blindaje' ? 'NXG-ANNUAL' : 'NXG-LIC'));
       o.licenseKey = pfx + '-' + crypto.randomBytes(3).toString('hex').toUpperCase() + '-' + crypto.randomBytes(3).toString('hex').toUpperCase();
     }
     if (o.status === 'pending_payment') { o.paidAt = T(); if (p.type === 'subscription') { o.status = 'active'; o.nextBilling = T() + 30 * DAY; } else o.status = 'in_progress'; }
@@ -760,13 +768,16 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     if (plan.price > 0) return fail(res, 400, 'Este plan requiere pago.');
     let target = user;
     if (!target) return fail(res, 401, 'Debes iniciar sesión para activar tu plan.');
+    const maxSites = Math.max(1, Math.min(100, Number(body.maxSites) || (plan ? plan.sites : 1) || 1));
     let order = db.orders.find(o => o.userId === target.id && o.plan === planId && (o.status === 'pending_payment' || o.status === 'active' || o.status === 'in_progress'));
     if (!order) {
-      order = { id: id('ord'), userId: target.id, plan: planId, status: 'pending_payment', stage: 0, amount: 0, createdAt: T() };
+      order = { id: id('ord'), userId: target.id, plan: planId, maxSites, status: 'pending_payment', stage: 0, amount: 0, createdAt: T() };
       db.orders.push(order);
+    } else if (body.maxSites) {
+      order.maxSites = maxSites;
     }
     const pay = applyPayment(order, 0, plan.currency || 'USD', 'free', 'PROMO-FREE', target.name);
-    record(target.name, target.id, 'Activó el plan gratuito: ' + plan.name);
+    record(target.name, target.id, 'Activó el plan gratuito: ' + plan.name + (maxSites > 1 ? ' (' + maxSites + ' sitios)' : ''));
     save();
     send(res, 201, { ok: true, user: publicUser(target), order: orderView(order) });
   });
@@ -1086,14 +1097,14 @@ function createApp({ store, scanner, waf, sentinel, config }) {
         const p = PLANS[o.plan] || {};
         const domains = Array.isArray(o.activatedDomains) ? o.activatedDomains : (o.activatedDomain ? [o.activatedDomain] : []);
         const maxSites = o.maxSites || p.sites || 1;
-        const exp = getLicenseExpiration(o);
+        const planDisplayName = o.maxSites && o.maxSites > 1 ? ((p && p.name ? p.name : o.plan) + ' (' + o.maxSites + ' Sitios)') : ((p && p.name) || o.plan);
         return {
           orderId: o.id,
           userId: o.userId,
           clientName: u.name || 'Cliente',
           clientEmail: u.email || '',
           planId: o.plan,
-          planName: p.name || o.plan,
+          planName: planDisplayName,
           licenseKey: o.licenseKey,
           status: o.status,
           licenseStatus: exp.licenseStatus,
