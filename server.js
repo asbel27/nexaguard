@@ -27,9 +27,9 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.
 const SEC = { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'same-origin' };
 // Se permite el dominio de PayPal (para su botón de pago) aunque no esté configurado:
 // si no hay credenciales, la página nunca carga ese script, así que no baja la seguridad.
-const PANEL_CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.paypal.com https://www.paypalobjects.com; " +
+const PANEL_CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.paypal.com https://www.paypalobjects.com https://www.sandbox.paypal.com; " +
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.paypalobjects.com; font-src https://fonts.gstatic.com; " +
-  "img-src 'self' data: https://www.paypalobjects.com; connect-src 'self' https://www.paypal.com; frame-src https://www.paypal.com; " +
+  "img-src 'self' data: https://www.paypalobjects.com; connect-src 'self' https://www.paypal.com https://www.sandbox.paypal.com; frame-src https://www.paypal.com https://www.sandbox.paypal.com; " +
   "frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
 
 function createServer(opts = {}) {
@@ -46,6 +46,13 @@ function createServer(opts = {}) {
   });
   sentinel.startWatchdog();
 
+  const paypalConfig = opts.paypal || {
+    clientId: process.env.PAYPAL_CLIENT_ID || 'AZ4KoBe46542jGzLZFXK6_kHH8it0LmBE0X-x5YQnvcFDg8HtcPxqFgAq_rLnraPd3UDby0mqsIb90A_',
+    clientSecret: process.env.PAYPAL_CLIENT_SECRET || 'EGBP6PsCyLQCoYxLmpn9x5fGQXpHmtH1Qz0DQXwLnUR-IcS8-bQ5vXlr7xROcQejtXCKaM4UAB6xerIX',
+    mode: process.env.PAYPAL_MODE || 'sandbox',
+    apiBase: process.env.PAYPAL_API_BASE || ''
+  };
+
   const app = createApp({
     store, scanner, waf, sentinel,
     config: {
@@ -53,10 +60,7 @@ function createServer(opts = {}) {
       secureCookie: process.env.SECURE_COOKIE === '1' ? true : process.env.SECURE_COOKIE === '0' ? false : null,
       adminEmail: opts.adminEmail || process.env.ADMIN_EMAIL, adminPassword: opts.adminPassword || process.env.ADMIN_PASSWORD,
       schedulerMs: opts.schedulerMs, cooldownMs: opts.cooldownMs,
-      paypal: opts.paypal || {
-        clientId: process.env.PAYPAL_CLIENT_ID || '', clientSecret: process.env.PAYPAL_CLIENT_SECRET || '',
-        mode: process.env.PAYPAL_MODE || 'sandbox', apiBase: process.env.PAYPAL_API_BASE || ''
-      },
+      paypal: paypalConfig,
       mailer: opts.mailer || {
         host: process.env.SMTP_HOST || 'smtp.titan.email',
         port: process.env.SMTP_PORT || 465,
@@ -189,7 +193,7 @@ if (require.main === module) {
         if (created.password) console.log('  │  Guárdala ahora: no se volverá a mostrar. Cámbiala al entrar.');
         console.log('  └───────────────────────────────────────────────────────────\n');
       }
-      if (s.app.PLANS && process.env.PAYPAL_CLIENT_ID) console.log('  Pago con PayPal: activo (modo ' + (process.env.PAYPAL_MODE || 'sandbox') + ')');
+      if (s.app.PLANS && paypalConfig.clientId) console.log('  Pago con PayPal: activo (modo ' + (paypalConfig.mode || 'sandbox') + ')');
       else console.log('  Pago con PayPal: no configurado (los planes se activan a mano). Ver LEEME.md.');
       if (process.env.RESEND_API_KEY) {
         console.log('  Envío de correos: activo vía Resend HTTPS API (→ ' + (process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'asbeldev8@gmail.com') + ')');

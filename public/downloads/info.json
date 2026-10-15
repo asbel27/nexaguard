@@ -7,7 +7,7 @@
   "fallback_download_url": "https://www.nexaguards.com/downloads/nexaguard-security.zip",
   "tested": "6.7",
   "requires_php": "7.4",
-  "last_updated": "2026-10-14",
+  "last_updated": "2026-10-15",
   "sections": {
     "description": "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
     "changelog": "<h4>Versión 1.5.5</h4><ul><li><strong>Soporte Completo de Licencias Vencidas / Expiradas:</strong> Reconocimiento y activación fluida del estado expirado (0 días) en el modal de licencias, permitiendo visualizar el banner rojo de renovación y el bloqueo preventivo del WAF tal como fue concebido en NXG-TEST-EXPIRED.</li><li><strong>Mensajes Claros de la Nube:</strong> Notificaciones explicativas directas sobre el vencimiento de la suscripción en lugar de códigos técnicos HTTP.</li><li><strong>Tipografía y Legibilidad Optimizada:</strong> Espaciado entre letras y palabras holgado en el escáner forense.</li></ul>"

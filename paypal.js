@@ -7,7 +7,7 @@
 
 function createPayPalClient(cfg) {
   cfg = Object.assign({ mode: 'live', timeoutMs: 15000 }, cfg || {});
-  const base = cfg.apiBase || (cfg.mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.paypal.com');
+  const base = cfg.apiBase || (cfg.mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com');
   const enabled = !!(cfg.clientId && cfg.clientSecret);
   let tokenCache = null; // { token, exp }
 
