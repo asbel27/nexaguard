@@ -543,12 +543,19 @@ function setBadge(n) {
   var old = sb.querySelector('.badge'); if (old) old.remove();
   if (n) sb.appendChild(h('span', { class: 'badge', title: 'Solicitudes que requieren atención' }, n));
 }
+function setLicenseBadge(n) {
+  badges.licenses = n;
+  var sb = document.querySelector('.nav-i[data-r="licencias"]'); if (!sb) return;
+  var old = sb.querySelector('.badge'); if (old) old.remove();
+  if (n) sb.appendChild(h('span', { class: 'badge', title: 'Licencias por vencer o vencidas', style: 'background:#f59f00' }, n));
+}
 function shell() {
   var app = $('#app'); app.innerHTML = '';
   var role = S.user.role, nav = h('nav', { 'aria-label': 'Secciones' });
   NAV[role].forEach(function (n) {
     var b = h('button', { class: 'nav-i', type: 'button', dataset: { r: n[0] }, on: { click: function () { go(n[0]); } } }, ico(n[2]), h('span', { class: 't' }, n[1]));
     if (n[0] === 'soporte' && badges.tickets) b.appendChild(h('span', { class: 'badge' }, badges.tickets));
+    if (n[0] === 'licencias' && badges.licenses) b.appendChild(h('span', { class: 'badge', style: 'background:#f59f00' }, badges.licenses));
     nav.appendChild(b);
   });
   var arrL = h('button', { class: 'nav-arr nav-arr-l', type: 'button', 'aria-label': 'Anterior', on: { click: function () { nav.scrollBy({ left: -140, behavior: 'smooth' }); } } }, ico('chevL'));
@@ -1143,12 +1150,26 @@ var AV = {};
 AV.resumen = async function () {
   var o = await api('GET', '/api/admin/overview'), k = o.kpis, root = h('div', null);
   setBadge(k.openTickets);
+  setLicenseBadge(k.expiringLicenses || 0);
   if (S.user.mustChangePassword) root.appendChild(h('div', { class: 'banner warn' }, ico('alert'), h('div', null, 'Estás usando la contraseña inicial. ', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('ajustes'); } } }, 'Cambiarla ahora'))));
   root.appendChild(head('Resumen', 'Datos reales de tu negocio.'));
   var kp = function (n, l, cls) { return h('div', { class: 'card kpi ' + (cls || '') }, h('b', null, n), h('span', null, l)); };
   root.appendChild(h('div', { class: 'grid g4' }, kp(k.clients, 'Clientes'), kp(k.active, 'Planes activos', 'good'), kp(k.pendingPayment, 'Pendientes de pago', k.pendingPayment ? 'bad' : ''), kp(k.openTickets, 'Solicitudes abiertas', k.openTickets ? 'bad' : ''),
     kp(k.sites, 'Sitios registrados'), kp(k.scansWeek, 'Análisis (7 días)'), kp(money(k.revenueMonth, k.currency), 'Ingresos del mes'), kp(money(k.revenueTotal, k.currency), 'Ingresos registrados')));
   if (k.overdue) root.appendChild(h('div', { class: 'banner warn', style: 'margin-top:16px' }, ico('alert'), h('div', null, k.overdue + ' suscripción(es) con cobro vencido.')));
+  if (k.expiringLicenses || k.expiredLicenses) {
+    var licMsgs = [];
+    if (k.expiringLicenses) licMsgs.push(k.expiringLicenses + ' licencia(s) de cliente por vencer en menos de 7 días');
+    if (k.expiredLicenses) licMsgs.push(k.expiredLicenses + ' ya expirada(s)');
+    root.appendChild(h('div', { class: 'banner warn', style: 'margin-top:16px;cursor:pointer;border-left:4px solid var(--yellow)', on: { click: function () { go('licencias'); } } },
+      ico('alert'),
+      h('div', null,
+        h('b', null, 'Aviso de Licencias: '),
+        licMsgs.join(' y ') + '. ',
+        h('u', null, 'Gestionar en Licencias & Plugin →')
+      )
+    ));
+  }
   var tot = Math.max(1, o.byPlan.reduce(function (a, b) { return a + b.count; }, 0));
   root.appendChild(h('div', { class: 'grid g2', style: 'margin-top:16px' },
     h('div', { class: 'card' }, h('h3', null, 'Clientes activos por plan'), o.byPlan.map(function (p) { return h('div', { style: 'margin-bottom:12px' }, h('div', { class: 'card-h', style: 'margin-bottom:6px;font-size:.9rem' }, h('span', null, p.name), h('b', null, String(p.count))), h('div', { class: 'bar' }, h('i', { style: 'width:' + Math.round(p.count / tot * 100) + '%' }))); })),
@@ -1281,10 +1302,26 @@ AV.licencias = async function () {
   var data = await api('GET', '/api/admin/licenses');
   var root = h('div', null);
 
-  root.appendChild(head('Licencias & Plugin', 'Gestor maestro de licencias, pruebas para WordPress y descarga oficial del plugin.',
+  setLicenseBadge(data.expiringCount || 0);
+
+  root.appendChild(head('Licencias & Plugin', 'Gestor maestro de licencias emitidas a clientes, control de vencimientos y descarga oficial del plugin.',
     h('a', { class: 'btn btn-y', href: data.downloadUrl, download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
 
-  // Tarjeta de Descarga
+  // Aviso de licencias por vencer o vencidas
+  if (data.expiringCount > 0 || data.expiredCount > 0) {
+    var alerts = [];
+    if (data.expiringCount > 0) alerts.push(data.expiringCount + ' licencia(s) por vencer en los próximos 7 días');
+    if (data.expiredCount > 0) alerts.push(data.expiredCount + ' licencia(s) ya expirada(s)');
+    root.appendChild(h('div', { class: 'banner warn', style: 'margin-bottom:20px;border-left:4px solid var(--yellow)' },
+      ico('alert'),
+      h('div', null,
+        h('b', null, 'Aviso de Renovaciones: '),
+        'Hay ' + alerts.join(' y ') + '. Revisa a los clientes listados a continuación para gestionar su renovación de suscripción.'
+      )
+    ));
+  }
+
+  // Tarjeta de Descarga Oficial
   var dlCard = h('div', { class: 'card', style: 'border:1.5px solid var(--yellow);background:rgba(255,207,51,.04);margin-bottom:20px' },
     h('div', { style: 'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px' },
       h('div', null,
@@ -1293,51 +1330,6 @@ AV.licencias = async function () {
         h('p', { class: 'hint', style: 'max-width:65ch;margin:0' }, 'Paquete .zip limpio y estándar. Al instalarlo en WordPress viene en Modo Estándar con escáner local. El Radar y la Vigilancia 24H se desbloquean al activar una licencia PRO.')),
       h('a', { class: 'btn btn-y', href: data.downloadUrl, download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar NexaGuard (.zip)')));
   root.appendChild(dlCard);
-
-  // Banco de pruebas de licencias para el Administrador
-  var testCard = h('div', { class: 'card', style: 'margin-bottom:20px' },
-    h('h3', null, '🔑 Banco de Pruebas de Licencias para el Administrador'),
-    h('p', { class: 'hint', style: 'margin-bottom:16px' }, 'Usa estas claves maestras en tu propio WordPress para verificar y probar cómo reacciona el plugin ante cada tipo de plan y estado de suscripción:'),
-    h('div', { class: 'stack', style: 'gap:12px' },
-      data.testKeys.map(function (k) {
-        var pillCls = k.status === 'active' ? 'ok' : (k.status === 'expiring_soon' ? 'warn' : 'crit');
-        var doms = (k.activatedDomains && k.activatedDomains.length) ? k.activatedDomains : (k.activatedDomain ? [k.activatedDomain] : []);
-        var maxS = k.maxSites || 1;
-        var domBadge = doms.length
-          ? h('span', { class: 'pill warn', style: 'margin-left:6px;font-size:0.75rem' }, '🌐 Activa en: ' + doms.join(', ') + ' (' + doms.length + '/' + maxS + ' sitios)')
-          : h('span', { class: 'pill ok', style: 'margin-left:6px;font-size:0.75rem' }, '🌐 Disponible (0/' + maxS + ' sitios)');
-
-        var unlinkBtn = doms.length
-          ? h('button', {
-              class: 'btn btn-o sm',
-              type: 'button',
-              style: 'color:#ff8ba0;border-color:rgba(255,107,138,.4)',
-              on: {
-                click: async function () {
-                  if (!confirm('¿Deseas liberar la licencia de los dominios vinculados (' + doms.join(', ') + ')?')) return;
-                  try {
-                    await api('POST', '/api/admin/licenses/reset-domain', { key: k.key });
-                    toast('Dominio(s) liberado(s) con éxito.');
-                    go('licencias');
-                  } catch (e) { toast(e.message); }
-                }
-              }
-            }, '🔓 Liberar Dominio' + (doms.length > 1 ? 's (' + doms.length + ')' : ''))
-          : null;
-
-        return h('div', { style: 'background:rgba(255,255,255,.03);border:1px solid var(--line2);border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px' },
-          h('div', { style: 'flex:1;min-width:240px' },
-            h('div', { style: 'display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap' },
-              h('span', { class: 'pill ' + pillCls }, k.badge),
-              h('b', { style: 'font-size:.95rem;color:#fff' }, k.name),
-              domBadge),
-            h('p', { class: 'hint', style: 'margin:2px 0 6px;font-size:.85rem' }, k.desc),
-            h('code', { style: 'font-family:var(--fm);font-size:.9rem;color:var(--yellow);background:rgba(255,207,51,.1);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,207,51,.25);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(k.key, this); toast('Clave copiada: ' + k.key); } } }, k.key)),
-          h('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' },
-            unlinkBtn,
-            h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(k.key, this); toast('Clave copiada: ' + k.key); } } }, 'Copiar Clave')));
-      })));
-  root.appendChild(testCard);
 
   // Tabla de licencias generadas para clientes
   var clientRows = data.clientOrders.map(function (o) {
@@ -1348,44 +1340,80 @@ AV.licencias = async function () {
           class: 'btn btn-o sm',
           type: 'button',
           style: 'color:#ff8ba0;border-color:rgba(255,107,138,.4)',
+          title: 'Liberar dominio vinculado para permitir activación en otro sitio',
           on: {
             click: async function () {
-              if (!confirm('¿Deseas desvincular la licencia de ' + cDoms.join(', ') + '?')) return;
+              if (!confirm('¿Deseas liberar la licencia ' + o.licenseKey + ' del dominio (' + cDoms.join(', ') + ')? El cliente podrá volver a activarla en cualquier otro sitio.')) return;
               try {
                 await api('POST', '/api/admin/licenses/reset-domain', { key: o.licenseKey });
-                toast('Dominio(s) desvinculado(s) con éxito.');
+                toast('Dominio(s) liberado(s) con éxito.');
                 go('licencias');
               } catch (e) { toast(e.message); }
             }
           }
-        }, '🔓 Liberar' + (cDoms.length > 1 ? ' (' + cDoms.length + ')' : ''))
+        }, '🔓 Liberar Dominio' + (cDoms.length > 1 ? 's' : ''))
       : null;
 
     var domainDisplay = cDoms.length
       ? h('span', { class: 'pill ok', style: 'font-size:0.8rem' }, '🌐 ' + cDoms.join(', ') + ' (' + cDoms.length + '/' + maxS + ')')
-      : h('span', { class: 'hint', style: 'font-size:0.8rem' }, 'Sin vincular');
+      : h('span', { class: 'hint', style: 'font-size:0.8rem' }, 'Sin vincular aún');
+
+    var expirationDisplay;
+    if (o.isExpired) {
+      expirationDisplay = h('div', null,
+        h('span', { class: 'pill crit', style: 'font-size:.78rem' }, 'Expirada (' + o.expiresFormatted + ')'),
+        h('div', { class: 'hint', style: 'font-size:.75rem;color:#ff8ba0;margin-top:2px' }, 'Venció hace ' + Math.abs(o.daysLeft) + ' d')
+      );
+    } else if (o.isExpiringSoon) {
+      expirationDisplay = h('div', null,
+        h('span', { class: 'pill warn', style: 'font-size:.78rem;font-weight:700' }, '⚠️ Vence en ' + o.daysLeft + ' día' + (o.daysLeft === 1 ? '' : 's')),
+        h('div', { class: 'hint', style: 'font-size:.75rem;margin-top:2px' }, 'Fecha: ' + o.expiresFormatted)
+      );
+    } else {
+      expirationDisplay = h('div', null,
+        h('span', { class: 'pill ok', style: 'font-size:.78rem' }, o.daysLeft + ' días restantes'),
+        h('div', { class: 'hint', style: 'font-size:.75rem;margin-top:2px' }, 'Hasta: ' + o.expiresFormatted)
+      );
+    }
+
+    var statusDisplay = o.isExpired
+      ? pill(['Expirada', 'crit'])
+      : (o.isExpiringSoon ? pill(['Por Vencer', 'warn']) : pill(['Activa', 'ok']));
 
     return {
       cells: [
-        h('b', null, o.clientName),
-        o.clientEmail,
-        o.planName,
-        h('code', { style: 'font-family:var(--fm);font-size:.84rem;color:var(--yellow);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, o.licenseKey),
+        h('div', null,
+          h('b', { style: 'color:#fff' }, o.clientName),
+          h('div', { class: 'hint', style: 'font-size:.8rem' }, o.clientEmail)),
+        h('div', null,
+          h('span', { style: 'font-weight:600' }, o.planName),
+          o.maxSites > 1 ? h('span', { class: 'pill info', style: 'font-size:.72rem;margin-left:6px' }, 'Multisitio') : null),
+        h('code', {
+          style: 'font-family:var(--fm);font-size:.84rem;color:var(--yellow);background:rgba(255,207,51,.1);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,207,51,.25);cursor:pointer;display:inline-block',
+          title: 'Clic para copiar clave de licencia',
+          on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } }
+        }, o.licenseKey),
         domainDisplay,
-        o.maxSites > 1 ? h('span', { class: 'pill ok', style: 'font-size:.78rem' }, 'Multisitio') : h('span', { class: 'pill ' + (o.transferCount >= 2 ? 'crit' : 'info'), style: 'font-size:.78rem' }, o.transferCount + '/2 usadas'),
-        pill(ORDER_ST[o.status] || o.status),
-        h('div', { style: 'display:flex;gap:6px;align-items:center' },
+        expirationDisplay,
+        statusDisplay,
+        h('div', { style: 'display:flex;gap:6px;align-items:center;flex-wrap:wrap' },
           unlinkClientBtn,
-          h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, 'Copiar'))
+          h('button', {
+            class: 'btn btn-o sm',
+            type: 'button',
+            title: 'Copiar clave',
+            on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } }
+          }, 'Copiar'))
       ]
     };
   });
 
   root.appendChild(h('div', { class: 'card' },
     h('h3', null, '📋 Licencias de Clientes Emitidas'),
-    h('p', { class: 'hint', style: 'margin-bottom:12px' }, 'Licencias asignadas automáticamente tras compras de planes Security Pro, Rescate + Blindaje y Guardián con escudo antifraude (máximo 2 transferencias y cooldown de 30 días).'),
-    clientRows.length ? table(['Cliente', 'Correo', 'Plan', 'Clave de Licencia', 'Dominio Vinculado', 'Transferencias', 'Estado', 'Acción'], clientRows)
-      : h('div', { class: 'empty' }, 'Aún no hay licencias de clientes generadas.')));
+    h('p', { class: 'hint', style: 'margin-bottom:12px' }, 'Licencias adquiridas automáticamente tras compras de planes Security Pro, Rescate + Blindaje y Guardián. Monitorea los vencimientos, dominios activos y libera licencias si el cliente necesita trasladarla.'),
+    clientRows.length
+      ? table(['Cliente', 'Plan Adquirido', 'Clave de Licencia', 'Dominio Vinculado', 'Vencimiento', 'Estado', 'Acciones'], clientRows)
+      : h('div', { class: 'empty' }, 'Aún no hay licencias de clientes generadas. Las licencias se crean automáticamente cuando un usuario compra un plan.')));
 
   return root;
 };

@@ -162,6 +162,41 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       licenseKey: o.licenseKey || null
     };
   }
+  function getLicenseExpiration(o) {
+    if (!o) return { expiresAt: null, expiresFormatted: '—', daysLeft: 0, isExpired: true, isExpiringSoon: false, licenseStatus: 'expired' };
+    const p = PLANS[o.plan] || {};
+    const now = T();
+    let expiresAt = null;
+
+    if (p.type === 'subscription') {
+      expiresAt = o.nextBilling || ((o.paidAt || o.createdAt) + 30 * DAY);
+    } else if (o.plan === 'blindaje') {
+      const start = o.paidAt || o.createdAt || now;
+      expiresAt = start + 365 * DAY;
+    } else if (p.afterDeliveryDays) {
+      const start = o.deliveredAt || o.paidAt || o.createdAt || now;
+      expiresAt = start + p.afterDeliveryDays * DAY;
+    } else {
+      const info = orderInfo(o);
+      expiresAt = info.accessUntil || (o.paidAt ? o.paidAt + 30 * DAY : (o.createdAt + 30 * DAY));
+    }
+
+    const diffMs = expiresAt - now;
+    const daysLeft = Math.ceil(diffMs / DAY);
+    const isCancelled = o.status === 'cancelled' || o.status === 'pending_payment';
+    const isExpired = isCancelled || diffMs <= 0;
+    const isExpiringSoon = !isExpired && daysLeft <= 7;
+    const licenseStatus = isExpired ? 'expired' : (isExpiringSoon ? 'expiring_soon' : 'active');
+
+    return {
+      expiresAt,
+      expiresFormatted: new Date(expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      daysLeft,
+      isExpired,
+      isExpiringSoon,
+      licenseStatus
+    };
+  }
   const planView = p => ({ id: p.id, name: p.name, price: p.price, currency: p.currency, period: p.period, type: p.type, sites: p.sites, scansPerMonth: p.scansPerMonth, scheduled: p.scheduled, priority: p.priority, response: p.response, features: p.features, afterDeliveryDays: p.afterDeliveryDays });
   const siteView = s => ({ id: s.id, url: s.url, host: s.host, label: s.label || '', monitoring: s.monitoring !== false, createdAt: iso(s.createdAt), lastScan: s.lastScan ? { id: s.lastScan.id, at: iso(s.lastScan.at), verdict: s.lastScan.verdict, counts: s.lastScan.counts, trigger: s.lastScan.trigger } : null });
   const scanRow = s => ({ id: s.id, siteId: s.siteId, host: (db.sites.find(x => x.id === s.siteId) || {}).host || '(sitio eliminado)', at: iso(s.at), trigger: s.trigger, verdict: s.verdict, counts: s.counts });
@@ -521,11 +556,15 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const revTotal = db.payments.reduce((a, p) => a + p.amount, 0), revMonth = db.payments.filter(p => p.at >= m0).reduce((a, p) => a + p.amount, 0);
     const problemSites = db.sites.filter(s => s.lastScan && (s.lastScan.verdict === 'infected' || s.lastScan.verdict === 'suspicious')).map(s => ({ id: s.id, host: s.host, verdict: s.lastScan.verdict, at: iso(s.lastScan.at), userId: s.userId, client: (db.users.find(u => u.id === s.userId) || {}).name || '' }));
     const waiting = db.tickets.filter(x => x.status === 'open').sort((a, b) => (a.priority === 'priority' ? -1 : 1) - (b.priority === 'priority' ? -1 : 1) || a.updatedAt - b.updatedAt).slice(0, 8).map(x => Object.assign(ticketRow(x), { client: (db.users.find(u => u.id === x.userId) || {}).name || '' }));
+    const licOrders = db.orders.filter(o => o.licenseKey && o.status !== 'pending_payment');
+    const expiringLicenses = licOrders.filter(o => getLicenseExpiration(o).isExpiringSoon).length;
+    const expiredLicenses = licOrders.filter(o => getLicenseExpiration(o).isExpired).length;
     send(ctx.res, 200, {
       kpis: {
         clients: cl.length, pendingPayment: sums.filter(s => s.level === 'pending').length, active: sums.filter(s => s.level === 'active').length,
         overdue: sums.filter(s => s.overdue).length, openTickets: db.tickets.filter(x => x.status === 'open').length, sites: db.sites.length,
-        scansWeek: db.scans.filter(s => s.at > t - 7 * DAY).length, revenueMonth: revMonth, revenueTotal: revTotal, currency: 'USD'
+        scansWeek: db.scans.filter(s => s.at > t - 7 * DAY).length, revenueMonth: revMonth, revenueTotal: revTotal, currency: 'USD',
+        expiringLicenses, expiredLicenses
       },
       byPlan: Object.keys(PLANS).map(k => ({ id: k, name: PLANS[k].name, count: byPlan[k] })), problemSites, waiting,
       activity: db.activity.slice(-25).reverse().map(a => ({ at: iso(a.at), actor: a.actor, text: a.text, kind: a.kind, userId: a.userId }))
@@ -750,62 +789,34 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       return fail(res, 429, 'Demasiados intentos fallidos de validación. IP registrada por WAF.');
     }
 
-    // 2. Lista blanca estricta de licencias de prueba / administrativas (SIN comodines ni prefijos abiertos)
-    const ADMIN_DEMO_KEYS = new Set([
-      'NXG-PRO-ADMIN-MASTER',
-      'NXG-ANNUAL-ADMIN-MASTER',
-      'NXG-PRO-1SITE-TEST',
-      'NXG-TEST-SOON',
-      'NXG-TEST-EXPIRED'
-    ]);
-
-    const isAdminDemo = ADMIN_DEMO_KEYS.has(key);
-    // Búsqueda estricta en la base de datos: ÚNICAMENTE claves reales emitidas tras pago
+    // 2. Búsqueda estricta en base de datos: ÚNICAMENTE claves reales emitidas tras pago
     const order = db.orders.find(o => o.licenseKey === key);
 
-    // Si no está en la base de datos y no es una clave demo explícita, es un intento de falsificación
-    if (!order && !isAdminDemo) {
+    // Si no está en la base de datos, es un intento de falsificación o clave no válida
+    if (!order) {
       hit(bruteKey);
       return fail(res, 404, 'Clave de licencia no reconocida en el sistema de NexaGuard.');
     }
 
     // 3. Blindaje Antifraude: Si es una orden, DEBE estar pagada y activa
-    if (order) {
-      if (order.status === 'pending_payment' || order.status === 'cancelled') {
-        return fail(res, 403, 'Esta orden se encuentra pendiente de pago. La membresía no está activa.');
-      }
-      if (!order.paidAt && order.status !== 'active') {
-        return fail(res, 403, 'No se ha acreditado ningún pago para esta licencia.');
-      }
+    if (order.status === 'pending_payment' || order.status === 'cancelled') {
+      return fail(res, 403, 'Esta orden se encuentra pendiente de pago o cancelada. La membresía no está activa.');
+    }
+    if (!order.paidAt && order.status !== 'active') {
+      return fail(res, 403, 'No se ha acreditado ningún pago para esta licencia.');
     }
 
-    const isTestExpiring = key === 'NXG-TEST-SOON';
-    const isTestExpired = key === 'NXG-TEST-EXPIRED';
-    const isAnnual = key === 'NXG-ANNUAL-ADMIN-MASTER' || (order && order.plan === 'blindaje');
-    const isPro = !isAnnual;
-
-    // Comprobación de vinculación por dominio (Monositio vs Multidominio)
-    const isMasterAdmin = key === 'NXG-PRO-ADMIN-MASTER' || key === 'NXG-ANNUAL-ADMIN-MASTER';
-    const isSingleTest = key === 'NXG-PRO-1SITE-TEST';
-    const isMultiDomain = !isSingleTest && ((order && (order.maxSites > 1 || order.plan === 'guardian')) || isMasterAdmin || isTestExpiring || isTestExpired);
-    const maxAllowed = isMasterAdmin ? 999 : (isMultiDomain ? (order ? (order.maxSites || 5) : 5) : 1);
+    const isAnnual = order.plan === 'blindaje';
+    const isMultiDomain = order.maxSites > 1 || order.plan === 'guardian';
+    const maxAllowed = isMultiDomain ? (order.maxSites || 5) : 1;
 
     db.settings.licenseActivations = db.settings.licenseActivations || {};
 
     let activeList = [];
-    if (order) {
-      if (Array.isArray(order.activatedDomains)) {
-        activeList = order.activatedDomains.map(d => String(d).trim().toLowerCase());
-      } else if (order.activatedDomain) {
-        activeList = [String(order.activatedDomain).trim().toLowerCase()];
-      }
-    } else {
-      const rawVal = db.settings.licenseActivations[key];
-      if (Array.isArray(rawVal)) {
-        activeList = rawVal.map(d => String(d).trim().toLowerCase());
-      } else if (typeof rawVal === 'string' && rawVal) {
-        activeList = [String(rawVal).trim().toLowerCase()];
-      }
+    if (Array.isArray(order.activatedDomains)) {
+      activeList = order.activatedDomains.map(d => String(d).trim().toLowerCase());
+    } else if (order.activatedDomain) {
+      activeList = [String(order.activatedDomain).trim().toLowerCase()];
     }
 
     // Si este dominio no está ya en la lista de activos
@@ -819,7 +830,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       }
 
       // Escudo Antifraude para licencias Monositio de clientes (Límite de transferencias y Cooldown de 30 días)
-      if (maxAllowed === 1 && order) {
+      if (maxAllowed === 1) {
         order.transferredDomains = order.transferredDomains || (order.activatedDomain ? [order.activatedDomain] : []);
         order.transferCount = typeof order.transferCount === 'number' ? order.transferCount : 0;
 
@@ -851,37 +862,20 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       }
 
       activeList.push(domain);
-      if (order) {
-        order.activatedDomains = activeList;
-        order.activatedDomain = activeList[0] || null;
-      } else {
-        db.settings.licenseActivations[key] = activeList;
-      }
+      order.activatedDomains = activeList;
+      order.activatedDomain = activeList[0] || null;
+      db.settings.licenseActivations[key] = activeList;
       save();
     }
 
-    const now = T();
-    let createdAt = order ? (order.paidAt || order.createdAt) : now;
-    let expiresAt = isAnnual ? (createdAt + 365 * DAY) : (order && order.nextBilling ? order.nextBilling : createdAt + 30 * DAY);
-
-    if (order) {
-      const info = orderInfo(order);
-      if (info.accessUntil) expiresAt = info.accessUntil;
-    }
-
-    // Soporte para pruebas del Administrador
-    if (isTestExpired) {
-      expiresAt = now - 1 * DAY;
-    } else if (isTestExpiring) {
-      expiresAt = now + 3 * DAY;
-    }
-
-    const diffMs = expiresAt - now;
-    const daysLeft = Math.max(0, Math.ceil(diffMs / DAY));
-    const isExpired = diffMs <= 0;
-    const isExpiringSoon = !isExpired && daysLeft <= 7;
-    const status = isExpired ? 'expired' : isExpiringSoon ? 'expiring_soon' : 'active';
-    const planName = isAnnual ? 'Licencia Anual (1 Año) · NexaGuard Pro' : 'Plan NexaGuard Security Pro (Mensual)';
+    const exp = getLicenseExpiration(order);
+    const expiresAt = exp.expiresAt;
+    const daysLeft = exp.daysLeft;
+    const isExpired = exp.isExpired;
+    const isExpiringSoon = exp.isExpiringSoon;
+    const status = exp.licenseStatus;
+    const planObj = PLANS[order.plan];
+    const planName = planObj ? planObj.name : (isAnnual ? 'Licencia Anual (1 Año) · NexaGuard Pro' : 'Plan NexaGuard Security Pro (Mensual)');
 
     // Firma criptográfica HMAC-SHA256 contra manipulación de respuesta en Burp Suite
     const hmacSecret = cfg.adminPassword || 'nexaguard-vault-integrity-key-2026';
@@ -1007,89 +1001,9 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     send(res, 200, { success: true, message: 'Dominio liberado. La clave ahora puede activarse en cualquier otra web.' });
   });
 
-  /* ---------- Panel de Administración: Gestión y Banco de Licencias ---------- */
+  /* ---------- Panel de Administración: Gestión de Licencias ---------- */
   route('GET', '/api/admin/licenses', 'admin', (ctx) => {
     db.settings.licenseActivations = db.settings.licenseActivations || {};
-
-    const getActivations = (k) => {
-      const val = db.settings.licenseActivations[k];
-      if (Array.isArray(val)) return val;
-      if (typeof val === 'string' && val) return [val];
-      return [];
-    };
-
-    const testKeys = [
-      {
-        id: 'pro_monthly_master',
-        name: 'Licencia PRO Multidominio Admin (Hasta 5 sitios)',
-        key: 'NXG-PRO-ADMIN-MASTER',
-        plan: 'Plan NexaGuard Security Pro (Multisitio Admin)',
-        period: 'monthly',
-        days: 30,
-        status: 'active',
-        badge: 'ACTIVA · 30 DÍAS · MULTISITIO',
-        desc: 'Clave maestra multidominio (hasta 5 sitios). Te permite probar simultáneamente en goldwp.net, mensajerodelcielo.com y otras webs sin que se bloqueen entre sí.',
-        maxSites: 5,
-        activatedDomains: getActivations('NXG-PRO-ADMIN-MASTER'),
-        activatedDomain: getActivations('NXG-PRO-ADMIN-MASTER').join(', ') || null
-      },
-      {
-        id: 'pro_single_test',
-        name: 'Licencia PRO Monositio (1 solo sitio estricto)',
-        key: 'NXG-PRO-1SITE-TEST',
-        plan: 'Plan NexaGuard Security Pro (1 Sitio)',
-        period: 'monthly',
-        days: 30,
-        status: 'active',
-        badge: 'ACTIVA · 30 DÍAS · MONOSITIO',
-        desc: 'Clave monositio estricta (1 dominio). Te permite verificar el bloqueo cuando intentas colocarla en un 2do sitio sin haberla desvinculado del 1ero.',
-        maxSites: 1,
-        activatedDomains: getActivations('NXG-PRO-1SITE-TEST'),
-        activatedDomain: getActivations('NXG-PRO-1SITE-TEST').join(', ') || null
-      },
-      {
-        id: 'annual',
-        name: 'Licencia Anual Multidominio (365 días - Blindaje)',
-        key: 'NXG-ANNUAL-ADMIN-MASTER',
-        plan: 'Licencia Anual (1 Año) · NexaGuard Pro',
-        period: 'annual',
-        days: 365,
-        status: 'active',
-        badge: 'ACTIVA · 365 DÍAS · MULTISITIO',
-        desc: 'Activa la vigilancia 24H durante 1 año completo en hasta 5 sitios simultáneos.',
-        maxSites: 5,
-        activatedDomains: getActivations('NXG-ANNUAL-ADMIN-MASTER'),
-        activatedDomain: getActivations('NXG-ANNUAL-ADMIN-MASTER').join(', ') || null
-      },
-      {
-        id: 'expiring',
-        name: 'Prueba: Alerta por Vencer (3 días restantes)',
-        key: 'NXG-TEST-SOON',
-        plan: 'Plan NexaGuard Security Pro (Prueba)',
-        period: 'monthly',
-        days: 3,
-        status: 'expiring_soon',
-        badge: 'POR VENCER · 3 DÍAS',
-        desc: 'Simula el estado preventivo en el plugin con el banner amarillo de advertencia.',
-        maxSites: 5,
-        activatedDomains: getActivations('NXG-TEST-SOON'),
-        activatedDomain: getActivations('NXG-TEST-SOON').join(', ') || null
-      },
-      {
-        id: 'expired',
-        name: 'Prueba: Licencia Vencida (Expirada)',
-        key: 'NXG-TEST-EXPIRED',
-        plan: 'Plan NexaGuard Security Pro (Vencida)',
-        period: 'monthly',
-        days: 0,
-        status: 'expired',
-        badge: 'VENCIDA · 0 DÍAS',
-        desc: 'Simula que venció el mes: radar bloqueado, banner rojo y aviso de renovación.',
-        maxSites: 5,
-        activatedDomains: getActivations('NXG-TEST-EXPIRED'),
-        activatedDomain: getActivations('NXG-TEST-EXPIRED').join(', ') || null
-      }
-    ];
 
     const clientOrders = db.orders
       .filter(o => o.licenseKey)
@@ -1098,14 +1012,22 @@ function createApp({ store, scanner, waf, sentinel, config }) {
         const p = PLANS[o.plan] || {};
         const domains = Array.isArray(o.activatedDomains) ? o.activatedDomains : (o.activatedDomain ? [o.activatedDomain] : []);
         const maxSites = o.maxSites || p.sites || 1;
+        const exp = getLicenseExpiration(o);
         return {
           orderId: o.id,
+          userId: o.userId,
           clientName: u.name || 'Cliente',
           clientEmail: u.email || '',
           planId: o.plan,
           planName: p.name || o.plan,
           licenseKey: o.licenseKey,
           status: o.status,
+          licenseStatus: exp.licenseStatus,
+          expiresAt: exp.expiresAt,
+          expiresFormatted: exp.expiresFormatted,
+          daysLeft: exp.daysLeft,
+          isExpiringSoon: exp.isExpiringSoon,
+          isExpired: exp.isExpired,
           maxSites: maxSites,
           activatedDomains: domains,
           activatedDomain: domains.join(', ') || null,
@@ -1116,11 +1038,16 @@ function createApp({ store, scanner, waf, sentinel, config }) {
           createdAt: iso(o.createdAt),
           paidAt: iso(o.paidAt)
         };
-      });
+      })
+      .sort((a, b) => (a.isExpiringSoon === b.isExpiringSoon ? 0 : a.isExpiringSoon ? -1 : 1) || a.daysLeft - b.daysLeft);
+
+    const expiringCount = clientOrders.filter(o => o.isExpiringSoon).length;
+    const expiredCount = clientOrders.filter(o => o.isExpired).length;
 
     send(ctx.res, 200, {
-      testKeys,
       clientOrders,
+      expiringCount,
+      expiredCount,
       downloadUrl: '/downloads/nexaguard-security.zip'
     });
   });
