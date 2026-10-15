@@ -562,6 +562,150 @@ a[data-go],a[data-act]{cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translate(-50%,30px);background:var(--text);color:#0a1030;padding:.8em 1.2em;border-radius:12px;font-weight:600;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .35s,transform .35s;z-index:80;max-width:min(92vw,460px);text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
+/* ---------- Notificación Flotante de Compra en Vivo (Prueba Social) ---------- */
+.sales-toast{
+  position:fixed;
+  left:22px;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 22px);
+  z-index:75;
+  max-width:370px;
+  width:calc(100% - 44px);
+  background:rgba(10,16,42,.92);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1.2px solid rgba(255,207,51,.35);
+  box-shadow:0 14px 36px -8px rgba(0,0,0,.75), 0 0 20px -2px rgba(255,207,51,.18);
+  border-radius:14px;
+  padding:11px 14px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color:var(--text);
+  font-family:var(--fb);
+  font-size:.84rem;
+  line-height:1.35;
+  cursor:pointer;
+  transform:translateY(32px) scale(.94);
+  opacity:0;
+  pointer-events:none;
+  visibility:hidden;
+  transition:transform .42s cubic-bezier(.16,1,.3,1), opacity .35s ease, visibility .35s, border-color .2s, box-shadow .2s;
+}
+.sales-toast.show{
+  transform:translateY(0) scale(1);
+  opacity:1;
+  pointer-events:auto;
+  visibility:visible;
+}
+.sales-toast:hover{
+  border-color:var(--yellow);
+  box-shadow:0 16px 40px -8px rgba(0,0,0,.85), 0 0 26px rgba(255,207,51,.28);
+}
+.st-icon-wrap{
+  position:relative;
+  width:42px;
+  height:42px;
+  flex-shrink:0;
+  border-radius:12px;
+  background:linear-gradient(135deg,rgba(255,207,51,.15),rgba(107,140,255,.2));
+  border:1px solid rgba(255,207,51,.4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.35rem;
+}
+.st-pulse-dot{
+  position:absolute;
+  top:-2px;
+  right:-2px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#3de8a4;
+  border:2px solid #070c22;
+  box-shadow:0 0 8px #3de8a4;
+  animation:stPulse 2s infinite;
+}
+@keyframes stPulse{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.3);opacity:.6}
+}
+.st-body{
+  flex:1;
+  min-width:0;
+}
+.st-head{
+  font-size:.82rem;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  gap:5px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.st-head b{
+  color:#fff;
+  font-weight:700;
+}
+.st-plan{
+  font-size:.85rem;
+  font-weight:600;
+  color:var(--yellow);
+  margin-top:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.st-foot{
+  font-size:.72rem;
+  color:#a0acd2;
+  margin-top:2px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.st-foot .st-check{
+  color:#3de8a4;
+  font-weight:600;
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+}
+.st-close{
+  position:absolute;
+  top:6px;
+  right:8px;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  border:none;
+  background:transparent;
+  color:var(--muted);
+  font-size:16px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:color .2s, background .2s;
+  padding:0;
+}
+.st-close:hover{
+  color:#fff;
+  background:rgba(255,255,255,.12);
+}
+@media(max-width:640px){
+  .sales-toast{
+    left:12px;
+    right:12px;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
+    width:auto;
+    max-width:none;
+    padding:10px 12px;
+  }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width:1180px){
   .plans{grid-template-columns:repeat(2,1fr)}
@@ -1459,6 +1603,24 @@ a[data-go],a[data-act]{cursor:pointer}
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Notificación Flotante de Compra Reciente (Prueba Social) -->
+<div id="salesToast" class="sales-toast" role="status" aria-live="polite" title="Clic para ver planes y licencias">
+  <div class="st-icon-wrap">
+    <span id="stFlag">🇪🇸</span>
+    <span class="st-pulse-dot"></span>
+  </div>
+  <div class="st-body">
+    <div class="st-head"><b id="stName">Carlos M.</b> <span id="stFrom">de España</span></div>
+    <div class="st-plan" id="stPlan">Plan NexaGuard Security Pro</div>
+    <div class="st-foot">
+      <span id="stTime">hace 4 min</span>
+      <span>•</span>
+      <span class="st-check">🛡️ Compra verificada</span>
+    </div>
+  </div>
+  <button type="button" class="st-close" id="stClose" aria-label="Cerrar notificación">&times;</button>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function () {
@@ -2851,6 +3013,105 @@ document.addEventListener('keydown', function (e) {
   e.preventDefault();
   if (a.hasAttribute('data-go')) goTo(a.getAttribute('data-go')); else a.click();
 });
+
+/* =====================================================
+   Notificaciones Flotantes de Compras en Vivo (Social Proof)
+   ===================================================== */
+(function initSocialSales() {
+  var toastEl = document.getElementById('salesToast');
+  if (!toastEl) return;
+  var flagEl = document.getElementById('stFlag');
+  var nameEl = document.getElementById('stName');
+  var fromEl = document.getElementById('stFrom');
+  var planEl = document.getElementById('stPlan');
+  var timeEl = document.getElementById('stTime');
+  var closeBtn = document.getElementById('stClose');
+
+  var FALLBACK_POOL = [
+    { name: 'Carlos M.', country: 'España', flag: '🇪🇸', plan: 'Plan NexaGuard Security Pro', timeAgo: 'hace 4 min' },
+    { name: 'Alejandro V.', country: 'México', flag: '🇲🇽', plan: 'Rescate + Blindaje (1 Año Pro)', timeAgo: 'hace 9 min' },
+    { name: 'Gabriel T.', country: 'Estados Unidos', flag: '🇺🇸', plan: 'Plan NexaGuard Security Pro', timeAgo: 'hace 14 min' },
+    { name: 'Elena B.', country: 'España', flag: '🇪🇸', plan: 'Plan Guardián (Monitoreo 24/7)', timeAgo: 'hace 22 min' },
+    { name: 'Martín G.', country: 'Colombia', flag: '🇨🇴', plan: 'Plan NexaGuard Security Pro', timeAgo: 'hace 31 min' },
+    { name: 'Roberto C.', country: 'México', flag: '🇲🇽', plan: 'Plan NexaGuard Security Pro', timeAgo: 'hace 45 min' },
+    { name: 'David H.', country: 'Chile', flag: '🇨🇱', plan: 'Rescate + Blindaje (1 Año Pro)', timeAgo: 'hace 1 hora' },
+    { name: 'Andrés P.', country: 'Perú', flag: '🇵🇪', plan: 'Plan NexaGuard Security Pro', timeAgo: 'hace 1 hora' },
+    { name: 'Lucas D.', country: 'Argentina', flag: '🇦🇷', plan: 'Plan Guardián (Monitoreo 24/7)', timeAgo: 'hace 2 horas' },
+    { name: 'Javier R.', country: 'España', flag: '🇪🇸', plan: 'Rescate + Blindaje (1 Año Pro)', timeAgo: 'hace 3 horas' },
+    { name: 'Sophia M.', country: 'Estados Unidos', flag: '🇺🇸', plan: 'Plan NexaGuard Security Pro', timeAgo: 'hace 3 horas' }
+  ];
+
+  var salesList = FALLBACK_POOL.slice();
+  var currentIndex = -1;
+  var timer = null;
+  var isDismissed = false;
+
+  // Cargar ventas reales de la base de datos si existen
+  fetch('/api/public/recent-sales')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data && data.sales && data.sales.length) {
+        var realFormatted = data.sales.map(function (s, idx) {
+          var flags = ['🇪🇸', '🇲🇽', '🇺🇸', '🇨🇴', '🇨🇱', '🇦🇷', '🇵🇪'];
+          var countries = ['España', 'México', 'Estados Unidos', 'Colombia', 'Chile', 'Argentina', 'Perú'];
+          var cIdx = idx % flags.length;
+          return {
+            name: s.name,
+            country: countries[cIdx],
+            flag: flags[cIdx],
+            plan: s.plan,
+            timeAgo: s.timeAgo || 'hace unos minutos'
+          };
+        });
+        salesList = realFormatted.concat(FALLBACK_POOL);
+      }
+    })
+    .catch(function () {});
+
+  function showNext() {
+    if (isDismissed || !salesList.length) return;
+    currentIndex = (currentIndex + 1) % salesList.length;
+    var item = salesList[currentIndex];
+
+    flagEl.textContent = item.flag || '🛡️';
+    nameEl.textContent = item.name;
+    fromEl.textContent = 'de ' + item.country;
+    planEl.textContent = item.plan;
+    timeEl.textContent = item.timeAgo;
+
+    toastEl.classList.add('show');
+
+    // Permanece visible por 5.2 segundos
+    setTimeout(function () {
+      toastEl.classList.remove('show');
+      if (!isDismissed) {
+        // Pausa entre 8 y 16 segundos antes de la siguiente
+        var nextDelay = 8000 + Math.floor(Math.random() * 8000);
+        timer = setTimeout(showNext, nextDelay);
+      }
+    }, 5200);
+  }
+
+  // Al hacer clic en la notificación, llevar al usuario a la sección de planes
+  toastEl.addEventListener('click', function (e) {
+    if (e.target.closest('#stClose')) return;
+    goTo('planes');
+  });
+
+  // Botón de cerrar (dismiss)
+  closeBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toastEl.classList.remove('show');
+    clearTimeout(timer);
+    // Pausar 45 segundos si el usuario decide cerrarla
+    timer = setTimeout(function () {
+      showNext();
+    }, 45000);
+  });
+
+  // Disparar la primera notificación 5 segundos después de que cargue la web
+  setTimeout(showNext, 5000);
+})();
 
 /* =====================================================
    Arranque

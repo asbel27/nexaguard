@@ -385,6 +385,36 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     send(ctx.res, 200, { ok: true }, { 'Set-Cookie': cookie(ctx.req, '', 0) });
   });
 
+  // Social Proof: Ventas recientes para notificación en vivo del frontend
+  route('GET', '/api/public/recent-sales', null, (ctx) => {
+    const paidOrders = db.orders
+      .filter(o => o.licenseKey && (o.paidAt || o.status === 'active' || o.status === 'delivered'))
+      .slice(-12)
+      .reverse();
+
+    const realSales = paidOrders.map(o => {
+      const u = db.users.find(x => x.id === o.userId) || {};
+      const p = PLANS[o.plan] || {};
+      const rawName = (u.name || 'Cliente').trim();
+      const parts = rawName.split(/\s+/);
+      const safeName = parts.length > 1 ? (parts[0] + ' ' + parts[1][0] + '.') : parts[0];
+      const diffMs = Math.max(60000, T() - (o.paidAt || o.createdAt || T()));
+      const mins = Math.floor(diffMs / 60000);
+      const hours = Math.floor(mins / 60);
+      const days = Math.floor(hours / 24);
+      let timeAgo = mins < 60 ? `hace ${mins} min` : (hours < 24 ? `hace ${hours} h` : `hace ${days} d`);
+
+      return {
+        name: safeName,
+        plan: p.name || 'Plan NexaGuard Security Pro',
+        timeAgo: timeAgo,
+        isReal: true
+      };
+    });
+
+    send(ctx.res, 200, { sales: realSales });
+  });
+
   // NexaGuard Real-Time Cloud Threat Intelligence Feed
   route('GET', '/api/threat-intel', null, (ctx) => {
     send(ctx.res, 200, {
