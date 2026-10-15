@@ -1149,10 +1149,138 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     send(ctx.res, 200, { scans: list.slice(0, 200).map(s => Object.assign(scanRow(s), { client: (db.users.find(u => u.id === s.userId) || {}).name || '', userId: s.userId })) });
   });
   route('GET', '/api/admin/scans/:id', 'admin', (ctx) => { const sc = db.scans.find(x => x.id === ctx.params[0]); sc ? send(ctx.res, 200, Object.assign(scanRow(sc), { findings: sc.findings, meta: sc.meta })) : fail(ctx.res, 404, 'Análisis no encontrado.'); });
-  route('GET', '/api/admin/settings', 'admin', (ctx) => send(ctx.res, 200, { paymentInstructions: (db.settings && db.settings.paymentInstructions) || DEFAULT_PAYMENT_TEXT, plans: Object.values(PLANS).map(planView) }));
+  route('GET', '/api/admin/settings', 'admin', (ctx) => send(ctx.res, 200, {
+    paymentInstructions: (db.settings && db.settings.paymentInstructions) || DEFAULT_PAYMENT_TEXT,
+    plans: Object.values(PLANS).map(planView),
+    counts: {
+      clients: (db.users || []).filter(u => u.role === 'client').length,
+      orders: (db.orders || []).length,
+      sites: (db.sites || []).length,
+      scans: (db.scans || []).length,
+      tickets: (db.tickets || []).length,
+      payments: (db.payments || []).length,
+      wafEvents: (db.wafEvents || []).length,
+      wafJail: (db.wafJail || []).length,
+      licenses: Object.keys((db.settings && db.settings.licenseActivations) || {}).length
+    }
+  }));
   route('PATCH', '/api/admin/settings', 'admin', (ctx) => {
     if (ctx.body.paymentInstructions !== undefined) { db.settings = db.settings || {}; db.settings.paymentInstructions = clean(ctx.body.paymentInstructions, 1500); }
     save(); send(ctx.res, 200, { ok: true });
+  });
+
+  /* ---------- Restablecimiento Total de Módulos (Factory Reset) ---------- */
+  route('POST', '/api/admin/system/reset', 'admin', async (ctx) => {
+    const { user, body, res, req } = ctx;
+    const confirmation = String(body.confirmation || '').trim().toUpperCase();
+
+    if (confirmation !== 'REESTABLECER') {
+      return fail(res, 400, 'Debes escribir exactamente la palabra "REESTABLECER" para confirmar esta operación.');
+    }
+
+    const resetClients  = body.clients !== false;
+    const resetOrders   = body.orders !== false;
+    const resetSites    = body.sites !== false;
+    const resetScans    = body.scans !== false;
+    const resetTickets  = body.tickets !== false;
+    const resetPayments = body.payments !== false;
+    const resetLogs     = body.logs !== false;
+    const resetWaf      = body.waf !== false;
+    const resetLicenses = body.licenses !== false;
+
+    const summary = {
+      clientsRemoved: 0,
+      ordersRemoved: 0,
+      sitesRemoved: 0,
+      scansRemoved: 0,
+      ticketsRemoved: 0,
+      paymentsRemoved: 0,
+      licensesReset: 0
+    };
+
+    // 1. Clientes (Preservar SIEMPRE a los administradores)
+    if (resetClients) {
+      const initialUsersCount = (db.users || []).length;
+      db.users = (db.users || []).filter(u => u.role === 'admin');
+      summary.clientsRemoved = initialUsersCount - db.users.length;
+    }
+
+    // 2. Pedidos y suscripciones
+    if (resetOrders) {
+      summary.ordersRemoved = (db.orders || []).length;
+      db.orders = [];
+      db.paypalOrders = {};
+    }
+
+    // 3. Sitios web
+    if (resetSites) {
+      summary.sitesRemoved = (db.sites || []).length;
+      db.sites = [];
+    }
+
+    // 4. Análisis forenses
+    if (resetScans) {
+      summary.scansRemoved = (db.scans || []).length;
+      db.scans = [];
+    }
+
+    // 5. Soporte y tickets
+    if (resetTickets) {
+      summary.ticketsRemoved = (db.tickets || []).length;
+      db.tickets = [];
+    }
+
+    // 6. Pagos registrados
+    if (resetPayments) {
+      summary.paymentsRemoved = (db.payments || []).length;
+      db.payments = [];
+    }
+
+    // 7. Licencias y dominios activados
+    if (resetLicenses) {
+      db.settings = db.settings || {};
+      const activeKeys = Object.keys(db.settings.licenseActivations || {});
+      summary.licensesReset = activeKeys.length;
+      db.settings.licenseActivations = {};
+      (db.orders || []).forEach(o => {
+        o.activatedDomain = null;
+        o.activatedDomains = [];
+        o.transferCount = 0;
+        o.transferredDomains = [];
+      });
+    }
+
+    // 8. Telemetría WAF, IPs en Jail y Estadísticas
+    if (resetWaf) {
+      db.wafEvents = [];
+      db.wafJail = [];
+      db.wafStats = { inspected: 0, blocked: 0, todayBlocked: 0, lastDay: new Date().toDateString() };
+      if (waf) {
+        try { waf.clearEvents(); } catch (e) {}
+      }
+    }
+
+    // 9. Sesiones: Mantener la sesión activa del administrador actual
+    const currentSid = parseCookies(req).pw_sid || '';
+    const keepHash = sha(currentSid);
+    db.sessions = (db.sessions || []).filter(s => s.h === keepHash);
+
+    // 10. Bitácora de actividad
+    if (resetLogs) {
+      db.activity = [];
+    }
+    record(user.name, user.id, 'Restablecimiento de módulos completado por el administrador.');
+
+    save();
+    if (store && store.flush) {
+      try { await store.flush(); } catch (e) { console.error('flush after reset:', e.message); }
+    }
+
+    send(res, 200, {
+      ok: true,
+      message: 'Todos los módulos han sido restablecidos exitosamente a su estado inicial.',
+      summary
+    });
   });
   route('GET', '/api/admin/export.csv', 'admin', (ctx) => {
     const cell = v => { let s = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };
