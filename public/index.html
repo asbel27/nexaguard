@@ -1255,7 +1255,7 @@ a[data-go],a[data-act]{cursor:pointer}
         <span class="tag-sub">Software SaaS</span>
         <h3>Plan NexaGuard Security Pro</h3>
         <p class="d">Licencia oficial para tu WordPress con Vigilancia 24H activa.</p>
-        <div class="price">$9.99<small>al mes</small></div>
+        <div class="price">$0<small>al mes</small></div>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>Licencia Oficial NexaGuard PRO</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Sistema de Vigilancia 24 Horas activo</li>
@@ -1268,7 +1268,7 @@ a[data-go],a[data-act]{cursor:pointer}
       <article class="plan">
         <h3>Rescate</h3>
         <p class="d">Para sitios con síntomas puntuales que necesitan arreglo ya.</p>
-        <div class="price">$99<small>pago único</small></div>
+        <div class="price">$0<small>pago único</small></div>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>Limpieza forense de archivos y DB</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Plugin NexaGuard Security incluido</li>
@@ -1282,7 +1282,7 @@ a[data-go],a[data-act]{cursor:pointer}
         <span class="tag">El más elegido</span>
         <h3>Rescate + Blindaje</h3>
         <p class="d">Limpiamos y protegemos para que no se repita.</p>
-        <div class="price">$199<small>pago único</small></div>
+        <div class="price">$0<small>pago único</small></div>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>Todo lo del plan Rescate</li>
           <li><svg class="ic"><use href="#i-check"/></svg>1 Año de Licencia NexaGuard PRO</li>
@@ -1295,7 +1295,7 @@ a[data-go],a[data-act]{cursor:pointer}
       <article class="plan">
         <h3>Guardián</h3>
         <p class="d">Vigilancia continua e ingeniería dedicada.</p>
-        <div class="price">$39<small>al mes</small></div>
+        <div class="price">$0<small>al mes</small></div>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>Licencia NexaGuard PRO activa</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Sistema de Vigilancia 24 Horas continuo</li>
@@ -1565,7 +1565,7 @@ a[data-go],a[data-act]{cursor:pointer}
     <div class="pro-modal-offer">
       <div class="pro-modal-price">
         <span class="p-currency">$</span>
-        <span class="p-num">9.99</span>
+        <span class="p-num">0</span>
         <span class="p-per">USD / mes</span>
       </div>
       <div class="pro-modal-guar">🛡️ Licencia PRO Oficial incluida • Cancela cuando quieras</div>
@@ -1592,7 +1592,7 @@ a[data-go],a[data-act]{cursor:pointer}
 
     <div class="pro-modal-acts">
       <button type="button" class="btn btn-y" id="btnGetProModal" style="width:100%;font-weight:700;padding:13px">
-        Adquirir Security Pro ($9.99/mes)
+        Adquirir Security Pro ($0/mes)
       </button>
       <button type="button" class="btn btn-o" id="btnDismissProModal" style="width:100%;font-size:.85rem;padding:9px;color:var(--muted)">
         Continuar navegando
@@ -2300,9 +2300,39 @@ function ensurePayPalSdk() {
 /* Pantalla: pagar con PayPal (o elegir otra vía) */
 function checkoutScreen(planId) {
   var plan = PLAN_BY_ID[planId], wrap = acEl('div', null), err = acEl('p', { class: 'err', role: 'alert' });
-  wrap.appendChild(acEl('h3', { class: 'ad-t' }, 'Paga tu plan'));
-  wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Estás por contratar ' + plan.name + '. Al confirmar el pago, tu panel se activa al instante.' : ''));
+  wrap.appendChild(acEl('h3', { class: 'ad-t' }, plan && plan.price <= 0 ? 'Activa tu plan gratis ($0)' : 'Paga tu plan'));
+  wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Estás por contratar ' + plan.name + '. ' + (plan.price <= 0 ? 'Plan sin costo. Al activar, tu panel y tu licencia quedan habilitados al instante.' : 'Al confirmar el pago, tu panel se activa al instante.') : ''));
   if (plan) wrap.appendChild(planSummary(plan));
+
+  if (plan && plan.price <= 0) {
+    var freeBox = acEl('div', { class: 'pp-wrap', style: 'margin-top:14px;display:flex;flex-direction:column;gap:10px' });
+    if (ACCOUNTS.user) {
+      var btnFree = acEl('button', { type: 'button', class: 'btn btn-y', style: 'width:100%;font-size:16px;padding:14px;font-weight:700', on: { click: async function () {
+        btnFree.disabled = true; btnFree.textContent = 'Activando tu licencia...'; err.textContent = '';
+        try {
+          var r = await acFetch('/api/checkout/free', { method: 'POST', body: JSON.stringify({ plan: planId }) });
+          ACCOUNTS.user = r.user; $('#navPanel').textContent = 'Mi panel';
+          paidSuccessScreen(planId, null, r.order || null);
+        } catch (x) {
+          btnFree.disabled = false; btnFree.textContent = 'Activar Licencia Gratis ($0)'; err.textContent = x.message;
+        }
+      } } }, 'Activar Licencia Gratis Ahora ($0)');
+      freeBox.appendChild(btnFree);
+    } else {
+      var btnGoReg = acEl('button', { type: 'button', class: 'btn btn-y', style: 'width:100%;font-size:15px;padding:12px;font-weight:700', on: { click: function () {
+        authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'reg'));
+      } } }, 'Crear cuenta y activar gratis ($0)');
+      var btnGoLogin = acEl('button', { type: 'button', class: 'linklike', style: 'display:block;margin:6px auto 0;text-align:center', on: { click: function () {
+        authBody.innerHTML = ''; authBody.appendChild(authScreen(planId, 'login'));
+      } } }, '¿Ya tienes cuenta? Ingresa aquí');
+      freeBox.appendChild(btnGoReg);
+      freeBox.appendChild(btnGoLogin);
+    }
+    wrap.appendChild(freeBox);
+    wrap.appendChild(err);
+    return wrap;
+  }
+
   var ppMsg = acEl('p', { class: 'hint', style: 'text-align:center;margin:14px 0' }, 'Cargando el módulo de pago…');
   var ppBox = acEl('div', { class: 'pp-box' });
   wrap.appendChild(acEl('div', { class: 'pp-wrap' }, ppMsg, ppBox));
@@ -2370,7 +2400,12 @@ function authScreen(planId, mode) {
         try {
           var d = await acFetch('/api/register', { method: 'POST', body: JSON.stringify({ name: nm.value, email: em.value, phone: ph.value, password: pw.value, plan: planId || '', accept: ac.checked }) });
           ACCOUNTS.user = d.user; $('#navPanel').textContent = 'Mi panel';
-          if (ACCOUNTS.paypal) { authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId)); } else afterAuth(planId, true);
+          var curPlan = PLAN_BY_ID[planId];
+          if (curPlan && curPlan.price <= 0 && d.order) {
+            paidSuccessScreen(planId, null, d.order);
+          } else if (ACCOUNTS.paypal) {
+            authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId));
+          } else afterAuth(planId, true);
         } catch (x) { err.textContent = x.message; }
       } } },
         acEl('div', { class: 'fld' }, acEl('label', null, 'Nombre'), nm),
@@ -2385,6 +2420,10 @@ function authScreen(planId, mode) {
         try {
           var d = await acFetch('/api/login', { method: 'POST', body: JSON.stringify({ email: em2.value, password: pw2.value }) });
           ACCOUNTS.user = d.user; $('#navPanel').textContent = 'Mi panel';
+          var curPlan = PLAN_BY_ID[planId];
+          if (curPlan && curPlan.price <= 0) {
+            authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId)); return;
+          }
           if (ACCOUNTS.paypal) { authBody.innerHTML = ''; authBody.appendChild(checkoutScreen(planId)); return; }
           await requestPlanForUser(planId); afterAuth(planId, false);
         } catch (x) { err.textContent = x.message; }

@@ -9,22 +9,22 @@ const DAY = 864e5;
 /* ---------- Planes: aquí defines qué incluye cada uno ---------- */
 const PLANS = {
   security_pro: {
-    id: 'security_pro', tier: 1, name: 'Plan NexaGuard Security Pro', price: 9.99, currency: 'USD', period: 'al mes', type: 'subscription',
+    id: 'security_pro', tier: 1, name: 'Plan NexaGuard Security Pro', price: 0, currency: 'USD', period: 'al mes', type: 'subscription',
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
     features: ['Licencia Oficial NexaGuard Security PRO para WordPress', 'Sistema de Vigilancia 24 Horas contra amenazas activo', 'Auditoría forense y erradicación de malware con 1 clic', 'Sincronización en tiempo real con NexaGuard Threat Cloud', 'Actualizaciones continuas de firmas Zero-Day']
   },
   rescate: {
-    id: 'rescate', tier: 2, name: 'Rescate', price: 99, currency: 'USD', period: 'pago único', type: 'oneoff',
+    id: 'rescate', tier: 2, name: 'Rescate', price: 0, currency: 'USD', period: 'pago único', type: 'oneoff',
     sites: 1, scansPerMonth: 3, scheduled: false, priority: false, afterDeliveryDays: 14, response: '24 a 48 horas',
     features: ['Limpieza forense humana de archivos y base de datos', 'Plugin NexaGuard Security incluido para análisis interno', 'Reparación de errores críticos del sitio', 'Informe detallado de intrusiones', '3 análisis del escáner web por mes']
   },
   blindaje: {
-    id: 'blindaje', tier: 3, name: 'Rescate + Blindaje', price: 199, currency: 'USD', period: 'pago único', type: 'oneoff',
+    id: 'blindaje', tier: 3, name: 'Rescate + Blindaje', price: 0, currency: 'USD', period: 'pago único', type: 'oneoff',
     sites: 1, scansPerMonth: 10, scheduled: false, priority: true, afterDeliveryDays: 365, response: 'menos de 24 horas',
     features: ['Todo lo del plan Rescate', '1 Año Completo de Licencia NexaGuard Security PRO incluida', 'Firewall (WAF) y 2FA configurados por expertos', 'wp-config y permisos endurecidos', 'Revisión y deslistado de Google Safe Browsing', 'Garantía de 30 días y atención prioritaria']
   },
   guardian: {
-    id: 'guardian', tier: 4, name: 'Guardián', price: 39, currency: 'USD', period: 'al mes', type: 'subscription',
+    id: 'guardian', tier: 4, name: 'Guardián', price: 0, currency: 'USD', period: 'al mes', type: 'subscription',
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 24, priority: true, afterDeliveryDays: 0, response: 'menos de 24 horas',
     features: ['Licencia NexaGuard Security PRO siempre activa', 'Sistema de Vigilancia 24 Horas continuo', 'Monitoreo automático diario con el escáner', 'Backups diarios y actualizaciones probadas asistidas', 'Limpiezas y soporte prioritario incluidos']
   }
@@ -375,10 +375,18 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     if (db.users.some(u => u.email === email)) return fail(res, 409, 'Ya existe una cuenta con ese correo. Ingresa con tu contraseña.');
     const u = { id: id('usr'), email, name, phone, role: 'client', pass: await hashPw(pw), createdAt: T(), active: true };
     db.users.push(u);
-    if (plan) db.orders.push({ id: id('ord'), userId: u.id, plan, status: 'pending_payment', stage: 0, amount: PLANS[plan].price, createdAt: T() });
+    let createdOrder = null;
+    if (plan) {
+      const o = { id: id('ord'), userId: u.id, plan, status: 'pending_payment', stage: 0, amount: PLANS[plan].price, createdAt: T() };
+      db.orders.push(o);
+      if (PLANS[plan].price === 0) {
+        applyPayment(o, 0, PLANS[plan].currency, 'free', 'PROMO-FREE', 'sistema');
+      }
+      createdOrder = o;
+    }
     record(u.name, u.id, 'Se registró' + (plan ? ' y eligió el plan ' + PLANS[plan].name : ''));
     const headers = startSession(req, res, u.id);
-    send(res, 201, { user: publicUser(u) }, headers);
+    send(res, 201, { user: publicUser(u), order: createdOrder ? orderView(createdOrder) : null }, headers);
   });
   route('POST', '/api/login', null, async (ctx) => {
     const { req, res, body } = ctx, ip = clientIp(req), email = clean(body.email, 254).toLowerCase(), pw = String(body.password || '');
@@ -503,7 +511,11 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     if (ordersOf(user.id).some(o => o.plan === plan && o.status === 'pending_payment')) return fail(res, 409, 'Ya tienes ese plan pendiente de pago.');
     if (ordersOf(user.id).filter(o => o.status === 'pending_payment').length >= 3) return fail(res, 409, 'Ya tienes varios pedidos pendientes de pago.');
     const o = { id: id('ord'), userId: user.id, plan, status: 'pending_payment', stage: 0, amount: PLANS[plan].price, createdAt: T() };
-    db.orders.push(o); record(user.name, user.id, 'Solicitó el plan ' + PLANS[plan].name); save();
+    db.orders.push(o);
+    if (PLANS[plan].price === 0) {
+      applyPayment(o, 0, PLANS[plan].currency, 'free', 'PROMO-FREE', user.name);
+    }
+    record(user.name, user.id, (PLANS[plan].price === 0 ? 'Activó el plan ' : 'Solicitó el plan ') + PLANS[plan].name); save();
     send(res, 201, { order: orderView(o) });
   });
   route('POST', '/api/sites', 'client', (ctx) => {
@@ -738,6 +750,25 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const p = PLANS[o.plan], pay = applyPayment(o, amount, p.currency, clean(ctx.body.method, 40) || 'manual', clean(ctx.body.reference, 80), ctx.user.name);
     record(ctx.user.name, o.userId, 'Registró un pago de ' + pay.amount + ' ' + pay.currency + ' (' + p.name + ')'); save();
     send(ctx.res, 201, { payment: paymentView(pay), order: orderView(o) });
+  });
+
+  /* ---------- Activación Inmediata de Planes Gratuitos / Promocionales ($0) ---------- */
+  route('POST', '/api/checkout/free', null, async (ctx) => {
+    const { req, res, user, body } = ctx;
+    const planId = clean(body.plan, 20), plan = PLANS[planId];
+    if (!plan) return fail(res, 400, 'Plan no válido.');
+    if (plan.price > 0) return fail(res, 400, 'Este plan requiere pago.');
+    let target = user;
+    if (!target) return fail(res, 401, 'Debes iniciar sesión para activar tu plan.');
+    let order = db.orders.find(o => o.userId === target.id && o.plan === planId && (o.status === 'pending_payment' || o.status === 'active' || o.status === 'in_progress'));
+    if (!order) {
+      order = { id: id('ord'), userId: target.id, plan: planId, status: 'pending_payment', stage: 0, amount: 0, createdAt: T() };
+      db.orders.push(order);
+    }
+    const pay = applyPayment(order, 0, plan.currency || 'USD', 'free', 'PROMO-FREE', target.name);
+    record(target.name, target.id, 'Activó el plan gratuito: ' + plan.name);
+    save();
+    send(res, 201, { ok: true, user: publicUser(target), order: orderView(order) });
   });
 
   /* ---------- Pago con PayPal (automático) ---------- */

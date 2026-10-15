@@ -472,6 +472,21 @@ function payWithPayPal(container, planId, msgEl) {
   }).catch(function (e) { if (msgEl) msgEl.textContent = e.message + ' Usa el botón de abajo para coordinar el pago por otra vía.'; });
 }
 function payPalBlock(planId) {
+  var pl = S.plans && S.plans.find(function (x) { return x.id === planId; });
+  if (pl && pl.price <= 0) {
+    return h('div', { style: 'margin:12px 0' },
+      h('button', { class: 'btn btn-y', type: 'button', style: 'padding:10px 18px;font-weight:700', on: { click: async function () {
+        var btn = this; btn.disabled = true; btn.textContent = 'Activando tu licencia...';
+        try {
+          await api('POST', '/api/checkout/free', { plan: planId });
+          toast('¡Plan activado con éxito! Tu licencia ya está disponible.');
+          go('licencias');
+        } catch (e) {
+          btn.disabled = false; btn.textContent = 'Activar plan ($0)';
+          toast(e.message);
+        }
+      } } }, ico('shield'), 'Activar plan gratis ($0)'));
+  }
   if (!S.paypal) return null;
   var msg = h('p', { class: 'hint', style: 'margin:10px 0' }, 'Cargando el botón de pago…');
   var box = h('div', { class: 'pp-box' });
