@@ -881,8 +881,9 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     }
 
     const isAnnual = order.plan === 'blindaje';
-    const isMultiDomain = order.maxSites > 1 || order.plan === 'guardian';
-    const maxAllowed = isMultiDomain ? (order.maxSites || 5) : 1;
+    const planObj = PLANS[order.plan] || {};
+    const maxAllowed = order.maxSites || planObj.sites || 1;
+    const isMultiDomain = maxAllowed > 1;
 
     db.settings.licenseActivations = db.settings.licenseActivations || {};
 
@@ -948,7 +949,6 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const isExpired = exp.isExpired;
     const isExpiringSoon = exp.isExpiringSoon;
     const status = exp.licenseStatus;
-    const planObj = PLANS[order.plan];
     const planName = planObj ? planObj.name : (isAnnual ? 'Licencia Anual (1 Año) · NexaGuard Pro' : 'Plan NexaGuard Security Pro (Mensual)');
 
     // Firma criptográfica HMAC-SHA256 contra manipulación de respuesta en Burp Suite
