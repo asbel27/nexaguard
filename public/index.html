@@ -877,7 +877,7 @@ a[data-go],a[data-act]{cursor:pointer}
 <main>
 
 <!-- ============ HERO ============ -->
-<div class="hero-wrap" id="inicio" data-obj="virus" data-x="2.75" data-y=".5" data-s="1">
+<div class="hero-wrap" id="inicio" data-obj="logo" data-x="2.75" data-y=".5" data-s="1">
   <section class="hero" aria-label="Portada">
     <div class="grid-bg" aria-hidden="true"></div>
     <div class="hero-inner" data-hfade>
@@ -1255,7 +1255,7 @@ a[data-go],a[data-act]{cursor:pointer}
         <span class="tag-sub">Software SaaS</span>
         <h3>Plan NexaGuard Security Pro</h3>
         <p class="d">Licencia oficial para tu WordPress con Vigilancia 24H activa.</p>
-        <div class="price">$0<small>al mes</small></div>
+        <div class="price">$9.99<small>al mes</small></div>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>Licencia Oficial NexaGuard PRO</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Sistema de Vigilancia 24 Horas activo</li>
@@ -1265,11 +1265,55 @@ a[data-go],a[data-act]{cursor:pointer}
         </ul>
         <a class="btn btn-o" href="#contacto" data-plan="Plan NexaGuard Security Pro" data-pid="security_pro">Elegir Security Pro</a>
       </article>
+
+      <article class="plan">
+        <h3>Rescate</h3>
+        <p class="d">Para sitios con síntomas puntuales que necesitan arreglo ya.</p>
+        <div class="price">$89<small>pago único</small></div>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Limpieza forense de archivos y DB</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Plugin NexaGuard Security incluido</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Reparación de errores del sitio</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Informe forense de intrusiones</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>3 análisis del escáner por mes</li>
+        </ul>
+        <a class="btn btn-o" href="#contacto" data-plan="Rescate" data-pid="rescate">Elegir Rescate</a>
+      </article>
+
+      <article class="plan feat">
+        <span class="tag">El más elegido</span>
+        <h3>Rescate + Blindaje</h3>
+        <p class="d">Limpiamos y protegemos para que no se repita.</p>
+        <div class="price">$189<small>pago único</small></div>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Todo lo del plan Rescate</li>
+          <li><svg class="ic"><use href="#i-check"/></svg><strong>1 Año Completo de Licencia PRO</strong></li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Firewall (WAF) y 2FA configurados</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>wp-config y permisos endurecidos</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Revisión de Google y 30 días de garantía</li>
+        </ul>
+        <a class="btn" href="#contacto" data-plan="Rescate + Blindaje" data-pid="blindaje">Elegir Rescate + Blindaje</a>
+      </article>
+
+      <article class="plan">
+        <h3>Guardián</h3>
+        <p class="d">Vigilancia continua e ingeniería dedicada.</p>
+        <div class="price">$39<small>al mes</small></div>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Licencia NexaGuard PRO activa</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Sistema de Vigilancia 24 Horas continuo</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Monitoreo diario con alertas automáticas</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Backups diarios fuera del servidor</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Limpiezas y soporte prioritario incluidos</li>
+        </ul>
+        <a class="btn btn-o" href="#contacto" data-plan="Guardián" data-pid="guardian">Elegir Guardián</a>
+      </article>
+
       <article class="plan" id="planAgencyCard" style="border-top:3px solid #00f0ff">
         <span class="tag-sub" style="color:#00f0ff;background:rgba(0,240,255,.08);border-color:rgba(0,240,255,.35)">⭐ Multidominio Agencias</span>
-        <h3>Plan Agencia / Dev</h3>
+        <h3>Plan Agencia / Freelancer</h3>
         <p class="d">1 sola clave maestra para centralizar y proteger los sitios de tus clientes.</p>
-        <div class="price">$0<small>al mes</small></div>
+        <div class="price" id="agencyPriceTag">$29.99<small>al mes</small></div>
 
         <div style="margin:8px 0 4px;background:rgba(0,240,255,.05);border:1px solid rgba(0,240,255,.2);border-radius:8px;padding:8px">
           <span style="display:block;font-size:.72rem;color:#00f0ff;font-weight:700;text-transform:uppercase;margin-bottom:6px">Selecciona sitios a proteger:</span>
@@ -1281,53 +1325,13 @@ a[data-go],a[data-act]{cursor:pointer}
         </div>
 
         <ul>
-          <li><svg class="ic"><use href="#i-check"/></svg><strong id="agencySitesText" style="color:#fff">Hasta 5 sitios simultáneos</strong></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><strong id="agencySitesText" style="color:#fff">Hasta 5 sitios simultáneos ($5.99/web)</strong></li>
           <li><svg class="ic"><use href="#i-check"/></svg>1 Sola Clave Maestra Multisitio</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Vigilancia 24H y Erradicación en cada web</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Liberación de dominios desde tu panel</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Soporte prioritario para agencias</li>
         </ul>
         <a class="btn btn-o" href="#contacto" id="btnAgencyHome" data-plan="Plan Agencia / Freelancer" data-pid="agency" data-sites="5">Elegir Plan Agencia</a>
-      </article>
-      <article class="plan">
-        <h3>Rescate</h3>
-        <p class="d">Para sitios con síntomas puntuales que necesitan arreglo ya.</p>
-        <div class="price">$0<small>pago único</small></div>
-        <ul>
-          <li><svg class="ic"><use href="#i-check"/></svg>Limpieza forense de archivos y DB</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Plugin NexaGuard Security incluido</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Reparación de errores del sitio</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Informe forense de intrusiones</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>3 análisis del escáner por mes</li>
-        </ul>
-        <a class="btn btn-o" href="#contacto" data-plan="Rescate" data-pid="rescate">Elegir Rescate</a>
-      </article>
-      <article class="plan feat">
-        <span class="tag">El más elegido</span>
-        <h3>Rescate + Blindaje</h3>
-        <p class="d">Limpiamos y protegemos para que no se repita.</p>
-        <div class="price">$0<small>pago único</small></div>
-        <ul>
-          <li><svg class="ic"><use href="#i-check"/></svg>Todo lo del plan Rescate</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>1 Año de Licencia NexaGuard PRO</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Firewall (WAF) y 2FA configurados</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>wp-config y permisos endurecidos</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Revisión de Google y 30 días de garantía</li>
-        </ul>
-        <a class="btn" href="#contacto" data-plan="Rescate + Blindaje" data-pid="blindaje">Elegir Rescate + Blindaje</a>
-      </article>
-      <article class="plan">
-        <h3>Guardián</h3>
-        <p class="d">Vigilancia continua e ingeniería dedicada.</p>
-        <div class="price">$0<small>al mes</small></div>
-        <ul>
-          <li><svg class="ic"><use href="#i-check"/></svg>Licencia NexaGuard PRO activa</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Sistema de Vigilancia 24 Horas continuo</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Monitoreo diario con alertas automáticas</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Backups diarios fuera del servidor</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Limpiezas y soporte prioritario incluidos</li>
-        </ul>
-        <a class="btn btn-o" href="#contacto" data-plan="Guardián" data-pid="guardian">Elegir Guardián</a>
       </article>
     </div>
     <ol class="after-plan" aria-label="Qué pasa después de elegir tu plan">
@@ -1616,7 +1620,7 @@ a[data-go],a[data-act]{cursor:pointer}
 
     <div class="pro-modal-acts">
       <button type="button" class="btn btn-y" id="btnGetProModal" style="width:100%;font-weight:700;padding:13px">
-        Adquirir Security Pro ($0/mes)
+        Adquirir Security Pro ($9.99/mes)
       </button>
       <button type="button" class="btn btn-o" id="btnDismissProModal" style="width:100%;font-size:.85rem;padding:9px;color:var(--muted)">
         Continuar navegando
@@ -1801,6 +1805,78 @@ function makeScene() {
     return g;
   }
 
+  /* ---- NEXAGUARD 3D LOGO (marca oficial) ---- */
+  var logo = new T.Group();
+  var nxgSc = 1 / 18;
+  var nxgSh = new T.Shape();
+  nxgSh.moveTo(0, (32 - 4) * nxgSc);
+  nxgSh.lineTo((54 - 32) * nxgSc, (32 - 12) * nxgSc);
+  nxgSh.lineTo((54 - 32) * nxgSc, (32 - 31) * nxgSc);
+  nxgSh.bezierCurveTo((54 - 32) * nxgSc, (32 - 45.5) * nxgSc, (44.5 - 32) * nxgSc, (32 - 55.5) * nxgSc, 0, (32 - 60) * nxgSc);
+  nxgSh.bezierCurveTo((19.5 - 32) * nxgSc, (32 - 55.5) * nxgSc, (10 - 32) * nxgSc, (32 - 45.5) * nxgSc, (10 - 32) * nxgSc, (32 - 31) * nxgSc);
+  nxgSh.lineTo((10 - 32) * nxgSc, (32 - 12) * nxgSc);
+  nxgSh.closePath();
+
+  var logoShieldGeo = new T.ExtrudeGeometry(nxgSh, { depth: .3, bevelEnabled: true, bevelSize: .07, bevelThickness: .06, bevelSegments: 3, curveSegments: 32 });
+  logoShieldGeo.center();
+  logo.add(holo(logoShieldGeo, YEL, { body: 0x0c173d, em: .22, thr: 16, wire: .08 }));
+
+  var innerSh = new T.Shape();
+  var scIn = nxgSc * .86;
+  innerSh.moveTo(0, (32 - 4) * scIn);
+  innerSh.lineTo((54 - 32) * scIn, (32 - 12) * scIn);
+  innerSh.lineTo((54 - 32) * scIn, (32 - 31) * scIn);
+  innerSh.bezierCurveTo((54 - 32) * scIn, (32 - 45.5) * scIn, (44.5 - 32) * scIn, (32 - 55.5) * scIn, 0, (32 - 60) * scIn);
+  innerSh.bezierCurveTo((19.5 - 32) * scIn, (32 - 55.5) * scIn, (10 - 32) * scIn, (32 - 45.5) * scIn, (10 - 32) * scIn, (32 - 31) * scIn);
+  innerSh.lineTo((10 - 32) * scIn, (32 - 12) * scIn);
+  innerSh.closePath();
+  var innerGeo = new T.ExtrudeGeometry(innerSh, { depth: .09, bevelEnabled: true, bevelSize: .02, bevelThickness: .02, bevelSegments: 1, curveSegments: 24 });
+  innerGeo.center();
+  var innerMesh = new T.Mesh(innerGeo, new T.MeshStandardMaterial({
+    color: 0x111e4f, metalness: .85, roughness: .25, emissive: BLU, emissiveIntensity: .18
+  }));
+  innerMesh.position.z = .16;
+  logo.add(innerMesh);
+
+  /* Circuito "N" en 3D con reflejo metálico y brillo cian */
+  var nMat = new T.MeshStandardMaterial({ color: 0xffffff, metalness: .9, roughness: .15, emissive: BLU, emissiveIntensity: .4 });
+  var barL = new T.Mesh(new T.CylinderGeometry(.055, .055, 1.11, 16), nMat);
+  barL.position.set(-10 * nxgSc, 0, .26);
+  logo.add(barL);
+  var barR = new T.Mesh(new T.CylinderGeometry(.055, .055, 1.11, 16), nMat);
+  barR.position.set(10 * nxgSc, 0, .26);
+  logo.add(barR);
+  var barDiag = new T.Mesh(new T.CylinderGeometry(.055, .055, 1.571, 16), nMat);
+  barDiag.position.set(0, 0, .26);
+  barDiag.rotation.z = Math.PI / 4;
+  logo.add(barDiag);
+
+  /* 4 Nodos dorados interconectados */
+  var logoNodes = [];
+  var nodeGeo = new T.SphereGeometry(.11, 16, 16);
+  var nodeMat = new T.MeshStandardMaterial({ color: YEL, metalness: .65, roughness: .2, emissive: YEL, emissiveIntensity: .8 });
+  var nodeRingGeo = new T.TorusGeometry(.16, .014, 8, 24);
+  var nodeRingMat = new T.MeshBasicMaterial({ color: YEL, transparent: true, opacity: .9 });
+
+  [[-10 * nxgSc, -10 * nxgSc], [-10 * nxgSc, 10 * nxgSc], [10 * nxgSc, -10 * nxgSc], [10 * nxgSc, 10 * nxgSc]].forEach(function (pt) {
+    var nodeG = new T.Group();
+    var sph = new T.Mesh(nodeGeo, nodeMat);
+    var nr = new T.Mesh(nodeRingGeo, nodeRingMat);
+    nodeG.add(sph); nodeG.add(nr);
+    nodeG.position.set(pt[0], pt[1], .27);
+    logo.add(nodeG);
+    logoNodes.push(nodeG);
+  });
+
+  /* Anillos orbitales de ciberseguridad */
+  var logoRings = new T.Group();
+  var ringA = new T.Mesh(new T.TorusGeometry(2.1, .014, 8, 90), new T.MeshBasicMaterial({ color: YEL, transparent: true, opacity: .7 }));
+  var ringB = new T.Mesh(new T.TorusGeometry(2.5, .009, 8, 90), new T.MeshBasicMaterial({ color: BLU, transparent: true, opacity: .5 }));
+  ringB.rotation.x = 1.15; ringB.rotation.y = .35;
+  ringA.rotation.x = .8; ringA.rotation.y = -.25;
+  logoRings.add(ringA); logoRings.add(ringB);
+  logo.add(logoRings);
+
   /* ---- VIRUS (infección) ---- */
   var virus = new T.Group();
   virus.add(holo(new T.IcosahedronGeometry(1.05, 1), RED, { body: 0x1c0811, em: .18, thr: 5 }));
@@ -1875,7 +1951,7 @@ function makeScene() {
   ring2.rotation.x = 1.1; shield.add(ring1); shield.add(ring2);
 
   /* Registro de objetos: g = posición/escala, m = rotación */
-  var defs = { virus: virus, wrench: wrench, lock: lock, shield: shield };
+  var defs = { logo: logo, virus: virus, wrench: wrench, lock: lock, shield: shield };
   var objs = {};
   Object.keys(defs).forEach(function (key) {
     var g = new T.Group(), m = new T.Group();
@@ -1896,9 +1972,9 @@ function makeScene() {
   var pm = new T.PointsMaterial({ color: BLU, size: .045, transparent: true, opacity: .75, depthWrite: false, blending: T.AdditiveBlending });
   var pts = new T.Points(pg, pm); scene.add(pts);
 
-  var themes = { virus: [RED, RED], wrench: [YEL, BLU], lock: [BLU, BLU], shield: [GRN, BLU] };
+  var themes = { logo: [YEL, BLU], virus: [RED, RED], wrench: [YEL, BLU], lock: [BLU, BLU], shield: [GRN, BLU] };
   var tmp = new T.Color();
-  var cur = null, burst = 0, boost = 0, glitchT = 2, glitchFor = 0, shackleY = 1.45, shieldSpin = 0;
+  var cur = null, burst = 0, boost = 0, glitchT = 2, glitchFor = 0, shackleY = 1.45, shieldSpin = 0, logoSpin = 0;
 
   function resize(w, h) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, w < 820 ? 1.5 : 1.75));
@@ -1931,6 +2007,17 @@ function makeScene() {
     boost *= Math.max(0, 1 - dt * 1.4);
     var mx = ms.x, my = ms.y;
 
+    if (objs.logo && objs.logo.g.visible) {
+      var lm = objs.logo.m;
+      logoSpin += dt * boost * 6;
+      lm.rotation.y = Math.sin(t * .6) * .45 + mx * .35 + logoSpin;
+      lm.rotation.x = Math.sin(t * .4) * .15 + my * .2;
+      lm.scale.setScalar(1 + Math.sin(t * 2.2) * .025);
+      logoRings.rotation.z += dt * .35;
+      logoNodes.forEach(function (nd, idx) {
+        nd.scale.setScalar(1 + Math.sin(t * 3.5 + idx * 1.5) * .12);
+      });
+    }
     if (objs.virus.g.visible) {
       var vm = objs.virus.m;
       vm.rotation.y += dt * (.28 + spin);
@@ -2321,19 +2408,51 @@ function ensurePayPalSdk() {
   return ppSdkPromise;
 }
 
+function getAgencyPrice(sites) {
+  var s = Number(sites) || 5;
+  if (s <= 5) return 29.99;
+  if (s <= 10) return 49.99;
+  if (s <= 25) return 99.99;
+  return 179.99;
+}
+
 /* Pantalla: pagar con PayPal (o elegir otra vía) */
 function checkoutScreen(planId, preselectedSites) {
   var plan = PLAN_BY_ID[planId], wrap = acEl('div', null), err = acEl('p', { class: 'err', role: 'alert' });
   var chosenSites = Number(preselectedSites) || (plan && plan.sites) || 1;
-  wrap.appendChild(acEl('h3', { class: 'ad-t' }, plan && plan.price <= 0 ? 'Activa tu plan gratis ($0)' : 'Paga tu plan'));
-  wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Estás por contratar ' + plan.name + '. ' + (plan.price <= 0 ? 'Plan sin costo. Al activar, tu panel y tu licencia quedan habilitados al instante.' : 'Al confirmar el pago, tu panel se activa al instante.') : ''));
-  if (plan) wrap.appendChild(planSummary(plan));
+  var isAgency = planId === 'agency';
+  var initialPrice = isAgency ? getAgencyPrice(chosenSites) : (plan ? plan.price : 0);
 
-  if (planId === 'agency') {
+  wrap.appendChild(acEl('h3', { class: 'ad-t' }, plan && initialPrice <= 0 ? 'Activa tu plan gratis ($0)' : 'Paga tu plan'));
+  wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Estás por contratar ' + plan.name + '. ' + (initialPrice <= 0 ? 'Plan sin costo. Al activar, tu panel y tu licencia quedan habilitados al instante.' : 'Al confirmar el pago con PayPal, tu panel y tu licencia se activan al instante.') : ''));
+
+  var summaryWrap = acEl('div', null);
+  function renderSummary() {
+    summaryWrap.innerHTML = '';
+    if (!plan) return;
+    var currentPrice = isAgency ? getAgencyPrice(chosenSites) : plan.price;
+    summaryWrap.appendChild(acEl('div', { class: 'ad-plan' },
+      acEl('strong', null,
+        acEl('span', null, plan.name + (isAgency ? ' (' + chosenSites + ' Sitios)' : '')),
+        acEl('span', null, acMoney(currentPrice, plan.currency) + ' · ' + plan.period)
+      ),
+      acEl('ul', null, plan.features.slice(0, 4).map(function (f) { return acEl('li', null, f); }))
+    ));
+  }
+  renderSummary();
+  wrap.appendChild(summaryWrap);
+
+  if (isAgency) {
     var sitesPillsWrap = acEl('div', { style: 'background:rgba(0,240,255,.06);border:1.5px solid rgba(0,240,255,.3);border-radius:12px;padding:14px;margin:14px 0' });
     sitesPillsWrap.appendChild(acEl('label', { style: 'display:block;font-size:.85rem;font-weight:700;color:#00f0ff;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px' }, '🛡️ Cantidad de sitios web a proteger con tu clave maestra:'));
     var pRow = acEl('div', { style: 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap' });
-    var pDesc = acEl('p', { class: 'hint', style: 'margin:8px 0 0;font-size:.82rem;text-align:center' }, 'Tu clave de licencia autorizará exactamente hasta ' + chosenSites + ' sitios web simultáneos.');
+    var pDesc = acEl('p', { class: 'hint', style: 'margin:8px 0 0;font-size:.82rem;text-align:center' });
+    function updateAgencyDesc() {
+      var pr = getAgencyPrice(chosenSites);
+      var perSite = (pr / chosenSites).toFixed(2);
+      pDesc.textContent = 'Tu clave autoriza hasta ' + chosenSites + ' sitios por ' + acMoney(pr, 'USD') + '/mes ($' + perSite + '/sitio).';
+    }
+    updateAgencyDesc();
     [5, 10, 25, 50].forEach(function (num) {
       var pBtn = acEl('button', {
         type: 'button',
@@ -2343,7 +2462,8 @@ function checkoutScreen(planId, preselectedSites) {
           chosenSites = num;
           pRow.querySelectorAll('button').forEach(function (b) { b.className = 'btn btn-o sm'; });
           pBtn.className = 'btn btn-y sm';
-          pDesc.textContent = 'Tu clave de licencia autorizará exactamente hasta ' + chosenSites + ' sitios web simultáneos.';
+          updateAgencyDesc();
+          renderSummary();
         } }
       }, num + ' Sitios');
       pRow.appendChild(pBtn);
@@ -2353,7 +2473,7 @@ function checkoutScreen(planId, preselectedSites) {
     wrap.appendChild(sitesPillsWrap);
   }
 
-  if (plan && plan.price <= 0) {
+  if (plan && initialPrice <= 0) {
     var freeBox = acEl('div', { class: 'pp-wrap', style: 'margin-top:14px;display:flex;flex-direction:column;gap:10px' });
     if (ACCOUNTS.user) {
       var btnFree = acEl('button', { type: 'button', class: 'btn btn-y', style: 'width:100%;font-size:16px;padding:14px;font-weight:700', on: { click: async function () {
@@ -2583,8 +2703,12 @@ document.addEventListener('click', function (e) {
   if (p) p.querySelectorAll('.btn-agency-opt').forEach(function (x) { x.className = 'btn btn-o sm btn-agency-opt'; });
   b.className = 'btn btn-y sm btn-agency-opt';
   var s = Number(b.dataset.sites) || 5;
+  var prMap = { 5: { p: '$29.99', sub: '$5.99/web' }, 10: { p: '$49.99', sub: '$4.99/web' }, 25: { p: '$99.99', sub: '$3.99/web' } };
+  var info = prMap[s] || { p: '$29.99', sub: '$5.99/web' };
   var txt = $('#agencySitesText');
-  if (txt) txt.textContent = 'Hasta ' + s + ' sitios simultáneos';
+  if (txt) txt.textContent = 'Hasta ' + s + ' sitios simultáneos (' + info.sub + ')';
+  var prTag = $('#agencyPriceTag');
+  if (prTag) prTag.innerHTML = info.p + '<small>al mes</small>';
   var aBtn = $('#btnAgencyHome');
   if (aBtn) { aBtn.dataset.sites = s; }
 });

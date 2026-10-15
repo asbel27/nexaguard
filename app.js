@@ -9,31 +9,44 @@ const DAY = 864e5;
 /* ---------- Planes: aquí defines qué incluye cada uno ---------- */
 const PLANS = {
   security_pro: {
-    id: 'security_pro', tier: 1, name: 'Plan NexaGuard Security Pro', price: 0, currency: 'USD', period: 'al mes', type: 'subscription',
+    id: 'security_pro', tier: 1, name: 'Plan NexaGuard Security Pro', price: 9.99, currency: 'USD', period: 'al mes', type: 'subscription',
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
     features: ['Licencia Oficial NexaGuard Security PRO para WordPress', 'Sistema de Vigilancia 24 Horas contra amenazas activo', 'Auditoría forense y erradicación de malware con 1 clic', 'Sincronización en tiempo real con NexaGuard Threat Cloud', 'Actualizaciones continuas de firmas Zero-Day']
   },
-  agency: {
-    id: 'agency', tier: 2, name: 'Plan Agencia / Freelancer', price: 0, currency: 'USD', period: 'al mes', type: 'subscription',
-    sites: 5, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
-    features: ['Licencia Multidominio Oficial NexaGuard PRO', 'Protección para 5, 10 o 25 sitios web simultáneos', 'Radar de Vigilancia 24H y Erradicación en cada sitio', '1 sola clave de licencia para centralizar a tus clientes', 'Actualizaciones continuas y soporte prioritario']
-  },
   rescate: {
-    id: 'rescate', tier: 3, name: 'Rescate', price: 0, currency: 'USD', period: 'pago único', type: 'oneoff',
+    id: 'rescate', tier: 2, name: 'Rescate', price: 89, currency: 'USD', period: 'pago único', type: 'oneoff',
     sites: 1, scansPerMonth: 3, scheduled: false, priority: false, afterDeliveryDays: 14, response: '24 a 48 horas',
     features: ['Limpieza forense humana de archivos y base de datos', 'Plugin NexaGuard Security incluido para análisis interno', 'Reparación de errores críticos del sitio', 'Informe detallado de intrusiones', '3 análisis del escáner web por mes']
   },
   blindaje: {
-    id: 'blindaje', tier: 4, name: 'Rescate + Blindaje', price: 0, currency: 'USD', period: 'pago único', type: 'oneoff',
+    id: 'blindaje', tier: 3, name: 'Rescate + Blindaje', price: 189, currency: 'USD', period: 'pago único', type: 'oneoff',
     sites: 1, scansPerMonth: 10, scheduled: false, priority: true, afterDeliveryDays: 365, response: 'menos de 24 horas',
     features: ['Todo lo del plan Rescate', '1 Año Completo de Licencia NexaGuard Security PRO incluida', 'Firewall (WAF) y 2FA configurados por expertos', 'wp-config y permisos endurecidos', 'Revisión y deslistado de Google Safe Browsing', 'Garantía de 30 días y atención prioritaria']
   },
   guardian: {
-    id: 'guardian', tier: 5, name: 'Guardián', price: 0, currency: 'USD', period: 'al mes', type: 'subscription',
+    id: 'guardian', tier: 4, name: 'Guardián', price: 39, currency: 'USD', period: 'al mes', type: 'subscription',
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 24, priority: true, afterDeliveryDays: 0, response: 'menos de 24 horas',
     features: ['Licencia NexaGuard Security PRO siempre activa', 'Sistema de Vigilancia 24 Horas continuo', 'Monitoreo automático diario con el escáner', 'Backups diarios y actualizaciones probadas asistidas', 'Limpiezas y soporte prioritario incluidos']
+  },
+  agency: {
+    id: 'agency', tier: 5, name: 'Plan Agencia / Freelancer', price: 29.99, currency: 'USD', period: 'al mes', type: 'subscription',
+    sites: 5, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
+    features: ['Licencia Multidominio Oficial NexaGuard PRO', 'Protección para 5, 10, 25 o 50 sitios web simultáneos', 'Radar de Vigilancia 24H y Erradicación en cada sitio', '1 sola clave de licencia para centralizar a tus clientes', 'Actualizaciones continuas y soporte prioritario para agencias']
   }
 };
+
+function getPlanPrice(planId, maxSites) {
+  const p = PLANS[planId];
+  if (!p) return 0;
+  if (planId === 'agency') {
+    const s = Number(maxSites) || 5;
+    if (s <= 5) return 29.99;
+    if (s <= 10) return 49.99;
+    if (s <= 25) return 99.99;
+    return 179.99;
+  }
+  return p.price;
+}
 const STAGES = ['Triage y diagnóstico', 'Copia y aislamiento', 'Limpieza quirúrgica', 'Blindaje y garantía'];
 const ONEOFF_STATUS = ['pending_payment', 'in_progress', 'delivered', 'cancelled'];
 const SUB_STATUS = ['pending_payment', 'active', 'cancelled'];
@@ -792,9 +805,13 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     if (limited('pp-c|' + ip, 20, 3600e3)) return fail(res, 429, 'Demasiados intentos. Espera un momento.');
     const planId = clean(body.plan, 20), plan = PLANS[planId];
     if (!plan) return fail(res, 400, 'Plan no válido.');
+    const maxSites = planId === 'agency' ? Math.max(1, Math.min(100, Number(body.maxSites) || 5)) : 1;
+    const price = getPlanPrice(planId, maxSites);
     hit('pp-c|' + ip);
     try {
-      const order = await pp.createOrder({ amount: plan.price.toFixed(2), currency: plan.currency, referenceId: planId, description: plan.name + ' · NexaGuard', requestId: id('ppreq') });
+      const refId = planId === 'agency' ? (planId + ':' + maxSites) : planId;
+      const desc = (planId === 'agency' ? (plan.name + ' (' + maxSites + ' Sitios)') : plan.name) + ' · NexaGuard';
+      const order = await pp.createOrder({ amount: price.toFixed(2), currency: plan.currency, referenceId: refId, description: desc, requestId: id('ppreq') });
       send(res, 201, { id: order.id });
     } catch (e) { console.error('paypal createOrder:', e.message); fail(res, 502, 'No se pudo iniciar el pago con PayPal. Inténtalo de nuevo.'); }
   });
@@ -822,10 +839,15 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const captured = pu && pu.payments && pu.payments.captures && pu.payments.captures[0];
     if (!captured || captured.status !== 'COMPLETED') return fail(res, 402, 'El pago no se completó.');
 
-    const planId = pu.reference_id, plan = PLANS[planId];
+    const rawRef = pu.reference_id || '';
+    const refParts = rawRef.split(':');
+    const planId = refParts[0];
+    const plan = PLANS[planId];
     if (!plan) return fail(res, 400, 'El pago no corresponde a un plan reconocido. Escríbenos con tu comprobante.');
+    const maxSites = planId === 'agency' ? Math.max(1, Math.min(100, Number(refParts[1]) || 5)) : 1;
+    const expectedPrice = getPlanPrice(planId, maxSites);
     const amt = parseFloat(captured.amount && captured.amount.value), curr = captured.amount && captured.amount.currency_code;
-    if (!(amt > 0) || Math.abs(amt - plan.price) > 0.01 || curr !== plan.currency) return fail(res, 409, 'El monto del pago no coincide con el del plan. Escríbenos con tu comprobante y lo revisamos a mano.');
+    if (!(amt > 0) || Math.abs(amt - expectedPrice) > 0.05 || curr !== plan.currency) return fail(res, 409, 'El monto del pago no coincide con el del plan. Escríbenos con tu comprobante y lo revisamos a mano.');
 
     let target = user, newTempPass = null, isNewAccount = false;
     if (!target) {
@@ -842,10 +864,16 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       }
     }
     let order = db.orders.find(o => o.userId === target.id && o.plan === planId && o.status === 'pending_payment');
-    if (!order) { order = { id: id('ord'), userId: target.id, plan: planId, status: 'pending_payment', stage: 0, amount: plan.price, createdAt: T() }; db.orders.push(order); }
+    if (!order) {
+      order = { id: id('ord'), userId: target.id, plan: planId, maxSites: maxSites, status: 'pending_payment', stage: 0, amount: amt, createdAt: T() };
+      db.orders.push(order);
+    } else {
+      order.maxSites = maxSites;
+      order.amount = amt;
+    }
     const pay = applyPayment(order, amt, curr, 'paypal', captured.id, 'PayPal');
     db.paypalOrders[paypalOrderId] = { userId: target.id, orderId: order.id, paymentId: pay.id, at: T() };
-    record(isNewAccount ? 'PayPal' : target.name, target.id, 'Pago con PayPal recibido: ' + pay.amount + ' ' + pay.currency + ' (' + plan.name + ')');
+    record(isNewAccount ? 'PayPal' : target.name, target.id, 'Pago con PayPal recibido: ' + pay.amount + ' ' + pay.currency + ' (' + plan.name + (maxSites > 1 ? ' · ' + maxSites + ' Sitios' : '') + ')');
     save();
     const headers = user ? {} : startSession(req, res, target.id);
     send(res, 201, { ok: true, user: publicUser(target), order: orderView(order), tempPassword: newTempPass }, headers);
