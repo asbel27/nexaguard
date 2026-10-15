@@ -1432,8 +1432,7 @@ a[data-go],a[data-act]{cursor:pointer}
               </div>
               <div class="summary" id="resSummary"></div>
               <div class="res-acts">
-                <a class="btn btn-y" id="btnWa" data-act target="_blank" rel="noopener" role="button" tabindex="0"><svg class="ic"><use href="#i-chat"/></svg>Enviar por WhatsApp</a>
-                <a class="btn btn-o" id="btnMail" data-act role="button" tabindex="0"><svg class="ic"><use href="#i-mail"/></svg>Enviar por correo</a>
+                <a class="btn btn-y" id="btnMail" data-act role="button" tabindex="0"><svg class="ic"><use href="#i-mail"/></svg>Enviar por correo</a>
                 <button type="button" class="btn btn-o" id="btnCopy"><svg class="ic"><use href="#i-copy"/></svg>Copiar resumen</button>
               </div>
               <button type="button" class="linkbtn" id="btnReset">Abrir otra orden</button>
@@ -2613,14 +2612,8 @@ function showResult(f) {
   if (scene) scene.boost(.9);
 
   var subj = 'Orden de servicio: ' + f.url;
-  var wa = $('#btnWa'), ml = $('#btnMail');
-  if (CONFIG.whatsapp) wa.href = 'https://wa.me/' + CONFIG.whatsapp.replace(/\D/g, '') + '?text=' + encodeURIComponent(summary); else wa.removeAttribute('href');
+  var ml = $('#btnMail');
   if (CONFIG.email) ml.href = 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(summary); else ml.removeAttribute('href');
-  wa.onclick = function (e) {
-    if (CONFIG.whatsapp) return;
-    e.preventDefault();
-    copyText(summary).then(function () { toast('Copiamos tu resumen. Pégalo en WhatsApp para enviarlo.'); });
-  };
   ml.onclick = function (e) {
     e.preventDefault();
     var parts = (f.name || '').trim().split(/\s+/);
