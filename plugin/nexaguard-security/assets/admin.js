@@ -502,16 +502,7 @@ jQuery(document).ready(function ($) {
 
             var whitelistBtn = '<button type="button" class="btn-ng btn-ng-outline btn-whitelist-item" data-target="' + t.file + '" data-id="' + t.id + '" title="Omitir en futuros escaneos">✓ Permitir / Falso Positivo</button>';
 
-            var actionButtonsHtml = '';
-            var canFreeClean = !nexaguardData.is_pro && (parseInt(nexaguardData.free_clean_remaining, 10) > 0);
-
-            if (nexaguardData.is_pro || canFreeClean) {
-                actionButtonsHtml = delFolderBtn + ' ' + actBtn + ' ' + forceDelBtn + ' ' + quarantineBtn + ' ' + whitelistBtn;
-            } else {
-                actionButtonsHtml = '<button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="' + t.file + '" title="Erradicar amenaza (Requiere Plan Pro o Rescate)">🔒 Erradicar Amenaza (Función PRO)</button> ' +
-                                    '<button type="button" class="btn-ng btn-ng-outline btn-locked-clean" data-target="' + t.file + '" title="Mover a cuarentena (Requiere Plan Pro)">🔒 Cuarentena (Función PRO)</button> ' +
-                                    whitelistBtn;
-            }
+            var actionButtonsHtml = delFolderBtn + ' ' + actBtn + ' ' + forceDelBtn + ' ' + quarantineBtn + ' ' + whitelistBtn;
 
             var item = $('<div class="threat-item ' + sevClass + '" id="threat-' + t.id + '">' +
                 '<div class="threat-header">' +
@@ -695,12 +686,6 @@ jQuery(document).ready(function ($) {
         showConfirm(
             confirmMsg,
             function () {
-                var remFree = parseInt(nexaguardData.free_clean_remaining || 0, 10);
-                if (!nexaguardData.is_pro && remFree <= 0) {
-                    showToast('Has agotado tus 2 erradicaciones de cortesía. Adquiere el Plan PRO ($9.99/mes) para continuar.', 'warning', 'Acción Restringida');
-                    openActionBlockedModal();
-                    return;
-                }
 
                 var loadingLabel = (type === 'restore_core_file') ? 'Restaurando desde WP.org…' : (type === 'delete_db_option' ? 'Purgando…' : (type.indexOf('apply_') !== -1 || type.indexOf('protect_') !== -1 || type === 'regenerate_wp_salts' ? 'Aplicando…' : 'Desinfectando…'));
                 $btn.prop('disabled', true).text(loadingLabel);
@@ -842,13 +827,6 @@ jQuery(document).ready(function ($) {
         showConfirm(
             '¿Mover este archivo malicioso a la cuarentena segura aislada con permisos restringidos (Deny From All)?',
             function () {
-                var remFree = parseInt(nexaguardData.free_clean_remaining || 0, 10);
-                if (!nexaguardData.is_pro && remFree <= 0) {
-                    showToast('Has agotado tus 2 erradicaciones de cortesía. Adquiere el Plan PRO ($9.99/mes) para mover archivos a cuarentena.', 'warning', 'Acción Restringida');
-                    openActionBlockedModal();
-                    return;
-                }
-
                 $btn.prop('disabled', true).text('Aislando…');
 
                 $.ajax({

@@ -85,7 +85,7 @@ $settings = get_option('nexaguard_settings', array(
             </label>
 
             <!-- Anti-ClearFake / Anti-ClickFix Live Filter -->
-            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+            <label class="toggle-row">
                 <div class="toggle-info">
                     <b>Filtro Activo Anti-ClearFake y Falsos Captchas
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -96,15 +96,14 @@ $settings = get_option('nexaguard_settings', array(
                                 <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
                             </span>
                         </span>
-                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
                     </b>
                     <p class="ng-hint">Inspecciona el HTML de salida en milisegundos y elimina al vuelo cualquier script base64 sospechoso o llamada a contratos inteligentes en blockchain (EtherHiding), impidiendo que los visitantes vean popups maliciosos.</p>
                 </div>
-                <input type="checkbox" name="anti_clearfake" value="1" <?php checked(!empty($settings['anti_clearfake'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                <input type="checkbox" name="anti_clearfake" value="1" <?php checked(!empty($settings['anti_clearfake'])); ?> class="ng-toggle">
             </label>
 
             <!-- Bloqueo de PHP en Uploads -->
-            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+            <label class="toggle-row">
                 <div class="toggle-info">
                     <b>Bloquear ejecución de scripts PHP en la carpeta /wp-content/uploads/
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -115,15 +114,14 @@ $settings = get_option('nexaguard_settings', array(
                                 <span class="ng-tooltip-rec">💡 Recomendado: Esencial (Previene el 90% de intrusiones)</span>
                             </span>
                         </span>
-                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
                     </b>
                     <p class="ng-hint">Instala una regla perimetral en .htaccess para que ningún archivo .php subido por atacantes pueda ser ejecutado. Neutraliza el 90% de backdoors.</p>
                 </div>
-                <input type="checkbox" name="block_php_uploads" value="1" <?php checked(!empty($settings['block_php_uploads'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                <input type="checkbox" name="block_php_uploads" value="1" <?php checked(!empty($settings['block_php_uploads'])); ?> class="ng-toggle">
             </label>
 
             <!-- Deshabilitar XML-RPC -->
-            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+            <label class="toggle-row">
                 <div class="toggle-info">
                     <b>Deshabilitar completamente XML-RPC
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -134,15 +132,14 @@ $settings = get_option('nexaguard_settings', array(
                                 <span class="ng-tooltip-rec">💡 Recomendado: ACTIVO (salvo si usas la app móvil clásica)</span>
                             </span>
                         </span>
-                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
                     </b>
                     <p class="ng-hint">Bloquea el archivo xmlrpc.php para detener ataques automatizados de fuerza bruta a contraseñas y ataques de amplificación DDoS.</p>
                 </div>
-                <input type="checkbox" name="disable_xmlrpc" value="1" <?php checked(!empty($settings['disable_xmlrpc'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                <input type="checkbox" name="disable_xmlrpc" value="1" <?php checked(!empty($settings['disable_xmlrpc'])); ?> class="ng-toggle">
             </label>
 
             <!-- Ocultar versión de WordPress -->
-            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+            <label class="toggle-row">
                 <div class="toggle-info">
                     <b>Ocultar versión de WordPress (wp_generator)
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -153,11 +150,10 @@ $settings = get_option('nexaguard_settings', array(
                                 <span class="ng-tooltip-rec">💡 Recomendado: ACTIVO</span>
                             </span>
                         </span>
-                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
                     </b>
                     <p class="ng-hint">Elimina la etiqueta meta generator que expone la versión exacta de tu WordPress a bots que buscan vulnerabilidades conocidas.</p>
                 </div>
-                <input type="checkbox" name="hide_wp_version" value="1" <?php checked(!empty($settings['hide_wp_version'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                <input type="checkbox" name="hide_wp_version" value="1" <?php checked(!empty($settings['hide_wp_version'])); ?> class="ng-toggle">
             </label>
 
             <!-- Modo Aislamiento de Emergencia -->
@@ -180,7 +176,7 @@ $settings = get_option('nexaguard_settings', array(
             </label>
 
             <!-- Deshabilitar Editor de Temas y Plugins -->
-            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+            <label class="toggle-row">
                 <div class="toggle-info">
                     <b>Deshabilitar Editor de Temas y Plugins de WordPress (DISALLOW_FILE_EDIT)
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -191,15 +187,14 @@ $settings = get_option('nexaguard_settings', array(
                                 <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO en sitios en producción</span>
                             </span>
                         </span>
-                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
                     </b>
                     <p class="ng-hint">Impide que cualquier usuario modifique archivos PHP desde el panel de administración. Cierra la puerta principal a atacantes que intenten inyectar webshells si comprometen una cuenta admin.</p>
                 </div>
-                <input type="checkbox" name="disallow_file_edit" value="1" <?php checked(!empty($settings['disallow_file_edit'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                <input type="checkbox" name="disallow_file_edit" value="1" <?php checked(!empty($settings['disallow_file_edit'])); ?> class="ng-toggle">
             </label>
 
             <!-- Prevenir Listado de Directorios -->
-            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+            <label class="toggle-row">
                 <div class="toggle-info">
                     <b>Bloquear Listado de Directorios Apache (Options -Indexes)
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -210,11 +205,10 @@ $settings = get_option('nexaguard_settings', array(
                                 <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
                             </span>
                         </span>
-                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
                     </b>
                     <p class="ng-hint">Añade directiva en .htaccess para que ningún visitante ni escáner automatizado pueda ver el listado de archivos dentro de carpetas de tu servidor.</p>
                 </div>
-                <input type="checkbox" name="disable_dir_browsing" value="1" <?php checked(!empty($settings['disable_dir_browsing'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                <input type="checkbox" name="disable_dir_browsing" value="1" <?php checked(!empty($settings['disable_dir_browsing'])); ?> class="ng-toggle">
             </label>
 
             <!-- Alertas Inmediatas por Correo ante Intrusiones (SQLi, XSS, Webshells) -->
