@@ -327,9 +327,6 @@ class NexaGuard_Plugin {
         } else {
             wp_send_json_error($result);
         }
-        } else {
-            wp_send_json_error($result);
-        }
     }
 
     public function ajax_auto_remediate_all() {
