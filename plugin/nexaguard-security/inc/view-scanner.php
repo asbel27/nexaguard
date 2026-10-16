@@ -164,9 +164,10 @@ $rollback_count = count($backup_history);
                 <span class="ng-tab-badge danger"><?php echo $threat_count; ?></span>
             <?php endif; ?>
         </button>
-        <button type="button" class="ng-tab" data-tab="audit">
-            <span class="ng-tab-icon">📊</span>
-            <span class="ng-tab-label">Auditoría</span>
+        <button type="button" class="ng-tab" data-tab="sentinel">
+            <span class="ng-tab-icon">🧬</span>
+            <span class="ng-tab-label">Monitor de Núcleo</span>
+            <span class="ng-tab-badge active" style="background:rgba(61,232,164,0.15);color:#3de8a4;border:1px solid rgba(61,232,164,0.35);">EN VIVO</span>
         </button>
         <button type="button" class="ng-tab" data-tab="vigilance">
             <span class="ng-tab-icon">📡</span>
@@ -177,10 +178,9 @@ $rollback_count = count($backup_history);
                 <span class="ng-tab-badge locked">🔒</span>
             <?php endif; ?>
         </button>
-        <button type="button" class="ng-tab" data-tab="sentinel">
-            <span class="ng-tab-icon">🧬</span>
-            <span class="ng-tab-label">Monitor de Núcleo</span>
-            <span class="ng-tab-badge active" style="background:rgba(61,232,164,0.15);color:#3de8a4;border:1px solid rgba(61,232,164,0.35);">EN VIVO</span>
+        <button type="button" class="ng-tab" data-tab="audit">
+            <span class="ng-tab-icon">📊</span>
+            <span class="ng-tab-label">Auditoría</span>
         </button>
         <button type="button" class="ng-tab" data-tab="waf">
             <span class="ng-tab-icon">🛡️</span>

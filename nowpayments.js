@@ -128,3 +128,4 @@ function createNowPaymentsClient(cfg) {
 }
 
 module.exports = { createNowPaymentsClient };
+
