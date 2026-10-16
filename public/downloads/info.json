@@ -1,7 +1,7 @@
 {
   "name": "NexaGuard Security · Antimalware & Blindaje Forense",
   "slug": "nexaguard-security",
-  "version": "1.5.5",
+  "version": "1.5.6",
   "homepage": "https://www.nexaguards.com",
   "download_url": "https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/nexaguard-security.zip",
   "fallback_download_url": "https://www.nexaguards.com/downloads/nexaguard-security.zip",
@@ -10,6 +10,6 @@
   "last_updated": "2026-10-16",
   "sections": {
     "description": "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
-    "changelog": "<h4>Versión 1.5.5</h4><ul><li><strong>Soporte Completo de Licencias Vencidas / Expiradas:</strong> Reconocimiento y activación fluida del estado expirado (0 días) en el modal de licencias, permitiendo visualizar el banner rojo de renovación y el bloqueo preventivo del WAF tal como fue concebido en NXG-TEST-EXPIRED.</li><li><strong>Mensajes Claros de la Nube:</strong> Notificaciones explicativas directas sobre el vencimiento de la suscripción en lugar de códigos técnicos HTTP.</li><li><strong>Tipografía y Legibilidad Optimizada:</strong> Espaciado entre letras y palabras holgado en el escáner forense.</li></ul>"
+    "changelog": "<h4>Versión 1.5.6</h4><ul><li><strong>Erradicaciones de Cortesía Gratuitas:</strong> El escáner forense ahora permite desinfectar y erradicar hasta 2 amenazas reales sin costo en la versión estándar.</li><li><strong>Monitor de Núcleo (Sentinel) en Vivo:</strong> Telemetría forense e inspección continua de integridad de archivos vitales abierta para todos los usuarios.</li><li><strong>Reordenamiento de Pestañas:</strong> Monitor de Núcleo reubicado junto al Escáner Forense y Vigilancia 24H para una navegación más intuitiva.</li><li><strong>Centinela Tripwire:</strong> Monitoreo perimetral y recálculo de línea base de wp-config.php e index.php desbloqueado.</li><li><strong>Integración con Pagos Cripto y Binance Pay:</strong> Activación instantánea de licencias PRO mediante NOWPayments.</li></ul>"
   }
 }
