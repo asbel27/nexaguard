@@ -29,13 +29,16 @@ class NexaGuard_Updater {
     }
 
     public static function init() {
-        // Hooks nativos del gestor de actualizaciones de WordPress (tanto en lectura como en guardado)
+        // En WordPress.org, las actualizaciones son gestionadas de forma nativa por el repositorio oficial (SVN).
+        // Las actualizaciones se distribuyen automáticamente por WordPress core sin interceptar transients.
+        /*
         add_filter('site_transient_update_plugins', array(__CLASS__, 'check_update'));
         add_filter('pre_set_site_transient_update_plugins', array(__CLASS__, 'check_update'));
         add_filter('plugins_api', array(__CLASS__, 'plugin_info'), 20, 3);
         add_filter('upgrader_source_selection', array(__CLASS__, 'fix_source_folder'), 10, 4);
+        */
 
-        // AJAX para comprobación y actualización instantánea desde el panel NexaGuard
+        // AJAX para comprobación informativa desde el panel NexaGuard
         add_action('wp_ajax_nexaguard_check_update', array(__CLASS__, 'ajax_check_update'));
         add_action('wp_ajax_nexaguard_perform_update', array(__CLASS__, 'ajax_perform_update'));
     }
