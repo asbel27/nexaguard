@@ -1,7 +1,6 @@
 <?php
 /**
  * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
- * Plugin URI: https://nexaguards.com
  * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
  * Version: 1.5.6
  * Requires at least: 5.8
