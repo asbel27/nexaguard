@@ -503,7 +503,9 @@ jQuery(document).ready(function ($) {
             var whitelistBtn = '<button type="button" class="btn-ng btn-ng-outline btn-whitelist-item" data-target="' + t.file + '" data-id="' + t.id + '" title="Omitir en futuros escaneos">✓ Permitir / Falso Positivo</button>';
 
             var actionButtonsHtml = '';
-            if (nexaguardData.is_pro) {
+            var canFreeClean = !nexaguardData.is_pro && (parseInt(nexaguardData.free_clean_remaining, 10) > 0);
+
+            if (nexaguardData.is_pro || canFreeClean) {
                 actionButtonsHtml = delFolderBtn + ' ' + actBtn + ' ' + forceDelBtn + ' ' + quarantineBtn + ' ' + whitelistBtn;
             } else {
                 actionButtonsHtml = '<button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="' + t.file + '" title="Erradicar amenaza (Requiere Plan Pro o Rescate)">🔒 Erradicar Amenaza (Función PRO)</button> ' +
@@ -693,8 +695,9 @@ jQuery(document).ready(function ($) {
         showConfirm(
             confirmMsg,
             function () {
-                if (!nexaguardData.is_pro) {
-                    showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para desinfectar y erradicar amenazas.', 'warning', 'Acción Restringida');
+                var remFree = parseInt(nexaguardData.free_clean_remaining || 0, 10);
+                if (!nexaguardData.is_pro && remFree <= 0) {
+                    showToast('Has agotado tus 2 erradicaciones de cortesía. Adquiere el Plan PRO ($9.99/mes) para continuar.', 'warning', 'Acción Restringida');
                     openActionBlockedModal();
                     return;
                 }
@@ -714,6 +717,22 @@ jQuery(document).ready(function ($) {
                     },
                     success: function (res) {
                         if (res.success) {
+                            if (res.data && res.data.free_clean) {
+                                nexaguardData.free_clean_remaining = res.data.free_remaining;
+                                nexaguardData.free_clean_used = res.data.free_used;
+                                $('.ng-free-quota-badge').text(res.data.free_remaining + ' de ' + res.data.free_limit);
+                                if (res.data.free_remaining <= 0) {
+                                    $('.ng-free-quota-banner').fadeOut(300);
+                                    $('.btn-clean-threat, .btn-quarantine-file, .btn-force-delete').each(function () {
+                                        var f = $(this).data('target') || $(this).data('file') || '';
+                                        $(this).replaceWith('<button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="' + f + '">🔒 Erradicar Amenaza (Función PRO)</button>');
+                                    });
+                                    setTimeout(function () {
+                                        $('#nexaguard-quota-modal').stop(true, true).fadeIn(250);
+                                    }, 1200);
+                                }
+                            }
+
                             if (type === 'delete_db_option' || type === 'remove_cron_hook') {
                                 $('#threat-' + id).fadeOut(350, function () {
                                     $(this).remove();
@@ -823,8 +842,9 @@ jQuery(document).ready(function ($) {
         showConfirm(
             '¿Mover este archivo malicioso a la cuarentena segura aislada con permisos restringidos (Deny From All)?',
             function () {
-                if (!nexaguardData.is_pro) {
-                    showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para mover archivos a cuarentena.', 'warning', 'Acción Restringida');
+                var remFree = parseInt(nexaguardData.free_clean_remaining || 0, 10);
+                if (!nexaguardData.is_pro && remFree <= 0) {
+                    showToast('Has agotado tus 2 erradicaciones de cortesía. Adquiere el Plan PRO ($9.99/mes) para mover archivos a cuarentena.', 'warning', 'Acción Restringida');
                     openActionBlockedModal();
                     return;
                 }
@@ -842,6 +862,22 @@ jQuery(document).ready(function ($) {
                     },
                     success: function (res) {
                         if (res.success) {
+                            if (res.data && res.data.free_clean) {
+                                nexaguardData.free_clean_remaining = res.data.free_remaining;
+                                nexaguardData.free_clean_used = res.data.free_used;
+                                $('.ng-free-quota-badge').text(res.data.free_remaining + ' de ' + res.data.free_limit);
+                                if (res.data.free_remaining <= 0) {
+                                    $('.ng-free-quota-banner').fadeOut(300);
+                                    $('.btn-clean-threat, .btn-quarantine-file, .btn-force-delete').each(function () {
+                                        var f = $(this).data('target') || $(this).data('file') || '';
+                                        $(this).replaceWith('<button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="' + f + '">🔒 Erradicar Amenaza (Función PRO)</button>');
+                                    });
+                                    setTimeout(function () {
+                                        $('#nexaguard-quota-modal').stop(true, true).fadeIn(250);
+                                    }, 1200);
+                                }
+                            }
+
                             $('#threat-' + id).fadeOut(400, function () { 
                                 $(this).remove(); 
                                 updateThreatCounts();
@@ -2035,11 +2071,17 @@ jQuery(document).ready(function ($) {
         closeUpgradeModal();
     });
 
+    $(document).on('click', '#btn-close-quota-modal', function (e) {
+        e.preventDefault();
+        $('#nexaguard-quota-modal').stop(true, true).fadeOut(150);
+    });
+
     $(document).on('click', '.btn-switch-to-key', function (e) {
         e.preventDefault();
         e.stopPropagation();
         closeUpgradeModal();
         closeActionBlockedModal();
+        $('#nexaguard-quota-modal').stop(true, true).fadeOut(150);
         openLicenseModal('Introduce tu clave de licencia del Plan PRO:');
     });
 
@@ -2049,6 +2091,7 @@ jQuery(document).ready(function ($) {
             closeUpgradeModal();
             closeActionBlockedModal();
             closeLicenseModal();
+            $('#nexaguard-quota-modal').stop(true, true).fadeOut(150);
         }
     });
 
@@ -2058,6 +2101,7 @@ jQuery(document).ready(function ($) {
             closeUpgradeModal();
             closeActionBlockedModal();
             closeLicenseModal();
+            $('#nexaguard-quota-modal').stop(true, true).fadeOut(150);
         }
     });
 
@@ -2644,11 +2688,21 @@ jQuery(document).ready(function ($) {
                         d.anomalies.forEach(function (anom) {
                             var actionBtn = '';
                             if (anom.can_rebuild) {
-                                actionBtn = '<button type="button" class="btn-ng btn-ng-primary btn-sentinel-rebuild" data-file="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; border:none; border-radius:6px; cursor:pointer;" title="Descargar y restaurar la copia oficial limpia de WordPress.org">' +
-                                    '🛠️ Reconstruir Archivo Oficial</button>';
+                                if (nexaguardData.is_pro) {
+                                    actionBtn = '<button type="button" class="btn-ng btn-ng-primary btn-sentinel-rebuild" data-file="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; border:none; border-radius:6px; cursor:pointer;" title="Descargar y restaurar la copia oficial limpia de WordPress.org">' +
+                                        '🛠️ Reconstruir Archivo Oficial</button>';
+                                } else {
+                                    actionBtn = '<button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; cursor:pointer;" title="Recomponer archivo (Requiere Plan PRO)">' +
+                                        '🔒 Recomponer Archivo (PRO)</button>';
+                                }
                             } else if (anom.can_harden) {
-                                actionBtn = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;">' +
-                                    '🔒 Endurecer Permisos</button>';
+                                if (nexaguardData.is_pro) {
+                                    actionBtn = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;">' +
+                                        '🔒 Endurecer Permisos</button>';
+                                } else {
+                                    actionBtn = '<button type="button" class="btn-ng btn-ng-outline btn-locked-clean" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:rgba(255,207,51,0.4); color:#ffcf33; border-radius:6px; cursor:pointer;" title="Endurecer permisos (Requiere Plan PRO)">' +
+                                        '🔒 Endurecer Permisos (PRO)</button>';
+                                }
                             } else {
                                 actionBtn = '<a href="' + (d.reinstall_url || 'update-core.php') + '" class="btn-ng btn-ng-link" style="color:#ffcf33; font-weight:700; font-size:0.78rem;">🔄 Reinstalar Núcleo</a>';
                             }
@@ -2758,6 +2812,13 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '#btn-sentinel-harden-now', function () {
         var $btn = $(this);
         var ngData = window.nexaguardData || window.nexaguard_data || {};
+
+        if (!ngData.is_pro) {
+            showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para endurecer permisos de archivos vitales.', 'warning', 'Acción Restringida');
+            openActionBlockedModal();
+            return;
+        }
+
         $btn.prop('disabled', true).text('Endureciendo...');
 
         $.ajax({
@@ -2790,6 +2851,12 @@ jQuery(document).ready(function ($) {
         var $btn = $(this);
         var file = $btn.data('file');
         var ngData = window.nexaguardData || window.nexaguard_data || {};
+
+        if (!ngData.is_pro) {
+            showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para recomponer archivos oficiales de WordPress.', 'warning', 'Acción Restringida');
+            openActionBlockedModal();
+            return;
+        }
 
         showConfirm(
             '¿Deseas reconstruir el archivo /' + file + ' restaurando la copia oficial limpia original de WordPress.org? Se creará una copia de respaldo en cuarentena por seguridad.',

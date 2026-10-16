@@ -45,6 +45,10 @@ $settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
 ));
 $total_lockouts = intval(get_option('nexaguard_total_lockouts', 0));
 
+$free_clean_used = (int)get_option('nexaguard_free_clean_count', 0);
+$free_clean_limit = 2;
+$free_clean_remaining = $is_pro ? -1 : max(0, $free_clean_limit - $free_clean_used);
+
 $threat_count = $last_report ? $last_report['threats_count'] : 0;
 $quarantine_count = count($quarantine_log);
 $rollback_count = count($backup_history);
@@ -314,6 +318,19 @@ $rollback_count = count($backup_history);
                 <?php endif; ?>
             <?php endif; ?>
 
+            <?php if (!$is_pro && $threat_count > 0 && $free_clean_remaining > 0): ?>
+                <div class="ng-free-quota-banner" style="background:linear-gradient(90deg, rgba(61,232,164,0.12) 0%, rgba(11,22,61,0.9) 100%); border:1.5px solid #3de8a4; border-radius:12px; padding:14px 20px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 8px 25px rgba(0,0,0,0.35);">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:2rem; line-height:1;">🎁</span>
+                        <div>
+                            <strong style="color:#3de8a4; font-size:0.98rem; display:block;">CORTESÍA NEXAGUARD: <span class="ng-free-quota-badge"><?php echo esc_html($free_clean_remaining); ?> de <?php echo esc_html($free_clean_limit); ?></span> Erradicaciones Gratuitas Disponibles</strong>
+                            <span style="color:#cad7f5; font-size:0.86rem;">Comprueba la efectividad de nuestro motor erradicando tus 2 primeras amenazas sin costo.</span>
+                        </div>
+                    </div>
+                    <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-outline" style="border-color:#ffcf33; color:#ffcf33; font-size:0.82rem; padding:6px 14px;">Desbloquear Erradicación Ilimitada ($9.99/mes)</a>
+                </div>
+            <?php endif; ?>
+
             <div id="threats-list" class="threats-grid">
                 <?php if (!$last_report || empty($last_report['threats'])): ?>
                     <div class="empty-state">
@@ -397,8 +414,39 @@ $rollback_count = count($backup_history);
                                             </button>
                                         <?php endif; ?>
                                     <?php endif; ?>
+                                <?php elseif ($free_clean_remaining > 0): ?>
+                                    <!-- En Modo Estándar con Cupo de Cortesía Disponible -->
+                                    <?php 
+                                    $is_core_file = (isset($t['module']) && $t['module'] === 'core') || 
+                                        (strpos($t['file'], 'wp-includes') !== false) || 
+                                        (strpos($t['file'], 'wp-admin') !== false) || 
+                                        in_array(basename($t['file']), array('wp-config.php', 'wp-settings.php', 'wp-load.php', 'wp-blog-header.php', 'wp-login.php', 'index.php', '.htaccess', 'version.php'));
+                                    ?>
+                                    <?php if ($t['clean_action'] === 'restore_core_file'): ?>
+                                        <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Descargar y restaurar el archivo original limpio">
+                                            🔄 Restaurar Archivo (Cortesía Free)
+                                        </button>
+                                    <?php elseif ($t['clean_action'] === 'sanitize_injection'): ?>
+                                        <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Extirpar código malicioso inyectado">
+                                            🧹 Desinfectar Código (Cortesía Free)
+                                        </button>
+                                    <?php elseif (!empty($t['clean_action']) && $t['clean_action'] === 'clean_db_option'): ?>
+                                        <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clean_db_option" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                            🧹 Limpiar Inyección en BD (Cortesía Free)
+                                        </button>
+                                    <?php elseif (!$is_core_file): ?>
+                                        <button type="button" class="btn-ng btn-ng-danger btn-clean-threat" data-type="quarantine" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Erradicar y aislar este archivo malicioso">
+                                            ⚡ Erradicar Amenaza (Cortesía Free)
+                                        </button>
+                                    <?php endif; ?>
+
+                                    <?php if ($t['clean_action'] === 'quarantine'): ?>
+                                        <button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>">
+                                            🔒 Mover a Cuarentena
+                                        </button>
+                                    <?php endif; ?>
                                 <?php else: ?>
-                                    <!-- En Modo Estándar: Botones bloqueados que abren la conversión -->
+                                    <!-- Cupo de Cortesía Agotado: Requiere Licencia PRO -->
                                     <button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="<?php echo esc_attr($t['file']); ?>" title="Erradicar amenaza (Requiere Plan Pro o Rescate)">
                                         🔒 Erradicar Amenaza (Función PRO)
                                     </button>
@@ -1294,9 +1342,15 @@ $rollback_count = count($backup_history);
             <div class="ng-card" style="background:#0e163e;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                     <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;">🛡️ Bóveda Vital de Archivos del Núcleo</h3>
-                    <button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem;padding:3px 8px;border-color:rgba(61,232,164,0.4);color:#3de8a4;font-weight:700;" title="Endurecer permisos de wp-config.php a solo-lectura">
-                        🔒 Endurecer Permisos
-                    </button>
+                    <?php if ($is_pro): ?>
+                        <button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem;padding:3px 8px;border-color:rgba(61,232,164,0.4);color:#3de8a4;font-weight:700;" title="Endurecer permisos de wp-config.php a solo-lectura">
+                            🔒 Endurecer Permisos
+                        </button>
+                    <?php else: ?>
+                        <button type="button" class="btn-ng btn-ng-outline btn-locked-clean" style="font-size:0.75rem;padding:3px 8px;border-color:rgba(255,207,51,0.4);color:#ffcf33;font-weight:700;" title="Endurecer permisos de wp-config.php (Función PRO)">
+                            🔒 Endurecer Permisos (PRO)
+                        </button>
+                    <?php endif; ?>
                 </div>
                 <div style="max-height:240px;overflow-y:auto;">
                     <table class="ng-table" style="font-size:0.8rem;margin:0;">

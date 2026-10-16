@@ -256,11 +256,19 @@ class NexaGuard_Plugin {
             true
         );
 
+        $is_pro = $this->is_pro_active() ? 1 : 0;
+        $free_limit = 2;
+        $free_used = (int)get_option('nexaguard_free_clean_count', 0);
+        $free_remaining = $is_pro ? -1 : max(0, $free_limit - $free_used);
+
         wp_localize_script('nexaguard-admin-js', 'nexaguardData', array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce'    => wp_create_nonce('nexaguard_security_nonce'),
-            'site_url' => site_url(),
-            'is_pro'   => $this->is_pro_active() ? 1 : 0
+            'ajax_url'             => admin_url('admin-ajax.php'),
+            'nonce'                => wp_create_nonce('nexaguard_security_nonce'),
+            'site_url'             => site_url(),
+            'is_pro'               => $is_pro,
+            'free_clean_used'      => $free_used,
+            'free_clean_limit'     => $free_limit,
+            'free_clean_remaining' => $free_remaining
         ));
     }
 
@@ -304,10 +312,17 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
-        if (!$this->is_pro_active()) {
+        $is_pro = $this->is_pro_active();
+        $free_limit = 2;
+        $free_used = (int)get_option('nexaguard_free_clean_count', 0);
+
+        if (!$is_pro && $free_used >= $free_limit) {
             wp_send_json_error(array(
-                'code'    => 'pro_required',
-                'message' => 'La erradicación automática y desinfección de amenazas requiere Licencia NexaGuard PRO activa o el Plan Rescate.'
+                'code'           => 'free_quota_exceeded',
+                'quota_exceeded' => true,
+                'free_used'      => $free_used,
+                'free_limit'     => $free_limit,
+                'message'        => 'Has utilizado tus 2 erradicaciones gratuitas de cortesía con éxito. Para desinfectar las amenazas restantes de tu web y activar la Vigilancia 24H, desbloquea NexaGuard PRO ($9.99/mes) o solicita el Plan Rescate ($89).'
             ));
             return;
         }
@@ -319,6 +334,21 @@ class NexaGuard_Plugin {
         $result = $cleaner->clean($type, $target);
 
         if ($result['success']) {
+            if (!$is_pro) {
+                $free_used++;
+                update_option('nexaguard_free_clean_count', $free_used);
+                $remaining = max(0, $free_limit - $free_used);
+                $result['free_clean'] = true;
+                $result['free_used'] = $free_used;
+                $result['free_remaining'] = $remaining;
+                $result['free_limit'] = $free_limit;
+                if ($remaining > 0) {
+                    $result['message'] = ($result['message'] ? $result['message'] . ' ' : '') . '🛡️ Erradicación de cortesía aplicada con éxito (Te queda ' . $remaining . ' disponible gratis).';
+                } else {
+                    $result['message'] = ($result['message'] ? $result['message'] . ' ' : '') . '🛡️ ¡Segunda erradicación de cortesía completada! Has comprobado la eficacia de NexaGuard.';
+                    $result['quota_reached'] = true;
+                }
+            }
             wp_send_json_success($result);
         } else {
             wp_send_json_error($result);
@@ -372,10 +402,17 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
-        if (!$this->is_pro_active()) {
+        $is_pro = $this->is_pro_active();
+        $free_limit = 2;
+        $free_used = (int)get_option('nexaguard_free_clean_count', 0);
+
+        if (!$is_pro && $free_used >= $free_limit) {
             wp_send_json_error(array(
-                'code'    => 'pro_required',
-                'message' => 'El aislamiento en cuarentena protegida requiere Licencia NexaGuard PRO activa o el Plan Rescate.'
+                'code'           => 'free_quota_exceeded',
+                'quota_exceeded' => true,
+                'free_used'      => $free_used,
+                'free_limit'     => $free_limit,
+                'message'        => 'Has utilizado tus 2 acciones de desinfección gratuitas. Para poner en cuarentena las amenazas restantes y proteger tu servidor, desbloquea NexaGuard PRO ($9.99/mes).'
             ));
             return;
         }
@@ -385,6 +422,21 @@ class NexaGuard_Plugin {
         $result = $cleaner->quarantine_file($file);
 
         if ($result['success']) {
+            if (!$is_pro) {
+                $free_used++;
+                update_option('nexaguard_free_clean_count', $free_used);
+                $remaining = max(0, $free_limit - $free_used);
+                $result['free_clean'] = true;
+                $result['free_used'] = $free_used;
+                $result['free_remaining'] = $remaining;
+                $result['free_limit'] = $free_limit;
+                if ($remaining > 0) {
+                    $result['message'] = ($result['message'] ? $result['message'] . ' ' : '') . '🛡️ Archivo aislado en cuarentena de cortesía (Te queda ' . $remaining . ' acción disponible gratis).';
+                } else {
+                    $result['message'] = ($result['message'] ? $result['message'] . ' ' : '') . '🛡️ Archivo aislado con éxito. Has completado tus 2 acciones gratuitas de cortesía.';
+                    $result['quota_reached'] = true;
+                }
+            }
             wp_send_json_success($result);
         } else {
             wp_send_json_error($result);
@@ -877,6 +929,13 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code'    => 'pro_required',
+                'message' => 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para restaurar y reconstruir automáticamente archivos oficiales del núcleo de WordPress.'
+            ));
+        }
+
         $rel_path = isset($_POST['file']) ? sanitize_text_field(ltrim(trim($_POST['file']), '/\\')) : '';
         if (empty($rel_path)) {
             wp_send_json_error(array('message' => 'Ruta de archivo no especificada.'));
@@ -956,6 +1015,13 @@ class NexaGuard_Plugin {
         check_ajax_referer('nexaguard_security_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code'    => 'pro_required',
+                'message' => 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para endurecer permisos de archivos vitales del núcleo.'
+            ));
         }
 
         $config_file = ABSPATH . 'wp-config.php';

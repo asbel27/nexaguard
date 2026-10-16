@@ -260,7 +260,7 @@ $settings = get_option('nexaguard_settings', array(
             </label>
 
             <!-- Centinela de Integridad de Archivos Críticos (Tripwire Sentinel) -->
-            <div class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div class="toggle-row" style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <div class="toggle-info" style="flex:1; padding-right:15px;">
                     <b>Centinela de Integridad de Archivos Críticos (Tripwire Sentinel)
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -271,20 +271,18 @@ $settings = get_option('nexaguard_settings', array(
                                 <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
                             </span>
                         </span>
-                        <?php if (!$is_pro): ?><span class="rule-lock-tag">🔒 PRO</span><?php endif; ?>
+                        <span class="badge-status-pill ok" style="font-size:0.7rem; padding:2px 7px; margin-left:6px; background:rgba(61,232,164,0.15); color:#3de8a4; border:1px solid rgba(61,232,164,0.35); border-radius:12px; font-weight:700;">GRATUITO / VIGILANCIA</span>
                     </b>
                     <p class="ng-hint">Inspecciona continuamente los hashes SHA-256 de wp-config.php, .htaccess e index.php contra su línea base, alertando al instante si detecta manipulaciones clandestinas.</p>
-                    <?php if ($is_pro): ?>
-                        <div style="margin-top:10px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                            <button type="button" id="btn-rebaseline-tripwire" class="button button-secondary" style="background:#0f172a; color:#38bdf8; border:1px solid #0284c7; font-weight:600; cursor:pointer; padding:3px 12px; border-radius:6px;">
-                                🔄 Recalcular Línea Base Tripwire
-                            </button>
-                            <span id="tripwire-rebaseline-status" style="font-size:12px; color:#94a3b8;"></span>
-                        </div>
-                    <?php endif; ?>
+                    <div style="margin-top:10px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <button type="button" id="btn-rebaseline-tripwire" class="button button-secondary" style="background:#0f172a; color:#38bdf8; border:1px solid #0284c7; font-weight:600; cursor:pointer; padding:3px 12px; border-radius:6px;">
+                            🔄 Recalcular Línea Base Tripwire
+                        </button>
+                        <span id="tripwire-rebaseline-status" style="font-size:12px; color:#94a3b8;"></span>
+                    </div>
                 </div>
                 <label style="margin:0; cursor:pointer;">
-                    <input type="checkbox" name="tripwire_enabled" value="1" <?php checked(!isset($settings['tripwire_enabled']) || !empty($settings['tripwire_enabled'])); ?> class="ng-toggle" <?php disabled(!$is_pro); ?>>
+                    <input type="checkbox" name="tripwire_enabled" value="1" <?php checked(!isset($settings['tripwire_enabled']) || !empty($settings['tripwire_enabled'])); ?> class="ng-toggle">
                 </label>
             </div>
 
