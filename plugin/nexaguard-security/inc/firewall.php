@@ -183,7 +183,7 @@ class NexaGuard_Firewall {
 
         // 2. Ruta de acceso personalizada si está activa (ej: /acceso-seguro/)
         if (!empty($login_slug)) {
-            $req_path = trim((string)parse_url($uri, PHP_URL_PATH), '/');
+            $req_path = trim((string)wp_parse_url($uri, PHP_URL_PATH), '/');
             if ($req_path === $login_slug || strpos($uri, '/' . $login_slug) !== false) {
                 return;
             }
@@ -960,7 +960,6 @@ class NexaGuard_Firewall {
 
             $payload = array(
                 'username' => 'NexaGuard Security Radar',
-                'avatar_url' => 'https://www.nexaguards.com/assets/img/nexaguard-icon.png',
                 'content' => '🚨 **[ALERTA DE SEGURIDAD NEXAGUARD]** Intrusión interceptada en **' . $site_name . '**',
                 'embeds' => array(
                     array(
@@ -1149,8 +1148,8 @@ class NexaGuard_Firewall {
         $slug = !empty($settings['login_slug']) ? sanitize_title($settings['login_slug']) : '';
         if (empty($slug)) return;
 
-        $raw_uri = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : '';
-        $home_path = parse_url(home_url(), PHP_URL_PATH);
+        $raw_uri = isset($_SERVER['REQUEST_URI']) ? wp_parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : '';
+        $home_path = wp_parse_url(home_url(), PHP_URL_PATH);
         $req_path = (string)$raw_uri;
         if (!empty($home_path) && $home_path !== '/') {
             $home_path_trimmed = trim($home_path, '/');
@@ -1215,7 +1214,7 @@ class NexaGuard_Firewall {
             $settings = get_option('nexaguard_settings', array());
             $slug = !empty($settings['login_slug']) ? sanitize_title($settings['login_slug']) : '';
             if (!empty($slug)) {
-                $query = parse_url($url, PHP_URL_QUERY);
+                $query = wp_parse_url($url, PHP_URL_QUERY);
                 $new_url = home_url('/' . $slug . '/');
                 if (!empty($query)) {
                     $new_url .= '?' . $query;
@@ -1231,7 +1230,7 @@ class NexaGuard_Firewall {
             $settings = get_option('nexaguard_settings', array());
             $slug = !empty($settings['login_slug']) ? sanitize_title($settings['login_slug']) : '';
             if (!empty($slug)) {
-                $query = parse_url($location, PHP_URL_QUERY);
+                $query = wp_parse_url($location, PHP_URL_QUERY);
                 $new_loc = home_url('/' . $slug . '/');
                 if (!empty($query)) {
                     $new_loc .= '?' . $query;
@@ -1374,32 +1373,26 @@ class NexaGuard_Firewall {
             return;
         }
 
-        $bg_css = '';
-        if (!empty($settings['login_bg_image'])) {
-            $bg_url = esc_url($settings['login_bg_image']);
-            $bg_css = "background-image: url('{$bg_url}') !important; background-size: cover !important; background-position: center center !important; background-repeat: no-repeat !important; background-attachment: fixed !important;";
-        } elseif ($settings['login_bg_preset'] === 'cyber-dark') {
-            $bg_css = "background: radial-gradient(circle at 50% 20%, #172554 0%, #0b112c 50%, #030712 100%) !important;";
-        } elseif ($settings['login_bg_preset'] === 'matrix') {
-            $bg_css = "background: linear-gradient(135deg, #022c22 0%, #05161e 40%, #0b0f19 100%) !important;";
-        } else {
-            // deep-navy (default NexaGuard)
-            $bg_css = "background: radial-gradient(ellipse at bottom, #1e1b4b 0%, #0a0f2c 60%, #030717 100%) !important;";
-        }
-
-        $logo_css = '';
-        if (!empty($settings['login_logo_image'])) {
-            $logo_url = esc_url($settings['login_logo_image']);
-            $logo_css = "background-image: url('{$logo_url}') !important; background-size: contain !important; background-position: center center !important; background-repeat: no-repeat !important; width: 100% !important; max-width: 280px !important; height: 85px !important;";
-        } else {
-            // Logo de escudo estilizado NexaGuard en sustitución del icono por defecto de WordPress
-            $logo_css = "background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffcf33' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E\") !important; background-size: contain !important; background-repeat: no-repeat !important; background-position: center center !important; width: 72px !important; height: 72px !important;";
-        }
+        $bg_url = !empty($settings['login_bg_image']) ? esc_url_raw($settings['login_bg_image']) : '';
+        $bg_preset = !empty($settings['login_bg_preset']) ? sanitize_key($settings['login_bg_preset']) : 'deep-navy';
+        $logo_url = !empty($settings['login_logo_image']) ? esc_url_raw($settings['login_logo_image']) : '';
 
         ?>
         <style id="nexaguard-login-customizer">
             body.login {
-                <?php echo $bg_css; ?>
+                <?php if (!empty($bg_url)): ?>
+                background-image: url("<?php echo esc_url($bg_url); ?>") !important;
+                background-size: cover !important;
+                background-position: center center !important;
+                background-repeat: no-repeat !important;
+                background-attachment: fixed !important;
+                <?php elseif ($bg_preset === 'cyber-dark'): ?>
+                background: radial-gradient(circle at 50% 20%, #172554 0%, #0b112c 50%, #030712 100%) !important;
+                <?php elseif ($bg_preset === 'matrix'): ?>
+                background: linear-gradient(135deg, #022c22 0%, #05161e 40%, #0b0f19 100%) !important;
+                <?php else: ?>
+                background: radial-gradient(ellipse at bottom, #1e1b4b 0%, #0a0f2c 60%, #030717 100%) !important;
+                <?php endif; ?>
                 color: #eaf0ff !important;
                 font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
                 min-height: 100vh !important;
@@ -1426,7 +1419,22 @@ class NexaGuard_Firewall {
                 text-align: center;
             }
             body.login #login h1 a {
-                <?php echo $logo_css; ?>
+                <?php if (!empty($logo_url)): ?>
+                background-image: url("<?php echo esc_url($logo_url); ?>") !important;
+                background-size: contain !important;
+                background-position: center center !important;
+                background-repeat: no-repeat !important;
+                width: 100% !important;
+                max-width: 280px !important;
+                height: 85px !important;
+                <?php else: ?>
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffcf33' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E") !important;
+                background-size: contain !important;
+                background-repeat: no-repeat !important;
+                background-position: center center !important;
+                width: 72px !important;
+                height: 72px !important;
+                <?php endif; ?>
                 margin: 0 auto 12px !important;
                 display: block;
                 outline: none;

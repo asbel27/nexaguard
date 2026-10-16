@@ -929,7 +929,7 @@ class NexaGuard_Scanner {
 
         // Detección de redirecciones maliciosas o cloaking de tráfico
         if (preg_match('/(RewriteRule|Redirect(Match)?)\s+.*\b(https?:\/\/(?!wordpress\.org|google\.|bing\.)[a-zA-Z0-9\.\-_]+\b.*)/i', $content, $m)) {
-            $site_domain = parse_url(home_url(), PHP_URL_HOST);
+            $site_domain = wp_parse_url(home_url(), PHP_URL_HOST);
             if ($site_domain && stripos($m[0], $site_domain) === false) {
                 $this->add_threat(array(
                     'id'          => md5('htaccess_malicious_redirect'),
@@ -1060,7 +1060,7 @@ class NexaGuard_Scanner {
                 }
 
                 $mtime = filemtime($local_path);
-                $mod_time_str = date('d/m/Y H:i:s', $mtime);
+                $mod_time_str = gmdate('d/m/Y H:i:s', $mtime);
 
                 $this->add_threat(array(
                     'id'          => md5('checksum_mismatch_' . $rel_file),
@@ -1143,11 +1143,11 @@ class NexaGuard_Scanner {
                             'category'    => 'recent_core_modification',
                             'severity'    => 'warn',
                             'title'       => 'Archivo del Núcleo modificado recientemente (' . $rel . ')',
-                            'desc'        => 'Este archivo del sistema fue alterado en las últimas 48 horas (' . date('d/m/Y H:i:s', $mtime) . '). Los atacantes suelen dejar huellas de fecha reciente al inyectar código.',
+                            'desc'        => 'Este archivo del sistema fue alterado en las últimas 48 horas (' . gmdate('d/m/Y H:i:s', $mtime) . '). Los atacantes suelen dejar huellas de fecha reciente al inyectar código.',
                             'file'        => $rel,
                             'full_path'   => $file,
                             'line'        => 1,
-                            'code'        => 'Última modificación detectada: ' . date('d/m/Y H:i:s', $mtime),
+                            'code'        => 'Última modificación detectada: ' . gmdate('d/m/Y H:i:s', $mtime),
                             'can_clean'   => true,
                             'clean_action'=> 'restore_core_file'
                         ), 'core');

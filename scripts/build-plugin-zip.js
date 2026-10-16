@@ -165,7 +165,6 @@ function generateIntegrityManifest(sourceDir) {
     'inc/firewall.php',
     'inc/scanner.php',
     'inc/cleaner.php',
-    'inc/updater.php',
     'inc/view-scanner.php',
     'inc/view-waf.php',
     'inc/view-modals.php'

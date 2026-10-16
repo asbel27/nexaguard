@@ -30,7 +30,7 @@ $settings = get_option('nexaguard_settings', array(
             </div>
         </div>
         <div class="nexaguard-header-actions">
-            <a href="<?php echo admin_url('admin.php?page=nexaguard-security'); ?>" class="btn-ng btn-ng-outline">← Volver al Escáner</a>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=nexaguard-security')); ?>" class="btn-ng btn-ng-outline">← Volver al Escáner</a>
             <?php if (!$is_pro): ?>
                 <button type="button" class="btn-ng btn-ng-primary btn-open-upgrade-modal">⚡ Desbloquear Modo PRO</button>
             <?php endif; ?>
@@ -54,7 +54,7 @@ $settings = get_option('nexaguard_settings', array(
         </div>
     <?php endif; ?>
 
-    <form id="form-waf-settings" class="ng-card <?php echo !$is_pro ? 'waf-locked-form' : ''; ?>" style="margin-top:20px;">
+    <form id="form-waf-settings" class="ng-card <?php echo esc_attr(!$is_pro ? 'waf-locked-form' : ''); ?>" style="margin-top:20px;">
         <div class="card-title-bar">
             <h3>Reglas de Protección en Tiempo Real</h3>
             <?php if (!$is_pro): ?>
@@ -63,10 +63,10 @@ $settings = get_option('nexaguard_settings', array(
         </div>
         <p class="ng-hint">Estas medidas frenan intentos de intrusión antes de que toquen la base de datos o el núcleo de WordPress.</p>
 
-        <div class="toggle-list <?php echo !$is_pro ? 'waf-locked-container' : ''; ?>">
+        <div class="toggle-list <?php echo esc_attr(!$is_pro ? 'waf-locked-container' : ''); ?>">
             <!-- WAF Core -->
             <!-- WAF Core -->
-            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+            <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                 <div class="toggle-info">
                     <b>Cortafuegos de Aplicación Web (WAF Inteligente)
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -157,7 +157,7 @@ $settings = get_option('nexaguard_settings', array(
             </label>
 
             <!-- Modo Aislamiento de Emergencia -->
-            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="border-left: 3px solid #ff4560;">
+            <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>" style="border-left: 3px solid #ff4560;">
                 <div class="toggle-info">
                     <b>Modo Aislamiento de Emergencia / Cuarentena de Tráfico
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -212,7 +212,7 @@ $settings = get_option('nexaguard_settings', array(
             </label>
 
             <!-- Alertas Inmediatas por Correo ante Intrusiones (SQLi, XSS, Webshells) -->
-            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+            <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                 <div class="toggle-info">
                     <b>Alertas Inmediatas por Correo ante Ataques e Intrusiones
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -235,7 +235,7 @@ $settings = get_option('nexaguard_settings', array(
             </label>
 
             <!-- Cárcel Automática de IPs por Reincidencia (IP Auto-Jail 24H) -->
-            <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+            <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                 <div class="toggle-info">
                     <b>Cárcel Automática de IPs por Reincidencia (IP Auto-Jail 24 Horas)
                         <span class="ng-tooltip-btn" tabindex="0">
@@ -281,7 +281,7 @@ $settings = get_option('nexaguard_settings', array(
             </div>
 
             <!-- Alertas Instantáneas por Webhook (Discord / Slack / Telegram) -->
-            <div class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="display:flex; flex-direction:column; gap:10px;">
+            <div class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>" style="display:flex; flex-direction:column; gap:10px;">
                 <div class="toggle-info">
                     <b>Alertas Instantáneas por Webhook (Discord / Slack / Teams)
                         <span class="ng-tooltip-btn" tabindex="0">

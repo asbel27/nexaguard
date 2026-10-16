@@ -1,80 +1,78 @@
-=== NexaGuard Security - Antimalware & Blindaje Forense WordPress ===
+=== NexaGuard Security ===
 Contributors: asbel27
 Donate link: https://www.nexaguards.com
 Tags: security, malware, scanner, firewall, waf
 Requires at least: 5.8
-Tested up to: 6.7
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 1.5.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Suite avanzada de ciberseguridad para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, neutralización de ClearFake / ClickFix y blindaje en tiempo real (WAF).
+Expert cybersecurity suite for WordPress: deep forensic file and database scanner, backdoor eradication, core checksum verification, webshell quarantine, and real-time firewall (WAF).
 
 == Description ==
 
-**NexaGuard Security** es una solución integral y liviana de ciberseguridad diseñada para proteger sitios WordPress contra intrusiones complejas, inyecciones de código y malware avanzado.
+**NexaGuard Security** is an advanced, lightweight cybersecurity solution engineered to protect WordPress websites against sophisticated intrusions, code injections, and emerging web threats.
 
-A diferencia de otras soluciones pesadas que ralentizan tu servidor con consultas excesivas a bases de datos, NexaGuard utiliza un motor heurístico optimizado y firmas criptográficas para auditar el código fuente, la base de datos y la integridad del núcleo sin saturar los recursos de tu servidor compartido o VPS.
+Unlike bulky security plugins that overwhelm your database and slow down page loading, NexaGuard uses an optimized heuristic engine and cryptographic checksums to audit source code, core files, and database options without overloading your shared hosting or VPS.
 
-### 🛡️ Características Principales
+### 🛡️ Key Features
 
-* **Escáner Forense Profundo:** Inspecciona la raíz, directorios de temas, plugins, mu-plugins, uploads y la tabla wp_options.
-* **Neutralización de ClearFake / EtherHiding / ClickFix:** Detecta scripts base64 inyectados y llamadas a contratos inteligentes que despliegan falsos avisos de Cloudflare.
-* **Monitor de Núcleo (Sentinel):** Compara los archivos vitales de WordPress contra los hashes oficiales para identificar modificaciones no autorizadas al instante.
-* **Vigilancia Continua:** Monitoreo periódico de eventos y telemetría de integridad del sitio.
-* **Erradicación con un Clic:** Limpia inyecciones maliciosas preservando los archivos originales con copias de respaldo automáticas.
-* **Cuarentena Blindada:** Aísla de forma segura archivos maliciosos y webshells en un directorio con acceso bloqueado (`Deny from all`).
-* **Cortafuegos WAF en Tiempo Real:** Bloquea inyecciones SQL, Directory Traversal, Cross-Site Scripting (XSS) y ejecución de webshells.
-* **Blindaje Perimetral:** Deshabilita la ejecución de PHP en `/uploads/`, apaga XML-RPC y previene la enumeración de usuarios.
+* **Deep Forensic Scanner:** Audits the root directory, themes, plugins, mu-plugins, uploads, and wp_options for malicious code.
+* **Neutralize ClearFake, EtherHiding & ClickFix:** Detects injected base64 scripts, malicious blockchain RPC calls, and fake Cloudflare captcha popups.
+* **Core Integrity Monitor (Sentinel):** Compares core WordPress files directly against official WordPress.org cryptographic hashes to flag unauthorized modifications instantly.
+* **One-Click Eradication:** Cleans malicious code injections and webshells while automatically preserving backups for single-click rollback.
+* **Hardened Quarantine:** Moves infected files and backdoors to an isolated directory protected with `Deny from all` directives.
+* **Real-Time Firewall (WAF):** Blocks SQL injections (SQLi), Cross-Site Scripting (XSS), Directory Traversal, and unauthorized execution of PHP scripts in the uploads folder.
+* **Perimeter Hardening:** Disables PHP execution in `/uploads/`, blocks XML-RPC attacks, disables file editing in the admin panel, and prevents user enumeration.
 
 == Installation ==
 
-1. Sube la carpeta `nexaguard-security` al directorio `/wp-content/plugins/` de tu instalación, o sube el archivo .zip desde **Plugins > Añadir nuevo > Subir plugin**.
-2. Activa el plugin a través de la pantalla **Plugins** en WordPress.
-3. Dirígete a la sección **NexaGuard** en el menú lateral de administración.
-4. Haz clic en **Iniciar Análisis Forense** para auditar y proteger tu sitio web.
+1. Upload the `nexaguard-security` folder to your `/wp-content/plugins/` directory, or upload the `.zip` file via **Plugins > Add New > Upload Plugin**.
+2. Activate the plugin through the **Plugins** screen in WordPress.
+3. Navigate to **NexaGuard** in the WordPress administration sidebar.
+4. Click **Start Forensic Scan** to audit and secure your site.
 
 == Frequently Asked Questions ==
 
-= ¿NexaGuard ralentizará mi sitio web? =
-No. NexaGuard fue diseñado con enfoque en el rendimiento. El escáner ejecuta lotes de procesamiento controlados con pausas dinámicas para no saturar la CPU ni la memoria RAM de tu servidor.
+= Will NexaGuard slow down my site? =
+No. NexaGuard is built with performance in mind. The forensic scanner processes files in controlled, paced batches with dynamic pauses to keep CPU and memory usage minimal.
 
-= ¿Qué hace NexaGuard si encuentra un archivo infectado? =
-Puedes elegir entre aislar el archivo en cuarentena blindada o limpiar la inyección maliciosa automáticamente manteniendo una copia de respaldo para revertir cualquier cambio en un solo clic.
+= What happens if NexaGuard detects an infected file? =
+You can isolate the file in a hardened quarantine directory or automatically clean the malicious injection with a single click. A backup is created before any modification so you can roll back at any time.
 
-= ¿Requiere una cuenta o servicio externo para funcionar? =
-No. Las funciones esenciales de escaneo local, verificación de integridad de núcleo, cuarentena y firewall WAF son 100% funcionales de forma gratuita y local. Opcionalmente, puedes vincular una licencia PRO con la nube de inteligencia NexaGuard Threat Cloud (https://www.nexaguards.com) para recibir telemetría avanzada y firmas de amenazas de día cero.
+= Does this plugin require an external service to work? =
+No. The core functionality—local forensic scanner, WordPress core integrity verification, quarantine, and essential firewall rules—is 100% free and runs locally on your server. Optionally, you may connect a PRO license to NexaGuard Threat Cloud (https://www.nexaguards.com) to receive real-time zero-day signature updates and remote incident response.
 
 == External Service ==
 
-Este plugin puede conectarse de forma opcional y segura a la nube de inteligencia NexaGuard (https://www.nexaguards.com) para la verificación de firmas de amenazas y validación de licencias PRO.
+This plugin may optionally connect to the NexaGuard Threat Intelligence Cloud (https://www.nexaguards.com) to verify PRO licenses and receive cloud threat signatures.
 
-* **Servicio:** NexaGuard Threat Intelligence & License Gateway
+* **Service:** NexaGuard Threat Intelligence & License Gateway
 * **URL:** https://www.nexaguards.com
-* **Datos transmitidos:** Dirección URL / dominio del sitio y clave de licencia (si se ha configurado) para verificar la validez y obtener las firmas de malware más recientes.
-* **Términos de servicio:** https://www.nexaguards.com/terminos
-* **Política de privacidad:** https://www.nexaguards.com/privacidad
+* **Data transmitted:** Site URL / domain name and license key (if configured) to validate updates.
+* **Terms of Service:** https://www.nexaguards.com/terminos
+* **Privacy Policy:** https://www.nexaguards.com/privacidad
 
 == Screenshots ==
 
-1. Panel principal de NexaGuard: resumen de amenazas, estado del firewall y acceso rápido al escáner.
-2. Escáner Forense en acción detectando malware y webshells.
-3. Monitor de Núcleo (Sentinel) verificando la integridad de archivos frente al repositorio oficial.
-4. Registro de eventos del cortafuegos WAF y opciones de blindaje perimetral.
+1. NexaGuard Dashboard: threat summary, firewall status, and quick scan access.
+2. Deep Forensic Scanner identifying backdoors and injected malware.
+3. Core Sentinel verifying file integrity against official WordPress.org checksums.
+4. Real-time WAF firewall rules and security hardening settings.
 
 == Changelog ==
 
 = 1.5.6 =
-* Reorganización intuitiva de pestañas: Monitor de Núcleo (Sentinel) y Vigilancia 24H posicionados junto al Escáner Forense.
-* Mejoras en el motor de detección de scripts maliciosos ClearFake y ClickFix.
-* Erradicaciones de cortesía gratuitas incluidas en la versión estándar.
-* Compatibilidad verificada con WordPress 6.7 y PHP 8.2+.
-* Optimización en la gestión de copias de seguridad de cuarentena.
+* Compatibility update for WordPress 7.1 and PHP 8.2+.
+* Intuitive tab reorganization: Core Sentinel and 24H Vigilance positioned alongside Forensic Scanner.
+* Enhanced heuristic detection for ClearFake, ClickFix, and Web3 smart contract injectors.
+* Optimized quarantine backup and rollback management.
 
 = 1.5.5 =
-* Incorporación de Monitor de Núcleo (Sentinel) para auditoría de archivos core de WordPress.
-* Sistema de rollback mejorado para restaurar archivos modificados con un solo clic.
+* Introduced Core Sentinel to verify core WordPress files against official checksums.
+* Enhanced rollback system to restore modified files with one click.
 
 = 1.5.0 =
-* Lanzamiento de la versión unificada de NexaGuard Security Suite.
+* Initial release of the unified NexaGuard Security Suite.

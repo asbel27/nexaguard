@@ -63,11 +63,7 @@ $rollback_count = count($backup_history);
             </svg>
             <div>
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <h1>NexaGuard Security <span class="badge-v">v<?php echo NEXAGUARD_VERSION; ?></span></h1>
-                    <button type="button" id="btn-check-plugin-update" class="btn-ng btn-ng-outline" style="padding:3px 10px; font-size:0.75rem; border-radius:6px; background:rgba(255,207,51,0.08); border:1px solid rgba(255,207,51,0.3); color:#ffcf33; cursor:pointer;" title="Buscar nuevas actualizaciones de NexaGuard">
-                        <span class="icon-refresh">🔄</span> Comprobar Actualización
-                    </button>
-                    <span id="update-check-status" style="font-size:0.8rem; font-weight:600;"></span>
+                    <h1>NexaGuard Security <span class="badge-v">v<?php echo esc_html(NEXAGUARD_VERSION); ?></span></h1>
                 </div>
                 <p class="sub">Auditoría forense profunda, erradicación de malware e inteligencia en la nube</p>
             </div>
@@ -104,7 +100,7 @@ $rollback_count = count($backup_history);
         <div class="ng-license-banner license-warning" style="background:#261907 !important; border:2px solid #ffcf33 !important; border-radius:14px; padding:18px 24px; margin-bottom:20px; box-shadow:0 10px 30px rgba(0,0,0,0.35);">
             <div class="lic-icon" style="font-size:2.4rem; line-height:1;">⚠️</div>
             <div class="lic-content" style="flex:1; min-width:260px;">
-                <strong style="display:block; font-size:1.08rem; font-weight:800; color:#ffffff !important; margin-bottom:4px;">ATENCIÓN: Tu suscripción a <?php echo esc_html($license_data['plan']); ?> vencerá en <?php echo $days_left; ?> días.</strong>
+                <strong style="display:block; font-size:1.08rem; font-weight:800; color:#ffffff !important; margin-bottom:4px;">ATENCIÓN: Tu suscripción a <?php echo esc_html($license_data['plan']); ?> vencerá en <?php echo intval($days_left); ?> días.</strong>
                 <p style="font-size:0.94rem; color:#fff0c7 !important; margin:0; line-height:1.55; font-weight:500;">Renueva a tiempo en nexaguards.com para mantener el escudo y la vigilancia continua activos sin interrupciones.</p>
             </div>
             <div class="lic-action" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -118,7 +114,7 @@ $rollback_count = count($backup_history);
             <div class="lic-pill">
                 <span class="lic-check">✓</span>
                 <span>Licencia PRO Activa: <strong><?php echo esc_html($license_data['plan']); ?></strong></span>
-                <span class="lic-exp">· Vence el: <strong><?php echo esc_html($license_data['expires_formatted']); ?></strong> (Quedan <?php echo $days_left; ?> días)</span>
+                <span class="lic-exp">· Vence el: <strong><?php echo esc_html($license_data['expires_formatted']); ?></strong> (Quedan <?php echo intval($days_left); ?> días)</span>
             </div>
             <div class="lic-key-mgmt">
                 <span class="lic-key-tag">Clave: <?php echo esc_html(substr($license_data['key'], 0, 8) . '••••••••'); ?></span>
@@ -160,7 +156,7 @@ $rollback_count = count($backup_history);
             <span class="ng-tab-icon">🔍</span>
             <span class="ng-tab-label">Escáner Forense</span>
             <?php if ($threat_count > 0): ?>
-                <span class="ng-tab-badge danger"><?php echo $threat_count; ?></span>
+                <span class="ng-tab-badge danger"><?php echo intval($threat_count); ?></span>
             <?php endif; ?>
         </button>
         <button type="button" class="ng-tab" data-tab="sentinel">
@@ -192,14 +188,14 @@ $rollback_count = count($backup_history);
             <span class="ng-tab-icon">🔒</span>
             <span class="ng-tab-label">Cuarentena</span>
             <?php if ($quarantine_count > 0): ?>
-                <span class="ng-tab-badge info"><?php echo $quarantine_count; ?></span>
+                <span class="ng-tab-badge info"><?php echo intval($quarantine_count); ?></span>
             <?php endif; ?>
         </button>
         <button type="button" class="ng-tab" data-tab="rollback">
             <span class="ng-tab-icon">↩️</span>
             <span class="ng-tab-label">Rollback</span>
             <?php if ($rollback_count > 0): ?>
-                <span class="ng-tab-badge info"><?php echo $rollback_count; ?></span>
+                <span class="ng-tab-badge info"><?php echo intval($rollback_count); ?></span>
             <?php endif; ?>
         </button>
         <button type="button" class="ng-tab" data-tab="compare">
@@ -215,29 +211,29 @@ $rollback_count = count($backup_history);
     <div class="ng-tab-panel is-active" id="tab-scanner">
 
         <!-- Banner de estado dinámico -->
-        <div id="scan-status-card" class="ng-card scan-summary-card <?php echo ($last_report && $last_report['threats_count'] > 0) ? 'status-danger' : 'status-clean'; ?>">
+        <div id="scan-status-card" class="ng-card scan-summary-card <?php echo esc_attr(($last_report && $last_report['threats_count'] > 0) ? 'status-danger' : 'status-clean'); ?>">
             <div class="summary-left">
                 <div class="status-indicator">
-                    <span id="status-icon"><?php echo ($last_report && $last_report['threats_count'] > 0) ? '⚠️' : '✓'; ?></span>
+                    <span id="status-icon"><?php echo esc_html(($last_report && $last_report['threats_count'] > 0) ? '⚠️' : '✓'); ?></span>
                 </div>
                 <div>
                     <h3 id="status-heading" style="letter-spacing: 0.6px; word-spacing: 2px; line-height: 1.45; font-weight: 700;">
                         <?php 
                         if (!$last_report) {
-                            echo 'Listo para Iniciar Análisis en Tiempo Real';
+                            echo esc_html('Listo para Iniciar Análisis en Tiempo Real');
                         } elseif ($last_report['threats_count'] > 0) {
-                            echo '¡Atención! Se detectaron ' . $last_report['threats_count'] . ' amenazas de seguridad';
+                            echo esc_html('¡Atención! Se detectaron ' . intval($last_report['threats_count']) . ' amenazas de seguridad');
                         } else {
-                            echo 'Sistema 100% limpio y protegido';
+                            echo esc_html('Sistema 100% limpio y protegido');
                         }
                         ?>
                     </h3>
                     <p id="status-desc" class="status-desc-text">
                         <?php 
                         if ($last_report) {
-                            echo 'Último análisis: <span class="status-highlight">' . date('d/m/Y H:i:s', $last_report['timestamp']) . '</span> · <span class="status-highlight">' . $last_report['scanned_files'] . ' archivos</span> analizados en <span class="status-highlight">' . $last_report['elapsed'] . 's</span>.';
+                            echo wp_kses_post('Último análisis: <span class="status-highlight">' . esc_html(gmdate('d/m/Y H:i:s', intval($last_report['timestamp']))) . '</span> · <span class="status-highlight">' . intval($last_report['scanned_files']) . ' archivos</span> analizados en <span class="status-highlight">' . esc_html($last_report['elapsed']) . 's</span>.');
                         } else {
-                            echo 'Haz clic en <strong>"Iniciar Análisis Forense"</strong> para auditar plugins, temas, Core y base de datos con la base de firmas en tiempo real.';
+                            echo wp_kses_post('Haz clic en <strong>"Iniciar Análisis Forense"</strong> para auditar plugins, temas, Core y base de datos con la base de firmas en tiempo real.');
                         }
                         ?>
                     </p>
@@ -253,15 +249,15 @@ $rollback_count = count($backup_history);
             </div>
             <div class="summary-kpis">
                 <div class="kpi-box kpi-threats-box">
-                    <span class="kpi-val" id="kpi-threats"><?php echo $last_report ? $last_report['threats_count'] : '0'; ?></span>
+                    <span class="kpi-val" id="kpi-threats"><?php echo esc_html($last_report ? intval($last_report['threats_count']) : 0); ?></span>
                     <span class="kpi-lbl">Amenazas</span>
                 </div>
                 <div class="kpi-box">
-                    <span class="kpi-val" id="kpi-files"><?php echo $last_report ? $last_report['scanned_files'] : '0'; ?></span>
+                    <span class="kpi-val" id="kpi-files"><?php echo esc_html($last_report ? intval($last_report['scanned_files']) : 0); ?></span>
                     <span class="kpi-lbl">Archivos auditados</span>
                 </div>
                 <div class="kpi-box">
-                    <span class="kpi-val" id="kpi-quarantine"><?php echo $quarantine_count; ?></span>
+                    <span class="kpi-val" id="kpi-quarantine"><?php echo intval($quarantine_count); ?></span>
                     <span class="kpi-lbl">En cuarentena</span>
                 </div>
             </div>
@@ -289,8 +285,8 @@ $rollback_count = count($backup_history);
         <div id="threats-container" class="ng-card" style="margin-top:20px;">
             <div class="card-title-bar">
                 <h3>Resultados de la Auditoría Forense</h3>
-                <span id="threats-badge" class="badge-count <?php echo ($last_report && $last_report['threats_count'] > 0) ? 'danger' : 'ok'; ?>">
-                    <?php echo ($last_report) ? $last_report['threats_count'] . ' hallazgos' : '0 hallazgos'; ?>
+                <span id="threats-badge" class="badge-count <?php echo esc_attr(($last_report && $last_report['threats_count'] > 0) ? 'danger' : 'ok'); ?>">
+                    <?php echo esc_html(($last_report) ? intval($last_report['threats_count']) . ' hallazgos' : '0 hallazgos'); ?>
                 </span>
             </div>
 
@@ -311,7 +307,7 @@ $rollback_count = count($backup_history);
                 <?php else: ?>
                     <div class="threats-pro-banner">
                         <div class="tpb-badge">⚡ FUNCIÓN DE LIMPIEZA AUTOMÁTICA PRO</div>
-                        <h4>Erradicación con 1 Clic Bloqueada · Se detectaron <?php echo $last_report['threats_count']; ?> amenazas</h4>
+                        <h4>Erradicación con 1 Clic Bloqueada · Se detectaron <?php echo intval($last_report['threats_count']); ?> amenazas</h4>
                         <p>NexaGuard ha localizado con precisión quirúrgica los archivos infectados y las inyecciones en base de datos. Para erradicarlos automáticamente sin romper tu sitio o encargar la desinfección a nuestros ingenieros:</p>
                         <div class="tpb-acts">
                             <button type="button" class="btn-ng btn-ng-primary btn-open-clean-modal">⚡ Desbloquear Erradicación con Plan PRO ($9.99/mes)</button>
@@ -320,19 +316,6 @@ $rollback_count = count($backup_history);
                         </div>
                     </div>
                 <?php endif; ?>
-            <?php endif; ?>
-
-            <?php if (!$is_pro && $threat_count > 0 && $free_clean_remaining > 0): ?>
-                <div class="ng-free-quota-banner" style="background:linear-gradient(90deg, rgba(61,232,164,0.12) 0%, rgba(11,22,61,0.9) 100%); border:1.5px solid #3de8a4; border-radius:12px; padding:14px 20px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 8px 25px rgba(0,0,0,0.35);">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <span style="font-size:2rem; line-height:1;">🎁</span>
-                        <div>
-                            <strong style="color:#3de8a4; font-size:0.98rem; display:block;">CORTESÍA NEXAGUARD: <span class="ng-free-quota-badge"><?php echo esc_html($free_clean_remaining); ?> de <?php echo esc_html($free_clean_limit); ?></span> Erradicaciones Gratuitas Disponibles</strong>
-                            <span style="color:#cad7f5; font-size:0.86rem;">Comprueba la efectividad de nuestro motor erradicando tus 2 primeras amenazas sin costo.</span>
-                        </div>
-                    </div>
-                    <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-outline" style="border-color:#ffcf33; color:#ffcf33; font-size:0.82rem; padding:6px 14px;">Desbloquear Erradicación Ilimitada ($9.99/mes)</a>
-                </div>
             <?php endif; ?>
 
             <div id="threats-list" class="threats-grid">
@@ -349,13 +332,13 @@ $rollback_count = count($backup_history);
                         <div class="threat-item <?php echo esc_attr($t['severity']); ?>" id="threat-<?php echo esc_attr($t['id']); ?>">
                             <div class="threat-header">
                                 <span class="sev-badge <?php echo esc_attr($t['severity']); ?>">
-                                    <?php echo ($t['severity'] === 'crit') ? 'CRÍTICO' : 'ADVERTENCIA'; ?>
+                                    <?php echo esc_html(($t['severity'] === 'crit') ? 'CRÍTICO' : 'ADVERTENCIA'); ?>
                                 </span>
                                 <h4><?php echo esc_html($t['title']); ?></h4>
                             </div>
                             <p class="threat-desc"><?php echo esc_html($t['desc']); ?></p>
                             <div class="threat-loc">
-                                <code><?php echo esc_html($t['file']); ?><?php echo ($t['line'] > 0) ? ' : Línea ' . $t['line'] : ''; ?></code>
+                                <code><?php echo esc_html($t['file']); ?><?php echo esc_html(($t['line'] > 0) ? ' : Línea ' . intval($t['line']) : ''); ?></code>
                             </div>
                             <?php if (!empty($t['code'])): ?>
                                 <pre class="threat-snippet"><code><?php echo esc_html($t['code']); ?></code></pre>
@@ -500,20 +483,20 @@ $rollback_count = count($backup_history);
                 foreach ($breakdown_data as $key => $item):
                     $is_danger = !empty($item['threats']) && $item['threats'] > 0;
                 ?>
-                    <div class="folder-item <?php echo $is_danger ? 'has-threats' : ''; ?>" id="folder-item-<?php echo esc_attr($key); ?>">
+                    <div class="folder-item <?php echo esc_attr($is_danger ? 'has-threats' : ''); ?>" id="folder-item-<?php echo esc_attr($key); ?>">
                         <div class="folder-left">
                             <span class="folder-icon"><?php echo esc_html($item['icon']); ?></span>
                             <div class="folder-info">
                                 <h4 class="folder-title"><?php echo esc_html($item['name']); ?></h4>
                                 <span class="folder-path"><?php echo esc_html($item['path']); ?></span>
                                 <span class="folder-count">
-                                    <b id="count-<?php echo esc_attr($key); ?>"><?php echo number_format_i18n($item['files']); ?></b> elementos evaluados
+                                    <b id="count-<?php echo esc_attr($key); ?>"><?php echo esc_html(number_format_i18n($item['files'])); ?></b> elementos evaluados
                                 </span>
                             </div>
                         </div>
                         <div class="folder-right">
-                            <span class="folder-status-badge <?php echo $is_danger ? 'danger' : 'clean'; ?>" id="badge-<?php echo esc_attr($key); ?>">
-                                <?php echo $is_danger ? '⚠️ ' . $item['threats'] . ' detectado(s)' : '✓ Limpio'; ?>
+                            <span class="folder-status-badge <?php echo esc_attr($is_danger ? 'danger' : 'clean'); ?>" id="badge-<?php echo esc_attr($key); ?>">
+                                <?php echo esc_html($is_danger ? '⚠️ ' . intval($item['threats']) . ' detectado(s)' : '✓ Limpio'); ?>
                             </span>
                         </div>
                     </div>
@@ -528,7 +511,7 @@ $rollback_count = count($backup_history);
     <!-- ====================================================================== -->
     <div class="ng-tab-panel" id="tab-vigilance">
 
-        <div class="ng-card vigilance-card <?php echo !$is_pro ? 'vigilance-locked' : ''; ?>">
+        <div class="ng-card vigilance-card <?php echo esc_attr(!$is_pro ? 'vigilance-locked' : ''); ?>">
             <div class="vigilance-header">
                 <div class="vigilance-info">
                     <?php if ($is_pro): ?>
@@ -541,9 +524,9 @@ $rollback_count = count($backup_history);
                 </div>
                 <div class="vigilance-action">
                     <?php if ($is_pro): ?>
-                        <button type="button" id="btn-toggle-vigilance" class="btn-vigilance-toggle <?php echo $vigilance_active ? 'is-active' : ''; ?>" data-active="<?php echo $vigilance_active ? '1' : '0'; ?>" data-locked="0">
+                        <button type="button" id="btn-toggle-vigilance" class="btn-vigilance-toggle <?php echo esc_attr($vigilance_active ? 'is-active' : ''); ?>" data-active="<?php echo esc_attr($vigilance_active ? '1' : '0'); ?>" data-locked="0">
                             <span class="v-switch-knob"></span>
-                            <span id="v-toggle-label"><?php echo $vigilance_active ? 'VIGILANCIA ACTIVA 24H' : 'ACTIVAR VIGILANCIA 24H'; ?></span>
+                            <span id="v-toggle-label"><?php echo esc_html($vigilance_active ? 'VIGILANCIA ACTIVA 24H' : 'ACTIVAR VIGILANCIA 24H'); ?></span>
                         </button>
                     <?php else: ?>
                         <button type="button" id="btn-toggle-vigilance" class="btn-vigilance-toggle btn-vigilance-locked" data-locked="1" title="Haz clic para activar tu clave de licencia o adquirir el Plan Pro">
@@ -554,7 +537,7 @@ $rollback_count = count($backup_history);
                 </div>
             </div>
 
-            <div id="vigilance-radar-box" class="vigilance-radar-box <?php echo !$is_pro ? 'radar-locked radar-paused' : ($vigilance_active ? 'radar-scanning' : 'radar-paused'); ?>">
+            <div id="vigilance-radar-box" class="vigilance-radar-box <?php echo esc_attr(!$is_pro ? 'radar-locked radar-paused' : ($vigilance_active ? 'radar-scanning' : 'radar-paused')); ?>">
                 <div class="radar-screen-wrap">
                     <div class="radar-screen">
                         <div class="radar-ring ring-1"></div>
@@ -573,18 +556,18 @@ $rollback_count = count($backup_history);
                     <h4 id="radar-status-text">
                         <?php 
                         if (!$is_pro) {
-                            echo '🔒 Sistema de vigilancia en pausa. Requiere licencia NexaGuard Pro activa.';
+                            echo esc_html('🔒 Sistema de vigilancia en pausa. Requiere licencia NexaGuard Pro activa.');
                         } else {
-                            echo $vigilance_active ? '🟢 El sistema de vigilancia de 24 horas para tu web está activado.' : '⏸️ Sistema de vigilancia en pausa. Actívalo para proteger tu web.';
+                            echo esc_html($vigilance_active ? '🟢 El sistema de vigilancia de 24 horas para tu web está activado.' : '⏸️ Sistema de vigilancia en pausa. Actívalo para proteger tu web.');
                         }
                         ?>
                     </h4>
                     <p id="radar-status-sub">
                         <?php 
                         if (!$is_pro) {
-                            echo 'Activa tu clave de licencia del Plan NexaGuard Security Pro ($9.99/mes) para iniciar la supervisión perimetral autónoma.';
+                            echo esc_html('Activa tu clave de licencia del Plan NexaGuard Security Pro ($9.99/mes) para iniciar la supervisión perimetral autónoma.');
                         } else {
-                            echo $vigilance_active ? 'NexaGuard Cloud Radar supervisa continuamente inyecciones PHP, cambios en archivos y peticiones maliciosas.' : 'Haz clic en el botón superior para activar el radar perimetral permanente.';
+                            echo esc_html($vigilance_active ? 'NexaGuard Cloud Radar supervisa continuamente inyecciones PHP, cambios en archivos y peticiones maliciosas.' : 'Haz clic en el botón superior para activar el radar perimetral permanente.');
                         }
                         ?>
                     </p>
@@ -628,7 +611,7 @@ $rollback_count = count($backup_history);
                     <div class="terminal-crt-scanlines"></div>
                     <div class="terminal-screen" id="hacker-radar-screen">
                         <div class="terminal-stream-inner" id="terminal-stream-inner">
-                            <div class="term-line term-system">[SYSTEM INIT] NexaGuard Security Kernel v<?php echo NEXAGUARD_VERSION; ?> loaded.</div>
+                            <div class="term-line term-system">[SYSTEM INIT] NexaGuard Security Kernel v<?php echo esc_html(NEXAGUARD_VERSION); ?> loaded.</div>
                             <div class="term-line term-system">[SENSOR] Tactical 24H Radar listening on perimeter ports (HTTP/HTTPS, REST API, WP-RPC)...</div>
                             <div class="term-line term-dim">[READY] Active defense module standing by. Live stream connected.</div>
                         </div>
@@ -678,7 +661,7 @@ $rollback_count = count($backup_history);
             </div>
         <?php endif; ?>
 
-        <form id="form-waf-settings" class="ng-card <?php echo !$is_pro ? 'waf-locked-form' : ''; ?>" style="margin-top:18px;">
+        <form id="form-waf-settings" class="ng-card <?php echo esc_attr(!$is_pro ? 'waf-locked-form' : ''); ?>" style="margin-top:18px;">
             <div class="card-title-bar">
                 <h3>Reglas de Protección en Tiempo Real</h3>
                 <?php if (!$is_pro): ?>
@@ -687,9 +670,9 @@ $rollback_count = count($backup_history);
             </div>
             <p class="ng-hint">Estas medidas frenan intentos de intrusión antes de que toquen la base de datos o el núcleo de WordPress.</p>
 
-            <div class="toggle-list <?php echo !$is_pro ? 'waf-locked-container' : ''; ?>">
+            <div class="toggle-list <?php echo esc_attr(!$is_pro ? 'waf-locked-container' : ''); ?>">
                 <!-- WAF Core -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Cortafuegos de Aplicación Web (WAF Inteligente)
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -708,7 +691,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Anti-ClearFake / Anti-ClickFix Live Filter -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Filtro Activo Anti-ClearFake y Falsos Captchas
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -727,7 +710,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Bloqueo de PHP en Uploads -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Bloquear ejecución de scripts PHP en /wp-content/uploads/
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -746,7 +729,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Deshabilitar XML-RPC -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Deshabilitar completamente XML-RPC
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -765,7 +748,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Ocultar versión de WordPress -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Ocultar versión de WordPress (wp_generator)
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -784,7 +767,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Modo Aislamiento de Emergencia -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="border-left: 3px solid #ff4560;">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>" style="border-left: 3px solid #ff4560;">
                     <div class="toggle-info">
                         <b>Modo Aislamiento de Emergencia / Cuarentena de Tráfico
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -803,7 +786,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Deshabilitar Editor de Temas y Plugins -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Deshabilitar Editor de Temas y Plugins (DISALLOW_FILE_EDIT)
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -822,7 +805,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Prevenir Listado de Directorios -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Bloquear Listado de Directorios Apache (Options -Indexes)
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -841,7 +824,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Protección Anti Fuerza Bruta Local -->
-                <div class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <div class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Protección Anti Fuerza Bruta Local (Bloqueo IP Automático)
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -856,7 +839,7 @@ $rollback_count = count($backup_history);
                         </b>
                         <p class="ng-hint">Bloquea temporalmente el acceso por IP tras reiterados intentos fallidos de autenticación para mitigar ataques de diccionario masivos.</p>
                         <?php if ($total_lockouts > 0): ?>
-                            <div style="margin-top:6px;"><span class="badge-v" style="background:rgba(61,232,164,.15);color:#3de8a4;font-size:0.75rem;">🛡️ <?php echo $total_lockouts; ?> bloqueo(s) perimetral(es) registrados</span></div>
+                            <div style="margin-top:6px;"><span class="badge-v" style="background:rgba(61,232,164,.15);color:#3de8a4;font-size:0.75rem;">🛡️ <?php echo intval($total_lockouts); ?> bloqueo(s) perimetral(es) registrados</span></div>
                         <?php endif; ?>
                         <div class="ng-subcontrols">
                             <label>Máx. Intentos Fallidos: <input type="number" name="bf_max_retries" value="<?php echo esc_attr($settings['bf_max_retries']); ?>" min="3" max="20" <?php disabled(!$is_pro); ?>></label>
@@ -869,7 +852,7 @@ $rollback_count = count($backup_history);
                 </div>
 
                 <!-- Ocultar URL de Acceso (Hide Backend) -->
-                <div class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <div class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Ocultar URL de Acceso al Panel (Hide wp-login.php)
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -893,7 +876,7 @@ $rollback_count = count($backup_history);
                 </div>
 
                 <!-- Personalizador y Embellecedor Visual de Login (Login Customizer & Branding) -->
-                <div class="toggle-row toggle-row-customizer <?php echo !$is_pro ? 'row-locked' : ''; ?>" style="border-left: 3px solid #ffcf33; flex-direction: column; align-items: stretch; gap: 14px;">
+                <div class="toggle-row toggle-row-customizer <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>" style="border-left: 3px solid #ffcf33; flex-direction: column; align-items: stretch; gap: 14px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <div class="toggle-info">
                             <b>Personalizador y Embellecedor Visual de Login (Login Customizer & Branding)
@@ -915,7 +898,7 @@ $rollback_count = count($backup_history);
                     </div>
 
                     <!-- Panel de Controles y Previsualización -->
-                    <div id="login-customizer-controls" class="login-customizer-grid" style="<?php echo empty($settings['login_custom_design']) ? 'opacity: 0.6;' : ''; ?>">
+                    <div id="login-customizer-controls" class="login-customizer-grid" style="<?php echo esc_attr(empty($settings['login_custom_design']) ? 'opacity: 0.6;' : ''); ?>">
                         
                         <!-- Columna Izquierda: Opciones de Diseño -->
                         <div class="login-options-col">
@@ -942,7 +925,7 @@ $rollback_count = count($backup_history);
                             <div class="login-opt-group">
                                 <label class="login-opt-label">🖼️ Imagen de Fondo Personalizada (URL o Subir Archivo):</label>
                                 <div class="input-with-actions">
-                                    <input type="text" name="login_bg_image" id="login_bg_image" value="<?php echo esc_attr($settings['login_bg_image']); ?>" placeholder="https://ejemplo.com/fondo.jpg" class="ng-input-full" <?php disabled(!$is_pro); ?>>
+                                    <input type="text" name="login_bg_image" id="login_bg_image" value="<?php echo esc_attr($settings['login_bg_image']); ?>" placeholder="Pega la URL o sube una imagen de fondo" class="ng-input-full" <?php disabled(!$is_pro); ?>>
                                     <button type="button" class="btn-ng btn-ng-outline btn-sm" id="btn-select-login-bg" <?php disabled(!$is_pro); ?>>📁 Elegir Imagen</button>
                                     <button type="button" class="btn-ng btn-ng-link btn-sm" id="btn-clear-login-bg" title="Quitar imagen" <?php disabled(!$is_pro); ?>>✕</button>
                                 </div>
@@ -953,7 +936,7 @@ $rollback_count = count($backup_history);
                             <div class="login-opt-group">
                                 <label class="login-opt-label">👑 Logo Personalizado (Sustituye el Icono de WordPress):</label>
                                 <div class="input-with-actions">
-                                    <input type="text" name="login_logo_image" id="login_logo_image" value="<?php echo esc_attr($settings['login_logo_image']); ?>" placeholder="https://ejemplo.com/logo.png" class="ng-input-full" <?php disabled(!$is_pro); ?>>
+                                    <input type="text" name="login_logo_image" id="login_logo_image" value="<?php echo esc_attr($settings['login_logo_image']); ?>" placeholder="Pega la URL o sube el logotipo" class="ng-input-full" <?php disabled(!$is_pro); ?>>
                                     <button type="button" class="btn-ng btn-ng-outline btn-sm" id="btn-select-login-logo" <?php disabled(!$is_pro); ?>>📁 Elegir Logo</button>
                                     <button type="button" class="btn-ng btn-ng-link btn-sm" id="btn-clear-login-logo" title="Quitar logo" <?php disabled(!$is_pro); ?>>✕</button>
                                 </div>
@@ -1008,7 +991,7 @@ $rollback_count = count($backup_history);
                 </div>
 
                 <!-- Bloquear Enumeración de Usuarios -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Bloquear Enumeración de Usuarios (Anti-Reconnaissance)
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -1027,7 +1010,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Ofuscación Genérica de Errores de Acceso -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Ofuscación Genérica de Errores de Inicio de Sesión
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -1046,7 +1029,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Blindaje de Archivos del Sistema y wp-includes -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Blindaje de Archivos del Sistema y wp-includes (.htaccess)
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -1065,7 +1048,7 @@ $rollback_count = count($backup_history);
                 </label>
 
                 <!-- Alertas de Acceso de Administrador por Email -->
-                <label class="toggle-row <?php echo !$is_pro ? 'row-locked' : ''; ?>">
+                <label class="toggle-row <?php echo esc_attr(!$is_pro ? 'row-locked' : ''); ?>">
                     <div class="toggle-info">
                         <b>Alertas por Correo ante Inicio de Sesión de Administrador desde Nueva IP
                             <span class="ng-tooltip-btn" tabindex="0">
@@ -1106,7 +1089,7 @@ $rollback_count = count($backup_history);
         <div class="ng-card" style="margin-top:0;">
             <div class="card-title-bar">
                 <h3>Archivos Aislados en Cuarentena Segura</h3>
-                <span class="badge-count ok" id="quarantine-badge"><?php echo $quarantine_count; ?> archivo(s)</span>
+                <span class="badge-count ok" id="quarantine-badge"><?php echo intval($quarantine_count); ?> archivo(s)</span>
             </div>
             <p class="ng-hint" style="color: #dbe4ff; font-weight: 500;">Estos archivos fueron deshabilitados y movidos a un entorno protegido con permisos restringidos (Deny From All).</p>
 
@@ -1157,7 +1140,7 @@ $rollback_count = count($backup_history);
                     <p class="ng-hint" style="color: #dbe4ff; font-weight: 500; margin: 4px 0 0;">Cada vez que NexaGuard desinfecta, restaura o elimina un archivo, guarda un punto de respaldo automático. Si notas cualquier anomalía, puedes revertir la acción con 1 clic.</p>
                 </div>
                 <span class="badge-count ok" id="rollback-badge">
-                    <?php echo $rollback_count; ?> punto(s) de respaldo
+                    <?php echo intval($rollback_count); ?> punto(s) de respaldo
                 </span>
             </div>
 

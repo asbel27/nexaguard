@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name: NexaGuard Security · Antimalware & Blindaje Forense
- * Description: Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, limpieza de malware (ClearFake, ClickFix, EtherHiding) y blindaje en tiempo real (WAF).
+ * Plugin Name: NexaGuard Security
+ * Description: Deep forensic scanner, malware eradication, webshell quarantine, integrity monitor and real-time firewall (WAF) for WordPress.
  * Version: 1.5.6
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -24,7 +24,6 @@ define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
 require_once NEXAGUARD_DIR . 'inc/firewall.php';
 require_once NEXAGUARD_DIR . 'inc/scanner.php';
 require_once NEXAGUARD_DIR . 'inc/cleaner.php';
-require_once NEXAGUARD_DIR . 'inc/updater.php';
 
 class NexaGuard_Plugin {
     private static $instance = null;
@@ -37,9 +36,8 @@ class NexaGuard_Plugin {
     }
 
     private function __construct() {
-        // Inicializar Firewall y Auto-Updater antes de que carguen otros componentes
+        // Inicializar Firewall antes de que carguen otros componentes
         NexaGuard_Firewall::init();
-        NexaGuard_Updater::init();
 
         add_action('admin_menu', array($this, 'register_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
@@ -892,7 +890,6 @@ class NexaGuard_Plugin {
 
         // Descargar copia oficial limpia desde los repositorios certificados de WordPress
         $download_urls = array(
-            "https://raw.githubusercontent.com/WordPress/WordPress/{$core_version}/{$rel_path}",
             "https://core.svn.wordpress.org/tags/{$core_version}/{$rel_path}"
         );
 
@@ -934,8 +931,15 @@ class NexaGuard_Plugin {
             return;
         }
 
-        // Restablecer permisos seguros 0644
-        @chmod($full_path, 0644);
+        // Restablecer permisos seguros 0644 mediante WP_Filesystem
+        global $wp_filesystem;
+        if (empty($wp_filesystem)) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            WP_Filesystem();
+        }
+        if ($wp_filesystem) {
+            $wp_filesystem->chmod($full_path, 0644);
+        }
 
         wp_send_json_success(array(
             'message' => "¡Archivo /$rel_path reconstruido con éxito a su estado oficial original de WordPress $core_version!",
@@ -952,19 +956,19 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
-        if (!$this->is_pro_active()) {
-            wp_send_json_error(array(
-                'code'    => 'pro_required',
-                'message' => 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para endurecer permisos de archivos vitales del núcleo.'
-            ));
-        }
-
         $config_file = ABSPATH . 'wp-config.php';
         $hardened = false;
         if (file_exists($config_file)) {
-            $hardened = @chmod($config_file, 0440);
-            if (!$hardened) {
-                $hardened = @chmod($config_file, 0640);
+            global $wp_filesystem;
+            if (empty($wp_filesystem)) {
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+                WP_Filesystem();
+            }
+            if ($wp_filesystem) {
+                $hardened = $wp_filesystem->chmod($config_file, 0440);
+                if (!$hardened) {
+                    $hardened = $wp_filesystem->chmod($config_file, 0640);
+                }
             }
         }
 

@@ -15,6 +15,29 @@ class NexaGuard_Cleaner {
         $this->ensure_backup_dir();
     }
 
+    /**
+     * Obtiene el manejador oficial de archivos de WordPress (WP_Filesystem)
+     */
+    private function get_filesystem() {
+        global $wp_filesystem;
+        if (empty($wp_filesystem)) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            WP_Filesystem();
+        }
+        return $wp_filesystem;
+    }
+
+    /**
+     * Modifica permisos de archivo o directorio usando WP_Filesystem
+     */
+    private function fs_chmod($path, $mode = 0644) {
+        $fs = $this->get_filesystem();
+        if ($fs && method_exists($fs, 'chmod')) {
+            return $fs->fs_chmod($path, $mode);
+        }
+        return false;
+    }
+
     private function ensure_quarantine_dir() {
         if (!is_dir($this->quarantine_dir)) {
             wp_mkdir_p($this->quarantine_dir);
@@ -68,9 +91,9 @@ class NexaGuard_Cleaner {
         @copy($full_path, $full_path . '.bak_nexaguard_' . time());
 
         // Forzar permisos en directorio y archivo para evitar bloqueos
-        if (!is_writable($full_path)) {
-            @chmod(dirname($full_path), 0777);
-            @chmod($full_path, 0777);
+        if (!wp_is_writable($full_path)) {
+            $this->fs_chmod(dirname($full_path), 0777);
+            $this->fs_chmod($full_path, 0777);
         }
 
         $id = uniqid('q_');
@@ -88,7 +111,7 @@ class NexaGuard_Cleaner {
 
         // Forzar vaciado y eliminación del archivo infectado
         @file_put_contents($full_path, '<?php // Neutralizado en cuarentena por NexaGuard Security; exit; ?>');
-        @unlink($full_path);
+        wp_delete_file($full_path);
 
         // Guardar registro en opciones
         $log = get_option('nexaguard_quarantine_log', array());
@@ -194,13 +217,13 @@ class NexaGuard_Cleaner {
         }
 
         // Forzar permisos a nivel de carpeta y archivo
-        @chmod(dirname($full_path), 0777);
-        @chmod($full_path, 0777);
+        $this->fs_chmod(dirname($full_path), 0777);
+        $this->fs_chmod($full_path, 0777);
 
         // Neutralizar código inmediatamente vaciando el archivo
         @file_put_contents($full_path, '<?php // Neutralizado y destruido por NexaGuard Security; exit; ?>');
 
-        if (@unlink($full_path) || !file_exists($full_path)) {
+        if (wp_delete_file($full_path) || !file_exists($full_path)) {
             return array('success' => true, 'message' => 'Amenaza destruida y eliminada definitivamente del servidor.');
         }
 
@@ -241,22 +264,11 @@ class NexaGuard_Cleaner {
 
     private function recursive_force_delete_dir($dir) {
         if (!is_dir($dir)) return false;
-        @chmod($dir, 0777);
-        $files = @scandir($dir);
-        if ($files === false) return false;
-
-        foreach ($files as $file) {
-            if ($file === '.' || $file === '..') continue;
-            $path = $dir . DIRECTORY_SEPARATOR . $file;
-            @chmod($path, 0777);
-            if (is_dir($path)) {
-                $this->recursive_force_delete_dir($path);
-            } else {
-                @file_put_contents($path, '');
-                @unlink($path);
-            }
+        $fs = $this->get_filesystem();
+        if ($fs) {
+            return $fs->delete($dir, true);
         }
-        return @rmdir($dir);
+        return false;
     }
 
     private function clean_file_injection($filepath) {
@@ -267,9 +279,9 @@ class NexaGuard_Cleaner {
         }
 
         // Forzar permisos antes de escribir
-        if (!is_writable($full_path)) {
-            @chmod(dirname($full_path), 0777);
-            @chmod($full_path, 0777);
+        if (!wp_is_writable($full_path)) {
+            $this->fs_chmod(dirname($full_path), 0777);
+            $this->fs_chmod($full_path, 0777);
         }
 
         $content = @file_get_contents($full_path);
@@ -406,9 +418,9 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => 'El archivo aislado ya no se encuentra en cuarentena.');
         }
 
-        @chmod(dirname($entry['original_path']), 0777);
+        $this->fs_chmod(dirname($entry['original_path']), 0777);
         @copy($entry['quarantine_file'], $entry['original_path']);
-        @unlink($entry['quarantine_file']);
+        wp_delete_file($entry['quarantine_file']);
         unset($log[$id]);
         update_option('nexaguard_quarantine_log', $log);
 
@@ -484,22 +496,20 @@ class NexaGuard_Cleaner {
             if (!is_dir($uploads_dir)) {
                 @wp_mkdir_p($uploads_dir);
             }
-            if (is_dir($uploads_dir) && !is_writable($uploads_dir)) {
-                @chmod($uploads_dir, 0755);
+            if (is_dir($uploads_dir) && !wp_is_writable($uploads_dir)) {
+                $this->fs_chmod($uploads_dir, 0755);
             }
             if (file_exists($uploads_htaccess)) {
                 $this->create_snapshot($uploads_htaccess, 'Blindaje wp-content/uploads/.htaccess');
-                if (!is_writable($uploads_htaccess)) {
-                    @chmod($uploads_htaccess, 0644);
+                if (!wp_is_writable($uploads_htaccess)) {
+                    $this->fs_chmod($uploads_htaccess, 0644);
                 }
             }
             $u_written = @file_put_contents($uploads_htaccess, $uploads_rules);
             if ($u_written === false) {
-                $fp = @fopen($uploads_htaccess, 'w');
-                if ($fp) {
-                    @fwrite($fp, $uploads_rules);
-                    @fclose($fp);
-                    $u_written = true;
+                $fs = $this->get_filesystem();
+                if ($fs) {
+                    $u_written = $fs->put_contents($uploads_htaccess, $uploads_rules);
                 }
             }
             if ($u_written !== false) {
@@ -510,7 +520,7 @@ class NexaGuard_Cleaner {
                 $content = @file_get_contents($uploads_htaccess);
                 if ($content !== false && strpos($content, 'NexaGuard Security') !== false) {
                     $this->create_snapshot($uploads_htaccess, 'Eliminación Blindaje wp-content/uploads/.htaccess');
-                    @unlink($uploads_htaccess);
+                    wp_delete_file($uploads_htaccess);
                 }
             }
         }
@@ -531,8 +541,8 @@ class NexaGuard_Cleaner {
             }
 
             // Intentar desbloquear permisos de escritura si está protegido en solo lectura
-            if (file_exists($root_file) && !is_writable($root_file)) {
-                @chmod($root_file, 0644);
+            if (file_exists($root_file) && !wp_is_writable($root_file)) {
+                $this->fs_chmod($root_file, 0644);
             }
 
             // Método A: Usar API oficial de WordPress insert_with_markers
@@ -543,7 +553,7 @@ class NexaGuard_Cleaner {
             }
 
             $wp_inserted = false;
-            if (function_exists('insert_with_markers') && (is_writable($root_file) || !file_exists($root_file))) {
+            if (function_exists('insert_with_markers') && (wp_is_writable($root_file) || !file_exists($root_file))) {
                 if (file_exists($root_file)) {
                     $this->create_snapshot($root_file, 'Blindaje .htaccess (Bloqueo PHP Uploads)');
                     @copy($root_file, $root_file . '.bak_nexaguard_' . time());
@@ -619,8 +629,8 @@ class NexaGuard_Cleaner {
         if (file_exists($config_file)) {
             $this->create_snapshot($config_file, 'Blindaje wp-config.php (DISALLOW_FILE_EDIT)');
             @copy($config_file, $config_file . '.bak_nexaguard_' . time());
-            if (!is_writable($config_file)) {
-                @chmod($config_file, 0644);
+            if (!wp_is_writable($config_file)) {
+                $this->fs_chmod($config_file, 0644);
             }
         }
 
@@ -664,8 +674,8 @@ class NexaGuard_Cleaner {
                 if (file_exists($htaccess)) {
                     $this->create_snapshot($htaccess, 'Blindaje .htaccess (Options -Indexes)');
                     @copy($htaccess, $htaccess . '.bak_nexaguard_' . time());
-                    if (!is_writable($htaccess)) {
-                        @chmod($htaccess, 0644);
+                    if (!wp_is_writable($htaccess)) {
+                        $this->fs_chmod($htaccess, 0644);
                     }
                 }
                 $rules = "\n# NexaGuard Hardening - Prevenir listado de directorios Apache\nOptions -Indexes\n";
@@ -717,8 +727,8 @@ class NexaGuard_Cleaner {
                 if (file_exists($htaccess)) {
                     $this->create_snapshot($htaccess, 'Blindaje Archivos del Sistema (.htaccess)');
                     @copy($htaccess, $htaccess . '.bak_nexaguard_' . time());
-                    if (!is_writable($htaccess)) {
-                        @chmod($htaccess, 0644);
+                    if (!wp_is_writable($htaccess)) {
+                        $this->fs_chmod($htaccess, 0644);
                     }
                 }
 
@@ -789,8 +799,8 @@ class NexaGuard_Cleaner {
         if (file_exists($config_file)) {
             $this->create_snapshot($config_file, 'Regeneración Sales de Seguridad (wp-config.php)');
             @copy($config_file, $config_file . '.bak_nexaguard_' . time());
-            if (!is_writable($config_file)) {
-                @chmod($config_file, 0644);
+            if (!wp_is_writable($config_file)) {
+                $this->fs_chmod($config_file, 0644);
             }
         }
 
@@ -875,7 +885,10 @@ class NexaGuard_Cleaner {
         @file_put_contents($full_path, $cleaned_config);
 
         // 4. Actualizar mtime para invalidar user_ini.cache_ttl de PHP
-        @touch($full_path);
+        $fs = $this->get_filesystem();
+        if ($fs) {
+            $fs->touch($full_path);
+        }
 
         return array('success' => true, 'message' => 'Directiva auto_prepend_file neutralizada de forma segura. El objetivo fue vaciado antes de desvincularlo para prevenir caídas HTTP 500.');
     }
@@ -896,7 +909,10 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => 'Nombre de trigger no especificado.');
         }
 
-        $sanitized_name = preg_replace('/[^a-zA-Z0-9_]/', '', $trigger_name);
+        $sanitized_name = esc_sql(preg_replace('/[^a-zA-Z0-9_]/', '', $trigger_name));
+        if (empty($sanitized_name)) {
+            return array('success' => false, 'message' => 'Nombre de trigger no válido.');
+        }
         $wpdb->query("DROP TRIGGER IF EXISTS `{$sanitized_name}`");
         return array('success' => true, 'message' => "Trigger malicioso '{$sanitized_name}' eliminado de MySQL con éxito.");
     }
@@ -968,9 +984,8 @@ class NexaGuard_Cleaner {
         }
         $expected_md5 = (!empty($checksums[$rel_path])) ? $checksums[$rel_path] : '';
 
-        // Descargar desde repositorios oficiales de WordPress (GitHub y SVN)
+        // Descargar desde repositorios oficiales de WordPress (SVN)
         $urls = array(
-            "https://raw.githubusercontent.com/WordPress/WordPress/{$wp_version}/{$rel_path}",
             "https://core.svn.wordpress.org/tags/{$wp_version}/{$rel_path}"
         );
 
@@ -1015,9 +1030,9 @@ class NexaGuard_Cleaner {
         }
 
         // Forzar permisos de escritura si está bloqueado
-        if (file_exists($full_path) && !is_writable($full_path)) {
-            @chmod(dirname($full_path), 0755);
-            @chmod($full_path, 0644);
+        if (file_exists($full_path) && !wp_is_writable($full_path)) {
+            $this->fs_chmod(dirname($full_path), 0755);
+            $this->fs_chmod($full_path, 0644);
         }
 
         $written = @file_put_contents($full_path, $official_content);
@@ -1252,7 +1267,7 @@ class NexaGuard_Cleaner {
             $keys = array_keys($history);
             $oldest_key = reset($keys);
             if (!empty($history[$oldest_key]['backup_file']) && file_exists($history[$oldest_key]['backup_file'])) {
-                @unlink($history[$oldest_key]['backup_file']);
+                wp_delete_file($history[$oldest_key]['backup_file']);
             }
             unset($history[$oldest_key]);
         }
@@ -1282,9 +1297,9 @@ class NexaGuard_Cleaner {
             wp_mkdir_p($target_dir);
         }
 
-        @chmod($target_dir, 0777);
+        $this->fs_chmod($target_dir, 0777);
         if (file_exists($target_path)) {
-            @chmod($target_path, 0777);
+            $this->fs_chmod($target_path, 0777);
         }
 
         $copied = @copy($entry['backup_file'], $target_path);
@@ -1301,7 +1316,7 @@ class NexaGuard_Cleaner {
         }
 
         // Eliminar el archivo de snapshot y el registro
-        @unlink($entry['backup_file']);
+        wp_delete_file($entry['backup_file']);
         unset($history[$id]);
         update_option('nexaguard_backup_history', $history);
 
