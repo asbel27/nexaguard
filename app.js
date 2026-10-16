@@ -2,6 +2,7 @@
 /* Cuentas, roles (administrador / cliente), planes y API de los paneles. Sin dependencias. */
 const crypto = require('crypto');
 const { createPayPalClient } = require('./paypal.js');
+const { createNowPaymentsClient } = require('./nowpayments.js');
 const { createMailer } = require('./mailer.js');
 
 const DAY = 864e5;
@@ -68,6 +69,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
   const cfg = Object.assign({ trustProxy: false, secureCookie: null, maxConcurrent: 4, schedulerMs: 15 * 60e3, cooldownMs: 45e3 }, config || {});
   let running = 0, dummy = null;
   const pp = createPayPalClient(cfg.paypal || {});
+  const np = createNowPaymentsClient(cfg.nowpayments || {});
   const mailer = createMailer(cfg.mailer || {});
 
   const buckets = new Map();   // límites de intentos
@@ -795,9 +797,12 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     send(res, 201, { ok: true, user: publicUser(target), order: orderView(order) });
   });
 
-  /* ---------- Pago con PayPal (automático) ---------- */
+  /* ---------- Pago con PayPal & NOWPayments (automático) ---------- */
   route('GET', '/api/payment/config', null, (ctx) => {
-    send(ctx.res, 200, { paypal: pp.enabled ? { clientId: cfg.paypal.clientId, mode: pp.mode } : null });
+    send(ctx.res, 200, {
+      paypal: pp.enabled ? { clientId: cfg.paypal.clientId, mode: pp.mode } : null,
+      nowpayments: np.enabled ? { enabled: true } : null
+    });
   });
   route('POST', '/api/checkout/paypal/orders', null, async (ctx) => {
     const { req, res, body } = ctx, ip = clientIp(req);
@@ -877,6 +882,154 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     save();
     const headers = user ? {} : startSession(req, res, target.id);
     send(res, 201, { ok: true, user: publicUser(target), order: orderView(order), tempPassword: newTempPass }, headers);
+  });
+
+  /* ---------- Pago con NOWPayments / Binance Pay / Cripto (automático) ---------- */
+  route('POST', '/api/checkout/nowpayments/invoice', null, async (ctx) => {
+    const { req, res, user, body } = ctx, ip = clientIp(req);
+    if (!np.enabled) return fail(res, 503, 'El pago con NOWPayments / Cripto no está configurado.');
+    if (limited('np-inv|' + ip, 20, 3600e3)) return fail(res, 429, 'Demasiados intentos. Espera un momento.');
+    const planId = clean(body.plan, 20), plan = PLANS[planId];
+    if (!plan) return fail(res, 400, 'Plan no válido.');
+    const maxSites = planId === 'agency' ? Math.max(1, Math.min(100, Number(body.maxSites) || 5)) : 1;
+    const price = getPlanPrice(planId, maxSites);
+    hit('np-inv|' + ip);
+
+    const userEmail = (user && user.email) || clean(body.email, 254).toLowerCase() || '';
+    const userName = (user && user.name) || clean(body.name, 80) || 'Cliente';
+
+    // Crear orden interna en estado pendiente
+    const order = {
+      id: id('ord'),
+      userId: user ? user.id : null,
+      pendingEmail: userEmail,
+      pendingName: userName,
+      plan: planId,
+      maxSites,
+      status: 'pending_payment',
+      stage: 0,
+      amount: price,
+      createdAt: T()
+    };
+    db.orders.push(order);
+    save();
+
+    const desc = (planId === 'agency' ? (plan.name + ' (' + maxSites + ' Sitios)') : plan.name) + ' · NexaGuard';
+    const host = req.headers.host || 'www.nexaguards.com';
+    const proto = (req.headers['x-forwarded-proto'] || 'https');
+    const baseUrl = proto + '://' + host;
+
+    try {
+      const invoice = await np.createInvoice({
+        price_amount: price.toFixed(2),
+        price_currency: plan.currency || 'usd',
+        order_id: order.id,
+        order_description: desc,
+        ipn_callback_url: 'https://www.nexaguards.com/api/checkout/nowpayments/ipn',
+        success_url: baseUrl + '/panel.html?payment=success&order_id=' + order.id,
+        cancel_url: baseUrl + '/#planes'
+      });
+
+      order.nowpaymentsInvoiceId = invoice.id;
+      order.nowpaymentsInvoiceUrl = invoice.invoice_url;
+      save();
+
+      send(res, 201, {
+        ok: true,
+        invoice_url: invoice.invoice_url,
+        id: invoice.id,
+        orderId: order.id
+      });
+    } catch (e) {
+      console.error('NOWPayments createInvoice error:', e.message);
+      fail(res, 502, 'No se pudo generar la factura cripto. Inténtalo de nuevo.');
+    }
+  });
+
+  route('POST', '/api/checkout/nowpayments/ipn', null, async (ctx) => {
+    const { req, res, body } = ctx;
+    const sig = req.headers['x-nowpayments-sig'];
+
+    // Validar firma criptográfica HMAC-SHA512
+    if (!np.verifyIpnSignature(body, sig)) {
+      console.warn('NOWPayments IPN: Firma HMAC no válida');
+      return fail(res, 400, 'Firma IPN no válida.');
+    }
+
+    const orderId = clean(body.order_id, 40);
+    const order = db.orders.find(o => o.id === orderId);
+    if (!order) {
+      console.warn('NOWPayments IPN: Pedido no encontrado:', orderId);
+      return send(res, 200, { ok: true, note: 'order_not_found' });
+    }
+
+    const paymentStatus = String(body.payment_status || '').toLowerCase();
+    console.log('NOWPayments IPN para orden', orderId, 'estado:', paymentStatus, 'payment_id:', body.payment_id);
+
+    // Estados de pago completado en NOWPayments: 'finished' o 'confirmed'
+    if (paymentStatus === 'finished' || paymentStatus === 'confirmed') {
+      if (order.status === 'active' || (order.paidAt && order.nowpaymentsPaymentId === String(body.payment_id))) {
+        return send(res, 200, { ok: true, alreadyProcessed: true });
+      }
+
+      const plan = PLANS[order.plan];
+      if (!plan) return send(res, 200, { ok: true, note: 'plan_unknown' });
+
+      // Asignar o crear usuario si la orden se inició como invitado
+      let target = order.userId ? db.users.find(u => u.id === order.userId) : null;
+      let newTempPass = null, isNewAccount = false;
+      if (!target) {
+        const email = clean(order.pendingEmail || body.pay_address || '', 254).toLowerCase();
+        if (email && isEmail(email)) {
+          target = db.users.find(x => x.email === email && x.role === 'client');
+          if (!target) {
+            newTempPass = tempPassword() + 'a1';
+            isNewAccount = true;
+            target = {
+              id: id('usr'),
+              email,
+              name: clean(order.pendingName || 'Cliente Cripto', 80),
+              phone: '',
+              company: '',
+              role: 'client',
+              active: true,
+              pass: await hashPw(newTempPass),
+              createdAt: T(),
+              mustChangePassword: true
+            };
+            db.users.push(target);
+          }
+          order.userId = target.id;
+        }
+      }
+
+      const actuallyPaid = parseFloat(body.actually_paid || body.price_amount) || order.amount || 0;
+      const payRef = 'NP-' + (body.payment_id || body.payment_status);
+      order.nowpaymentsPaymentId = String(body.payment_id);
+
+      const pay = applyPayment(order, actuallyPaid, plan.currency || 'USD', 'nowpayments', payRef, 'NOWPayments IPN');
+
+      if (target) {
+        record(target.name, target.id, 'Pago Cripto / Binance Pay confirmado: ' + pay.amount + ' ' + pay.currency + ' (' + plan.name + ' · ' + order.licenseKey + ')', 'success');
+        if (isNewAccount && newTempPass) {
+          mailer.sendWelcomeClient(target, newTempPass, order.licenseKey).catch(e => console.error('Error enviando correo bienvenida cripto:', e.message));
+        } else {
+          mailer.sendLicenseDelivery(target, order.licenseKey, plan.name).catch(e => console.error('Error enviando correo licencia cripto:', e.message));
+        }
+      }
+
+      save();
+      return send(res, 200, { ok: true, licenseKey: order.licenseKey });
+    }
+
+    if (paymentStatus === 'failed' || paymentStatus === 'expired') {
+      if (order.status === 'pending_payment') {
+        order.status = 'cancelled';
+        save();
+      }
+    }
+
+    send(res, 200, { ok: true, status: paymentStatus });
   });
 
   /* ---------- Validación de Licencias para el Plugin WordPress (Blindaje Antifraude & Anti-Burp) ---------- */

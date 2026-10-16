@@ -2288,7 +2288,7 @@ $$('.chip input').forEach(function (i) { i.addEventListener('change', function (
    Todo esto solo se activa si el servidor de cuentas responde
    (en la vista previa de Claude no hay servidor, así que se avisa).
    ===================================================== */
-var ACCOUNTS = { ok: false, user: null, plans: [], paymentText: '', paypal: null };
+var ACCOUNTS = { ok: false, user: null, plans: [], paymentText: '', paypal: null, nowpayments: null };
 var PLAN_BY_ID = {};
 
 async function acFetch(url, opts) {
@@ -2308,7 +2308,14 @@ async function acFetch(url, opts) {
     ACCOUNTS.plans.forEach(function (p) { PLAN_BY_ID[p.id] = p; });
     var me = await acFetch('/api/me');
     ACCOUNTS.ok = true; ACCOUNTS.user = me.user;
-    try { var pc = await acFetch('/api/payment/config'); ACCOUNTS.paypal = pc.paypal || null; } catch (e2) { ACCOUNTS.paypal = null; }
+    try {
+      var pc = await acFetch('/api/payment/config');
+      ACCOUNTS.paypal = pc.paypal || null;
+      ACCOUNTS.nowpayments = pc.nowpayments || null;
+    } catch (e2) {
+      ACCOUNTS.paypal = null;
+      ACCOUNTS.nowpayments = null;
+    }
   } catch (e) { ACCOUNTS.ok = false; }
   var b = $('#navPanel');
   b.textContent = ACCOUNTS.ok && ACCOUNTS.user ? 'Mi panel' : 'Ingresar';
@@ -2365,7 +2372,7 @@ function acMoney(n, c) { try { return new Intl.NumberFormat('es', { style: 'curr
 function openAuth(planId, sites) {
   if (!ACCOUNTS.ok) { return notConnectedNotice(planId); }
   authBody.innerHTML = '';
-  if (ACCOUNTS.paypal) authBody.appendChild(checkoutScreen(planId, sites));
+  if (ACCOUNTS.paypal || ACCOUNTS.nowpayments) authBody.appendChild(checkoutScreen(planId, sites));
   else if (ACCOUNTS.user) authBody.appendChild(confirmPlanScreen(planId));
   else authBody.appendChild(authScreen(planId, 'reg', sites));
   if (!authDlg.open) authDlg.showModal();
@@ -2505,6 +2512,56 @@ function checkoutScreen(planId, preselectedSites) {
   var ppMsg = acEl('p', { class: 'hint', style: 'text-align:center;margin:14px 0' }, 'Cargando el módulo de pago…');
   var ppBox = acEl('div', { class: 'pp-box' });
   wrap.appendChild(acEl('div', { class: 'pp-wrap' }, ppMsg, ppBox));
+
+  if (ACCOUNTS.nowpayments && ACCOUNTS.nowpayments.enabled) {
+    var cryptoWrap = acEl('div', { class: 'crypto-wrap', style: 'margin-top:14px;' });
+    var cryptoDivider = acEl('div', { style: 'display:flex;align-items:center;gap:10px;margin:12px 0;' },
+      acEl('div', { style: 'flex:1;height:1px;background:rgba(255,255,255,0.12)' }),
+      acEl('span', { style: 'font-size:.76rem;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px' }, 'o paga con Criptomonedas'),
+      acEl('div', { style: 'flex:1;height:1px;background:rgba(255,255,255,0.12)' })
+    );
+    cryptoWrap.appendChild(cryptoDivider);
+
+    var btnCrypto = acEl('button', {
+      type: 'button',
+      class: 'btn-crypto-pay',
+      style: 'width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#f3ba2f;color:#0b0e11;font-weight:800;font-size:.95rem;padding:12px 20px;border-radius:26px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(243,186,47,0.28);transition:all .2s ease;',
+      on: {
+        click: async function () {
+          btnCrypto.disabled = true;
+          btnCrypto.innerHTML = '<span>⏳</span> Conectando con pasarela Binance Pay / Cripto…';
+          err.textContent = '';
+          try {
+            var r = await acFetch('/api/checkout/nowpayments/invoice', {
+              method: 'POST',
+              body: JSON.stringify({
+                plan: planId,
+                maxSites: (planId === 'agency' ? chosenSites : 1),
+                email: (ACCOUNTS.user && ACCOUNTS.user.email) || ''
+              })
+            });
+            if (r && r.invoice_url) {
+              window.location.href = r.invoice_url;
+            } else {
+              throw new Error('No se recibió la URL de cobro cripto.');
+            }
+          } catch (x) {
+            btnCrypto.disabled = false;
+            btnCrypto.innerHTML = '<span style="font-size:1.15rem">🟡</span> <span>Pagar con Binance Pay / Cripto (USDT)</span>';
+            err.textContent = x.message || 'Error al conectar con NOWPayments. Inténtalo de nuevo.';
+          }
+        }
+      }
+    },
+      acEl('span', { style: 'font-size:1.15rem' }, '🟡'),
+      acEl('span', null, 'Pagar con Binance Pay / Cripto (USDT)')
+    );
+
+    cryptoWrap.appendChild(btnCrypto);
+    cryptoWrap.appendChild(acEl('p', { class: 'hint', style: 'margin:8px 0 0;font-size:.76rem;color:#8fa0cf;text-align:center' }, '⚡ USDT (TRC-20, BSC) · BTC · ETH · App Binance'));
+    wrap.appendChild(cryptoWrap);
+  }
+
   wrap.appendChild(err);
   var alt = acEl('div', { class: 'ad-alt' });
   if (ACCOUNTS.user) {

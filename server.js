@@ -53,6 +53,12 @@ function createServer(opts = {}) {
     apiBase: process.env.PAYPAL_API_BASE || ''
   };
 
+  const nowpaymentsConfig = opts.nowpayments || {
+    apiKey: process.env.NOWPAYMENTS_API_KEY || '4XSVJ9V-W6SMB4A-PCZ1TJM-MPTJ2GX',
+    ipnKey: process.env.NOWPAYMENTS_IPN_KEY || 'iMaEbnmJlVH7RQcO+G1sFA5QjFCSSe2/',
+    apiBase: process.env.NOWPAYMENTS_API_BASE || 'https://api.nowpayments.io/v1'
+  };
+
   const app = createApp({
     store, scanner, waf, sentinel,
     config: {
@@ -61,6 +67,7 @@ function createServer(opts = {}) {
       adminEmail: opts.adminEmail || process.env.ADMIN_EMAIL, adminPassword: opts.adminPassword || process.env.ADMIN_PASSWORD,
       schedulerMs: opts.schedulerMs, cooldownMs: opts.cooldownMs,
       paypal: paypalConfig,
+      nowpayments: nowpaymentsConfig,
       mailer: opts.mailer || {
         host: process.env.SMTP_HOST || 'smtp.titan.email',
         port: process.env.SMTP_PORT || 465,
@@ -195,6 +202,7 @@ if (require.main === module) {
       }
       if (s.app.PLANS && paypalConfig.clientId) console.log('  Pago con PayPal: activo (modo ' + (paypalConfig.mode || 'sandbox') + ')');
       else console.log('  Pago con PayPal: no configurado (los planes se activan a mano). Ver LEEME.md.');
+      if (nowpaymentsConfig.apiKey) console.log('  Pago con NOWPayments / Binance Pay: activo');
       if (process.env.RESEND_API_KEY) {
         console.log('  Envío de correos: activo vía Resend HTTPS API (→ ' + (process.env.CONTACT_TO_EMAIL || process.env.ADMIN_EMAIL || 'asbeldev8@gmail.com') + ')');
       } else if (process.env.SMTP_PASS || process.env.EMAIL_PASS) {
