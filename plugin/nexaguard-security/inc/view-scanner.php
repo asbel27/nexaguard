@@ -1108,7 +1108,7 @@ $rollback_count = count($backup_history);
                             <tr>
                                 <td><code><?php echo esc_html(str_replace(ABSPATH, '', $q['original_path'])); ?></code></td>
                                 <td><?php echo esc_html($q['date']); ?></td>
-                                <td><?php echo size_format($q['size']); ?></td>
+                                <td><?php echo esc_html(size_format($q['size'])); ?></td>
                                 <td>
                                     <button type="button" class="btn-ng btn-ng-outline btn-restore-file" data-id="<?php echo esc_attr($qid); ?>">
                                         ↩️ Restaurar
@@ -1165,7 +1165,7 @@ $rollback_count = count($backup_history);
                                 <td><code><?php echo esc_html($snap['rel_path']); ?></code></td>
                                 <td><span class="badge-action-type"><?php echo esc_html($snap['action_name']); ?></span></td>
                                 <td><?php echo esc_html($snap['date_formatted']); ?></td>
-                                <td><?php echo size_format($snap['size']); ?></td>
+                                <td><?php echo esc_html(size_format($snap['size'])); ?></td>
                                 <td>
                                     <button type="button" class="btn-ng btn-ng-outline btn-revert-snapshot" data-id="<?php echo esc_attr($s_id); ?>" data-file="<?php echo esc_attr($snap['rel_path']); ?>" title="Revertir este archivo al estado anterior a la limpieza">
                                         ↩️ Revertir (Deshacer)
