@@ -333,6 +333,12 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code' => 'pro_required',
+                'message' => 'La reparación automática masiva con 1-clic es exclusiva del Plan PRO ($9.99/mes). En la versión gratuita puedes desinfectar y restaurar cada amenaza de forma individual.'
+            ));
+        }
 
         $cleaner = new NexaGuard_Cleaner();
         $result = $cleaner->auto_remediate_all();
@@ -413,6 +419,17 @@ class NexaGuard_Plugin {
             'login_logo_image'      => isset($_POST['login_logo_image']) ? esc_url_raw(trim($_POST['login_logo_image'])) : '',
             'login_security_notice' => isset($_POST['login_security_notice']) ? sanitize_text_field(trim($_POST['login_security_notice'])) : 'Estás iniciando sesión en tu WordPress protegido por NexaGuard'
         );
+
+        $is_pro = $this->is_pro_active();
+        $old_settings = get_option('nexaguard_settings', array());
+
+        if (!$is_pro) {
+            // Reglas de Ciberinteligencia Avanzada exclusivas de licencia PRO
+            $pro_keys = array('waf_enabled', 'anti_clearfake', 'emergency_lockdown', 'brute_force_protection', 'hide_backend', 'login_custom_design', 'block_user_enumeration', 'generic_login_errors', 'admin_login_alerts', 'waf_auto_jail', 'tripwire_enabled');
+            foreach ($pro_keys as $pkey) {
+                $settings[$pkey] = !empty($old_settings[$pkey]) ? $old_settings[$pkey] : false;
+            }
+        }
 
         update_option('nexaguard_settings', $settings);
 

@@ -733,6 +733,12 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '#btn-auto-remediate-all', function () {
         var $btn = $(this);
 
+        if (!nexaguardData.is_pro) {
+            showToast('La auto-reparación total con 1-clic es una función de inteligencia del Plan PRO ($9.99/mes). En la edición estándar puedes desinfectar y restaurar cada archivo manualmente sin costo.', 'info', 'Función PRO');
+            window.nexaguardOpenUpgradeModal();
+            return false;
+        }
+
         showConfirm(
             '¿Deseas que NexaGuard limpie, repare y blinde automáticamente todo tu sitio web de forma 100% segura?\n\n✓ Los archivos del sistema se restaurarán limpios desde WordPress.org.\n✓ Los virus en plugins se extirparán sin romper tus extensiones.\n✓ Se aplicarán los blindajes preventivos de servidor.\n✓ Se guardan copias de respaldo de cada archivo intervenido.',
             function () {
@@ -988,10 +994,6 @@ jQuery(document).ready(function ($) {
     // 9. Guardar Configuración WAF
     $('#form-waf-settings').on('submit', function (e) {
         e.preventDefault();
-        if (!nexaguardData.is_pro) {
-            $('#clean-upgrade-modal').fadeIn(200);
-            return false;
-        }
 
         var $form = $(this);
         var $msg = $('#save-msg').text('Guardando reglas…').css('color', '#ffcf33');
@@ -1082,6 +1084,15 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '.btn-open-upgrade-modal', function (e) {
         e.preventDefault();
         e.stopPropagation();
+        window.nexaguardOpenUpgradeModal();
+        return false;
+    });
+
+    // Clic en opciones exclusivas PRO
+    $(document).on('click', '.row-pro-feature', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showToast('Esta regla avanzada de ciberinteligencia requiere el Plan PRO ($9.99/mes).', 'info', 'Ciberinteligencia PRO');
         window.nexaguardOpenUpgradeModal();
         return false;
     });
