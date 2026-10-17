@@ -1,9 +1,8 @@
 {
-  "nexaguard-security.php": "3135cc2c345034373d49f69e81345b8aebd2dca0dc7e4049e510ac128cc2d314",
+  "nexaguard-security.php": "c49729d2a7c91a36d9d73afd2d4568ab8232dd297a21e5277283e8e474f1aa18",
   "inc/firewall.php": "a371bbf85989c921a0b2f2ead5fa01f7978d2fb99515d64a6b0b9aab07903b62",
   "inc/scanner.php": "f9a64d57ed184e9462bb4092e4fc4ea33835fb20b6912241d04f0ab06d3ad636",
   "inc/cleaner.php": "c4ccb1ecd70a28d705fc821b290f9d895bab2b87f6bb2922afe0e9c64d74ec8b",
-  "inc/view-scanner.php": "550dd35aaf1f55af53694e1b5d78c2a1cdc35a962e841bd19ce367909a98d747",
-  "inc/view-waf.php": "76f5e6a5848ed2e0dd450f5514ec7b5f9b1a97d6085bd93389b7f4894f6cd41f",
-  "inc/view-modals.php": "e16c966141c4000c30fe907fc7175c6e96e6ef0de6e75dd0797ea1b804188474"
+  "inc/view-scanner.php": "d84bf247fa698e615973222e7a2fe7b4cb606f2c600aecb2160451e815581bdf",
+  "inc/view-modals.php": "2e195904181b45fcbd3782e94c2af73509d5fd36c6fba542946c67c3ca7782aa"
 }

@@ -89,20 +89,20 @@ $has_license = !empty($license) && !empty($license['valid']) && !empty($license[
     </div>
 </div>
 
-<!-- Modal Interactivo: Acción Bloqueada · Invitación a Plan PRO -->
+<!-- Modal Interactivo: Invitación a NexaGuard Cloud PRO -->
 <div id="nexaguard-action-blocked-modal" class="ng-modal" style="display:none; z-index:9999999 !important;">
-    <div class="ng-modal-box action-blocked-box" style="max-width:540px; border:2px solid #ff4560; background:linear-gradient(180deg, #160c22 0%, #0c112e 100%); box-shadow:0 30px 70px rgba(0,0,0,0.9), 0 0 35px rgba(255,69,96,0.25); text-align:center; padding:32px 28px;">
-        <div style="width:68px; height:68px; margin:0 auto 16px; border-radius:50%; background:rgba(255,69,96,0.15); border:2px solid #ff4560; display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow:0 0 20px rgba(255,69,96,0.35);">
-            🔒
+    <div class="ng-modal-box action-blocked-box" style="max-width:540px; border:2px solid #ffcf33; background:linear-gradient(180deg, #160c22 0%, #0c112e 100%); box-shadow:0 30px 70px rgba(0,0,0,0.9), 0 0 35px rgba(255,207,51,0.25); text-align:center; padding:32px 28px;">
+        <div style="width:68px; height:68px; margin:0 auto 16px; border-radius:50%; background:rgba(255,207,51,0.15); border:2px solid #ffcf33; display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow:0 0 20px rgba(255,207,51,0.35);">
+            ⚡
         </div>
-        <span style="display:inline-block; font-size:0.75rem; font-weight:900; letter-spacing:0.08em; color:#ff8ba0; background:rgba(255,69,96,0.18); border:1px solid rgba(255,69,96,0.4); padding:4px 12px; border-radius:999px; margin-bottom:12px;">
-            FUNCIÓN RESTRINGIDA EN EDICIÓN ESTÁNDAR
+        <span style="display:inline-block; font-size:0.75rem; font-weight:900; letter-spacing:0.08em; color:#ffcf33; background:rgba(255,207,51,0.18); border:1px solid rgba(255,207,51,0.4); padding:4px 12px; border-radius:999px; margin-bottom:12px;">
+            SERVICIOS EN LA NUBE PRO
         </span>
         <h3 style="font-size:1.35rem; font-weight:800; color:#ffffff; margin:0 0 10px; text-transform:uppercase; letter-spacing:0.02em;">
-            LO SENTIMOS, LA ACCIÓN NO SE EJECUTÓ
+            POTENCIA TU SEGURIDAD CON NEXAGUARD CLOUD
         </h3>
         <p style="color:#cad7f5; font-size:0.94rem; line-height:1.6; margin:0 0 22px; font-weight:500;">
-            La <strong>erradicación automática de malware</strong>, la <strong>desinfección de archivos infectados</strong> y el <strong>aislamiento en cuarentena</strong> requieren el motor activo de <strong style="color:#ffcf33;">NexaGuard Security PRO</strong>.
+            Conéctate a la red global de ciberinteligencia de <strong style="color:#ffcf33;">NexaGuard Threat Cloud</strong> para recibir firmas Zero-Day en tiempo real, bloqueo colaborativo de botnets (Auto-Jail) y alertas instantáneas por Discord y Telegram.
         </p>
         
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,207,51,0.25); border-radius:12px; padding:16px 18px; margin-bottom:24px; text-align:left;">
@@ -111,15 +111,15 @@ $has_license = !empty($license) && !empty($license['valid']) && !empty($license[
                 <span style="color:#3de8a4; font-weight:800; font-size:0.95rem;">$9.99 <span style="font-size:0.75rem; color:#a0acd2;">/ mes</span></span>
             </div>
             <ul style="margin:0; padding-left:18px; color:#dbe4ff; font-size:0.82rem; line-height:1.6;">
-                <li>✓ Limpieza y eliminación ilimitada de amenazas con 1 clic</li>
-                <li>✓ Restauración limpia de archivos Core desde WordPress.org</li>
-                <li>✓ Bóveda de Cuarentena y Puntos de Reversión automáticos</li>
+                <li>✓ Feeds de telemetría y reglas Zero-Day en vivo desde la nube</li>
+                <li>✓ Cárcel colaborativa de IPs maliciosas y botnets (Auto-Jail)</li>
+                <li>✓ Notificaciones inmediatas a Discord y Telegram Webhooks</li>
             </ul>
         </div>
 
         <div style="display:flex; flex-direction:column; gap:10px;">
             <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="justify-content:center; font-size:1rem; padding:12px 20px;">
-                ⚡ Adquirir Plan PRO ($9.99/mes)
+                ⚡ Conocer NexaGuard Cloud PRO ($9.99/mes)
             </a>
             <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:4px;">
                 <button type="button" class="btn-ng btn-ng-link btn-switch-to-key" style="color:#ffcf33; font-size:0.84rem; text-decoration:underline;">
@@ -134,20 +134,20 @@ $has_license = !empty($license) && !empty($license['valid']) && !empty($license[
     </div>
 </div>
 
-<!-- Modal Interactivo: Cupo de Cortesía Agotado (Conversión tras 2 Erradicaciones) -->
+<!-- Modal Interactivo: Descubre NexaGuard Cloud PRO -->
 <div id="nexaguard-quota-modal" class="ng-modal" style="display:none; z-index:9999999 !important;">
     <div class="ng-modal-box action-blocked-box" style="max-width:560px; border:2px solid #3de8a4; background:linear-gradient(180deg, #0e1e38 0%, #0c112e 100%); box-shadow:0 30px 70px rgba(0,0,0,0.9), 0 0 35px rgba(61,232,164,0.25); text-align:center; padding:32px 28px;">
         <div style="width:68px; height:68px; margin:0 auto 16px; border-radius:50%; background:rgba(61,232,164,0.15); border:2px solid #3de8a4; display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow:0 0 20px rgba(61,232,164,0.35);">
-            🎉
+            🛡️
         </div>
         <span style="display:inline-block; font-size:0.75rem; font-weight:900; letter-spacing:0.08em; color:#3de8a4; background:rgba(61,232,164,0.18); border:1px solid rgba(61,232,164,0.4); padding:4px 14px; border-radius:999px; margin-bottom:12px;">
-            ¡COMPROBASTE EL PODER DE NEXAGUARD!
+            PROTECCIÓN PROFESIONAL RECOMENDADA
         </span>
         <h3 style="font-size:1.35rem; font-weight:800; color:#ffffff; margin:0 0 10px; text-transform:uppercase; letter-spacing:0.02em;">
-            2 Amenazas Erradicadas con Éxito
+            DESCUBRE NEXAGUARD SECURITY PRO
         </h3>
         <p style="color:#cad7f5; font-size:0.94rem; line-height:1.6; margin:0 0 20px; font-weight:500;">
-            Has utilizado tus <strong>2 erradicaciones de cortesía gratuitas</strong> y comprobado la eficacia de nuestro motor forense. Sin embargo, aún quedan <strong style="color:#ff4560;">amenazas activas</strong> en tu servidor que pueden comprometer tu web.
+            Mantén tu WordPress permanentemente blindado con la red de ciberinteligencia global en la nube y asistencia experta para incidentes graves.
         </p>
         
         <div style="background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,207,51,0.35); border-radius:12px; padding:16px 18px; margin-bottom:20px; text-align:left;">
@@ -156,19 +156,19 @@ $has_license = !empty($license) && !empty($license['valid']) && !empty($license[
                 <span style="color:#3de8a4; font-weight:800; font-size:0.95rem;">$9.99 <span style="font-size:0.75rem; color:#a0acd2;">/ mes</span></span>
             </div>
             <ul style="margin:0; padding-left:18px; color:#dbe4ff; font-size:0.82rem; line-height:1.6;">
-                <li>✓ Erradicación ilimitada de todas las amenazas con 1 solo clic</li>
-                <li>✓ Radar y Sistema de Vigilancia Activa 24 Horas continuo</li>
-                <li>✓ Protección contra ClearFake, webshells y ataques Zero-Day</li>
+                <li>✓ Feeds de reglas Zero-Day en vivo desde la nube</li>
+                <li>✓ Bloqueo colaborativo de botnets e IPs mundiales (Auto-Jail)</li>
+                <li>✓ Alertas instantáneas por Webhooks (Discord y Telegram)</li>
             </ul>
         </div>
 
         <div style="display:flex; flex-direction:column; gap:10px;">
             <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="justify-content:center; font-size:1rem; padding:12px 20px;">
-                ⚡ Desbloquear Erradicación Ilimitada ($9.99/mes)
+                ⚡ Ver Planes NexaGuard PRO ($9.99/mes)
             </a>
             <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:4px;">
                 <a href="https://www.nexaguards.com/#contacto" target="_blank" style="color:#ffcf33; font-size:0.84rem; text-decoration:none; font-weight:700;">
-                    👨‍💻 ¿Prefieres ayuda humana experta? Plan Rescate ($89)
+                    👨‍💻 ¿Prefieres ayuda humana experta? Plan Rescate ($99)
                 </a>
             </div>
             <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:6px;">

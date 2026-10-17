@@ -62,6 +62,7 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_sentinel_scan', array($this, 'ajax_sentinel_scan'));
         add_action('wp_ajax_nexaguard_sentinel_harden', array($this, 'ajax_sentinel_harden'));
         add_action('wp_ajax_nexaguard_sentinel_restore_file', array($this, 'ajax_sentinel_restore_file'));
+        add_action('nexaguard_daily_vigilance_scan', array($this, 'run_background_vigilance_scan'));
 
         // Aviso en el pie de página de administración
         add_filter('admin_footer_text', array($this, 'admin_footer_text'));
@@ -332,13 +333,6 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
-        if (!$this->is_pro_active()) {
-            wp_send_json_error(array(
-                'code'    => 'pro_required',
-                'message' => 'La Reparación y Blindaje Inteligente con 1 Clic requiere Licencia NexaGuard PRO activa o el Plan Rescate.'
-            ));
-            return;
-        }
 
         $cleaner = new NexaGuard_Cleaner();
         $result = $cleaner->auto_remediate_all();
@@ -500,13 +494,6 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
-        if (!$this->is_pro_active()) {
-            wp_send_json_error(array(
-                'code'    => 'pro_required',
-                'message' => 'La erradicación forzada y eliminación de archivos maliciosos requiere Licencia NexaGuard PRO activa o el Plan Rescate.'
-            ));
-            return;
-        }
 
         $target = isset($_POST['target']) ? sanitize_text_field($_POST['target']) : '';
         $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : 'file';
@@ -531,23 +518,38 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
-        if (!$this->is_pro_active()) {
-            wp_send_json_error(array(
-                'code'    => 'pro_required',
-                'message' => 'El Sistema de Vigilancia 24 Horas requiere Licencia NexaGuard PRO activa.'
-            ));
-            return;
-        }
-
         $active = !empty($_POST['active']) ? 1 : 0;
         update_option('nexaguard_vigilance_active', $active);
 
+        // Programar o desprogramar WP-Cron de auditoría diaria automática
+        if ($active) {
+            if (!wp_next_scheduled('nexaguard_daily_vigilance_scan')) {
+                wp_schedule_event(time(), 'daily', 'nexaguard_daily_vigilance_scan');
+            }
+        } else {
+            wp_clear_scheduled_hook('nexaguard_daily_vigilance_scan');
+        }
+
+        $is_pro = $this->is_pro_active();
         wp_send_json_success(array(
             'active'  => $active,
+            'is_pro'  => $is_pro,
             'message' => $active
-                ? 'El sistema de vigilancia de 24 horas para tu web está activado.'
+                ? ($is_pro ? 'Vigilancia continua 24H y Radar Cloud perimetral activados.' : 'Vigilancia programada diaria activa en tu servidor (WP-Cron).')
                 : 'Sistema de vigilancia en pausa.'
         ));
+    }
+
+    /**
+     * Ejecuta una auditoría forense automática en segundo plano (WP-Cron diario)
+     */
+    public function run_background_vigilance_scan() {
+        if (!get_option('nexaguard_vigilance_active', 0)) {
+            return;
+        }
+        $scanner = new NexaGuard_Scanner();
+        $report = $scanner->run_scan();
+        update_option('nexaguard_last_scan_report', $report);
     }
 
     public function ajax_validate_license() {
@@ -860,13 +862,6 @@ class NexaGuard_Plugin {
         check_ajax_referer('nexaguard_security_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
-        }
-
-        if (!$this->is_pro_active()) {
-            wp_send_json_error(array(
-                'code'    => 'pro_required',
-                'message' => 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para restaurar y reconstruir automáticamente archivos oficiales del núcleo de WordPress.'
-            ));
         }
 
         $rel_path = isset($_POST['file']) ? sanitize_text_field(ltrim(trim($_POST['file']), '/\\')) : '';

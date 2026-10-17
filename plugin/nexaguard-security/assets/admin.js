@@ -420,21 +420,6 @@ jQuery(document).ready(function ($) {
             });
         }
 
-        if (!nexaguardData.is_pro && d.threats_count > 0) {
-            $('.threats-pro-banner').remove();
-            var bannerHtml = '<div class="threats-pro-banner">' +
-                '<div class="tpb-badge">⚡ FUNCIÓN DE LIMPIEZA AUTOMÁTICA PRO</div>' +
-                '<h4>Erradicación con 1 Clic Bloqueada · Se detectaron ' + d.threats_count + ' amenazas</h4>' +
-                '<p>NexaGuard ha localizado con precisión quirúrgica los archivos infectados y las inyecciones en base de datos. Para erradicarlos automáticamente sin romper tu sitio o encargar la desinfección a nuestros ingenieros:</p>' +
-                '<div class="tpb-acts">' +
-                    '<button type="button" class="btn-ng btn-ng-primary btn-open-clean-modal">⚡ Desbloquear Erradicación con Plan PRO ($9.99/mes)</button> ' +
-                    '<a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-danger">Solicitar Plan Rescate ($99)</a> ' +
-                    '<button type="button" class="btn-ng btn-ng-link btn-open-lic-modal" style="color:#ffcf33">Ya tengo mi clave de licencia ›</button>' +
-                '</div>' +
-            '</div>';
-            $('#threats-list').before(bannerHtml);
-        }
-
         var $list = $('#threats-list').empty();
         if (!d.threats || d.threats.length === 0) {
             $('.threats-pro-banner').remove();
@@ -528,12 +513,6 @@ jQuery(document).ready(function ($) {
         showConfirm(
             '¿Forzar la eliminación definitiva de esta amenaza? NexaGuard desbloqueará permisos y destruirá el archivo.',
             function () {
-                if (!nexaguardData.is_pro) {
-                    showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para forzar la eliminación de amenazas.', 'warning', 'Acción Restringida');
-                    openActionBlockedModal();
-                    return;
-                }
-
                 $btn.prop('disabled', true).text('Destruyendo…');
                 $.ajax({
                     url: nexaguardData.ajax_url,
@@ -581,11 +560,6 @@ jQuery(document).ready(function ($) {
         showConfirm(
             '¿Estás seguro de destruir la carpeta completa del plugin malicioso? Esta acción eliminará todo el plugin troyano.',
             function () {
-                if (!nexaguardData.is_pro) {
-                    showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para destruir carpetas de plugins maliciosos.', 'warning', 'Acción Restringida');
-                    openActionBlockedModal();
-                    return;
-                }
 
                 $btn.prop('disabled', true).text('Destruyendo plugin…');
                 $.ajax({
@@ -762,12 +736,6 @@ jQuery(document).ready(function ($) {
         showConfirm(
             '¿Deseas que NexaGuard limpie, repare y blinde automáticamente todo tu sitio web de forma 100% segura?\n\n✓ Los archivos del sistema se restaurarán limpios desde WordPress.org.\n✓ Los virus en plugins se extirparán sin romper tus extensiones.\n✓ Se aplicarán los blindajes preventivos de servidor.\n✓ Se guardan copias de respaldo de cada archivo intervenido.',
             function () {
-                if (!nexaguardData.is_pro) {
-                    showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para la remediación y blindaje automático.', 'warning', 'Acción Restringida');
-                    openActionBlockedModal();
-                    return;
-                }
-
                 $btn.prop('disabled', true).html('⚡ Reparando y Blindando Sitio… (Espere)');
 
                 $.ajax({
@@ -1110,14 +1078,12 @@ jQuery(document).ready(function ($) {
     var openLicenseModal = window.nexaguardOpenLicenseModal;
     var closeLicenseModal = window.nexaguardCloseLicenseModal;
 
-    // Interceptar clicks en WAF cuando no es PRO
-    $(document).on('click', '#btn-locked-waf-submit, .btn-locked-waf-submit, .waf-locked-container, .waf-locked-container label, .btn-open-upgrade-modal, [class*="btn-locked-waf"]', function (e) {
-        if (!nexaguardData.is_pro) {
-            e.preventDefault();
-            e.stopPropagation();
-            window.nexaguardOpenUpgradeModal();
-            return false;
-        }
+    // Abrir modal de mejora solo con botones de actualización explícitos
+    $(document).on('click', '.btn-open-upgrade-modal', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.nexaguardOpenUpgradeModal();
+        return false;
     });
 
     function updateThreatCounts() {
@@ -1177,14 +1143,6 @@ jQuery(document).ready(function ($) {
 
     $('#btn-toggle-vigilance').on('click', function (e) {
         var $btn = $(this);
-
-        // Si es versión estándar sin PRO activa: bloquear radar y abrir modal de compra
-        if (!nexaguardData.is_pro || $btn.attr('data-locked') === '1' || $btn.hasClass('btn-vigilance-locked')) {
-            e.preventDefault();
-            $('#clean-upgrade-modal').fadeIn(200);
-            return false;
-        }
-
         var current = parseInt($btn.attr('data-active'), 10) || 0;
         var next = current === 1 ? 0 : 1;
 
@@ -1193,17 +1151,22 @@ jQuery(document).ready(function ($) {
         if (next === 1) {
             playRadarActivationSound();
             $btn.addClass('is-active').attr('data-active', '1');
-            $('#v-toggle-label').text('VIGILANCIA ACTIVA 24H');
+            $('#v-toggle-label').text('VIGILANCIA ACTIVA');
             $('#vigilance-radar-box').removeClass('radar-paused').addClass('radar-scanning');
-            $('#radar-status-text').html('🟢 El sistema de vigilancia de 24 horas para tu web está activado.');
-            $('#radar-status-sub').text('NexaGuard Cloud Radar supervisa continuamente inyecciones PHP, cambios en archivos y peticiones maliciosas.');
+            if (nexaguardData.is_pro) {
+                $('#radar-status-text').html('🟢 Vigilancia perimetral 24/7 con NexaGuard Cloud Radar activada.');
+                $('#radar-status-sub').text('NexaGuard Cloud Radar supervisa continuamente inyecciones PHP, cambios en archivos y peticiones maliciosas.');
+            } else {
+                $('#radar-status-text').html('🟢 Vigilancia automática activa en tu servidor (auditoría programada diaria).');
+                $('#radar-status-sub').text('Tu sitio ejecuta auditorías automáticas de integridad vía WP-Cron.');
+            }
             startRadarTerminalStream();
         } else {
             $btn.removeClass('is-active').attr('data-active', '0');
-            $('#v-toggle-label').text('ACTIVAR VIGILANCIA 24H');
+            $('#v-toggle-label').text('ACTIVAR VIGILANCIA');
             $('#vigilance-radar-box').removeClass('radar-scanning').addClass('radar-paused');
             $('#radar-status-text').html('⏸️ Sistema de vigilancia en pausa. Actívalo para proteger tu web.');
-            $('#radar-status-sub').text('Haz clic en el botón superior para activar el radar perimetral permanente.');
+            $('#radar-status-sub').text('Haz clic en el botón superior para activar la supervisión autónoma permanente.');
             stopRadarTerminalStream();
         }
 
@@ -1220,16 +1183,6 @@ jQuery(document).ready(function ($) {
                 $btn.prop('disabled', false);
             }
         });
-    });
-
-    // Clicks en la caja del radar o distintivos bloqueados
-    $(document).on('click', '.vigilance-card.vigilance-locked #vigilance-radar-box, .radar-locked', function (e) {
-        if (!nexaguardData.is_pro) {
-            e.preventDefault();
-            e.stopPropagation();
-            openUpgradeModal();
-            return false;
-        }
     });
 
     /* =========================================================================
@@ -2666,21 +2619,11 @@ jQuery(document).ready(function ($) {
                         d.anomalies.forEach(function (anom) {
                             var actionBtn = '';
                             if (anom.can_rebuild) {
-                                if (nexaguardData.is_pro) {
-                                    actionBtn = '<button type="button" class="btn-ng btn-ng-primary btn-sentinel-rebuild" data-file="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; border:none; border-radius:6px; cursor:pointer;" title="Descargar y restaurar la copia oficial limpia de WordPress.org">' +
-                                        '🛠️ Reconstruir Archivo Oficial</button>';
-                                } else {
-                                    actionBtn = '<button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; cursor:pointer;" title="Recomponer archivo (Requiere Plan PRO)">' +
-                                        '🔒 Recomponer Archivo (PRO)</button>';
-                                }
+                                actionBtn = '<button type="button" class="btn-ng btn-ng-primary btn-sentinel-rebuild" data-file="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; border:none; border-radius:6px; cursor:pointer;" title="Descargar y restaurar la copia oficial limpia de WordPress.org">' +
+                                    '🛠️ Reconstruir Archivo Oficial</button>';
                             } else if (anom.can_harden) {
-                                if (nexaguardData.is_pro) {
-                                    actionBtn = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;">' +
-                                        '🔒 Endurecer Permisos</button>';
-                                } else {
-                                    actionBtn = '<button type="button" class="btn-ng btn-ng-outline btn-locked-clean" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:rgba(255,207,51,0.4); color:#ffcf33; border-radius:6px; cursor:pointer;" title="Endurecer permisos (Requiere Plan PRO)">' +
-                                        '🔒 Endurecer Permisos (PRO)</button>';
-                                }
+                                actionBtn = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;">' +
+                                    '🛡️ Endurecer Permisos</button>';
                             } else {
                                 actionBtn = '<a href="' + (d.reinstall_url || 'update-core.php') + '" class="btn-ng btn-ng-link" style="color:#ffcf33; font-weight:700; font-size:0.78rem;">🔄 Reinstalar Núcleo</a>';
                             }
@@ -2819,7 +2762,7 @@ jQuery(document).ready(function ($) {
                 showAlert('Error al contactar con el servidor.', 'error', 'Error');
             },
             complete: function () {
-                $btn.prop('disabled', false).text('🔒 Endurecer Permisos');
+                $btn.prop('disabled', false).text('🛡️ Endurecer Permisos');
             }
         });
     });
@@ -2829,12 +2772,6 @@ jQuery(document).ready(function ($) {
         var $btn = $(this);
         var file = $btn.data('file');
         var ngData = window.nexaguardData || window.nexaguard_data || {};
-
-        if (!ngData.is_pro) {
-            showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para recomponer archivos oficiales de WordPress.', 'warning', 'Acción Restringida');
-            openActionBlockedModal();
-            return;
-        }
 
         showConfirm(
             '¿Deseas reconstruir el archivo /' + file + ' restaurando la copia oficial limpia original de WordPress.org? Se creará una copia de respaldo en cuarentena por seguridad.',
