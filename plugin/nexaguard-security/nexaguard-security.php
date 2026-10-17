@@ -317,6 +317,13 @@ class NexaGuard_Plugin {
         $type = isset($_POST['threat_type']) ? sanitize_text_field($_POST['threat_type']) : '';
         $target = isset($_POST['target']) ? sanitize_text_field($_POST['target']) : '';
 
+        if ($type === 'restore_core_file' && !$is_pro) {
+            wp_send_json_error(array(
+                'code' => 'pro_required',
+                'message' => 'La restauración y reconstrucción de archivos vitales del núcleo desde WordPress.org requiere el Plan PRO ($9.99/mes).'
+            ));
+        }
+
         $cleaner = new NexaGuard_Cleaner();
         $result = $cleaner->clean($type, $target);
 
@@ -881,6 +888,13 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code' => 'pro_required',
+                'message' => 'La reconstrucción y restauración de archivos vitales del núcleo desde WordPress.org requiere el Plan PRO ($9.99/mes).'
+            ));
+        }
+
         $rel_path = isset($_POST['file']) ? sanitize_text_field(ltrim(trim($_POST['file']), '/\\')) : '';
         if (empty($rel_path)) {
             wp_send_json_error(array('message' => 'Ruta de archivo no especificada.'));
@@ -966,6 +980,13 @@ class NexaGuard_Plugin {
         check_ajax_referer('nexaguard_security_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        if (!$this->is_pro_active()) {
+            wp_send_json_error(array(
+                'code' => 'pro_required',
+                'message' => 'El endurecimiento de permisos de archivos vitales requiere el Plan PRO ($9.99/mes).'
+            ));
         }
 
         $config_file = ABSPATH . 'wp-config.php';

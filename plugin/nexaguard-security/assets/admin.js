@@ -443,7 +443,11 @@ jQuery(document).ready(function ($) {
 
             if (!t.is_db) {
                 if (t.clean_action === 'restore_core_file') {
-                    actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Descargar y restaurar el archivo original limpio desde WordPress.org">🔄 Restaurar Archivo Original (WordPress.org)</button>';
+                    if (nexaguardData.is_pro) {
+                        actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Descargar y restaurar el archivo original limpio desde WordPress.org">🔄 Restaurar Archivo Original (WordPress.org)</button>';
+                    } else {
+                        actBtn = '<button type="button" class="btn-ng btn-ng-outline btn-open-upgrade-modal" style="border-color:#ffcf33; color:#ffcf33; font-weight:700;" title="Función PRO: Descargar y restaurar el archivo original limpio desde WordPress.org">⚡ Restaurar Núcleo (Función PRO)</button>';
+                    }
                 } else if (t.clean_action === 'sanitize_injection') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Extirpar código malicioso inyectado preservando el archivo original">🧹 Desinfectar Código (Extirpar Inyección)</button>';
                 } else if (t.clean_action === 'clean_dropin') {
@@ -609,6 +613,12 @@ jQuery(document).ready(function ($) {
         var type = $btn.data('type');
         var target = $btn.data('target');
         var id = $btn.data('id');
+
+        if (type === 'restore_core_file' && !nexaguardData.is_pro) {
+            showToast('La restauración de archivos vitales del núcleo desde WordPress.org requiere el Plan PRO ($9.99/mes).', 'warning', 'Función PRO Requerida');
+            openActionBlockedModal();
+            return;
+        }
 
         var confirmMsg = '¿Deseas desinfectar este archivo? Se extirpará únicamente el código malicioso inyectado y se creará una copia de seguridad automática antes de guardar.';
         var confirmTitle = 'Desinfección Forense';
@@ -2630,11 +2640,21 @@ jQuery(document).ready(function ($) {
                         d.anomalies.forEach(function (anom) {
                             var actionBtn = '';
                             if (anom.can_rebuild) {
-                                actionBtn = '<button type="button" class="btn-ng btn-ng-primary btn-sentinel-rebuild" data-file="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; border:none; border-radius:6px; cursor:pointer;" title="Descargar y restaurar la copia oficial limpia de WordPress.org">' +
-                                    '🛠️ Reconstruir Archivo Oficial</button>';
+                                if (ngData.is_pro) {
+                                    actionBtn = '<button type="button" class="btn-ng btn-ng-primary btn-sentinel-rebuild" data-file="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; border:none; border-radius:6px; cursor:pointer;" title="Descargar y restaurar la copia oficial limpia de WordPress.org">' +
+                                        '🛠️ Reconstruir Archivo Oficial</button>';
+                                } else {
+                                    actionBtn = '<button type="button" class="btn-ng btn-ng-outline btn-open-upgrade-modal" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;" title="Función PRO: Descargar y restaurar la copia oficial limpia de WordPress.org">' +
+                                        '⚡ Reconstruir Núcleo (PRO)</button>';
+                                }
                             } else if (anom.can_harden) {
-                                actionBtn = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;">' +
-                                    '🛡️ Endurecer Permisos</button>';
+                                if (ngData.is_pro) {
+                                    actionBtn = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;">' +
+                                        '🛡️ Endurecer Permisos</button>';
+                                } else {
+                                    actionBtn = '<button type="button" class="btn-ng btn-ng-outline btn-open-upgrade-modal" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;" title="Función PRO: Endurecer permisos de archivos vitales">' +
+                                        '⚡ Endurecer Permisos (PRO)</button>';
+                                }
                             } else {
                                 actionBtn = '<a href="' + (d.reinstall_url || 'update-core.php') + '" class="btn-ng btn-ng-link" style="color:#ffcf33; font-weight:700; font-size:0.78rem;">🔄 Reinstalar Núcleo</a>';
                             }
@@ -2783,6 +2803,12 @@ jQuery(document).ready(function ($) {
         var $btn = $(this);
         var file = $btn.data('file');
         var ngData = window.nexaguardData || window.nexaguard_data || {};
+
+        if (!ngData.is_pro) {
+            showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para reconstruir y restaurar archivos vitales de WordPress.', 'warning', 'Acción Restringida');
+            openActionBlockedModal();
+            return;
+        }
 
         showConfirm(
             '¿Deseas reconstruir el archivo /' + file + ' restaurando la copia oficial limpia original de WordPress.org? Se creará una copia de respaldo en cuarentena por seguridad.',
