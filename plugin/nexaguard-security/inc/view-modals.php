@@ -58,15 +58,18 @@ $has_license = !empty($license) && !empty($license['valid']) && !empty($license[
 <!-- Modal de Cambio / Ingreso de Licencia -->
 <div id="license-modal" class="ng-modal" style="display:none;">
     <div class="ng-modal-box">
-        <h3>🔑 Activar Licencia NexaGuard Pro</h3>
-        <p>Introduce tu clave de licencia oficial obtenida tras la compra de tu plan en NexaGuard:</p>
+        <h3>🔑 Activar Licencia NexaGuard</h3>
+        <p>Introduce tu clave de licencia oficial del Plan PRO obtenida tras tu compra, o activa tu Licencia Comunitaria Gratuita:</p>
         <div class="ng-modal-fld">
             <input type="text" id="input-license-key" class="in-ng" placeholder="Ej: NXG-PRO-XXXX-XXXX" value="<?php echo esc_attr($has_license ? $license['key'] : ''); ?>">
         </div>
         <p id="license-modal-msg" class="modal-msg"></p>
-        <div class="ng-modal-acts">
-            <button type="button" id="btn-save-license" class="btn-ng btn-ng-primary">Verificar y Guardar</button>
-            <button type="button" id="btn-close-license" class="btn-ng btn-ng-outline">Cancelar</button>
+        <div class="ng-modal-acts" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; gap:8px;">
+                <button type="button" id="btn-save-license" class="btn-ng btn-ng-primary">Verificar y Guardar</button>
+                <button type="button" id="btn-close-license" class="btn-ng btn-ng-outline">Cancelar</button>
+            </div>
+            <button type="button" id="btn-get-free-license" class="btn-ng btn-ng-link" style="color:#3de8a4; font-size:0.82rem; font-weight:700;">🛡️ Activar Licencia Gratuita (1-Clic)</button>
         </div>
     </div>
 </div>

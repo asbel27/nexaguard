@@ -57,6 +57,7 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_test_webhook', array('NexaGuard_Firewall', 'ajax_test_webhook'));
         add_action('wp_ajax_nexaguard_rebaseline_tripwire', array('NexaGuard_Firewall', 'ajax_rebaseline_tripwire'));
         add_action('wp_ajax_nexaguard_validate_license', array($this, 'ajax_validate_license'));
+        add_action('wp_ajax_nexaguard_activate_free_license', array($this, 'ajax_activate_free_license'));
         add_action('wp_ajax_nexaguard_auto_remediate_all', array($this, 'ajax_auto_remediate_all'));
         add_action('wp_ajax_nexaguard_revert_snapshot', array($this, 'ajax_revert_snapshot'));
         add_action('wp_ajax_nexaguard_sentinel_scan', array($this, 'ajax_sentinel_scan'));
@@ -276,6 +277,15 @@ class NexaGuard_Plugin {
     public function is_pro_active() {
         $license = get_option('nexaguard_license_data', null);
         if (empty($license) || empty($license['valid']) || empty($license['key'])) {
+            return false;
+        }
+        if (!empty($license['plan_type']) && $license['plan_type'] === 'free') {
+            return false;
+        }
+        if (!empty($license['plan']) && stripos($license['plan'], 'gratuita') !== false) {
+            return false;
+        }
+        if (strpos($license['key'], 'NEXA-FREE-') === 0 || strpos($license['key'], 'FREE-') === 0) {
             return false;
         }
         $days_left = isset($license['days_left']) ? intval($license['days_left']) : 0;
@@ -595,6 +605,27 @@ class NexaGuard_Plugin {
         }
         $site_domain = strtolower(preg_replace('/^www\./i', '', trim(explode(':', (string)$raw_host)[0])));
 
+        if (strpos($license_key, 'NEXA-FREE-') === 0 || strpos($license_key, 'FREE-') === 0) {
+            $data = array(
+                'valid'             => true,
+                'status'            => 'active',
+                'plan_type'         => 'free',
+                'plan'              => 'Edición Comunitaria Gratuita',
+                'key'               => $license_key,
+                'domain'            => $site_domain,
+                'expires_at'        => null,
+                'expires_formatted' => 'Sin Vencimiento (Comunidad)',
+                'days_left'         => 99999,
+                'notice'            => 'Licencia Comunitaria Gratuita activa en ' . $site_domain . '.',
+                'message'           => '¡Licencia Comunitaria Gratuita verificada y guardada con éxito!'
+            );
+            update_option('nexaguard_license_data', $data);
+            delete_transient('nexaguard_license_sync_lock');
+            delete_transient('nexaguard_license_revoked_notice');
+            wp_send_json_success($data);
+            return;
+        }
+
         if (empty($license_key)) {
             $prev_data = get_option('nexaguard_license_data', array());
             $prev_key = !empty($prev_data['key']) ? $prev_data['key'] : '';
@@ -679,6 +710,62 @@ class NexaGuard_Plugin {
             'message' => 'No se pudo conectar con el servidor de licencias en nexaguards.com (' . $err_msg . '). Comprueba la conexión saliente de tu servidor.',
             'code'    => 'connection_error'
         ));
+    }
+
+    /**
+     * Emisión y activación en 1 clic de Licencia Comunitaria Gratuita (estilo Wordfence)
+     */
+    public function ajax_activate_free_license() {
+        if (!check_ajax_referer('nexaguard_security_nonce', 'nonce', false) && !check_ajax_referer('nexaguard_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Sesión o token de seguridad expirado. Por favor recarga la página.'));
+            return;
+        }
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+            return;
+        }
+
+        $raw_host = wp_parse_url(home_url(), PHP_URL_HOST);
+        if (!$raw_host && !empty($_SERVER['HTTP_HOST'])) {
+            $raw_host = sanitize_text_field($_SERVER['HTTP_HOST']);
+        }
+        $site_domain = strtolower(preg_replace('/^www\./i', '', trim(explode(':', (string)$raw_host)[0])));
+
+        $admin_email = get_option('admin_email', '');
+        $free_hash = strtoupper(substr(md5($site_domain . $admin_email . 'nexaguard_free_community'), 0, 8));
+        $free_key = 'NEXA-FREE-' . $free_hash;
+
+        $data = array(
+            'valid'             => true,
+            'status'            => 'active',
+            'plan_type'         => 'free',
+            'plan'              => 'Edición Comunitaria Gratuita',
+            'key'               => $free_key,
+            'domain'            => $site_domain,
+            'expires_at'        => null,
+            'expires_formatted' => 'Sin Vencimiento (Comunidad)',
+            'days_left'         => 99999,
+            'notice'            => 'Licencia Comunitaria Gratuita activa en ' . $site_domain . '.',
+            'message'           => '¡Licencia Comunitaria Gratuita activada con éxito!'
+        );
+
+        update_option('nexaguard_license_data', $data);
+        delete_transient('nexaguard_license_sync_lock');
+        delete_transient('nexaguard_license_revoked_notice');
+
+        // Notificar al servidor en segundo plano
+        @wp_remote_post('https://www.nexaguards.com/api/license/free', array(
+            'timeout'   => 5,
+            'sslverify' => false,
+            'headers'   => array('Content-Type' => 'application/json'),
+            'body'      => wp_json_encode(array(
+                'email'  => $admin_email,
+                'domain' => $site_domain,
+                'key'    => $free_key
+            ))
+        ));
+
+        wp_send_json_success($data);
     }
 
     public function admin_footer_text($text) {

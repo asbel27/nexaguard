@@ -1042,6 +1042,29 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     if (!key) return fail(res, 400, 'Clave de licencia requerida.');
     if (!domain) return fail(res, 400, 'Dominio web requerido para validar la licencia.');
 
+    // 1.0 Si es una clave comunitaria gratuita (estilo Wordfence)
+    if (key.startsWith('NEXA-FREE-') || key.startsWith('FREE-')) {
+      return send(res, 200, {
+        valid: true,
+        status: 'active',
+        plan_type: 'free',
+        plan: 'Edición Comunitaria Gratuita',
+        key: key,
+        domain: domain,
+        expires_at: null,
+        expires_formatted: 'Sin Vencimiento (Comunidad)',
+        days_left: 99999,
+        notice: 'Licencia Comunitaria Gratuita activa en ' + domain + '.',
+        message: 'Licencia Comunitaria Gratuita activa en ' + domain + '.',
+        renew_url: 'https://www.nexaguards.com/#planes',
+        features: {
+          vigilance_24h: false,
+          deep_clean: true,
+          cloud_intel: false
+        }
+      });
+    }
+
     // 1. Escudo Anti-Fuerza Bruta & Burp Suite Intruder
     const bruteKey = 'lic_fail|' + ip;
     if (limited(bruteKey, 12, 60e3)) {
@@ -1171,6 +1194,37 @@ function createApp({ store, scanner, waf, sentinel, config }) {
         vigilance_24h: !isExpired,
         deep_clean: true,
         cloud_intel: !isExpired
+      }
+    });
+  });
+
+  /* ---------- Emisión de Licencia Gratuita (Comunidad) ---------- */
+  route('POST', '/api/license/free', null, (ctx) => {
+    const { res, body } = ctx;
+    const email = clean(body.email || '', 120).toLowerCase();
+    const rawDomain = clean(body.domain || '', 120).toLowerCase();
+    const domain = rawDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').split(':')[0].replace(/^www\./, '').trim();
+
+    if (!domain) return fail(res, 400, 'Dominio web requerido.');
+    const freeKey = 'NEXA-FREE-' + crypto.createHash('md5').update(domain + (email || '') + 'free').digest('hex').substring(0, 16).toUpperCase();
+
+    send(res, 200, {
+      valid: true,
+      status: 'active',
+      plan_type: 'free',
+      plan: 'Edición Comunitaria Gratuita',
+      key: freeKey,
+      domain: domain,
+      expires_at: null,
+      expires_formatted: 'Sin Vencimiento (Comunidad)',
+      days_left: 99999,
+      notice: 'Licencia Comunitaria Gratuita activa en ' + domain + '.',
+      message: 'Licencia Comunitaria Gratuita activa en ' + domain + '.',
+      renew_url: 'https://www.nexaguards.com/#planes',
+      features: {
+        vigilance_24h: false,
+        deep_clean: true,
+        cloud_intel: false
       }
     });
   });
@@ -1564,7 +1618,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const u = new URL(req.url, 'http://x'), pathname = u.pathname;
     if (!pathname.startsWith('/api/')) return false;
     try {
-      const isPublicExternalApi = pathname === '/api/license/validate' || pathname === '/api/license/deactivate' || pathname === '/api/threat-intel';
+      const isPublicExternalApi = pathname === '/api/license/validate' || pathname === '/api/license/deactivate' || pathname === '/api/license/free' || pathname === '/api/threat-intel';
       const origin = req.headers.origin;
       if (isPublicExternalApi) {
         res.setHeader('Access-Control-Allow-Origin', '*');

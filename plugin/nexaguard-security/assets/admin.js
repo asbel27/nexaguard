@@ -1908,10 +1908,43 @@ jQuery(document).ready(function ($) {
         }
     }, 3000);
 
-    // ============ GESTIÓN DE LICENCIA PRO ============
-    $('#btn-edit-license').on('click', function (e) {
+    // ============ GESTIÓN DE LICENCIA ============
+    $(document).on('click', '#btn-edit-license', function (e) {
         e.preventDefault();
         openLicenseModal();
+    });
+
+    $(document).on('click', '.btn-activate-free-license, #btn-get-free-license', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Activando Licencia...');
+        var $msg = $('#license-modal-msg');
+        if ($msg.length) $msg.text('Generando licencia comunitaria...').css('color', '#a0acd2');
+
+        $.ajax({
+            url: nexaguardData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_activate_free_license',
+                nonce: nexaguardData.nonce
+            },
+            success: function (res) {
+                if (res.success) {
+                    showToast('¡Licencia Comunitaria Gratuita activada con éxito!', 'success', 'Licencia Activada');
+                    setTimeout(function () {
+                        location.reload();
+                    }, 800);
+                } else {
+                    showAlert(res.data && res.data.message ? res.data.message : 'Error al activar licencia gratuita.', 'error', 'Error');
+                    $btn.prop('disabled', false).text('🛡️ Activar Licencia Gratuita (1-Clic)');
+                }
+            },
+            error: function () {
+                showAlert('Error de conexión al activar la licencia gratuita.', 'error', 'Error');
+                $btn.prop('disabled', false).text('🛡️ Activar Licencia Gratuita (1-Clic)');
+            }
+        });
     });
 
     $(document).on('click', '.btn-vigilance-locked, .btn-open-lic-modal', function (e) {
@@ -1921,12 +1954,12 @@ jQuery(document).ready(function ($) {
         openLicenseModal('Ingresa tu clave de licencia oficial del Plan Security PRO para desbloquear el radar 24h y el blindaje WAF.');
     });
 
-    $('#btn-unlink-license').on('click', function (e) {
+    $(document).on('click', '#btn-unlink-license', function (e) {
         e.preventDefault();
+        var $btn = $(this);
         showConfirm(
             '¿Deseas desvincular la licencia de este WordPress y regresar a la Edición Estándar?',
             function () {
-                var $btn = $('#btn-unlink-license');
                 $btn.prop('disabled', true).text('Desvinculando...');
                 $.ajax({
                     url: nexaguardData.ajax_url,
@@ -1947,7 +1980,7 @@ jQuery(document).ready(function ($) {
         );
     });
 
-    $('#btn-close-license').on('click', function (e) {
+    $(document).on('click', '#btn-close-license', function (e) {
         e.preventDefault();
         closeLicenseModal();
     });

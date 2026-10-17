@@ -11,10 +11,13 @@ $cloud_ver = ($cloud_cache && !empty($cloud_cache['feed_version'])) ? $cloud_cac
 
 $license_data = get_option('nexaguard_license_data', null);
 $has_license = !empty($license_data) && !empty($license_data['key']);
-$days_left = ($has_license && isset($license_data['days_left'])) ? intval($license_data['days_left']) : 0;
-$is_expired = $has_license && (($license_data['status'] === 'expired') || $days_left <= 0);
-$is_expiring_soon = $has_license && !$is_expired && $days_left <= 7;
-$is_pro = $has_license && !$is_expired && !empty($license_data['valid']);
+$is_free_license = $has_license && (!empty($license_data['plan_type']) && $license_data['plan_type'] === 'free' || (!empty($license_data['plan']) && stripos($license_data['plan'], 'gratuita') !== false) || (isset($license_data['key']) && strpos($license_data['key'], 'NEXA-FREE-') === 0));
+
+$days_left = ($has_license && !$is_free_license && isset($license_data['days_left'])) ? intval($license_data['days_left']) : 0;
+$is_expired = $has_license && !$is_free_license && (($license_data['status'] === 'expired') || $days_left <= 0);
+$is_expiring_soon = $has_license && !$is_free_license && !$is_expired && $days_left <= 7;
+$is_pro = $has_license && !$is_free_license && !$is_expired && !empty($license_data['valid']);
+$is_standard = !$has_license;
 $vigilance_active = (int) get_option('nexaguard_vigilance_active', 1);
 
 // WAF settings (integrado en la misma vista)
@@ -75,11 +78,26 @@ $rollback_count = count($backup_history);
             <div class="lic-icon" style="font-size:2.4rem; line-height:1;">🛡️</div>
             <div class="lic-content" style="flex:1; min-width:260px;">
                 <strong style="display:block; font-size:1.08rem; font-weight:800; color:#ffffff !important; margin-bottom:4px;">EDICIÓN ESTÁNDAR: Escaneo Forense Local Activo.</strong>
-                <p style="font-size:0.94rem; color:#e2eafc !important; margin:0; line-height:1.55; font-weight:500;">Estás usando NexaGuard Security Estándar. Para activar el <strong style="color:#ffd859 !important; font-weight:700;">Sistema de Vigilancia Continua 24 Horas con Radar</strong> y la protección en tiempo real, activa tu Licencia PRO.</p>
+                <p style="font-size:0.94rem; color:#e2eafc !important; margin:0; line-height:1.55; font-weight:500;">Estás usando NexaGuard Security en modo gratuito. Activa tu <strong style="color:#3de8a4 !important;">Licencia Gratuita de la Comunidad</strong> o adquiere el <strong style="color:#ffd859 !important;">Plan PRO ($9.99/mes)</strong> para desbloquear Vigilancia 24H y Cortafuegos WAF activo.</p>
             </div>
             <div class="lic-action" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <button type="button" class="btn-ng btn-ng-outline btn-activate-free-license" style="border-color:#3de8a4; color:#3de8a4; background:rgba(61,232,164,0.08); font-weight:700;">🛡️ Activar Licencia Gratuita (1-Clic)</button>
                 <button type="button" id="btn-edit-license" class="btn-ng btn-ng-primary">🔑 Activar Licencia PRO</button>
-                <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-outline" style="background:#141d4a !important; color:#ffffff !important; border:1.5px solid rgba(255,255,255,0.3) !important; margin-left:8px;">Obtener Plan PRO ($9.99/mes)</a>
+                <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-outline" style="background:#141d4a !important; color:#ffffff !important; border:1.5px solid rgba(255,255,255,0.3) !important;">Obtener Plan PRO ($9.99/mes)</a>
+            </div>
+        </div>
+    <?php elseif ($is_free_license): ?>
+        <div class="ng-license-strip" style="background:linear-gradient(90deg, #091a2e 0%, #0e163e 100%); border:1px solid rgba(61,232,164,0.35);">
+            <div class="lic-pill">
+                <span class="lic-check" style="background:#3de8a4; color:#061426;">✓</span>
+                <span style="color:#ffffff;">Licencia Comunitaria: <strong style="color:#3de8a4;"><?php echo esc_html(!empty($license_data['plan']) ? $license_data['plan'] : 'Edición Comunitaria Gratuita'); ?></strong></span>
+                <span class="lic-exp" style="color:#b8c7eb;">· Estado: <strong>Activa</strong> (Sin Vencimiento)</span>
+            </div>
+            <div class="lic-key-mgmt">
+                <span class="lic-key-tag" style="border-color:rgba(61,232,164,0.3); color:#3de8a4;">Clave: <?php echo esc_html(substr($license_data['key'], 0, 14) . '••••'); ?></span>
+                <button type="button" class="btn-ng btn-ng-primary btn-open-upgrade-modal" style="font-size:0.78rem; padding:4px 10px; font-weight:800;">⚡ Mejorar a Plan PRO</button>
+                <button type="button" id="btn-edit-license" class="btn-ng-link" style="color:#ffd859; margin-left:8px;">Ingresar Clave PRO</button>
+                <button type="button" id="btn-unlink-license" class="btn-ng-link" style="color:#ff8ba0; margin-left:8px;" title="Desvincular licencia">Desvincular</button>
             </div>
         </div>
     <?php elseif ($is_expired): ?>
@@ -108,7 +126,7 @@ $rollback_count = count($backup_history);
                 <button type="button" id="btn-unlink-license" class="btn-ng btn-ng-link" style="color:#ff8ba0;margin-left:8px">Desvincular</button>
             </div>
         </div>
-    <?php else: ?>
+    <?php elseif ($is_pro): ?>
         <div class="ng-license-strip">
             <div class="lic-pill">
                 <span class="lic-check">✓</span>
