@@ -3,7 +3,7 @@ Contributors: asbel27
 Donate link: https://www.nexaguards.com
 Tags: security, malware, scanner, firewall, waf
 Requires at least: 5.8
-Tested up to: 6.7
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 1.5.6
 License: GPLv2 or later
@@ -65,7 +65,7 @@ This plugin may optionally connect to the NexaGuard Threat Intelligence Cloud (h
 == Changelog ==
 
 = 1.5.6 =
-* Compatibility update for WordPress 6.7 and PHP 8.2+.
+* Compatibility update for WordPress 7.1 and PHP 8.2+.
 * Intuitive tab reorganization: Core Sentinel and 24H Vigilance positioned alongside Forensic Scanner.
 * Enhanced heuristic detection for ClearFake, ClickFix, and Web3 smart contract injectors.
 * Optimized quarantine backup and rollback management.
