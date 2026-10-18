@@ -23,7 +23,7 @@ const { createApp } = require('./app.js');
 const { createWaf } = require('./waf.js');
 const { createSentinel } = require('./sentinel.js');
 
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.zip': 'application/zip' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.zip': 'application/zip', '.xml': 'application/xml; charset=utf-8' };
 const SEC = { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'same-origin' };
 // Se permite el dominio de PayPal (para su botón de pago) aunque no esté configurado:
 // si no hay credenciales, la página nunca carga ese script, así que no baja la seguridad.

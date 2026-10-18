@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cómo Eliminar el Japanese Keyword Hack en WordPress | NexaGuard</title>
+<meta name="description" content="Guía técnica para limpiar la infección de palabras clave japonesas y spam SEO en Google. Erradica URLs falsas y recupera el posicionamiento de tu WordPress.">
+<meta name="keywords" content="japanese keyword hack wordpress, spam japones google wordpress, eliminar urls japonesas wordpress, hackeo japones wordpress, spam seo google">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://www.nexaguards.com/japanese-keyword-hack/">
+<meta name="theme-color" content="#070c22">
+
+<!-- Open Graph -->
+<meta property="og:locale" content="es_ES">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cómo Eliminar el Japanese Keyword Hack en WordPress">
+<meta property="og:description" content="Aprende a limpiar el spam de caracteres japoneses en Google y eliminar los scripts de cloaking de tu WordPress.">
+<meta property="og:url" content="https://www.nexaguards.com/japanese-keyword-hack/">
+<meta property="og:site_name" content="NexaGuard Security">
+<meta property="og:image" content="https://www.nexaguards.com/brand/logo.svg">
+
+<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#070c22;--bg2:#0d1538;--panel:rgba(17,28,70,.65);
+  --line:rgba(150,175,255,.16);--line2:rgba(170,195,255,.32);
+  --text:#eaf0ff;--muted:#a0acd2;
+  --yellow:#ffcf33;--yellow-ink:#1a1400;--blue:#6b8cff;--red:#ff4560;--green:#3de8a4;--cyan:#00f0ff;
+  --fd:'Unbounded',sans-serif;--fb:'Schibsted Grotesk',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:17px;line-height:1.7}
+a{color:var(--cyan);text-decoration:none;transition:opacity .2s}
+a:hover{opacity:.85}
+.nav{padding:16px max(20px,5vw);display:flex;align-items:center;justify-content:space-between;background:rgba(7,12,34,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+.logo svg{height:34px;width:auto}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;font-weight:700;font-size:.95rem;text-decoration:none;cursor:pointer;border:none}
+.btn-y{background:var(--yellow);color:var(--yellow-ink)}
+.btn-y:hover{background:#ffe066}
+.btn-o{border:1px solid var(--line2);color:var(--text);background:rgba(255,255,255,.04)}
+.btn-o:hover{background:rgba(255,255,255,.08)}
+.btn-red{background:var(--red);color:#fff}
+
+.container{max-width:880px;margin:40px auto;padding:0 24px}
+.hero-tag{display:inline-block;padding:4px 12px;background:rgba(255,176,32,.15);border:1px solid var(--yellow);color:var(--yellow);border-radius:999px;font-size:.78rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:16px}
+h1{font-family:var(--fd);font-size:clamp(1.9rem,4vw,2.7rem);line-height:1.18;margin-bottom:20px;color:#fff}
+.meta-info{display:flex;gap:18px;font-size:.85rem;color:var(--muted);margin-bottom:30px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.content h2{font-family:var(--fd);font-size:1.55rem;margin:38px 0 16px;color:#fff;border-bottom:1px solid var(--line);padding-bottom:8px}
+.content h3{font-size:1.2rem;margin:24px 0 10px;color:var(--yellow)}
+.content p{margin-bottom:18px;color:#cdd7f5}
+.content ul, .content ol{margin:0 0 22px 24px;color:#cdd7f5}
+.content li{margin-bottom:8px}
+.step-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;margin:20px 0}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:var(--cyan);color:#05091a;font-weight:800;font-family:var(--fm);margin-bottom:12px}
+code{background:#04081c;padding:3px 7px;border-radius:6px;color:#ff9fb0;font-family:var(--fm);font-size:.88rem;border:1px solid rgba(255,255,255,.08)}
+
+.cta-banner{background:linear-gradient(135deg,#0e1a47,#13225a);border:1px solid rgba(0,240,255,.3);border-radius:16px;padding:34px 28px;text-align:center;margin:46px 0;box-shadow:0 12px 36px rgba(0,0,0,.4)}
+.cta-banner h2{font-family:var(--fd);font-size:1.6rem;color:#fff;margin-bottom:10px}
+.cta-banner p{color:var(--muted);max-width:580px;margin:0 auto 24px}
+.cta-group{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+footer{text-align:center;padding:40px 20px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);margin-top:60px}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a href="/" class="logo" aria-label="NexaGuard">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64"><defs><linearGradient id="g1" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffcf33"/><stop offset="1" stop-color="#6b8cff"/></linearGradient></defs><path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="#15214f" stroke="url(#g1)" stroke-width="3.2"/><path d="M22 42V22L42 42V22" fill="none" stroke="#fff" stroke-width="4.4" stroke-linecap="round"/><circle cx="22" cy="22" r="4" fill="#ffcf33"/><circle cx="22" cy="42" r="4" fill="#ffcf33"/><circle cx="42" cy="42" r="4" fill="#ffcf33"/><circle cx="42" cy="22" r="4" fill="#ffcf33"/></svg>
+  </a>
+  <div style="display:flex;gap:12px">
+    <a href="/#escaner" class="btn btn-o">Escáner Gratis</a>
+    <a href="/#planes" class="btn btn-y">Planes y Precios</a>
+  </div>
+</header>
+
+<main class="container">
+  <span class="hero-tag">🔍 Guía Especializada de Desinfección</span>
+  <h1>Cómo Eliminar el Japanese Keyword Hack en WordPress (Paso a Paso)</h1>
+  
+  <div class="meta-info">
+    <span>🛡️ NexaGuard Security Research</span>
+    <span>⏱️ 5 min de lectura</span>
+    <span>🔄 Actualizado: Octubre 2026</span>
+  </div>
+
+  <div class="content">
+    <p>El <b>Japanese Keyword Hack</b> (o hackeo de palabras clave japonesas) es una de las infecciones de spam SEO más destructivas en WordPress. Los atacantes inyectan miles de páginas generadas automáticamente con texto en japonés y enlaces a tiendas fraudulentas de marcas de lujo o productos falsos.</p>
+    
+    <p>Si buscas en Google <code>site:tudominio.com</code> y ves cientos o miles de resultados con caracteres japoneses o chinos, tu sitio está sufriendo este ataque.</p>
+
+    <h2>¿Cómo funciona este ataque y por qué es tan engañoso?</h2>
+    <p>Este ataque utiliza una técnica conocida como <b>Cloaking</b> (encubrimiento):</p>
+    <ul>
+      <li>Si tú como humano visitas tu sitio web, todo parece normal y funcional.</li>
+      <li>Pero cuando el robot de Google (<code>Googlebot</code>) visita tu sitio web, el código malicioso le entrega páginas repletas de spam y enlaces japoneses.</li>
+      <li>Los atacantes adulteran el archivo <code>.htaccess</code> y crean un sitemap XML falso para que Google indexe rápidamente miles de URLs.</li>
+    </ul>
+
+    <h2>Procedimiento para Erradicar el Spam Japonés</h2>
+
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <h3>Restaura el archivo .htaccess y wp-config.php</h3>
+      <p>Revisa la raíz de tu instalación. Los hackers agregan reglas de reescritura condicionales basadas en <code>HTTP_USER_AGENT</code> que redirigen solo a Googlebot. Elimina esas reglas o restaura el archivo <code>.htaccess</code> por defecto de WordPress.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <h3>Localiza los Generadores de Páginas Fantasma</h3>
+      <p>Busca archivos sospechosos en la raíz o en <code>wp-content/</code> con nombres aleatorios o simulando ser del sistema (por ejemplo, <code>wp-l0ad.php</code>, <code>db_cache.php</code> o <code>xmlrpc_backup.php</code>). <b>NexaGuard Sentinel</b> compara automáticamente estos archivos contra la lista oficial de firmas para aislarlos en cuarentena.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <h3>Elimina el Sitemap Inyectado y Usuarios Ocultos</h3>
+      <p>Revisa tu lista de usuarios en WordPress. Los atacantes suelen crear un usuario administrador falso o modificar roles en la base de datos para recuperar el acceso. Elimina cualquier cuenta no reconocida y elimina sitemaps falsos generados en la raíz.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">04</div>
+      <h3>Desindexación Acelerada en Google Search Console</h3>
+      <p>Una vez que el malware está eliminado y las páginas falsas devuelven un error HTTP 404 o 410 (Gone):</p>
+      <ul>
+        <li>Envía tu nuevo sitemap limpio en Google Search Console.</li>
+        <li>Utiliza la herramienta de "Retirada de URLs temporales" para las secciones más afectadas.</li>
+        <li>Google irá desindexando progresivamente las URLs en las siguientes semanas.</li>
+      </ul>
+    </div>
+
+    <div class="cta-banner">
+      <h2>¿Tu web tiene miles de páginas en japonés y necesitas limpiarla hoy?</h2>
+      <p>Con el servicio de Rescate Forense de NexaGuard erradicamos el cloaking, limpiamos las inyecciones en base de datos y restauramos la reputación de tu sitio en Google con garantía.</p>
+      <div class="cta-group">
+        <a href="/#escaner" class="btn btn-y">Analizar mi Sitio Gratis</a>
+        <a href="/#contacto" class="btn btn-red">Pedir Rescate Inmediato ($89)</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>© 2026 NexaGuard Security. Ciberseguridad forense y protección perimetral para WordPress.</p>
+</footer>
+
+</body>
+</html>
