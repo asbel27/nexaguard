@@ -5,3 +5,4 @@ Disallow: /panel.html
 Disallow: /api/
 
 Sitemap: https://www.nexaguards.com/sitemap.xml
+
