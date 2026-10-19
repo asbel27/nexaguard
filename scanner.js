@@ -281,10 +281,14 @@ function hiddenBlocks(html) {   // bloques ocultos (display:none, fuera de panta
   return blocks;
 }
 
-/* ============================ Firmas ============================ */
-const SPAM_TERMS = ['viagra', 'cialis', 'levitra', 'kamagra', 'casino', 'poker', 'sportsbook', 'slot gacor', 'slot online', 'judi online', 'togel',
-  'situs slot', 'maxwin', 'porn', 'xxx video', 'escort', 'payday loan', 'replica watches', 'fake rolex', 'cheap jerseys', 'weight loss pills',
-  'keto gummies', 'forex robot', 'canadian pharmacy', 'online pharmacy', 'buy cheap', 'essay writing service', 'apuestas online', 'tragamonedas'];
+const SPAM_TERMS = ['viagra', 'cialis', 'levitra', 'kamagra', 'casino', 'casinos', 'poker', 'sportsbook', 'gokkasten', 'echt geld',
+  'gambling establishment', 'spielsaal', 'freispiele', 'blank einzahlung', 'spinboss', 'digital gambling', 'slot gacor', 'slot online',
+  'judi online', 'togel', 'situs slot', 'maxwin', 'pragmatic play', 'mahjong ways', 'scatter hitam', 'zeus slot', 'olympus slot',
+  'daftar slot', 'agen judi', 'bandar togel', 'taruhan bola', 'online casino', 'crypto casino', 'free spins', 'deposit pulsa',
+  'apuestas online', 'tragamonedas', 'ruleta online', 'baccarat', 'porn', 'xxx video', 'escort', 'payday loan', 'replica watches',
+  'fake rolex', 'cheap jerseys', 'weight loss pills', 'keto gummies', 'forex robot', 'canadian pharmacy', 'online pharmacy',
+  'buy cheap', 'essay writing service'];
+const SPAM_ASSET_RE = /thecasinodirectory|casino|gokkasten|gambling|slotgacor|judionline|sbobet|maxbet|pragmatic/i;
 const DEFACE_RE = /\b(hacked\s+by|defaced\s+by|owned\s+by\s+\w+|h4ck(?:3d|ed)\s+by|pwned\s+by|hacked\s+by\s+\w+)/i;
 const CJK_RE = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/g;
 const MINER_RE = /coinhive|coin-hive|cryptoloot|crypto-loot|authedmine|webminepool|minero\.cc|coinimp|jsecoin|monerominer|ppoi\.org|cryptonight/i;
@@ -642,7 +646,96 @@ async function runScan(target, emit, isAborted) {
         if (bad.length >= 3) finding(ctx, 'crit', bad.length + ' URLs de spam en el sitemap', bad.slice(0, 4).join('\n'), 'Hay páginas basura creadas por un atacante. Elimínalas y limpia el sitio.', { cat: 'infection' });
         else if (bad.length) finding(ctx, 'warn', bad.length + ' URL sospechosa(s) en el sitemap', bad.join('\n'), 'Revísala(s).', { cat: 'infection' });
         else finding(ctx, 'ok', 'Sitemap revisado (' + urls.length + ' URLs) sin spam evidente', 'Archivo: ' + src, '', { cat: 'info' });
-      } else finding(ctx, 'info', 'No se encontró un sitemap público', 'No se pudo revisar la lista de páginas indexables.', '', { cat: 'info' });
+      } else {
+        finding(ctx, 'info', 'No se encontró un sitemap público', 'No se pudo revisar la lista de páginas indexables.', '', { cat: 'info' });
+      }
+    }
+
+    const ogImg = metaOf(html, 'og:image');
+    if (ogImg && SPAM_ASSET_RE.test(ogImg)) {
+      finding(ctx, 'crit', 'Inyección de OpenGraph apuntando a red de Casino / Spam',
+        'La imagen destacada o etiqueta og:image de esta página apunta a un servidor externo de apuestas: ' + ogImg,
+        'Esta página fue modificada o inyectada por atacantes. Elimina la entrada o límpiala con NexaGuard Security.',
+        { cat: 'infection', evidence: ogImg }
+      );
+    }
+
+    /* 6b. Auditoría profunda de inyecciones en WordPress (REST API & RSS Feed) */
+    if (!over()) {
+      log(ctx, 'Auditando entradas recientes y API REST de WordPress');
+      const infectedEntries = [];
+      const restPaths = [
+        '/wp-json/wp/v2/posts?per_page=20&_fields=id,title,slug,link',
+        '/wp-json/wp/v2/pages?per_page=15&_fields=id,title,slug,link',
+        '/wp-json/wp/v2/posts?search=casino&per_page=5&_fields=id,title,slug,link',
+        '/wp-json/wp/v2/posts?search=slot&per_page=5&_fields=id,title,slug,link'
+      ];
+      
+      const origin = target.origin || (scheme + '//' + host);
+      for (const ep of restPaths) {
+        if (over() || infectedEntries.length >= 10) break;
+        try {
+          const urlToFetch = (base.endsWith(target.path) && target.path ? origin : base) + ep;
+          const r = await request(urlToFetch, { timeoutMs: 6000, accept: 'application/json' });
+          if (r.status === 200 && r.body && r.body.trim().startsWith('[')) {
+            const items = JSON.parse(r.body);
+            for (const item of items) {
+              const rawTitle = (item.title && item.title.rendered) || '';
+              const slug = (item.slug || '').replace(/[-_+]/g, ' ');
+              const fullTxt = (rawTitle + ' ' + slug).toLowerCase();
+              
+              const hitTerm = SPAM_TERMS.find(t => fullTxt.includes(t));
+              const cjkCount = ((rawTitle + ' ' + slug).match(CJK_RE) || []).length;
+              
+              if (hitTerm || (!asianSite && cjkCount >= 4)) {
+                const reason = hitTerm ? 'Término detectado: "' + hitTerm + '"' : 'Caracteres CJK (' + cjkCount + ')';
+                if (!infectedEntries.some(e => e.id === item.id)) {
+                  infectedEntries.push({
+                    id: item.id,
+                    title: textOf(rawTitle) || item.slug,
+                    link: item.link || (origin + '/' + item.slug + '/'),
+                    reason
+                  });
+                }
+              }
+            }
+          }
+        } catch {}
+      }
+
+      // Si no encontramos por REST API, verificar el RSS Feed /feed/
+      if (!infectedEntries.length && !over()) {
+        try {
+          const origin = target.origin || (scheme + '//' + host);
+          const rf = await request(origin + '/feed/', { timeoutMs: 6000 });
+          if (rf.status === 200 && /<rss|<feed/i.test(rf.body)) {
+            const itemMatches = rf.body.matchAll(/<item[\s\S]*?<title[^>]*>([\s\S]*?)<\/title>[\s\S]*?<link[^>]*>([\s\S]*?)<\/link>[\s\S]*?<\/item>/gi);
+            for (const im of itemMatches) {
+              const iTitle = textOf(im[1]);
+              const iLink = textOf(im[2]);
+              const iTxt = (iTitle + ' ' + iLink).toLowerCase();
+              const hit = SPAM_TERMS.find(t => iTxt.includes(t));
+              const cjk = ((iTitle).match(CJK_RE) || []).length;
+              if (hit || (!asianSite && cjk >= 4)) {
+                infectedEntries.push({
+                  title: iTitle,
+                  link: iLink,
+                  reason: hit ? 'Término detectado: "' + hit + '"' : 'Caracteres CJK (' + cjk + ')'
+                });
+              }
+            }
+          }
+        } catch {}
+      }
+
+      if (infectedEntries.length) {
+        const summaryList = infectedEntries.slice(0, 5).map(e => '• ' + e.title + ' (' + e.reason + ')\n  Enlace: ' + e.link).join('\n');
+        finding(ctx, 'crit', 'Infección oculta en Base de Datos: SEO Spam de Casino / Apuestas (' + infectedEntries.length + ' entradas)',
+          'El frontend o página de inicio puede parecer normal, pero se detectaron páginas parásitas creadas por atacantes dentro de WordPress que no aparecen en el menú principal pero están indexadas en Google para desviar tráfico hacia casinos y apuestas internacionales:\n\n' + summaryList,
+          'Instala NexaGuard Security para erradicar estas inyecciones de la base de datos, purgar la caché y sellar la puerta trasera.',
+          { cat: 'infection', evidence: summaryList }
+        );
+      }
     }
   } catch (e) { finding(ctx, 'info', 'No se pudo completar esta comprobación', e.message, '', { cat: 'info' }); }
   endStage(ctx);
