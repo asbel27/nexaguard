@@ -1,22 +1,22 @@
 <?php
 /**
- * Plugin Name: NexaGuard Security
- * Description: Deep forensic scanner, malware eradication, webshell quarantine, integrity monitor and real-time firewall (WAF) for WordPress.
- * Version: 1.5.6
+ * Plugin Name: NexaGuard – Malware Scanner & Web Security
+ * Description: Deep forensic malware scanner, core integrity monitor, webshell quarantine, and hardened perimeter security defense for WordPress sites.
+ * Version: 1.5.7
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://nexaguards.com
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: nexaguard-security
+ * Text Domain: nexaguard-malware-scanner
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.5.6');
+define('NEXAGUARD_VERSION', '1.5.7');
 define('NEXAGUARD_FILE', __FILE__);
 define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
 define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
@@ -61,8 +61,6 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_auto_remediate_all', array($this, 'ajax_auto_remediate_all'));
         add_action('wp_ajax_nexaguard_revert_snapshot', array($this, 'ajax_revert_snapshot'));
         add_action('wp_ajax_nexaguard_sentinel_scan', array($this, 'ajax_sentinel_scan'));
-        add_action('wp_ajax_nexaguard_sentinel_harden', array($this, 'ajax_sentinel_harden'));
-        add_action('wp_ajax_nexaguard_sentinel_restore_file', array($this, 'ajax_sentinel_restore_file'));
         add_action('nexaguard_daily_vigilance_scan', array($this, 'run_background_vigilance_scan'));
 
         // Aviso en el pie de página de administración
@@ -300,9 +298,9 @@ class NexaGuard_Plugin {
     }
 
     public function render_waf_page() {
-        // Redirigir a la pestaña WAF dentro de la interfaz principal unificada
-        $url = admin_url('admin.php?page=nexaguard-security&tab=waf');
-        echo '<script>sessionStorage.setItem("nexaguard_active_tab","waf");window.location.replace("' . esc_url($url) . '");</script>';
+        // Redirigir a la pestaña WAF/Hardening dentro de la interfaz principal
+        wp_safe_redirect(admin_url('admin.php?page=nexaguard-security&tab=waf'));
+        exit;
     }
 
     public function ajax_run_scan() {
@@ -323,16 +321,8 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
-        $is_pro = $this->is_pro_active();
         $type = isset($_POST['threat_type']) ? sanitize_text_field($_POST['threat_type']) : '';
         $target = isset($_POST['target']) ? sanitize_text_field($_POST['target']) : '';
-
-        if ($type === 'restore_core_file' && !$is_pro) {
-            wp_send_json_error(array(
-                'code' => 'pro_required',
-                'message' => 'La restauración y reconstrucción de archivos vitales del núcleo desde WordPress.org requiere el Plan PRO ($9.99/mes).'
-            ));
-        }
 
         $cleaner = new NexaGuard_Cleaner();
         $result = $cleaner->clean($type, $target);
@@ -348,13 +338,6 @@ class NexaGuard_Plugin {
         check_ajax_referer('nexaguard_security_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
-        }
-
-        if (!$this->is_pro_active()) {
-            wp_send_json_error(array(
-                'code' => 'pro_required',
-                'message' => 'La reparación automática masiva con 1-clic es exclusiva del Plan PRO ($9.99/mes). En la versión gratuita puedes desinfectar y restaurar cada amenaza de forma individual.'
-            ));
         }
 
         $cleaner = new NexaGuard_Cleaner();
@@ -434,19 +417,9 @@ class NexaGuard_Plugin {
             'login_bg_image'        => isset($_POST['login_bg_image']) ? esc_url_raw(trim($_POST['login_bg_image'])) : '',
             'login_bg_preset'       => isset($_POST['login_bg_preset']) ? sanitize_key($_POST['login_bg_preset']) : 'deep-navy',
             'login_logo_image'      => isset($_POST['login_logo_image']) ? esc_url_raw(trim($_POST['login_logo_image'])) : '',
-            'login_security_notice' => isset($_POST['login_security_notice']) ? sanitize_text_field(trim($_POST['login_security_notice'])) : 'Estás iniciando sesión en tu WordPress protegido por NexaGuard'
+            'login_security_notice' => isset($_POST['login_security_notice']) ? sanitize_text_field(trim($_POST['login_security_notice'])) : 'Estás iniciando sesión en tu WordPress protegido por NexaGuard',
+            'cloud_threat_intel'    => !empty($_POST['cloud_threat_intel'])
         );
-
-        $is_pro = $this->is_pro_active();
-        $old_settings = get_option('nexaguard_settings', array());
-
-        if (!$is_pro) {
-            // Reglas de Ciberinteligencia Avanzada exclusivas de licencia PRO
-            $pro_keys = array('waf_enabled', 'anti_clearfake', 'emergency_lockdown', 'brute_force_protection', 'hide_backend', 'login_custom_design', 'block_user_enumeration', 'generic_login_errors', 'admin_login_alerts', 'waf_auto_jail', 'tripwire_enabled');
-            foreach ($pro_keys as $pkey) {
-                $settings[$pkey] = !empty($old_settings[$pkey]) ? $old_settings[$pkey] : false;
-            }
-        }
 
         update_option('nexaguard_settings', $settings);
 
@@ -871,27 +844,27 @@ class NexaGuard_Plugin {
             $perms = substr(sprintf('%o', fileperms($full_path)), -4);
             $size = filesize($full_path);
             $mtime = filemtime($full_path);
-            $hash = hash_file('sha256', $full_path);
+            $is_wp_config = ($rel_path === 'wp-config.php');
+
+            // Seguridad: Proteger wp-config.php de fingerprinting para no filtrar hashes de claves/sales criptográficas
+            $hash = $is_wp_config ? '[PROTEGIDO]' : hash_file('sha256', $full_path);
 
             $status = 'intact';
             $verdict = 'Firma oficial verificada · Intacto';
-            $can_rebuild = false;
 
-            if ($rel_path === 'wp-config.php') {
+            if ($is_wp_config) {
                 if (intval($perms, 8) > intval('0644', 8)) {
                     $status = 'warning';
-                    $verdict = "Permisos débiles ($perms). Requiere 0440.";
+                    $verdict = "Permisos débiles ($perms). Se aconseja 0640 o 0440.";
                     $warnings[] = "wp-config.php tiene permisos vulnerables ($perms).";
                     $anomalies[] = array(
                         'path'        => '/' . $rel_path,
                         'rel_path'    => $rel_path,
                         'exists'      => true,
                         'perms'       => $perms,
-                        'hash'        => substr($hash, 0, 16) . '…',
+                        'hash'        => '[PROTEGIDO]',
                         'status'      => 'warning',
-                        'can_rebuild' => false,
-                        'can_harden'  => true,
-                        'verdict'     => "Permisos vulnerables ($perms) · Se aconseja endurecer a 0440"
+                        'verdict'     => "Permisos vulnerables ($perms) · Se aconseja endurecer permisos"
                     );
                 }
             } elseif (!$meta['is_custom'] && !empty($checksums) && isset($checksums[$rel_path])) {
@@ -914,7 +887,6 @@ class NexaGuard_Plugin {
                 if (!$is_clean_file) {
                     $status = 'tampered';
                     $verdict = '🚨 Firma alterada (Código modificado)';
-                    $can_rebuild = true;
                     $warnings[] = "El archivo vital /$rel_path fue alterado o modificado respecto a la versión oficial de WordPress $core_version.";
                     $anomalies[] = array(
                         'path'        => '/' . $rel_path,
@@ -923,8 +895,7 @@ class NexaGuard_Plugin {
                         'perms'       => $perms,
                         'hash'        => substr($hash, 0, 16) . '…',
                         'status'      => 'tampered',
-                        'can_rebuild' => true,
-                        'verdict'     => 'Código alterado / Posible backdoor inyectado'
+                        'verdict'     => 'Código alterado / Posible inyección'
                     );
                 }
             }
@@ -940,10 +911,9 @@ class NexaGuard_Plugin {
                 'size'        => $size,
                 'perms'       => $perms,
                 'mtime'       => $mtime,
-                'hash'        => substr($hash, 0, 16) . '…',
-                'full_hash'   => $hash,
+                'hash'        => $is_wp_config ? '[PROTEGIDO]' : (substr($hash, 0, 16) . '…'),
+                'full_hash'   => $is_wp_config ? '[PROTEGIDO]' : $hash,
                 'status'      => $status,
-                'can_rebuild' => $can_rebuild,
                 'verdict'     => $verdict
             );
         }
@@ -963,138 +933,6 @@ class NexaGuard_Plugin {
             'reinstall_url' => admin_url('update-core.php'),
             'checked_at'    => current_time('H:i:s'),
             'timestamp'     => time()
-        ));
-    }
-
-    /**
-     * Reconstruir un archivo vital del núcleo restaurando la copia original oficial de WordPress.org
-     */
-    public function ajax_sentinel_restore_file() {
-        check_ajax_referer('nexaguard_security_nonce', 'nonce');
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
-        }
-
-        if (!$this->is_pro_active()) {
-            wp_send_json_error(array(
-                'code' => 'pro_required',
-                'message' => 'La reconstrucción y restauración de archivos vitales del núcleo desde WordPress.org requiere el Plan PRO ($9.99/mes).'
-            ));
-        }
-
-        $rel_path = isset($_POST['file']) ? sanitize_text_field(ltrim(trim($_POST['file']), '/\\')) : '';
-        if (empty($rel_path)) {
-            wp_send_json_error(array('message' => 'Ruta de archivo no especificada.'));
-        }
-
-        // Seguridad: NO permitir sobreescribir wp-config.php ni .htaccess para no alterar credenciales locales
-        if ($rel_path === 'wp-config.php' || $rel_path === '.htaccess') {
-            wp_send_json_error(array('message' => 'wp-config.php y .htaccess son archivos de configuración personalizada y no pueden reconstruirse automáticamente.'));
-        }
-
-        if (strpos($rel_path, '..') !== false) {
-            wp_send_json_error(array('message' => 'Ruta de archivo no válida.'));
-        }
-
-        global $wp_version;
-        $core_version = !empty($wp_version) ? $wp_version : get_bloginfo('version');
-        $abs_root = wp_normalize_path(ABSPATH);
-        $full_path = $abs_root . $rel_path;
-
-        // Descargar copia oficial limpia desde los repositorios certificados de WordPress
-        $download_urls = array(
-            "https://core.svn.wordpress.org/tags/{$core_version}/{$rel_path}"
-        );
-
-        $clean_content = null;
-        foreach ($download_urls as $url) {
-            $res = wp_remote_get($url, array('timeout' => 12, 'sslverify' => false));
-            if (!is_wp_error($res) && wp_remote_retrieve_response_code($res) === 200) {
-                $body = wp_remote_retrieve_body($res);
-                if (!empty($body)) {
-                    $clean_content = $body;
-                    break;
-                }
-            }
-        }
-
-        if (empty($clean_content)) {
-            wp_send_json_error(array(
-                'message' => "No se pudo descargar la copia oficial de $rel_path para WordPress $core_version. Se aconseja reinstalar el núcleo desde Escritorio → Actualizaciones."
-            ));
-            return;
-        }
-
-        // Crear copia de seguridad en cuarentena antes de reemplazar
-        if (file_exists($full_path)) {
-            $quarantine_dir = WP_CONTENT_DIR . '/uploads/nexaguard-quarantine';
-            if (!is_dir($quarantine_dir)) {
-                @wp_mkdir_p($quarantine_dir);
-                @file_put_contents($quarantine_dir . '/.htaccess', 'Deny from all');
-            }
-            $backup_file = $quarantine_dir . '/' . basename($rel_path) . '.bak.' . time();
-            @copy($full_path, $backup_file);
-        }
-
-        $written = @file_put_contents($full_path, $clean_content);
-        if ($written === false) {
-            wp_send_json_error(array(
-                'message' => "No se pudo escribir en /$rel_path. Comprueba los permisos de archivo en tu servidor."
-            ));
-            return;
-        }
-
-        // Restablecer permisos seguros 0644 mediante WP_Filesystem
-        global $wp_filesystem;
-        if (empty($wp_filesystem)) {
-            require_once ABSPATH . 'wp-admin/includes/file.php';
-            WP_Filesystem();
-        }
-        if ($wp_filesystem) {
-            $wp_filesystem->chmod($full_path, 0644);
-        }
-
-        wp_send_json_success(array(
-            'message' => "¡Archivo /$rel_path reconstruido con éxito a su estado oficial original de WordPress $core_version!",
-            'file'    => '/' . $rel_path
-        ));
-    }
-
-    /**
-     * Endurecer permisos de wp-config.php a modo solo lectura
-     */
-    public function ajax_sentinel_harden() {
-        check_ajax_referer('nexaguard_security_nonce', 'nonce');
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
-        }
-
-        if (!$this->is_pro_active()) {
-            wp_send_json_error(array(
-                'code' => 'pro_required',
-                'message' => 'El endurecimiento de permisos de archivos vitales requiere el Plan PRO ($9.99/mes).'
-            ));
-        }
-
-        $config_file = ABSPATH . 'wp-config.php';
-        $hardened = false;
-        if (file_exists($config_file)) {
-            global $wp_filesystem;
-            if (empty($wp_filesystem)) {
-                require_once ABSPATH . 'wp-admin/includes/file.php';
-                WP_Filesystem();
-            }
-            if ($wp_filesystem) {
-                $hardened = $wp_filesystem->chmod($config_file, 0440);
-                if (!$hardened) {
-                    $hardened = $wp_filesystem->chmod($config_file, 0640);
-                }
-            }
-        }
-
-        wp_send_json_success(array(
-            'hardened' => $hardened,
-            'message'  => 'Permisos de wp-config.php endurecidos a modo seguro solo-lectura exitosamente.'
         ));
     }
 }

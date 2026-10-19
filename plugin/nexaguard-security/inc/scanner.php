@@ -346,8 +346,18 @@ class NexaGuard_Scanner {
     }
 
     private function sync_cloud_threat_intel() {
+        $settings = get_option('nexaguard_settings', array());
+        if (empty($settings['cloud_threat_intel'])) {
+            return array(
+                'status'    => 'local_engine',
+                'cloud'     => 'Local Heuristic Engine',
+                'version'   => '1.5.7-offline',
+                'synced_at' => 'Motor Heurístico Local Activo (Nube desactivada por privacidad)'
+            );
+        }
+
         $feed_url = 'https://nexaguard.onrender.com/api/threat-intel';
-        $response = wp_remote_get($feed_url, array('timeout' => 3, 'sslverify' => false));
+        $response = wp_remote_get($feed_url, array('timeout' => 5, 'sslverify' => true));
         if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
             $data = json_decode(wp_remote_retrieve_body($response), true);
             if ($data && !empty($data['threat_signatures'])) {
@@ -372,7 +382,7 @@ class NexaGuard_Scanner {
         return array(
             'status'    => 'local_engine',
             'cloud'     => 'NexaGuard Threat Cloud (Modo Autónomo)',
-            'version'   => '2026.10',
+            'version'   => '1.5.7',
             'synced_at' => 'Motor Heurístico Nativo'
         );
     }
@@ -978,7 +988,7 @@ class NexaGuard_Scanner {
 
         if (empty($checksums) || !is_array($checksums)) {
             $api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale={$locale}";
-            $response = wp_remote_get($api_url, array('timeout' => 4, 'sslverify' => false));
+            $response = wp_remote_get($api_url, array('timeout' => 5));
             if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
                 $body = json_decode(wp_remote_retrieve_body($response), true);
                 if ($body && !empty($body['checksums'])) {
@@ -1022,7 +1032,7 @@ class NexaGuard_Scanner {
                         $en_checksums = get_transient($en_cache_key);
                         if (empty($en_checksums) || !is_array($en_checksums)) {
                             $en_api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale=en_US";
-                            $en_resp = wp_remote_get($en_api_url, array('timeout' => 4, 'sslverify' => false));
+                            $en_resp = wp_remote_get($en_api_url, array('timeout' => 5));
                             if (!is_wp_error($en_resp) && wp_remote_retrieve_response_code($en_resp) === 200) {
                                 $en_body = json_decode(wp_remote_retrieve_body($en_resp), true);
                                 if (!empty($en_body['checksums'])) {
@@ -1043,7 +1053,7 @@ class NexaGuard_Scanner {
                         $pkg_checksums = get_transient($pkg_cache_key);
                         if (empty($pkg_checksums) || !is_array($pkg_checksums)) {
                             $pkg_api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale={$wp_local_package}";
-                            $pkg_resp = wp_remote_get($pkg_api_url, array('timeout' => 4, 'sslverify' => false));
+                            $pkg_resp = wp_remote_get($pkg_api_url, array('timeout' => 5));
                             if (!is_wp_error($pkg_resp) && wp_remote_retrieve_response_code($pkg_resp) === 200) {
                                 $pkg_body = json_decode(wp_remote_retrieve_body($pkg_resp), true);
                                 if (!empty($pkg_body['checksums'])) {

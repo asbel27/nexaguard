@@ -190,18 +190,18 @@ function generateUpdateInfo(sourceDir, downloadsDir) {
   const version = match ? match[1] : '1.0.0';
 
   const info = {
-    name: "NexaGuard Security · Antimalware & Blindaje Forense",
-    slug: "nexaguard-security",
+    name: "NexaGuard – Malware Scanner & Web Security",
+    slug: "nexaguard-malware-scanner",
     version: version,
     homepage: "https://www.nexaguards.com",
-    download_url: "https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/nexaguard-security.zip",
-    fallback_download_url: "https://www.nexaguards.com/downloads/nexaguard-security.zip",
+    download_url: "https://raw.githubusercontent.com/asbel27/nexaguard/main/public/downloads/nexaguard-malware-scanner.zip",
+    fallback_download_url: "https://www.nexaguards.com/downloads/nexaguard-malware-scanner.zip",
     tested: "6.7",
     requires_php: "7.4",
     last_updated: new Date().toISOString().split('T')[0],
     sections: {
       description: "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
-      changelog: `<h4>Versión ${version}</h4><ul><li><strong>Erradicaciones de Cortesía Gratuitas:</strong> El escáner forense ahora permite desinfectar y erradicar hasta 2 amenazas reales sin costo en la versión estándar.</li><li><strong>Monitor de Núcleo (Sentinel) en Vivo:</strong> Telemetría forense e inspección continua de integridad de archivos vitales abierta para todos los usuarios.</li><li><strong>Reordenamiento de Pestañas:</strong> Monitor de Núcleo reubicado junto al Escáner Forense y Vigilancia 24H para una navegación más intuitiva.</li><li><strong>Centinela Tripwire:</strong> Monitoreo perimetral y recálculo de línea base de wp-config.php e index.php desbloqueado.</li><li><strong>Integración con Pagos Cripto y Binance Pay:</strong> Activación instantánea de licencias PRO mediante NOWPayments.</li></ul>`
+      changelog: `<h4>Versión ${version}</h4><ul><li><strong>Cumplimiento de Directrices Oficiales WordPress.org:</strong> Plugin 100% libre de restricciones de prueba. Todas las herramientas estándar de limpieza y blindaje totalmente operativas.</li><li><strong>Monitor de Núcleo (Sentinel) en Vivo:</strong> Telemetría forense e inspección continua de integridad de archivos vitales abierta para todos los usuarios.</li><li><strong>Blindaje de Servidor:</strong> Protección de subidas contra ejecución PHP, bloqueo de listado de directorios y protección de archivos críticos del sistema.</li><li><strong>Sincronización Opt-in de Ciberinteligencia:</strong> Respeto estricto de privacidad con motor heurístico local autónomo.</li></ul>`
     }
   };
 
@@ -217,10 +217,18 @@ const downloadsDir = path.join(rootDir, 'public', 'downloads');
 // Generar manifiesto de integridad antes de comprimir
 generateIntegrityManifest(pluginSourceDir);
 
+// 1. Generar zip con slug original
 createZip(
   pluginSourceDir,
   path.join(downloadsDir, 'nexaguard-security.zip'),
   'nexaguard-security'
+);
+
+// 2. Generar zip con nuevo slug oficial de WordPress.org
+createZip(
+  pluginSourceDir,
+  path.join(downloadsDir, 'nexaguard-malware-scanner.zip'),
+  'nexaguard-malware-scanner'
 );
 
 // Generar info.json para el auto-updater nativo de WordPress

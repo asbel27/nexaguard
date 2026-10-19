@@ -443,11 +443,8 @@ jQuery(document).ready(function ($) {
 
             if (!t.is_db) {
                 if (t.clean_action === 'restore_core_file') {
-                    if (nexaguardData.is_pro) {
-                        actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Descargar y restaurar el archivo original limpio desde WordPress.org">🔄 Restaurar Archivo Original (WordPress.org)</button>';
-                    } else {
-                        actBtn = '<button type="button" class="btn-ng btn-ng-outline btn-open-upgrade-modal" style="border-color:#ffcf33; color:#ffcf33; font-weight:700;" title="Función PRO: Descargar y restaurar el archivo original limpio desde WordPress.org">⚡ Restaurar Núcleo (Función PRO)</button>';
-                    }
+                    actBtn = '<a href="update-core.php" class="btn-ng btn-ng-outline" style="border-color:#ffcf33; color:#ffcf33; font-weight:700; text-decoration:none;" title="Reinstalar núcleo oficial de WordPress">🔄 Reinstalar WordPress</a>' +
+                        '<a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-primary" style="margin-left:6px; text-decoration:none; font-weight:700;">🩺 Intervención Experta</a>';
                 } else if (t.clean_action === 'sanitize_injection') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Extirpar código malicioso inyectado preservando el archivo original">🧹 Desinfectar Código (Extirpar Inyección)</button>';
                 } else if (t.clean_action === 'clean_dropin') {
@@ -614,12 +611,6 @@ jQuery(document).ready(function ($) {
         var target = $btn.data('target');
         var id = $btn.data('id');
 
-        if (type === 'restore_core_file' && !nexaguardData.is_pro) {
-            showToast('La restauración de archivos vitales del núcleo desde WordPress.org requiere el Plan PRO ($9.99/mes).', 'warning', 'Función PRO Requerida');
-            openActionBlockedModal();
-            return;
-        }
-
         var confirmMsg = '¿Deseas desinfectar este archivo? Se extirpará únicamente el código malicioso inyectado y se creará una copia de seguridad automática antes de guardar.';
         var confirmTitle = 'Desinfección Forense';
         var confirmIcon = '🛡️';
@@ -742,12 +733,6 @@ jQuery(document).ready(function ($) {
     // 5.1 Reparación y Blindaje Automático con 1 Clic (Auto-Remediate All)
     $(document).on('click', '#btn-auto-remediate-all', function () {
         var $btn = $(this);
-
-        if (!nexaguardData.is_pro) {
-            showToast('La auto-reparación total con 1-clic es una función de inteligencia del Plan PRO ($9.99/mes). En la edición estándar puedes desinfectar y restaurar cada archivo manualmente sin costo.', 'info', 'Función PRO');
-            window.nexaguardOpenUpgradeModal();
-            return false;
-        }
 
         showConfirm(
             '¿Deseas que NexaGuard limpie, repare y blinde automáticamente todo tu sitio web de forma 100% segura?\n\n✓ Los archivos del sistema se restaurarán limpios desde WordPress.org.\n✓ Los virus en plugins se extirparán sin romper tus extensiones.\n✓ Se aplicarán los blindajes preventivos de servidor.\n✓ Se guardan copias de respaldo de cada archivo intervenido.',
@@ -2671,26 +2656,8 @@ jQuery(document).ready(function ($) {
                     if (d.has_anomalies && d.anomalies && d.anomalies.length > 0) {
                         var anomHtml = '';
                         d.anomalies.forEach(function (anom) {
-                            var actionBtn = '';
-                            if (anom.can_rebuild) {
-                                if (ngData.is_pro) {
-                                    actionBtn = '<button type="button" class="btn-ng btn-ng-primary btn-sentinel-rebuild" data-file="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; border:none; border-radius:6px; cursor:pointer;" title="Descargar y restaurar la copia oficial limpia de WordPress.org">' +
-                                        '🛠️ Reconstruir Archivo Oficial</button>';
-                                } else {
-                                    actionBtn = '<button type="button" class="btn-ng btn-ng-outline btn-open-upgrade-modal" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;" title="Función PRO: Descargar y restaurar la copia oficial limpia de WordPress.org">' +
-                                        '⚡ Reconstruir Núcleo (PRO)</button>';
-                                }
-                            } else if (anom.can_harden) {
-                                if (ngData.is_pro) {
-                                    actionBtn = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;">' +
-                                        '🛡️ Endurecer Permisos</button>';
-                                } else {
-                                    actionBtn = '<button type="button" class="btn-ng btn-ng-outline btn-open-upgrade-modal" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;" title="Función PRO: Endurecer permisos de archivos vitales">' +
-                                        '⚡ Endurecer Permisos (PRO)</button>';
-                                }
-                            } else {
-                                actionBtn = '<a href="' + (d.reinstall_url || 'update-core.php') + '" class="btn-ng btn-ng-link" style="color:#ffcf33; font-weight:700; font-size:0.78rem;">🔄 Reinstalar Núcleo</a>';
-                            }
+                            var actionBtn = '<a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-primary" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">🩺 Solicitar Intervención</a>' +
+                                '<a href="' + (d.reinstall_url || 'update-core.php') + '" class="btn-ng btn-ng-link" style="color:#ffcf33; font-weight:700; font-size:0.78rem; text-decoration:none; margin-left:6px;">🔄 Reinstalar WP</a>';
 
                             anomHtml += '<tr style="border-bottom:1px solid rgba(255,69,96,0.15);">' +
                                 '<td style="padding:10px 14px;"><code style="color:#ff8ba0; font-weight:700; font-size:0.85rem;">' + anom.path + '</code></td>' +
@@ -2792,89 +2759,6 @@ jQuery(document).ready(function ($) {
 
     $(document).on('click', '#btn-sentinel-clear-terminal', function () {
         $('#sentinel-terminal-stream').html('<div style="color:#ffcf33;">[SISTEMA] Consola reiniciada. Monitoreo Sentinel activo.</div>');
-    });
-
-    $(document).on('click', '#btn-sentinel-harden-now', function () {
-        var $btn = $(this);
-        var ngData = window.nexaguardData || window.nexaguard_data || {};
-
-        if (!ngData.is_pro) {
-            showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para endurecer permisos de archivos vitales.', 'warning', 'Acción Restringida');
-            openActionBlockedModal();
-            return;
-        }
-
-        $btn.prop('disabled', true).text('Endureciendo...');
-
-        $.ajax({
-            url: ngData.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'nexaguard_sentinel_harden',
-                nonce: ngData.nonce
-            },
-            success: function (res) {
-                if (res.success && res.data) {
-                    showToast(res.data.message || 'Permisos de wp-config.php endurecidos a 0440.', 'success', 'Bóveda Núcleo');
-                    runBackendSentinelScan(false);
-                } else {
-                    showAlert('No se pudieron modificar los permisos automáticamente. Tu hosting puede tener permisos fijos por servidor.', 'warning', 'Aviso');
-                }
-            },
-            error: function () {
-                showAlert('Error al contactar con el servidor.', 'error', 'Error');
-            },
-            complete: function () {
-                $btn.prop('disabled', false).text('🛡️ Endurecer Permisos');
-            }
-        });
-    });
-
-    // Reconstruir archivo vital con copia oficial de WordPress.org
-    $(document).on('click', '.btn-sentinel-rebuild', function () {
-        var $btn = $(this);
-        var file = $btn.data('file');
-        var ngData = window.nexaguardData || window.nexaguard_data || {};
-
-        if (!ngData.is_pro) {
-            showToast('Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para reconstruir y restaurar archivos vitales de WordPress.', 'warning', 'Acción Restringida');
-            openActionBlockedModal();
-            return;
-        }
-
-        showConfirm(
-            '¿Deseas reconstruir el archivo /' + file + ' restaurando la copia oficial limpia original de WordPress.org? Se creará una copia de respaldo en cuarentena por seguridad.',
-            function () {
-                $btn.prop('disabled', true).text('Reconstruyendo...');
-                $.ajax({
-                    url: ngData.ajax_url,
-                    type: 'POST',
-                    dataType: 'json',
-                    data: {
-                        action: 'nexaguard_sentinel_restore_file',
-                        file: file,
-                        nonce: ngData.nonce
-                    },
-                    success: function (res) {
-                        if (res.success && res.data) {
-                            showToast(res.data.message || 'Archivo reconstruido exitosamente.', 'success', 'Reconstrucción de Núcleo');
-                            runBackendSentinelScan(false);
-                        } else {
-                            var msg = (res && res.data && res.data.message) ? res.data.message : 'Error al reconstruir archivo.';
-                            showAlert(msg, 'warning', 'Aviso de Reconstrucción');
-                            $btn.prop('disabled', false).text('🛠️ Reconstruir Archivo Oficial');
-                        }
-                    },
-                    error: function () {
-                        showAlert('Error de conexión al intentar reconstruir el archivo.', 'danger', 'Error');
-                        $btn.prop('disabled', false).text('🛠️ Reconstruir Archivo Oficial');
-                    }
-                });
-            },
-            null,
-            { title: 'Reconstruir Archivo Vital', icon: '🛠️', btnOkText: 'Reconstruir Ahora' }
-        );
     });
 
     // Redimensionar canvas al cambiar tamaño de ventana

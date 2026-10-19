@@ -110,7 +110,7 @@ class NexaGuard_Firewall {
 
         // 5. Filtro en vivo Anti-ClearFake / EtherHiding (elimina el script malicioso en tiempo real)
         if (!empty($settings['anti_clearfake']) && !is_admin()) {
-            add_action('template_redirect', array(__CLASS__, 'start_buffer_filter'), 0);
+            add_filter('script_loader_tag', array(__CLASS__, 'filter_malicious_script_tag'), 10, 3);
         }
 
         // 6. Inspección WAF de peticiones entrantes
@@ -198,79 +198,48 @@ class NexaGuard_Firewall {
             return;
         }
 
-        status_header(503);
-        header('Retry-After: 3600');
+        if (!headers_sent()) {
+            header('Retry-After: 3600');
+        }
+
+        ob_start();
         ?>
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Mantenimiento de Seguridad · NexaGuard</title>
-            <style>
-                body{background:#0b1030;color:#eaf0ff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;padding:24px;box-sizing:border-box}
-                .box{background:#111a44;border:1px solid rgba(255,207,51,.35);border-radius:18px;padding:36px 30px;max-width:540px;width:100%;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.65);box-sizing:border-box}
-                .ic{font-size:3.2rem;margin-bottom:12px;filter:drop-shadow(0 4px 12px rgba(255,207,51,.3))}
-                h1{font-size:1.55rem;margin:0 0 12px;color:#ffcf33;font-weight:700;line-height:1.3}
-                p{color:#b6c4eb;font-size:.95rem;line-height:1.6;margin:0 0 18px}
-                .badge{font-size:.78rem;font-weight:700;letter-spacing:.05em;background:rgba(255,207,51,.15);color:#ffcf33;border:1px solid rgba(255,207,51,.3);padding:.4em 1.1em;border-radius:999px;display:inline-block;margin-bottom:16px}
-                .actions{display:flex;flex-direction:column;gap:12px;margin:20px 0 16px}
-                .btn-admin{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#ffcf33,#f0b90b);color:#0b1030;font-weight:700;font-size:.95rem;text-decoration:none;padding:12px 20px;border-radius:10px;box-shadow:0 4px 15px rgba(255,207,51,.3);transition:transform .15s ease,box-shadow .15s ease}
-                .btn-admin:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,207,51,.45)}
-                .divider{display:flex;align-items:center;text-align:center;color:#4c5b8a;font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;margin:24px 0 18px}
-                .divider::before,.divider::after{content:'';flex:1;border-bottom:1px solid rgba(255,255,255,.1)}
-                .divider:not(:empty)::before{margin-right:12px}
-                .divider:not(:empty)::after{margin-left:12px}
-                .support-box{background:rgba(15,24,65,.6);border:1px solid rgba(107,140,255,.2);border-radius:12px;padding:18px;text-align:left}
-                .support-title{display:flex;align-items:center;gap:8px;font-size:.88rem;font-weight:600;color:#eaf0ff;margin-bottom:6px}
-                .support-desc{font-size:.82rem;color:#8fa2d4;line-height:1.5;margin:0 0 14px}
-                .support-links{display:flex;flex-wrap:wrap;gap:10px}
-                .btn-support{display:inline-flex;align-items:center;gap:6px;background:rgba(107,140,255,.15);border:1px solid rgba(107,140,255,.35);color:#b6c4eb;text-decoration:none;font-size:.82rem;font-weight:600;padding:8px 14px;border-radius:8px;transition:all .15s ease}
-                .btn-support:hover{background:rgba(107,140,255,.28);color:#fff;border-color:rgba(107,140,255,.6)}
-                .footer-brand{margin-top:22px;font-size:.78rem;color:#5a6b99}
-                .footer-brand a{color:#ffcf33;text-decoration:none}
-            </style>
-        </head>
-        <body>
-            <div class="box">
-                <div class="ic">🛡️</div>
-                <div class="badge">AISLAMIENTO PREVENTIVO ACTIVO</div>
-                <h1>Sitio en Modo Mantenimiento de Seguridad</h1>
-                <p>Este sitio web se encuentra en aislamiento de seguridad temporal mientras se completan tareas de auditoría, desinfección forense o mitigación de incidentes con <strong>NexaGuard Security</strong>.</p>
-                
-                <div class="actions">
-                    <a href="<?php echo esc_url(wp_login_url(admin_url())); ?>" class="btn-admin">
-                        <span>🔐</span> Acceso para Administradores
+        <div class="box" style="background:#111a44;border:1px solid rgba(255,207,51,.35);border-radius:18px;padding:36px 30px;max-width:540px;width:100%;margin:40px auto;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.65);color:#eaf0ff;font-family:system-ui,-apple-system,sans-serif;">
+            <div style="font-size:3.2rem;margin-bottom:12px;">🛡️</div>
+            <div style="font-size:.78rem;font-weight:700;letter-spacing:.05em;background:rgba(255,207,51,.15);color:#ffcf33;border:1px solid rgba(255,207,51,.3);padding:.4em 1.1em;border-radius:999px;display:inline-block;margin-bottom:16px;">AISLAMIENTO PREVENTIVO ACTIVO</div>
+            <h1 style="font-size:1.55rem;margin:0 0 12px;color:#ffcf33;font-weight:700;line-height:1.3;">Sitio en Modo Mantenimiento de Seguridad</h1>
+            <p style="color:#b6c4eb;font-size:.95rem;line-height:1.6;margin:0 0 18px;">Este sitio web se encuentra en aislamiento de seguridad temporal mientras se completan tareas de auditoría, desinfección forense o mitigación de incidentes con <strong>NexaGuard Security</strong>.</p>
+            
+            <div style="margin:20px 0 16px;">
+                <a href="<?php echo esc_url(wp_login_url(admin_url())); ?>" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#ffcf33,#f0b90b);color:#0b1030;font-weight:700;font-size:.95rem;text-decoration:none;padding:12px 20px;border-radius:10px;">
+                    <span>🔐</span> Acceso para Administradores
+                </a>
+            </div>
+
+            <div style="background:rgba(15,24,65,.6);border:1px solid rgba(107,140,255,.2);border-radius:12px;padding:18px;text-align:left;margin-top:20px;">
+                <div style="font-size:.88rem;font-weight:600;color:#eaf0ff;margin-bottom:6px;">
+                    <span>💬</span> ¿Necesitas ayuda o eres el propietario?
+                </div>
+                <div style="font-size:.82rem;color:#8fa2d4;line-height:1.5;margin:0 0 14px;">
+                    Si este aislamiento fue activado por una emergencia de seguridad o requieres soporte técnico para desinfectar tu web, contacta directamente con nuestro equipo de respuesta a incidentes.
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;">
+                    <a href="https://www.nexaguards.com/#contacto" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;background:rgba(107,140,255,.15);border:1px solid rgba(107,140,255,.35);color:#b6c4eb;text-decoration:none;font-size:.82rem;font-weight:600;padding:8px 14px;border-radius:8px;">
+                        <span>🚀</span> Enviar Mensaje a Soporte
+                    </a>
+                    <a href="mailto:contacto@nexaguards.com?subject=Soporte%20NexaGuard%20-%20Aislamiento%20de%20Seguridad" style="display:inline-flex;align-items:center;gap:6px;background:rgba(107,140,255,.15);border:1px solid rgba(107,140,255,.35);color:#b6c4eb;text-decoration:none;font-size:.82rem;font-weight:600;padding:8px 14px;border-radius:8px;">
+                        <span>✉️</span> contacto@nexaguards.com
                     </a>
                 </div>
-
-                <div class="divider">Soporte y Asistencia</div>
-
-                <div class="support-box">
-                    <div class="support-title">
-                        <span>💬</span> ¿Necesitas ayuda o eres el propietario?
-                    </div>
-                    <div class="support-desc">
-                        Si este aislamiento fue activado por una emergencia de seguridad o requieres soporte técnico para desinfectar tu web, contacta directamente con nuestro equipo de respuesta a incidentes.
-                    </div>
-                    <div class="support-links">
-                        <a href="https://www.nexaguards.com/#contacto" target="_blank" rel="noopener noreferrer" class="btn-support">
-                            <span>🚀</span> Enviar Mensaje a Soporte
-                        </a>
-                        <a href="mailto:contacto@nexaguards.com?subject=Soporte%20NexaGuard%20-%20Aislamiento%20de%20Seguridad" class="btn-support">
-                            <span>✉️</span> contacto@nexaguards.com
-                        </a>
-                    </div>
-                </div>
-
-                <div class="footer-brand">
-                    Protegido por <a href="https://www.nexaguards.com" target="_blank" rel="noopener noreferrer">NexaGuard Security</a> · Respuesta a Incidentes
-                </div>
             </div>
-        </body>
-        </html>
+
+            <div style="margin-top:22px;font-size:.78rem;color:#5a6b99;">
+                Protegido por <a href="https://www.nexaguards.com" target="_blank" rel="noopener noreferrer" style="color:#ffcf33;text-decoration:none;">NexaGuard Security</a> · Respuesta a Incidentes
+            </div>
+        </div>
         <?php
-        exit;
+        $output = ob_get_clean();
+        wp_die($output, 'Mantenimiento de Seguridad · NexaGuard', array('response' => 503, 'code' => 'nexaguard_lockdown'));
     }
 
     public static function send_security_headers() {
@@ -281,8 +250,20 @@ class NexaGuard_Firewall {
         }
     }
 
-    public static function start_buffer_filter() {
-        ob_start(array(__CLASS__, 'filter_malicious_output'));
+    public static function filter_malicious_script_tag($tag, $handle = '', $src = '') {
+        if (empty($tag)) return $tag;
+
+        // 1. Filtrar inyección de ClearFake / EtherHiding
+        if (strpos($tag, 'data:text/javascript;base64') !== false || strpos($src, 'data:text/javascript;base64') !== false || strpos($tag, 'bsc-testnet-rpc') !== false) {
+            return "<!-- NexaGuard WAF: Bloqueado script malicioso ClearFake -->\n";
+        }
+
+        // 2. Filtrar scripts de engaño ClickFix / PowerShell smuggling
+        if (stripos($tag, 'powershell') !== false || stripos($tag, 'mshta') !== false) {
+            return "<!-- NexaGuard WAF: Bloqueado script de engaño ClickFix -->\n";
+        }
+
+        return $tag;
     }
 
     public static function filter_malicious_output($html) {
@@ -430,38 +411,19 @@ class NexaGuard_Firewall {
         if (!headers_sent()) {
             header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0', true);
             header('Pragma: no-cache', true);
-            if (function_exists('status_header')) {
-                status_header(403);
-            } else {
-                header('HTTP/1.1 403 Forbidden', true, 403);
-            }
         }
+
+        ob_start();
         ?>
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-            <meta charset="utf-8">
-            <title>403 Acceso Denegado · NexaGuard WAF</title>
-            <style>
-                body{background:#0b1030;color:#eaf0ff;font-family:system-ui,-apple-system,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
-                .box{background:#111a44;border:1px solid rgba(255,69,96,.4);border-radius:16px;padding:32px;max-width:520px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.6)}
-                .ic{font-size:3rem;margin-bottom:12px}
-                h1{font-size:1.5rem;margin:0 0 10px;color:#ff9fb0}
-                p{color:#b6c4eb;font-size:.95rem;line-height:1.5;margin:0 0 16px}
-                .tag{font-size:.78rem;font-weight:700;background:rgba(255,69,96,.15);color:#ff9fb0;padding:.4em 1em;border-radius:999px;display:inline-block}
-            </style>
-        </head>
-        <body>
-            <div class="box">
-                <div class="ic">🛡️</div>
-                <h1>Petición bloqueada por NexaGuard WAF</h1>
-                <p>El cortafuegos perimetral de NexaGuard Security detectó una solicitud sospechosa o potencialmente peligrosa y bloqueó el acceso preventivamente.</p>
-                <div class="tag">Motivo: <?php echo esc_html($reason); ?></div>
-            </div>
-        </body>
-        </html>
+        <div style="background:#111a44;border:1px solid rgba(255,69,96,.4);border-radius:16px;padding:32px;max-width:520px;margin:40px auto;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.6);color:#eaf0ff;font-family:system-ui,-apple-system,sans-serif;">
+            <div style="font-size:3rem;margin-bottom:12px;">🛡️</div>
+            <h1 style="font-size:1.5rem;margin:0 0 10px;color:#ff9fb0;">Petición bloqueada por NexaGuard WAF</h1>
+            <p style="color:#b6c4eb;font-size:.95rem;line-height:1.5;margin:0 0 16px;">El cortafuegos perimetral de NexaGuard Security detectó una solicitud sospechosa o potencialmente peligrosa y bloqueó el acceso preventivamente.</p>
+            <div style="font-size:.78rem;font-weight:700;background:rgba(255,69,96,.15);color:#ff9fb0;padding:.4em 1em;border-radius:999px;display:inline-block;">Motivo: <?php echo esc_html($reason); ?></div>
+        </div>
         <?php
-        exit;
+        $output = ob_get_clean();
+        wp_die($output, '403 Acceso Denegado · NexaGuard WAF', array('response' => 403, 'code' => 'nexaguard_waf_blocked'));
     }
 
     /**
@@ -566,7 +528,7 @@ class NexaGuard_Firewall {
             }
 
             // Control anti-saturación: máximo 1 correo cada 10 min para la misma IP y tipo de ataque
-            $throttle_key = 'ng_mail_thr_' . md5($log['ip'] . $log['reason']);
+            $throttle_key = 'nexaguard_mail_thr_' . md5($log['ip'] . $log['reason']);
             if (function_exists('get_transient') && get_transient($throttle_key)) {
                 return;
             }
@@ -736,7 +698,7 @@ class NexaGuard_Firewall {
         }
 
         $hash = md5($ip);
-        $strike_key = 'ng_waf_stk_' . $hash;
+        $strike_key = 'nexaguard_waf_stk_' . $hash;
         $strikes = (int) get_transient($strike_key);
         $strikes++;
 
@@ -779,74 +741,46 @@ class NexaGuard_Firewall {
             header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0', true);
             header('Pragma: no-cache', true);
             header('Retry-After: ' . ($hours_left * 3600), true);
-            if (function_exists('status_header')) {
-                status_header(403);
-            } else {
-                header('HTTP/1.1 403 Forbidden', true, 403);
-            }
         }
+
+        ob_start();
         ?>
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>403 Aislamiento Disciplinario · NexaGuard Cyber Jail</title>
-            <style>
-                body{background:#060818;color:#eaf0ff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
-                .box{background:#0e1333;border:2px solid #ff4560;border-radius:18px;padding:36px 30px;max-width:540px;width:100%;text-align:center;box-shadow:0 0 50px rgba(255,69,96,0.35);box-sizing:border-box}
-                .ic{font-size:3.4rem;margin-bottom:12px;filter:drop-shadow(0 0 20px rgba(255,69,96,0.6))}
-                h1{font-size:1.6rem;margin:0 0 12px;color:#ff6b82;font-weight:800;letter-spacing:0.02em}
-                p{color:#b6c4eb;font-size:0.95rem;line-height:1.6;margin:0 0 18px}
-                .badge{font-size:0.76rem;font-weight:800;letter-spacing:0.08em;background:rgba(255,69,96,0.2);color:#ff6b82;border:1px solid rgba(255,69,96,0.45);padding:0.45em 1.2em;border-radius:999px;display:inline-block;margin-bottom:18px;text-transform:uppercase}
-                .jail-card{background:rgba(6,8,24,0.7);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;margin:20px 0;text-align:left;font-size:0.86rem}
-                .jail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
-                .jail-row:last-child{border-bottom:none}
-                .jail-label{color:#8fa2d4;font-weight:600}
-                .jail-val{color:#ffffff;font-family:monospace;font-weight:700}
-                .jail-countdown{color:#ffcf33;font-weight:800}
-                .footer-brand{margin-top:22px;font-size:0.78rem;color:#5a6b99}
-                .footer-brand a{color:#ffcf33;text-decoration:none}
-            </style>
-        </head>
-        <body>
-            <div class="box">
-                <div class="ic">🚨</div>
-                <div class="badge">NEXAGUARD CYBER JAIL // AISLAMIENTO DISCIPLINARIO</div>
-                <h1>IP Bloqueada en Cárcel Digital (24 Horas)</h1>
-                <p>Tu dirección IP ha sido aislada perimetralmente debido a la <strong>reincidencia continuada de solicitudes maliciosas o inyecciones de código</strong> detectadas y neutralizadas por el motor WAF de NexaGuard Security.</p>
-                
-                <div class="jail-card">
-                    <div class="jail-row">
-                        <span class="jail-label">IP Aislada:</span>
-                        <span class="jail-val"><?php echo esc_html($ip); ?></span>
-                    </div>
-                    <div class="jail-row">
-                        <span class="jail-label">Motivo de Aislamiento:</span>
-                        <span class="jail-val" style="color:#ff6b82;">Reincidencia hostil (3+ ataques en 10 min)</span>
-                    </div>
-                    <div class="jail-row">
-                        <span class="jail-label">Duración del Bloqueo:</span>
-                        <span class="jail-val jail-countdown">Aprox. <?php echo intval($hours_left); ?> hora(s) restantes</span>
-                    </div>
-                    <div class="jail-row">
-                        <span class="jail-label">Acción Perimetral:</span>
-                        <span class="jail-val" style="color:#3de8a4;">Conexión cortada sin carga de PHP</span>
-                    </div>
+        <div style="background:#0e1333;border:2px solid #ff4560;border-radius:18px;padding:36px 30px;max-width:540px;width:100%;margin:40px auto;text-align:center;box-shadow:0 0 50px rgba(255,69,96,0.35);color:#eaf0ff;font-family:system-ui,-apple-system,sans-serif;">
+            <div style="font-size:3.4rem;margin-bottom:12px;">🚨</div>
+            <div style="font-size:0.76rem;font-weight:800;letter-spacing:0.08em;background:rgba(255,69,96,0.2);color:#ff6b82;border:1px solid rgba(255,69,96,0.45);padding:0.45em 1.2em;border-radius:999px;display:inline-block;margin-bottom:18px;text-transform:uppercase;">NEXAGUARD CYBER JAIL // AISLAMIENTO DISCIPLINARIO</div>
+            <h1 style="font-size:1.6rem;margin:0 0 12px;color:#ff6b82;font-weight:800;letter-spacing:0.02em;">IP Bloqueada en Cárcel Digital (24 Horas)</h1>
+            <p style="color:#b6c4eb;font-size:0.95rem;line-height:1.6;margin:0 0 18px;">Tu dirección IP ha sido aislada perimetralmente debido a la <strong>reincidencia continuada de solicitudes maliciosas o inyecciones de código</strong> detectadas y neutralizadas por el motor WAF de NexaGuard Security.</p>
+            
+            <div style="background:rgba(6,8,24,0.7);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;margin:20px 0;text-align:left;font-size:0.86rem;">
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <span style="color:#8fa2d4;font-weight:600;">IP Aislada:</span>
+                    <span style="color:#ffffff;font-family:monospace;font-weight:700;"><?php echo esc_html($ip); ?></span>
                 </div>
-
-                <p style="font-size:0.84rem;color:#8fa2d4;margin:0;">
-                    Si eres un usuario legítimo y consideras que tu IP fue bloqueada por error debido a una regla de seguridad estricta, contacta con el administrador del sitio para solicitar la liberación de tu IP.
-                </p>
-
-                <div class="footer-brand">
-                    Blindaje perimetral activo por <a href="https://www.nexaguards.com" target="_blank" rel="noopener noreferrer">NexaGuard Security</a>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <span style="color:#8fa2d4;font-weight:600;">Motivo de Aislamiento:</span>
+                    <span style="color:#ff6b82;font-family:monospace;font-weight:700;">Reincidencia hostil (3+ ataques en 10 min)</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <span style="color:#8fa2d4;font-weight:600;">Duración del Bloqueo:</span>
+                    <span style="color:#ffcf33;font-family:monospace;font-weight:800;">Aprox. <?php echo intval($hours_left); ?> hora(s) restantes</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                    <span style="color:#8fa2d4;font-weight:600;">Acción Perimetral:</span>
+                    <span style="color:#3de8a4;font-family:monospace;font-weight:700;">Conexión cortada sin carga de PHP</span>
                 </div>
             </div>
-        </body>
-        </html>
+
+            <p style="font-size:0.84rem;color:#8fa2d4;margin:0;">
+                Si eres un usuario legítimo y consideras que tu IP fue bloqueada por error debido a una regla de seguridad estricta, contacta con el administrador del sitio para solicitar la liberación de tu IP.
+            </p>
+
+            <div style="margin-top:22px;font-size:0.78rem;color:#5a6b99;">
+                Blindaje perimetral activo por <a href="https://www.nexaguards.com" target="_blank" rel="noopener noreferrer" style="color:#ffcf33;text-decoration:none;">NexaGuard Security</a>
+            </div>
+        </div>
         <?php
-        exit;
+        $output = ob_get_clean();
+        wp_die($output, '403 Aislamiento Disciplinario · NexaGuard Cyber Jail', array('response' => 403, 'code' => 'nexaguard_jail_blocked'));
     }
 
     /* =========================================================================
@@ -908,7 +842,7 @@ class NexaGuard_Firewall {
         }
 
         if (!empty($tampered)) {
-            $alert_throttle = 'ng_tripwire_alert_sent';
+            $alert_throttle = 'nexaguard_tripwire_alert_sent';
             if (!get_transient($alert_throttle)) {
                 set_transient($alert_throttle, 1, 30 * MINUTE_IN_SECONDS);
                 $msg = '¡Alerta Tripwire! Alteración crítica no autorizada en archivos del núcleo: ' . implode(', ', $tampered);
@@ -927,7 +861,7 @@ class NexaGuard_Firewall {
 
         delete_option('nexaguard_tripwire_baseline');
         delete_transient('nexaguard_tripwire_check_cache');
-        delete_transient('ng_tripwire_alert_sent');
+        delete_transient('nexaguard_tripwire_alert_sent');
         self::check_file_tripwire();
 
         wp_send_json_success(array('message' => 'Línea base criptográfica del Tripwire recalculada con éxito.'));
@@ -946,7 +880,7 @@ class NexaGuard_Firewall {
             }
 
             // Anti-saturación: máximo 1 webhook cada 60s por IP y vector
-            $throttle_key = 'ng_wbhk_thr_' . md5($log['ip'] . $log['reason']);
+            $throttle_key = 'nexaguard_wbhk_thr_' . md5($log['ip'] . $log['reason']);
             if (function_exists('get_transient') && get_transient($throttle_key)) {
                 return;
             }
@@ -1103,36 +1037,20 @@ class NexaGuard_Firewall {
     }
 
     public static function render_lockout_screen($minutes, $ip) {
-        status_header(429);
         nocache_headers();
+
+        ob_start();
         ?>
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-            <meta charset="utf-8">
-            <title>Bloqueo de Seguridad · NexaGuard Protection</title>
-            <style>
-                body{background:#0b1030;color:#eaf0ff;font-family:system-ui,-apple-system,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
-                .box{background:#111a44;border:1px solid rgba(255,69,96,.5);border-radius:18px;padding:36px;max-width:520px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.7)}
-                .ic{font-size:3.5rem;margin-bottom:12px}
-                h1{font-size:1.55rem;margin:0 0 10px;color:#ff9fb0}
-                p{color:#b6c4eb;font-size:.95rem;line-height:1.6;margin:0 0 18px}
-                .time-box{background:rgba(255,69,96,.15);border:1px solid rgba(255,69,96,.3);border-radius:10px;padding:12px;margin-bottom:18px;color:#ffcf33;font-weight:700;font-size:1.1rem}
-                .tag{font-size:.8rem;color:#7888b5;display:block}
-            </style>
-        </head>
-        <body>
-            <div class="box">
-                <div class="ic">🛑</div>
-                <h1>Bloqueo Temporal por Seguridad</h1>
-                <p>NexaGuard Security ha bloqueado temporalmente los accesos desde tu dirección IP debido a múltiples intentos consecutivos fallidos de inicio de sesión.</p>
-                <div class="time-box">⏳ Tiempo restante de bloqueo: ~<?php echo intval($minutes); ?> minutos</div>
-                <span class="tag">Dirección IP protegida: <?php echo esc_html($ip); ?></span>
-            </div>
-        </body>
-        </html>
+        <div style="background:#111a44;border:1px solid rgba(255,69,96,.5);border-radius:18px;padding:36px;max-width:520px;margin:40px auto;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.7);color:#eaf0ff;font-family:system-ui,-apple-system,sans-serif;">
+            <div style="font-size:3.5rem;margin-bottom:12px;">🛑</div>
+            <h1 style="font-size:1.55rem;margin:0 0 10px;color:#ff9fb0;">Bloqueo Temporal por Seguridad</h1>
+            <p style="color:#b6c4eb;font-size:.95rem;line-height:1.6;margin:0 0 18px;">NexaGuard Security ha bloqueado temporalmente los accesos desde tu dirección IP debido a múltiples intentos consecutivos fallidos de inicio de sesión.</p>
+            <div style="background:rgba(255,69,96,.15);border:1px solid rgba(255,69,96,.3);border-radius:10px;padding:12px;margin-bottom:18px;color:#ffcf33;font-weight:700;font-size:1.1rem;">⏳ Tiempo restante de bloqueo: ~<?php echo intval($minutes); ?> minutos</div>
+            <span style="font-size:.8rem;color:#7888b5;display:block;">Dirección IP protegida: <?php echo esc_html($ip); ?></span>
+        </div>
         <?php
-        exit;
+        $output = ob_get_clean();
+        wp_die($output, 'Bloqueo de Seguridad · NexaGuard Protection', array('response' => 429, 'code' => 'nexaguard_login_lockout'));
     }
 
     /* =========================================================================
@@ -1377,8 +1295,8 @@ class NexaGuard_Firewall {
         $bg_preset = !empty($settings['login_bg_preset']) ? sanitize_key($settings['login_bg_preset']) : 'deep-navy';
         $logo_url = !empty($settings['login_logo_image']) ? esc_url_raw($settings['login_logo_image']) : '';
 
+        ob_start();
         ?>
-        <style id="nexaguard-login-customizer">
             body.login {
                 <?php if (!empty($bg_url)): ?>
                 background-image: url("<?php echo esc_url($bg_url); ?>") !important;
@@ -1558,7 +1476,10 @@ class NexaGuard_Firewall {
                 border-left-color: #3de8a4 !important;
                 color: #d1fae5 !important;
             }
-        </style>
         <?php
+        $css = ob_get_clean();
+        wp_register_style('nexaguard-login-customizer', false);
+        wp_enqueue_style('nexaguard-login-customizer');
+        wp_add_inline_style('nexaguard-login-customizer', $css);
     }
 }
