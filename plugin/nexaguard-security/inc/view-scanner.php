@@ -1406,7 +1406,7 @@ $rollback_count = count($backup_history);
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015);">
                             <td style="padding: 13px 20px;">
                                 <strong style="color: #ffffff;">Monitor de Núcleo (Sentinel)</strong>
-                                <div style="font-size: 0.8rem; color: #94a6d1;">Verificación de integridad contra hashes oficiales de WordPress.org</div>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Verificación de integridad con los hashes oficiales de WordPress.org</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ En Vivo</span>
