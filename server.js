@@ -116,6 +116,7 @@ function createServer(opts = {}) {
     fs.readFile(file, (err, data) => {
       if (err) return sendJson(res, 404, { error: 'No encontrado' });
       const h = Object.assign({ 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' }, SEC);
+      if (path.extname(file) === '.html') h['Cache-Control'] = 'no-cache, must-revalidate';
       if (path.basename(file) === 'panel.html') { h['Content-Security-Policy'] = PANEL_CSP; h['Cache-Control'] = 'no-store'; }
       res.writeHead(200, h); res.end(data);
     });
