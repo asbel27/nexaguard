@@ -259,7 +259,7 @@ class NexaGuard_Scanner {
             'type'     => 'backdoor'
         ),
         'seo_spam_injection' => array(
-            'regex'    => '/((style\s*=\s*[\'"][^\'"]*(display\s*:\s*none|visibility\s*:\s*hidden|position\s*:\s*absolute;\s*left\s*:\s*-[0-9]{3,}px|text-indent\s*:\s*-[0-9]{3,}px)[^\'"]*[\'"])|class\s*=\s*[\'"][^\'"]*hidden[^\'"]*[\'"])[^>]*>[^<]*<a[^>]+href=[^>]+>(online-casino|viagra|cialis|slot-online|judi-online|poker-online|payday-loan|replica-watch|baccarat|porn|sex-video)/i',
+            'regex'    => '/((style\s*=\s*[\'"][^\'"]*(display\s*:\s*none|visibility\s*:\s*hidden|position\s*:\s*absolute;\s*left\s*:\s*-[0-9]{3,}px|text-indent\s*:\s*-[0-9]{3,}px)[^\'"]*[\'"])|class\s*=\s*[\'"][^\'"]*hidden[^\'"]*[\'"])[^>]*>[^<]*<a[^>]+href=[^>]+>(online-casino|viagra|cialis|slot-online|judi-online|poker-online|payday-loan|replica-watch|baccarat|porn|sex-video|spinboss|slot-gacor|pragmatic|digital-gambling|apuestas|sbobet)/i',
             'title'    => 'Inyección de Spam SEO Oculto (Black Hat SEO)',
             'desc'     => 'Enlaces o textos ocultos con CSS invisible para monetización ilegal (casinos, medicamentos ilegales, apuestas).',
             'severity' => 'warn',
@@ -1402,6 +1402,9 @@ class NexaGuard_Scanner {
                 OR option_value LIKE '%location.replace%'
                 OR option_value LIKE '%online-casino%'
                 OR option_value LIKE '%slot-online%'
+                OR option_value LIKE '%spinboss%'
+                OR option_value LIKE '%slot-gacor%'
+                OR option_value LIKE '%digital-gambling%'
                 OR option_value LIKE '%viagra%')
              LIMIT 350"
         );
@@ -1462,6 +1465,11 @@ class NexaGuard_Scanner {
                  OR post_content LIKE '%location.replace%'
                  OR post_content LIKE '%online-casino%'
                  OR post_content LIKE '%slot-online%'
+                 OR post_content LIKE '%spinboss%'
+                 OR post_content LIKE '%slot-gacor%'
+                 OR post_content LIKE '%digital-gambling%'
+                 OR post_name LIKE '%spinboss%'
+                 OR post_name LIKE '%digital-gambling%'
                  OR post_content LIKE '%viagra%'
                  OR post_content LIKE '%display:none%http%')
              LIMIT 100"

@@ -369,10 +369,30 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => 'Publicación o plantilla no encontrada.');
         }
 
+        // Si el post entero es una publicación clandestina de spam inyectada por el atacante
+        $slug = strtolower($post->post_name);
+        $title = strtolower($post->post_title);
+        $is_pure_spam_post = (
+            strpos($slug, 'spinboss') !== false ||
+            strpos($slug, 'digital-gambling') !== false ||
+            strpos($slug, 'slot-gacor') !== false ||
+            strpos($title, 'spinboss') !== false ||
+            strpos($title, 'digital gambling') !== false
+        );
+
+        if ($is_pure_spam_post) {
+            wp_trash_post($post_id);
+            return array('success' => true, 'message' => 'Publicación clandestina de spam SEO enviada a la papelera.');
+        }
+
         $content = $post->post_content;
         $cleaned = preg_replace('/<script[^>]*data:text\/javascript;base64,[^>]*><\/script>/i', '', $content);
         $cleaned = preg_replace('/<script[^>]*src=["\']data:text\/javascript;base64,[^>]*><\/script>/i', '', $cleaned);
         $cleaned = preg_replace('/<script[^>]*>[^<]*(bsc-testnet|0xA1decFB|0x46790e2|turnstile|challenge-platform)[^<]*<\/script>/i', '', $cleaned);
+
+        // Limpieza de enlaces ocultos y spam SEO (Black Hat Casino / Pharma)
+        $cleaned = preg_replace('/<div[^>]*style=["\'][^"\']*(display:\s*none|visibility:\s*hidden)[^"\']*["\'][^>]*>[\s\S]*?(online-casino|slot|spinboss|viagra|cialis|gambling)[\s\S]*?<\/div>/i', '', $cleaned);
+        $cleaned = preg_replace('/<a[^>]+href=["\'][^"\']*(spinboss|casino|slot|gambling)[^"\']*["\'][^>]*>.*?<\/a>/i', '', $cleaned);
 
         if ($cleaned !== $content) {
             wp_update_post(array(
@@ -382,7 +402,7 @@ class NexaGuard_Cleaner {
             return array('success' => true, 'message' => 'Plantilla/Publicación desinfectada exitosamente.');
         }
 
-        return array('success' => false, 'message' => 'No se encontraron scripts desinfectables en esta entrada.');
+        return array('success' => false, 'message' => 'No se encontraron scripts ni enlaces maliciosos desinfectables en esta entrada.');
     }
 
     private function remove_cron_hook($hook_name) {
