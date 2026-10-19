@@ -117,3 +117,4 @@ function Generate-Icon([int]$size, [string]$outPath) {
 
 Generate-Icon 256 "C:\Users\DEVX\NEXAGUARD\nexaguard\wp-org-assets\icon-256x256.png"
 Generate-Icon 128 "C:\Users\DEVX\NEXAGUARD\nexaguard\wp-org-assets\icon-128x128.png"
+

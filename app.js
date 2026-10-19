@@ -352,12 +352,86 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     if (!ctx.user) return send(ctx.res, 200, { user: null });
     send(ctx.res, 200, { user: publicUser(ctx.user) });
   });
-  // Formulario de contacto seguro con notificación al correo corporativo / Gmail
+  // Desafío anti-spam ligero, sin trackers de terceros y firmado con HMAC
+  route('GET', '/api/captcha', null, (ctx) => {
+    const a = Math.floor(Math.random() * 8) + 2; // 2..9
+    const b = Math.floor(Math.random() * 8) + 1; // 1..8
+    const ts = Date.now();
+    const hmacSecret = cfg.adminPassword || 'nexaguard-captcha-secret-2026';
+    const payload = `${a}:${b}:${ts}`;
+    const sig = crypto.createHmac('sha256', hmacSecret).update(payload).digest('hex');
+    const token = Buffer.from(payload).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') + '.' + sig;
+    send(ctx.res, 200, {
+      question: `¿Cuánto es ${a} + ${b}?`,
+      token: token
+    });
+  });
+
+  // Formulario de contacto seguro con protección anti-spam de 3 capas
   route('POST', '/api/contact', null, async (ctx) => {
     const { req, res, body } = ctx, ip = clientIp(req);
     if (limited('contact|' + ip, 6, 10 * 60e3)) {
       return fail(res, 429, 'Has enviado varios mensajes recientemente. Por favor espera unos minutos antes de intentar de nuevo.');
     }
+
+    // Capa 1: Trampa Honeypot invisible (caída silenciosa para bots)
+    if (body.website_url_hp && String(body.website_url_hp).trim().length > 0) {
+      // Respondemos con 200 para despistar al bot sin enviar correos ni gastar recursos
+      return send(res, 200, { ok: true, message: '¡Mensaje enviado con éxito! Te responderemos muy pronto a tu correo.' });
+    }
+
+    // Capa 2 y 3: Captcha y Verificación criptográfica con control de tiempo
+    const captchaToken = clean(body.captcha_token, 400);
+    const captchaAnswer = clean(body.captcha_answer, 20);
+
+    if (!captchaToken || !captchaAnswer) {
+      return fail(res, 400, 'Por favor resuelve la pregunta de seguridad anti-spam.');
+    }
+
+    const tokenParts = captchaToken.split('.');
+    if (tokenParts.length !== 2) {
+      return fail(res, 400, 'Token de seguridad inválido. Por favor recarga el formulario.');
+    }
+
+    const [b64Payload, sig] = tokenParts;
+    const hmacSecret = cfg.adminPassword || 'nexaguard-captcha-secret-2026';
+    let decodedPayload = '';
+    try {
+      const b64 = b64Payload.replace(/-/g, '+').replace(/_/g, '/');
+      decodedPayload = Buffer.from(b64, 'base64').toString('utf8');
+    } catch (_) {
+      return fail(res, 400, 'Token de seguridad no procesable.');
+    }
+
+    const expectedSig = crypto.createHmac('sha256', hmacSecret).update(decodedPayload).digest('hex');
+    if (sig !== expectedSig) {
+      return fail(res, 400, 'La firma de seguridad no coincide. Intenta de nuevo.');
+    }
+
+    const [sa, sb, sts] = decodedPayload.split(':');
+    const a = parseInt(sa, 10);
+    const b = parseInt(sb, 10);
+    const ts = parseInt(sts, 10);
+
+    if (isNaN(a) || isNaN(b) || isNaN(ts)) {
+      return fail(res, 400, 'Parámetros de seguridad corruptos.');
+    }
+
+    const now = Date.now();
+    // Mínimo 1.5 segundos: bots headless que disparan instantáneamente
+    if (now - ts < 1500) {
+      return fail(res, 400, 'Envío demasiado rápido. Por favor tómate un momento para revisar tus datos.');
+    }
+    // Máximo 15 minutos: evitar reutilización de tokens viejos
+    if (now - ts > 15 * 60 * 1000) {
+      return fail(res, 400, 'La sesión de seguridad ha expirado. Haz clic en recargar verificación.');
+    }
+
+    // Verificación matemática
+    if (parseInt(captchaAnswer, 10) !== (a + b)) {
+      return fail(res, 400, 'Respuesta incorrecta a la pregunta de seguridad. Inténtalo de nuevo.');
+    }
+
     const nombre = clean(body.nombre, 80);
     const apellido = clean(body.apellido, 80);
     const telefono = clean(body.telefono, 35);

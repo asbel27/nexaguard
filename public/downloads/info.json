@@ -7,7 +7,7 @@
   "fallback_download_url": "https://www.nexaguards.com/downloads/nexaguard-security.zip",
   "tested": "6.7",
   "requires_php": "7.4",
-  "last_updated": "2026-10-18",
+  "last_updated": "2026-10-19",
   "sections": {
     "description": "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
     "changelog": "<h4>Versión 1.5.6</h4><ul><li><strong>Erradicaciones de Cortesía Gratuitas:</strong> El escáner forense ahora permite desinfectar y erradicar hasta 2 amenazas reales sin costo en la versión estándar.</li><li><strong>Monitor de Núcleo (Sentinel) en Vivo:</strong> Telemetría forense e inspección continua de integridad de archivos vitales abierta para todos los usuarios.</li><li><strong>Reordenamiento de Pestañas:</strong> Monitor de Núcleo reubicado junto al Escáner Forense y Vigilancia 24H para una navegación más intuitiva.</li><li><strong>Centinela Tripwire:</strong> Monitoreo perimetral y recálculo de línea base de wp-config.php e index.php desbloqueado.</li><li><strong>Integración con Pagos Cripto y Binance Pay:</strong> Activación instantánea de licencias PRO mediante NOWPayments.</li></ul>"

@@ -1826,6 +1826,27 @@ a[data-go],a[data-act]{cursor:pointer}
           <textarea class="in" id="cd-mensaje" name="mensaje" rows="3" placeholder="Cuéntanos con detalle qué ocurre en tu sitio o qué duda tienes..." required></textarea>
         </div>
 
+        <!-- Capa 1 Anti-Spam: Honeypot invisible -->
+        <div style="opacity:0;position:absolute;top:0;left:-9999px;height:0;width:0;z-index:-1;overflow:hidden;" aria-hidden="true" tabindex="-1">
+          <label for="cd-hp">No completes este campo si eres humano</label>
+          <input type="text" id="cd-hp" name="website_url_hp" tabindex="-1" autocomplete="off" value="">
+        </div>
+
+        <!-- Capa 2 y 3 Anti-Spam: Desafío matemático firmado con control temporal -->
+        <div class="cd-captcha-wrap" style="margin-top:4px;margin-bottom:8px;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:var(--c-muted,#94a3b8);display:flex;align-items:center;gap:6px;">
+              <svg class="ic" style="width:14px;height:14px;color:#10b981;"><use href="#i-shield"/></svg>
+              <span>Verificación de seguridad: <strong id="cdCaptchaPrompt" style="color:#f8fafc;font-size:13px;">Cargando...</strong></span>
+            </span>
+            <button type="button" id="cdRefreshCaptcha" title="Generar otra pregunta" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:3px;display:flex;align-items:center;line-height:1;border-radius:4px;">
+              <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            </button>
+          </div>
+          <input class="in" id="cd-captcha" name="captcha_answer" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Ingresa el resultado de la suma" autocomplete="off" required style="padding:8px 12px;font-size:14px;">
+          <input type="hidden" id="cd-captcha-token" name="captcha_token" value="">
+        </div>
+
         <p class="cd-err" id="cdErr" role="alert"></p>
 
         <button type="submit" class="btn btn-y cd-btn" id="cdSubmit">
@@ -3204,7 +3225,7 @@ $('#btnReset').addEventListener('click', function () {
   $('#ordId').textContent = 'NXG-' + (1000 + Math.floor(Math.random() * 9000));
 });
 
-/* ---------- Controlador del Formulario de Contacto Seguro ---------- */
+/* ---------- Controlador del Formulario de Contacto Seguro (Anti-Spam 3 Capas) ---------- */
 var contactDlg = $('#contactDlg');
 var contactForm = $('#contactForm');
 var cdErr = $('#cdErr');
@@ -3213,6 +3234,28 @@ var cdBtnText = $('#cdBtnText');
 var cdFormView = $('#cdFormView');
 var cdSuccessView = $('#cdSuccessView');
 var cdSuccessEmail = $('#cdSuccessEmail');
+var cdCaptchaPrompt = $('#cdCaptchaPrompt');
+var cdCaptchaToken = $('#cd-captcha-token');
+var cdCaptchaInput = $('#cd-captcha');
+var cdRefreshCaptcha = $('#cdRefreshCaptcha');
+
+async function refreshContactCaptcha() {
+  if (cdCaptchaPrompt) cdCaptchaPrompt.textContent = 'Cargando...';
+  if (cdCaptchaInput) cdCaptchaInput.value = '';
+  try {
+    var data = await acFetch('/api/captcha');
+    if (cdCaptchaPrompt) cdCaptchaPrompt.textContent = data.question || '¿Cuánto es 4 + 3?';
+    if (cdCaptchaToken) cdCaptchaToken.value = data.token || '';
+  } catch (err) {
+    if (cdCaptchaPrompt) cdCaptchaPrompt.textContent = 'Verificación lista';
+  }
+}
+
+if (cdRefreshCaptcha) {
+  cdRefreshCaptcha.addEventListener('click', function () {
+    refreshContactCaptcha();
+  });
+}
 
 function openContactDialog(data) {
   data = data || {};
@@ -3238,6 +3281,8 @@ function openContactDialog(data) {
     if (data.asunto) $('#cd-asunto').value = data.asunto;
     if (data.mensaje) $('#cd-mensaje').value = data.mensaje;
   }
+
+  refreshContactCaptcha();
 
   if (contactDlg.showModal) contactDlg.showModal();
   else contactDlg.setAttribute('open', '');
@@ -3280,6 +3325,9 @@ if (contactForm) {
     var correo = ($('#cd-correo').value || '').trim().toLowerCase();
     var asunto = ($('#cd-asunto').value || '').trim();
     var mensaje = ($('#cd-mensaje').value || '').trim();
+    var hpValue = ($('#cd-hp') ? $('#cd-hp').value : '');
+    var captchaAnswer = ($('#cd-captcha') ? $('#cd-captcha').value : '').trim();
+    var captchaToken = ($('#cd-captcha-token') ? $('#cd-captcha-token').value : '').trim();
 
     if (!nombre) {
       cdErr.textContent = 'Por favor escribe tu nombre.';
@@ -3305,6 +3353,12 @@ if (contactForm) {
       $('#cd-mensaje').focus();
       return;
     }
+    if (!captchaAnswer) {
+      cdErr.textContent = 'Por favor responde la pregunta de seguridad anti-spam.';
+      cdErr.classList.add('show');
+      $('#cd-captcha').focus();
+      return;
+    }
 
     cdSubmit.disabled = true;
     cdBtnText.innerHTML = '<span class="spin"></span> Enviando mensaje...';
@@ -3318,7 +3372,10 @@ if (contactForm) {
           telefono: telefono,
           correo: correo,
           asunto: asunto,
-          mensaje: mensaje
+          mensaje: mensaje,
+          website_url_hp: hpValue,
+          captcha_token: captchaToken,
+          captcha_answer: captchaAnswer
         })
       });
 
@@ -3334,6 +3391,7 @@ if (contactForm) {
       cdBtnText.textContent = 'Enviar mensaje seguro';
       cdErr.textContent = err.message || 'No se pudo enviar el correo en este momento. Inténtalo de nuevo.';
       cdErr.classList.add('show');
+      refreshContactCaptcha();
     }
   });
 }
