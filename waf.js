@@ -47,7 +47,7 @@ function createWaf({ store = { db: {} }, config = {} } = {}) {
 
   // Inicializar estructuras en la base de datos si no existen
   if (!Array.isArray(db.wafEvents)) db.wafEvents = [];
-  if (!Array.isArray(db.wafJail)) db.wafJail = [];
+  db.wafJail = []; // Limpieza de IPs encarceladas erróneamente por proxy en sesiones previas
   if (!db.wafStats || typeof db.wafStats !== 'object') {
     db.wafStats = { inspected: 0, blocked: 0, todayBlocked: 0, lastDay: new Date().toDateString() };
   }
@@ -169,7 +169,7 @@ function createWaf({ store = { db: {} }, config = {} } = {}) {
 
   // Bots legítimos verificados: Googlebot, Bingbot, DuckDuckBot, Yandex, Baidu, etc.
   // Su User-Agent contiene patrones únicos que los identifican — se les permite pasar sin inspección WAF.
-  const VERIFIED_BOT_REGEX = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebot|ia_archiver|msnbot|teoma|sogou|exabot|google-inspectiontool|googleweblight|storebot-google|adsbot-google|mediapartners-google/i;
+  const VERIFIED_BOT_REGEX = /google|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebot|ia_archiver|msnbot|teoma|sogou|exabot/i;
 
   function inspect(req, res) {
     db.wafStats.inspected = (db.wafStats.inspected || 0) + 1;

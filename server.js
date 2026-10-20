@@ -124,13 +124,20 @@ function createServer(opts = {}) {
   }
 
   const server = http.createServer(async (req, res) => {
+    const url = req.url.split('?')[0];
+
+    // 0. Infraestructura crítica: robots.txt, sitemap.xml y health check NUNCA pasan por el WAF
+    if (url === '/robots.txt' || url === '/sitemap.xml' || url === '/health') {
+      if (req.method === 'GET' || req.method === 'HEAD') {
+        if (url === '/health') return sendJson(res, 200, { ok: true, v: '2.1.3' });
+        return serveStatic(req, res);
+      }
+    }
+
     // 1. Escudo Perimetral WAF (NexaGuard Web Defense): Inspección en tiempo real
     if (waf.inspect(req, res)) return;
-
-    const url = req.url.split('?')[0];
     if (url.startsWith('/api/')) { if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); } return app.handle(req, res); }
     if (req.method === 'OPTIONS') { if (!corsOk(req, res)) return sendJson(res, 403, { error: 'Origen no permitido' }); res.writeHead(204); return res.end(); }
-    if (req.method === 'GET' && url === '/health') return sendJson(res, 200, { ok: true, v: '2.1.2' });
     if (req.method === 'GET' || req.method === 'HEAD') return serveStatic(req, res);
     if (req.method !== 'POST' || url !== '/scan') return sendJson(res, 404, { error: 'No encontrado' });
     if (!corsOk(req, res)) return sendJson(res, 403, { t: 'error', message: 'Origen no permitido.' });
