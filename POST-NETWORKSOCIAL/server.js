@@ -874,6 +874,14 @@ app.post('/api/autopilot/config', (req, res) => {
   res.json({ ok: true, config: settings.autopilot });
 });
 
+// 11. API de Sistema (Apagado seguro)
+app.post('/api/system/shutdown', (req, res) => {
+  res.json({ ok: true, message: 'Servidor deteniéndose...' });
+  setTimeout(() => {
+    process.exit(0);
+  }, 500);
+});
+
 // Inicializar el bot con el canal de streaming de logs
 autopilotInstance.init((logObj) => broadcastLog(logObj));
 
