@@ -167,12 +167,20 @@ function createWaf({ store = { db: {} }, config = {} } = {}) {
     return event;
   }
 
+  // Bots legítimos verificados: Googlebot, Bingbot, DuckDuckBot, Yandex, Baidu, etc.
+  // Su User-Agent contiene patrones únicos que los identifican — se les permite pasar sin inspección WAF.
+  const VERIFIED_BOT_REGEX = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebot|ia_archiver|msnbot|teoma|sogou|exabot|google-inspectiontool|googleweblight|storebot-google|adsbot-google|mediapartners-google/i;
+
   function inspect(req, res) {
     db.wafStats.inspected = (db.wafStats.inspected || 0) + 1;
     const ip = clientIp(req);
     const method = req.method;
     const rawUrl = req.url || '';
     const userAgent = String(req.headers['user-agent'] || '');
+
+    // 0. Bypass para bots de motores de búsqueda verificados (Googlebot, Bingbot, etc.)
+    //    Estos bots nunca realizan ataques — bloquearlos perjudica la indexación SEO.
+    if (VERIFIED_BOT_REGEX.test(userAgent)) return false;
 
     // 1. Verificar si la IP ya está encarcelada
     const jailed = isJailed(ip);
