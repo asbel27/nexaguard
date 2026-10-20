@@ -45,3 +45,4 @@ indexHtml = indexHtml.replace('href="/reparar-wordpress-hackeado/"', 'href="repa
 indexHtml = indexHtml.replace('href="/japanese-keyword-hack/"', 'href="japanese-keyword-hack/index.html"');
 fs.writeFileSync(indexPath, indexHtml, 'utf8');
 console.log('[OK] Updated public/index.html footer links');
+
