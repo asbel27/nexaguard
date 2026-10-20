@@ -15,6 +15,7 @@ const { COPYWRITING_FRAMEWORKS } = require('./ai-copywriter');
 const { postToFacebookGroup } = require('./facebook-poster');
 const { isWithinOptimalHours, OPTIMAL_HOURS } = require('./scheduler');
 const { generateMarketingBanner } = require('./image-generator');
+const { scanAllActivePostsAndReply } = require('./comment-responder');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -39,6 +40,7 @@ class BotAutopilot {
   constructor() {
     this.enabled = false;
     this.timer = null;
+    this.commentTimer = null;
     this.state = 'STOPPED'; // STOPPED, WAITING_HOURS, WAITING_INTERVAL, POSTING, QUOTA_REACHED
     this.nextRunTimestamp = null;
     this.nextGroupIndex = 0;
@@ -60,6 +62,21 @@ class BotAutopilot {
     if (this.onLogCallback) {
       this.onLogCallback({ type, msg: `[BOT AUTÓNOMO] ${msg}` });
     }
+  }
+
+  startCommentMonitor() {
+    if (this.commentTimer) clearInterval(this.commentTimer);
+    // Cada 15 minutos revisa comentarios en los posts activos
+    this.commentTimer = setInterval(async () => {
+      if (!this.enabled) return;
+      try {
+        const settings = readJson('settings.json', {});
+        if (settings.autoReplyComments !== false) {
+          this.log('🔍 [COMMUNITY MANAGER] Escaneando publicaciones en busca de nuevos comentarios...', 'info');
+          await scanAllActivePostsAndReply((msg) => this.log(msg));
+        }
+      } catch (e) {}
+    }, 15 * 60 * 1000);
   }
 
   getStatus() {
@@ -108,13 +125,14 @@ class BotAutopilot {
     if (this.enabled) return;
     this.enabled = true;
     this.checkDailyReset();
-    this.log('🚀 Piloto Automático ACTIVADO. El bot se encargará de publicar solo según las reglas de Meta.', 'step');
+    this.log('🚀 Piloto Automático ACTIVADO. El bot publicará y responderá comentarios según las reglas de Meta.', 'step');
 
     const settings = readJson('settings.json', {});
     if (!settings.autopilot) settings.autopilot = {};
     settings.autopilot.enabled = true;
     writeJson('settings.json', settings);
 
+    this.startCommentMonitor();
     this.scheduleNextAction(15000); // Primera comprobación en 15 segundos
   }
 
@@ -124,6 +142,10 @@ class BotAutopilot {
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
+    }
+    if (this.commentTimer) {
+      clearInterval(this.commentTimer);
+      this.commentTimer = null;
     }
     this.nextRunTimestamp = null;
     this.log('🛑 Piloto Automático DETENIDO.', 'warn');
@@ -228,6 +250,8 @@ class BotAutopilot {
         message: uniqueMessage,
         imagePath: generatedImagePath,
         simulateTyping: true,
+        frameworkId: framework.id,
+        autoTranslateByGroupLanguage: true,
         onLog: (msg) => this.log(msg)
       });
 

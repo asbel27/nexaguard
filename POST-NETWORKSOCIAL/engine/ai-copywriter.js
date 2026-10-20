@@ -7,6 +7,100 @@
  */
 
 const { parseSpintax } = require('./spintax');
+const { detectLanguage } = require('./language-detector');
+
+const MULTILANG_FRAMEWORKS = {
+  en: [
+    {
+      id: 'pas-dolor-urgencia',
+      name: '🔥 PAS Formula (Pain, Agitation & Urgent Solution - English)',
+      type: 'PAS',
+      spintax: `{Fellow web developers & WordPress owners|Hello group|Important security notice for WordPress webmasters} ⚠️
+
+{Imagine waking up on a Monday morning to find your client's website blocked by Google with a red "Deceptive site ahead" warning.|Is there anything worse than an urgent call from a furious client saying their site is redirecting to scam pages?|The ultimate nightmare of every agency is a silent hack destroying months of hard work in minutes.}
+
+{Traffic plunges to zero, clients cannot checkout, and Google penalties grow harsher by the hour.|Attempting to clean the code manually without forensic tools risks breaking the database or leaving hidden backdoors that reinfect tomorrow.}
+
+💡 {Here is the good news: you do not have to rebuild from scratch.|To resolve this cleanly without data loss, our NexaGuard forensic protocol applies:}
+
+1️⃣ {Immutable backup prior to touching any server files.|Full database and core snapshot.}
+2️⃣ {Cryptographic SHA-256 verification against the official WordPress.org core.|Isolating tampered files.}
+3️⃣ {Purging hidden base64 webshells and persistent database transients.|Cleaning wp-content/uploads/ and backdoor cron jobs.}
+4️⃣ {Official Google Search Console review report to lift warnings in 24-48h.|WAF perimeter hardening.}
+
+🔍 {We made our remote diagnostic scanner 100% free with zero install needed on your server:|Run a live free diagnosis in 15 seconds on any domain:}
+👉 https://www.nexaguards.com/#escaner
+
+{Protecting our clients' security is protecting our professional reputation. Hope this helps!} 🛡️💻`
+    },
+    {
+      id: 'caso-estudio-educativo',
+      name: '🧠 Technical Case Study (Value-First / High Admin Approval - English)',
+      type: 'Value-First',
+      spintax: `{Sharing a real forensic case we resolved this week that might save you hours of troubleshooting|Quick technical insight for the community on a recent stealth WordPress intrusion}:
+
+📌 {The Issue:|The reported symptom:}
+{A high-traffic WooCommerce store was losing 40% of mobile sales. On desktop it loaded fine, but from smartphones it redirected to spam landing pages.|A client contacted us after noticing thousands of Japanese replica URLs indexed on Google Search, while the front-end looked completely normal.}
+
+🕵️‍♂️ {The Technical Finding:|Where the trap was hidden:}
+{The attackers injected a conditional rewrite in .htaccess combined with an obfuscated base64 script inside wp_options checking the HTTP_USER_AGENT (ClearFake campaign).|A sophisticated HTTP cloaking technique: serving mass spam to Googlebot while serving clean pages to direct human visitors to evade detection.}
+
+🛠️ {The Step-by-Step Eradication Protocol:}
+1. {Restoring clean WordPress official .htaccess directives.|Replacing corrupted server rewrite rules.}
+2. {Cryptographic hash comparison against official WordPress.org release files.|Replacing modified core binaries.}
+3. {Eliminating hidden webshells in /wp-content/uploads/.|Purging execution rights on media folders.}
+4. {Rotating SALT keys in wp-config.php and activating Core Sentinel WAF rules.|Hardening API endpoints.}
+
+🛡️ {We documented this entire case and built a real-time scanner for anyone who wants to audit their domains for free:|Feel free to test your sites or client projects using our free remote forensic scanner:}
+👉 https://www.nexaguards.com/#escaner
+
+{Have you run into these mobile conditional redirects lately? Let's discuss in the comments!} 🚀`
+    },
+    {
+      id: 'alerta-seguridad-comunidad',
+      name: '🚨 Preventive Security Alert (High Engagement - English)',
+      type: 'Alerta',
+      spintax: `{Attention WordPress community|Important notice for webmasters and digital agencies|Keep an eye on your sites' security this week} ⚠️
+
+{A widespread wave of automated attacks targeting vulnerabilities in outdated WordPress plugins and WooCommerce checkouts has been detected.|Over the last 72 hours, we have seen an aggressive spike in database malware injections and mobile traffic hijacking.}
+
+{What are the immediate red flags of a compromised site?|Check if you notice any of these symptoms:}
+🔴 {Google Chrome or Safe Browsing "Deceptive site ahead" red screen.}
+🔴 {Mobile visitors reporting random redirects to unknown domains.}
+🔴 {Foreign URLs or spam keywords indexed in Google search results.}
+🔴 {Unauthorized administrator accounts created in wp_users.}
+
+{To help the community audit their security, at NexaGuard we opened our live forensic engine 100% free with no install required:|You can run a free 15-second diagnostic scan on any domain right now:}
+👉 https://www.nexaguards.com/#escaner
+
+{Share this with fellow developers to catch infections before Google blacklists the domain!} 🛡️💪`
+    }
+  ],
+  pt: [
+    {
+      id: 'pas-dolor-urgencia',
+      name: '🔥 Fórmula PAS (Dor, Agitação e Solução Urgente - Português)',
+      type: 'PAS',
+      spintax: `{Atenção desenvolvedores e donos de sites WordPress|Olá grupo|Aviso importante para quem gerencia sites} ⚠️
+
+{Imagine acordar e ver que o site do seu cliente foi bloqueado pelo Google com a tela vermelha de "Site Enganoso".|Existe algo pior do que receber a ligação de um cliente dizendo que o site está redirecionando para páginas suspeitas?|O maior pesadelo de um desenvolvedor é um ataque silencioso destruindo meses de trabalho em minutos.}
+
+{As visitas caem a zero e o Google penaliza o domínio a cada hora que passa.|Tentar limpar o código manualmente sem ferramentas forenses pode quebrar o banco de dados ou deixar backdoors que reinfectam tudo amanhã.}
+
+💡 {A boa notícia é que você não precisa reconstruir o site do zero:|Para resolver com rigor técnico e sem perda de dados, aplicamos o protocolo forense NexaGuard:}
+
+1️⃣ Backup imutável completo antes de alterar qualquer arquivo.
+2️⃣ Verificação criptográfica SHA-256 contra o núcleo oficial do WordPress.
+3️⃣ Remoção de webshells em uploads e códigos ofuscados na tabela wp_options.
+4️⃣ Relatório técnico para o Google Search Console remover o bloqueio em 24-48h.
+
+🔍 {Liberamos nosso scanner forense remoto 100% gratuito e sem necessidade de instalar nada no seu servidor:|Podem rodar o diagnóstico gratuito em tempo real em qualquer domínio:}
+👉 https://www.nexaguards.com/#escaner
+
+{Cuidar da segurança dos clientes protege nossa reputação profissional. Espero que ajude!} 🛡️💻`
+    }
+  ]
+};
 
 const COPYWRITING_FRAMEWORKS = [
   {
@@ -79,11 +173,24 @@ const COPYWRITING_FRAMEWORKS = [
 ];
 
 /**
- * Genera un texto adaptado combinando el framework con el nicho del grupo
+ * Genera un texto adaptado combinando el framework con el idioma del grupo
+ * @param {string} frameworkId
+ * @param {string} [targetLang='es']
  */
-function generatePersuasiveCopy(frameworkId) {
-  const tmpl = COPYWRITING_FRAMEWORKS.find(f => f.id === frameworkId) || COPYWRITING_FRAMEWORKS[0];
+function generatePersuasiveCopy(frameworkId, targetLang = 'es') {
+  let langList = MULTILANG_FRAMEWORKS[targetLang];
+  let tmpl = null;
+
+  if (langList) {
+    tmpl = langList.find(f => f.id === frameworkId) || langList[0];
+  }
+
+  if (!tmpl) {
+    tmpl = COPYWRITING_FRAMEWORKS.find(f => f.id === frameworkId) || COPYWRITING_FRAMEWORKS[0];
+  }
+
   return {
+    lang: targetLang,
     rawSpintax: tmpl.spintax,
     sampleText: parseSpintax(tmpl.spintax),
     name: tmpl.name,
@@ -93,6 +200,7 @@ function generatePersuasiveCopy(frameworkId) {
 
 module.exports = {
   COPYWRITING_FRAMEWORKS,
+  MULTILANG_FRAMEWORKS,
   generatePersuasiveCopy
 };
 

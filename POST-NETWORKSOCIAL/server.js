@@ -20,6 +20,9 @@ const { COPYWRITING_FRAMEWORKS, generatePersuasiveCopy } = require('./engine/ai-
 const { isWithinOptimalHours, getSmartInterval, assessComplianceRisk, OPTIMAL_HOURS } = require('./engine/scheduler');
 const { autopilotInstance } = require('./engine/bot-autopilot');
 const { BANNER_PRESETS, generateMarketingBanner } = require('./engine/image-generator');
+const { detectLanguage, getLanguageName } = require('./engine/language-detector');
+const { generateContextualReply, checkAndReplyToInstagramComments, scanAllActivePostsAndReply } = require('./engine/comment-responder');
+const { scanUrlNiche } = require('./engine/url-niche-scanner');
 
 const PORT = process.env.PORT || 4242;
 const app = express();
@@ -529,6 +532,66 @@ app.delete('/api/history', (req, res) => {
   res.json({ ok: true, message: 'Historial vaciado por completo.' });
 });
 
+// ==========================================
+// 6.2 AUTO-RESPUESTA A COMENTARIOS & IDIOMAS
+// ==========================================
+app.post('/api/comments/test-reply', (req, res) => {
+  const { commentText, authorName, forceLang } = req.body;
+  if (!commentText || !commentText.trim()) {
+    return res.status(400).json({ ok: false, error: 'El texto del comentario es requerido.' });
+  }
+
+  const result = generateContextualReply(commentText, authorName, forceLang);
+  res.json({ ok: true, ...result });
+});
+
+app.get('/api/comments/history', (req, res) => {
+  const replied = readJson('replied_comments.json', []);
+  res.json({ ok: true, count: replied.length, replies: replied });
+});
+
+app.post('/api/comments/scan-now', async (req, res) => {
+  broadcastLog({ type: 'step', msg: '🔍 [COMMUNITY MANAGER] Escaneo manual de comentarios iniciado...' });
+  try {
+    const scanResult = await scanAllActivePostsAndReply((msg) => {
+      broadcastLog({ type: 'log', msg });
+    });
+    res.json({ ok: true, ...scanResult });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/language/detect', (req, res) => {
+  const { text } = req.body;
+  const lang = detectLanguage(text || '');
+  res.json({ ok: true, lang, langName: getLanguageName(lang) });
+});
+
+// ==========================================
+// 6.3 DETECCIÓN DE NICHO & MARCA POR URL
+// ==========================================
+app.post('/api/niche/scan-url', async (req, res) => {
+  const { url } = req.body;
+  if (!url || !url.trim()) {
+    return res.status(400).json({ ok: false, error: 'Debes ingresar una URL válida para analizar.' });
+  }
+
+  broadcastLog({ type: 'step', msg: `🌐 [IA NICHE SCANNER] Analizando URL: "${url.trim()}"...` });
+
+  try {
+    const result = await scanUrlNiche(url.trim());
+    broadcastLog({
+      type: 'success',
+      msg: `✓ Nicho detectado: [${result.nicheName}] | Marca: [${result.brand}] | Idioma: [${result.langName}]`
+    });
+    res.json(result);
+  } catch (err) {
+    broadcastLog({ type: 'error', msg: `❌ Error escaneando URL: ${err.message}` });
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // 7. Lanzamiento de Campaña de Auto-Posteo en Grupos
 app.post('/api/campaign/start', async (req, res) => {
   if (activeCampaign.running) {
@@ -589,12 +652,13 @@ app.post('/api/campaign/start', async (req, res) => {
       // Generar variación de texto Spintax única para este grupo
       const uniqueMessage = parseSpintax(spintaxText);
 
-      // Publicar en Facebook
+      // Publicar en Facebook con auto-detección de idioma
       const postResult = await postToFacebookGroup({
         groupUrl: group.url,
         message: uniqueMessage,
         imagePath: imagePath || null,
         simulateTyping: settings.simulateTyping !== false,
+        autoTranslateByGroupLanguage: true,
         onLog: (msg) => broadcastLog({ type: 'log', msg })
       });
 
@@ -713,21 +777,71 @@ app.post('/api/campaign/stop', (req, res) => {
   res.json({ ok: true, message: 'Deteniendo campaña...' });
 });
 
-// 9. Publicar en Instagram (Opcional)
+// 9. Publicar en Instagram (Individual o Sincronizado)
 app.post('/api/instagram/post', async (req, res) => {
-  const { caption, imagePath } = req.body;
-  if (!imagePath) return res.status(400).json({ ok: false, error: 'Debes proporcionar una imagen para Instagram.' });
+  const { caption, imagePath, frameworkId, targetLang } = req.body;
+  if (!imagePath) return res.status(400).json({ ok: false, error: 'Debes proporcionar una imagen o video para publicar en Instagram.' });
 
   try {
     const uniqueCaption = parseSpintax(caption || '');
     const result = await postToInstagram({
       caption: uniqueCaption,
       imagePath,
+      frameworkId,
+      targetLang,
       onLog: (msg) => broadcastLog({ type: 'log', msg: `[Instagram] ${msg}` })
     });
+
+    if (result.ok) {
+      const history = readJson('history.json', []);
+      history.unshift({
+        id: `post-ig-${Date.now()}`,
+        platform: 'instagram',
+        groupName: 'Instagram Feed Oficial',
+        groupUrl: result.postUrl || 'https://www.instagram.com',
+        postUrl: result.postUrl || 'https://www.instagram.com',
+        ok: true,
+        timestamp: new Date().toISOString(),
+        message: uniqueCaption,
+        messagePreview: uniqueCaption.slice(0, 140) + '...',
+        imageUrl: imagePath.includes('public') ? imagePath.replace(/.*public/, '') : `/assets/uploads/${path.basename(imagePath)}`,
+        screenshot: result.screenshot,
+        details: 'Publicado exitosamente en Instagram Feed.'
+      });
+      writeJson('history.json', history.slice(0, 200));
+
+      const posts = readJson('posts.json', []);
+      posts.unshift({
+        id: `post-ig-${Date.now()}`,
+        platform: 'instagram',
+        title: 'Post de Instagram Feed',
+        category: 'Instagram',
+        status: 'published',
+        groupName: 'Instagram Feed',
+        postUrl: result.postUrl || 'https://www.instagram.com',
+        mediaUrl: imagePath.includes('public') ? imagePath.replace(/.*public/, '') : `/assets/uploads/${path.basename(imagePath)}`,
+        message: uniqueCaption,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      writeJson('posts.json', posts.slice(0, 150));
+    }
+
     res.json(result);
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post('/api/instagram/scan-comments', async (req, res) => {
+  broadcastLog({ type: 'step', msg: '📸 [INSTAGRAM BOT] Escaneando comentarios de Instagram...' });
+  try {
+    const result = await checkAndReplyToInstagramComments({
+      onLog: (msg) => broadcastLog({ type: 'log', msg })
+    });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 

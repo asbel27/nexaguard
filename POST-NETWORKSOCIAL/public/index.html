@@ -81,6 +81,30 @@
             </div>
           </div>
 
+          <!-- MÓDULO: DETECCIÓN DE NICHO & MARCA POR URL -->
+          <div class="url-niche-scanner-box">
+            <div class="url-scanner-head">
+              <span class="url-scanner-title">🌐 Auto-Detección de Nicho &amp; Marca por URL:</span>
+              <span class="badge-info" id="detectedNicheBadge">Listo para analizar</span>
+            </div>
+            <div class="url-input-group">
+              <input type="url" id="targetNicheUrl" value="https://nexaguards.com" placeholder="Ingresa la URL de cualquier marca o sitio web (ej: https://tumarca.com)">
+              <button type="button" class="btn btn-primary btn-sm" id="btnScanUrlNiche" onclick="scanTargetUrlNiche()">
+                ⚡ Detectar Nicho &amp; Generar Posts
+              </button>
+            </div>
+            <div id="urlNicheResultsDrawer" class="niche-results-drawer" style="display:none">
+              <div class="niche-info-bar">
+                <span>🏷️ Marca: <strong id="nicheBrandText">--</strong></span>
+                <span>🎯 Nicho: <strong id="nicheCategoryText">--</strong></span>
+                <span>🌐 Idioma: <strong id="nicheLangText">--</strong></span>
+              </div>
+              <div class="niche-options-list" id="nicheOptionsList">
+                <!-- Opciones de posts generados -->
+              </div>
+            </div>
+          </div>
+
           <div class="form-group">
             <div class="label-row">
               <label for="postSpintax">Texto del Post con Spintax Anti-Baneo <code>{opción1|opción2}</code>:</label>
@@ -218,7 +242,10 @@
               💾 GUARDAR EN MIS POSTS
             </button>
             <button type="button" class="btn btn-outline btn-lg" onclick="previewCurrentComposerPost()">
-              👁️ VISTA PREVIA FACEBOOK
+              👁️ VISTA PREVIA (FB &amp; IG)
+            </button>
+            <button type="button" class="btn btn-lg" style="background:linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);color:#fff;border:none;font-weight:700" onclick="publishCurrentToInstagram()">
+              📸 PUBLICAR EN INSTAGRAM
             </button>
             <button class="btn btn-danger btn-lg" id="btnStopCampaign" onclick="stopCampaign()" style="display:none">
               🛑 DETENER CAMPAÑA
@@ -378,6 +405,105 @@
             </div>
             <div class="terminal-body" id="autopilotTerminalBody" style="height:250px">
               <div class="log-line info">[PILOTO AUTOMÁTICO] Listo. Enciende el interruptor maestro arriba para comenzar.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MÓDULO: AUTO-RESPUESTA A COMENTARIOS & INTELIGENCIA MULTILINGÜE -->
+        <div class="panel comment-bot-panel" style="margin-top:20px">
+          <div class="panel-header">
+            <div>
+              <h2>💬 Auto-Respuesta a Comentarios &amp; Detección de Idiomas</h2>
+              <p class="subtitle">Monitorea tus posts en vivo, detecta el idioma del grupo/usuario y responde automáticamente con enlaces persuasivos a nexaguards.com.</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <label class="master-toggle" style="background:rgba(0,0,0,0.3);padding:6px 12px;border-radius:30px;border:1px solid var(--line)">
+                <input type="checkbox" id="autoReplyToggle" checked onchange="toggleAutoReply(this.checked)">
+                <span class="toggle-track">
+                  <span class="toggle-thumb"></span>
+                </span>
+                <span class="toggle-label" style="font-size:0.8rem">AUTO-RESPUESTA ACTIVA</span>
+              </label>
+              <button class="btn btn-primary btn-sm" onclick="triggerScanCommentsNow()">
+                🔍 Escanear FB Ahora
+              </button>
+              <button class="btn btn-secondary btn-sm" style="background:#833ab4;border-color:#833ab4" onclick="triggerScanInstagramCommentsNow()">
+                📸 Escanear Instagram Ahora
+              </button>
+            </div>
+          </div>
+
+          <!-- Cuadrícula de Métricas de Comentarios -->
+          <div class="autopilot-stats-grid" style="margin-bottom:18px">
+            <div class="stat-box">
+              <span class="stat-label">Comentarios Respondidos:</span>
+              <strong id="statRepliedCount" class="stat-value">0</strong>
+              <small class="stat-sub">100% Sin duplicados</small>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Idiomas Soportados:</span>
+              <strong class="stat-value" style="color:var(--cyan)">ES · EN · PT · FR</strong>
+              <small class="stat-sub">Detección automática</small>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Enlace de Conversión:</span>
+              <strong class="stat-value" style="font-size:0.9rem;color:var(--green)">nexaguards.com/#escaner</strong>
+              <small class="stat-sub">Escáner forense gratuito</small>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Simulación Humana:</span>
+              <strong class="stat-value tag-green">✓ Activa</strong>
+              <small class="stat-sub">Mecanografía aleatoria (18-35ms)</small>
+            </div>
+          </div>
+
+          <!-- Probador de Respuestas y Detección de Idioma en Vivo -->
+          <div class="comment-tester-card">
+            <h4 style="margin-bottom:8px;font-size:0.92rem;color:var(--cyan)">🧪 Probador Interactivo de Respuestas IA &amp; Detección de Idioma</h4>
+            <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px">Prueba cómo responderá el bot según lo que comente un usuario en Facebook (en español, inglés o portugués):</p>
+            
+            <div class="form-row">
+              <div class="form-group col-4">
+                <label>Nombre del Comentarista:</label>
+                <input type="text" id="testCommentAuthor" value="Carlos Gómez" placeholder="Ej: Carlos Gómez">
+              </div>
+              <div class="form-group col-8">
+                <label>Comentario de Prueba:</label>
+                <input type="text" id="testCommentText" value="Mi web amaneció con la pantalla roja de Google y no sé cómo limpiarla" placeholder="Escribe cualquier pregunta...">
+              </div>
+            </div>
+
+            <!-- Botones de ejemplos rápidos -->
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+              <button type="button" class="btn btn-xs btn-outline" onclick="setTestComment('Mi web tiene virus y Google me penalizó', 'Carlos')">🔥 Pantalla Roja</button>
+              <button type="button" class="btn btn-xs btn-outline" onclick="setTestComment('¿Dónde puedo usar el escáner? ¿Es gratis?', 'María')">💡 ¿Es gratis?</button>
+              <button type="button" class="btn btn-xs btn-outline" onclick="setTestComment('¿Cuánto cobran por desinfectar un WooCommerce?', 'David')">💰 Precios</button>
+              <button type="button" class="btn btn-xs btn-outline" onclick="setTestComment('Muchas gracias por el aporte, excelente info', 'Elena')">🤝 Gracias</button>
+              <button type="button" class="btn btn-xs btn-outline" onclick="setTestComment('Is this scanner 100% free for my client site?', 'John')">🇺🇸 English Query</button>
+              <button type="button" class="btn btn-xs btn-outline" onclick="setTestComment('Como remover o malware do meu WordPress?', 'Rodrigo')">🇧🇷 Português</button>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-sm" onclick="runCommentTest()">
+              ⚡ Probar Respuesta Lógica de la IA
+            </button>
+
+            <!-- Resultado del probador -->
+            <div id="testCommentResult" style="display:none;margin-top:14px;background:#030718;border:1px solid var(--line);border-radius:10px;padding:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:0.78rem">
+                <span id="testResultLangBadge" class="tag-badge tag-category">Idioma</span>
+                <span id="testResultIntentBadge" class="tag-badge tag-ready">Intención</span>
+              </div>
+              <div style="font-size:0.88rem;color:#eaf0ff;line-height:1.5;white-space:pre-wrap" id="testResultReplyText"></div>
+            </div>
+          </div>
+
+          <!-- Historial de Respuestas Enviadas -->
+          <div style="margin-top:18px">
+            <h4 style="font-size:0.9rem;color:#fff;margin-bottom:10px">📜 Últimos Comentarios Respondidos Automáticamente:</h4>
+            <div id="repliedCommentsList" class="replied-comments-container">
+              <div style="color:var(--muted);font-size:0.8rem;padding:15px;background:rgba(3,6,22,0.5);border-radius:8px">
+                Aún no hay comentarios procesados en esta sesión. Cuando el bot detecte comentarios en tus publicaciones, se listarán aquí.
+              </div>
             </div>
           </div>
         </div>
@@ -546,11 +672,13 @@
   <div class="modal fb-preview-modal" id="facebookPreviewModal">
     <div class="modal-card fb-preview-card">
       <div class="modal-header fb-header">
-        <div class="fb-modal-title">
-          <svg class="fb-icon" viewBox="0 0 24 24" width="22" height="22">
-            <path fill="#1877f2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-          </svg>
-          <span>Vista Previa de Publicación en Facebook</span>
+        <div class="fb-modal-title" style="display:flex;gap:10px;align-items:center">
+          <button type="button" class="btn btn-xs btn-outline active" id="btnPreviewModeFb" onclick="setPreviewPlatformMode('fb')">
+            🔵 Vista Facebook
+          </button>
+          <button type="button" class="btn btn-xs btn-outline" id="btnPreviewModeIg" onclick="setPreviewPlatformMode('ig')">
+            🟣 Vista Instagram
+          </button>
         </div>
         <button class="btn-close" onclick="closeFacebookPreviewModal()">×</button>
       </div>

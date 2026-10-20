@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStatus();
   loadComplianceStatus();
   loadAutopilotStatus();
+  loadCommentBotStatus();
   loadTemplates();
   loadGroups();
   loadCreatedPosts();
@@ -878,6 +879,218 @@ async function saveAutopilotConfig() {
   }
 }
 
+// 12.1 Auto-Respuesta a Comentarios (Community Manager IA)
+async function loadCommentBotStatus() {
+  try {
+    const res = await fetch('/api/comments/history');
+    const data = await res.json();
+    if (data.ok) {
+      const countEl = document.getElementById('statRepliedCount');
+      if (countEl) countEl.textContent = data.count || 0;
+
+      const container = document.getElementById('repliedCommentsList');
+      if (container && data.replies) {
+        if (data.replies.length === 0) {
+          container.innerHTML = `
+            <div style="color:var(--muted);font-size:0.8rem;padding:15px;background:rgba(3,6,22,0.5);border-radius:8px">
+              Aún no hay comentarios procesados en esta sesión. Cuando el bot detecte comentarios en tus publicaciones, se listarán aquí.
+            </div>`;
+        } else {
+          container.innerHTML = '';
+          data.replies.slice(0, 15).forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'replied-comment-item';
+            row.style.background = 'rgba(4, 9, 32, 0.7)';
+            row.style.border = '1px solid var(--line)';
+            row.style.borderRadius = '10px';
+            row.style.padding = '12px';
+            row.style.marginBottom = '10px';
+            row.innerHTML = `
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.78rem">
+                <span><strong>👤 ${escapeHtml(item.authorName)}</strong> comentó:</span>
+                <span style="color:var(--muted)">${new Date(item.timestamp).toLocaleTimeString()}</span>
+              </div>
+              <div style="font-size:0.82rem;color:#ccd6f6;background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;margin-bottom:8px">
+                "${escapeHtml(item.commentText)}"
+              </div>
+              <div style="font-size:0.82rem;color:var(--green);line-height:1.4">
+                <strong>🤖 Respuesta enviada:</strong> ${escapeHtml(item.replyText)}
+              </div>
+              <div style="margin-top:6px;text-align:right">
+                <a href="${escapeHtml(item.postUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:0.75rem;color:var(--cyan);text-decoration:none">
+                  🔗 Ver publicación en Facebook ↗
+                </a>
+              </div>
+            `;
+            container.appendChild(row);
+          });
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+async function triggerScanCommentsNow() {
+  appendTerminalLog('step', '🔍 [COMMUNITY MANAGER] Escaneando publicaciones activas en busca de comentarios nuevos...');
+  try {
+    const res = await fetch('/api/comments/scan-now', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      appendTerminalLog('success', `🏁 [COMMUNITY MANAGER] Escaneo completado. Respuestas enviadas: ${data.totalReplied}`);
+      alert(`¡Escaneo de comentarios finalizado! Se enviaron ${data.totalReplied} respuestas personalizadas a nexaguards.com.`);
+      loadCommentBotStatus();
+    } else {
+      alert('Error en el escaneo: ' + data.error);
+    }
+  } catch (err) {
+    alert('Error al conectar: ' + err.message);
+  }
+}
+
+function setTestComment(text, author) {
+  document.getElementById('testCommentText').value = text;
+  document.getElementById('testCommentAuthor').value = author;
+  runCommentTest();
+}
+
+async function runCommentTest() {
+  const commentText = document.getElementById('testCommentText').value.trim();
+  const authorName = document.getElementById('testCommentAuthor').value.trim();
+
+  if (!commentText) {
+    alert('Ingresa un comentario de prueba.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/comments/test-reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ commentText, authorName })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const box = document.getElementById('testCommentResult');
+      box.style.display = 'block';
+      document.getElementById('testResultLangBadge').textContent = `🌐 ${data.langName || 'Español'}`;
+      document.getElementById('testResultIntentBadge').textContent = `🎯 ${data.intentName || 'Consulta General'}`;
+      document.getElementById('testResultReplyText').textContent = data.replyText;
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function toggleAutoReply(enabled) {
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ autoReplyComments: enabled })
+    });
+    appendTerminalLog('info', `[COMMUNITY MANAGER] Auto-respuesta a comentarios ${enabled ? 'ACTIVADA' : 'DESACTIVADA'}.`);
+  } catch (e) {}
+}
+
+// 12.2 Publicación & Comentarios en Instagram
+async function publishCurrentToInstagram() {
+  const spintaxText = document.getElementById('postSpintax').value;
+  if (!spintaxText || !spintaxText.trim()) {
+    alert('Por favor redacta un texto o selecciona una plantilla para el pie de foto de Instagram.');
+    return;
+  }
+
+  if (!state.attachedImagePath) {
+    if (confirm('Instagram requiere obligatoriamente una imagen o banner. ¿Deseas que la IA genere un banner de ciberseguridad automáticamente ahora?')) {
+      await generateAiBanner();
+      if (!state.attachedImagePath) return;
+    } else {
+      return;
+    }
+  }
+
+  const frameworkSelect = document.getElementById('frameworkSelect');
+  const frameworkId = frameworkSelect ? frameworkSelect.value : 'pas-dolor-urgencia';
+
+  if (!confirm('¿Publicar esta imagen y pie de foto en tu cuenta de Instagram ahora?')) return;
+
+  try {
+    appendTerminalLog('step', '📸 [INSTAGRAM] Iniciando publicación en Instagram Feed...');
+    const res = await fetch('/api/instagram/post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        caption: spintaxText,
+        imagePath: state.attachedImagePath,
+        frameworkId
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      appendTerminalLog('success', '🎉 [INSTAGRAM] ¡Publicado con éxito en tu feed de Instagram!');
+      alert('¡Publicación realizada exitosamente en Instagram!');
+      loadCreatedPosts();
+      loadHistory();
+    } else {
+      appendTerminalLog('error', `❌ [INSTAGRAM] Error al publicar: ${data.error || data.message}`);
+      alert('Error en Instagram: ' + (data.error || data.message));
+    }
+  } catch (err) {
+    alert('Error al conectar: ' + err.message);
+  }
+}
+
+async function triggerScanInstagramCommentsNow() {
+  appendTerminalLog('step', '📸 [INSTAGRAM BOT] Escaneando comentarios recientes en Instagram...');
+  try {
+    const res = await fetch('/api/instagram/scan-comments', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      appendTerminalLog('success', `🏁 [INSTAGRAM BOT] Escaneo completado. Respuestas enviadas: ${data.totalReplied || 0}`);
+      alert(`¡Escaneo de Instagram finalizado! Se respondieron ${data.totalReplied || 0} comentarios invitando a nexaguards.com.`);
+      loadCommentBotStatus();
+    } else {
+      alert('Error al escanear Instagram: ' + data.error);
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function setPreviewPlatformMode(platform) {
+  const btnFb = document.getElementById('btnPreviewModeFb');
+  const btnIg = document.getElementById('btnPreviewModeIg');
+  const directBtn = document.getElementById('fbPreviewDirectLinkBtn');
+  const authorBrand = document.querySelector('.fb-brand');
+  const groupTarget = document.getElementById('fbPreviewGroupTarget');
+
+  if (platform === 'ig') {
+    if (btnFb) btnFb.classList.remove('active');
+    if (btnIg) btnIg.classList.add('active');
+    if (authorBrand) authorBrand.textContent = 'nexaguard.security';
+    if (groupTarget) groupTarget.textContent = '· Ciberseguridad & Rescate';
+    if (directBtn) {
+      directBtn.textContent = '📸 Abrir en Instagram';
+      directBtn.style.background = 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)';
+      directBtn.setAttribute('data-url', 'https://www.instagram.com/');
+    }
+  } else {
+    if (btnIg) btnIg.classList.remove('active');
+    if (btnFb) btnFb.classList.add('active');
+    if (authorBrand) authorBrand.textContent = 'NexaGuard · Rescate Web & Ciberseguridad';
+    if (state.currentPreviewPost && groupTarget) {
+      groupTarget.textContent = `publicó en ${state.currentPreviewPost.groupName || 'un Grupo'}`;
+    }
+    if (directBtn) {
+      directBtn.textContent = '🔗 Abrir Directamente en Facebook';
+      directBtn.style.background = '';
+      if (state.currentPreviewPost) {
+        directBtn.setAttribute('data-url', state.currentPreviewPost.postUrl || state.currentPreviewPost.groupUrl || 'https://www.facebook.com');
+      }
+    }
+  }
+}
+
 // ==========================================================================
 // 11. GESTIÓN DE POSTS CREADOS (FEED, VISTA PREVIA, EDICIÓN Y BORRADO)
 // ==========================================================================
@@ -1647,4 +1860,127 @@ function closeImageModal() {
 function escapeHtml(str) {
   if (!str) return '';
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ==========================================================================
+// 13. AUTO-DETECCIÓN DE NICHO & MARCA POR URL
+// ==========================================================================
+let lastScannedNicheData = null;
+
+async function scanTargetUrlNiche() {
+  const urlInput = document.getElementById('targetNicheUrl');
+  const url = urlInput ? urlInput.value.trim() : '';
+  if (!url) {
+    alert('Por favor ingresa la URL de la web o marca a analizar.');
+    return;
+  }
+
+  const btn = document.getElementById('btnScanUrlNiche');
+  const badge = document.getElementById('detectedNicheBadge');
+  if (btn) btn.disabled = true;
+  if (badge) {
+    badge.textContent = 'Analizando sitio con IA...';
+    badge.className = 'badge-info';
+  }
+
+  appendTerminalLog('step', `🌐 [IA NICHE] Rastreador semántico analizando: ${url}...`);
+
+  try {
+    const res = await fetch('/api/niche/scan-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    const data = await res.json();
+    if (btn) btn.disabled = false;
+
+    if (data.ok) {
+      lastScannedNicheData = data;
+      if (badge) {
+        badge.textContent = `✓ Nicho: ${data.nicheName}`;
+        badge.className = 'opt-val tag-green';
+      }
+
+      const drawer = document.getElementById('urlNicheResultsDrawer');
+      if (drawer) drawer.style.display = 'block';
+
+      document.getElementById('nicheBrandText').textContent = data.brand;
+      document.getElementById('nicheCategoryText').textContent = data.nicheName;
+      document.getElementById('nicheLangText').textContent = `${data.langName} (${data.detectedLang.toUpperCase()})`;
+
+      renderNichePostsList(data.generatedPosts, data.brand, data.nicheName, data.url);
+      appendTerminalLog('success', `[IA NICHE] Análisis completado. Marca: "${data.brand}" | Nicho: "${data.nicheName}" | 3 Campañas Generadas.`);
+    } else {
+      if (badge) badge.textContent = 'Error al analizar';
+      alert('Error al escanear URL: ' + data.error);
+    }
+  } catch (err) {
+    if (btn) btn.disabled = false;
+    alert('Error al conectar: ' + err.message);
+  }
+}
+
+function renderNichePostsList(posts, brand, nicheName, url) {
+  const container = document.getElementById('nicheOptionsList');
+  if (!container) return;
+  container.innerHTML = '';
+
+  posts.forEach((p, idx) => {
+    const item = document.createElement('div');
+    item.className = 'niche-post-choice';
+    item.innerHTML = `
+      <div style="flex:1">
+        <div class="niche-choice-title">${escapeHtml(p.title)}</div>
+        <div class="niche-choice-sub">${escapeHtml(p.type)} · Enfoque específico para ${escapeHtml(brand)}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button type="button" class="btn btn-primary btn-xs" onclick="applyNichePostToComposer(${idx})" title="Cargar este post en el editor">
+          ✍️ Cargar al Redactor
+        </button>
+        <button type="button" class="btn btn-outline btn-xs" onclick="saveNichePostDirectly(${idx})" title="Guardar directamente en biblioteca de posts">
+          💾 Guardar
+        </button>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function applyNichePostToComposer(index) {
+  if (!lastScannedNicheData || !lastScannedNicheData.generatedPosts[index]) return;
+  const post = lastScannedNicheData.generatedPosts[index];
+  const textarea = document.getElementById('postSpintax');
+  if (textarea) {
+    textarea.value = post.spintax;
+    updateSpintaxPreview();
+    appendTerminalLog('success', `[REDACTOR] Cargada campaña de IA para nicho: "${post.title}"`);
+    alert(`¡Campaña "${post.title}" cargada en el Redactor! Puedes publicar en Facebook, Instagram o guardarla.`);
+  }
+}
+
+async function saveNichePostDirectly(index) {
+  if (!lastScannedNicheData || !lastScannedNicheData.generatedPosts[index]) return;
+  const post = lastScannedNicheData.generatedPosts[index];
+
+  try {
+    const res = await fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: post.title,
+        category: lastScannedNicheData.nicheName,
+        message: post.spintax,
+        groupName: `${lastScannedNicheData.brand} (${lastScannedNicheData.nicheName})`,
+        postUrl: lastScannedNicheData.url
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      loadCreatedPosts();
+      appendTerminalLog('success', `[GUARDADO] Post guardado en biblioteca.`);
+      alert('¡Campaña generada y guardada exitosamente en la pestaña de "Posts Creados"!');
+    }
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
 }

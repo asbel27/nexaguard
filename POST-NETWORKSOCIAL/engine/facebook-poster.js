@@ -7,6 +7,9 @@
 const fs = require('fs');
 const path = require('path');
 const { getOrLaunchBrowser } = require('./browser');
+const { detectLanguage, getLanguageName } = require('./language-detector');
+const { generatePersuasiveCopy } = require('./ai-copywriter');
+const { parseSpintax } = require('./spintax');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -81,7 +84,7 @@ async function tryAutoJoinGroup(page, onLog) {
  * @param {boolean} [options.simulateTyping=true] - Escribir carácter por carácter
  * @param {function} [options.onLog] - Callback para reportar progreso en vivo
  */
-async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTyping = true, onLog = console.log }) {
+async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTyping = true, frameworkId = null, autoTranslateByGroupLanguage = true, onLog = console.log }) {
   const browser = await getOrLaunchBrowser({ headless: false });
   const page = await browser.newPage();
 
@@ -93,6 +96,7 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
   const result = {
     ok: false,
     groupUrl,
+    detectedLang: 'es',
     timestamp: new Date().toISOString(),
     screenshot: null,
     message: ''
@@ -111,6 +115,28 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     if (!isLogged) {
       throw new Error('No has iniciado sesión en Facebook. Abre primero la ventana de inicio de sesión desde el panel.');
     }
+
+    // Detección automática del idioma del grupo
+    let finalMessage = message;
+    try {
+      const pageTextSample = await page.evaluate(() => {
+        const title = (document.querySelector('h1, h2')?.innerText || document.title || '').trim();
+        const desc = (document.querySelector('div[data-pagelet*="GroupDescription"], div[dir="auto"]')?.innerText || '').trim();
+        return `${title} ${desc}`.slice(0, 500);
+      });
+      const detectedLang = detectLanguage(pageTextSample);
+      result.detectedLang = detectedLang;
+      onLog(`🌐 Idioma detectado en el grupo: ${getLanguageName(detectedLang)} [${detectedLang.toUpperCase()}]`);
+
+      if (autoTranslateByGroupLanguage && detectedLang !== 'es') {
+        const fId = frameworkId || 'pas-dolor-urgencia';
+        const localized = generatePersuasiveCopy(fId, detectedLang);
+        if (localized && localized.rawSpintax) {
+          finalMessage = parseSpintax(localized.rawSpintax);
+          onLog(`🔄 Publicación adaptada automáticamente al idioma del grupo: ${getLanguageName(detectedLang)}`);
+        }
+      }
+    } catch (eLang) {}
 
     // 1. Verificar si NO somos miembros e intentar Auto-Join
     const didJoin = await tryAutoJoinGroup(page, onLog);
@@ -205,7 +231,7 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     // Escribir el mensaje
     onLog('📝 Escribiendo mensaje con simulación humana...');
     if (simulateTyping) {
-      const paragraphs = message.split('\n');
+      const paragraphs = finalMessage.split('\n');
       for (let i = 0; i < paragraphs.length; i++) {
         const p = paragraphs[i];
         if (p.length > 0) {
@@ -219,7 +245,7 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
         }
       }
     } else {
-      await page.keyboard.type(message);
+      await page.keyboard.type(finalMessage);
     }
 
     await sleep(randomDelay(2000, 4000));

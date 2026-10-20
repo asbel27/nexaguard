@@ -1513,3 +1513,116 @@ input:checked + .slider:before {
   padding: 4px 8px;
   justify-content: center;
 }
+
+/* Selector de plataforma en la vista previa */
+.preview-platform-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.preview-platform-btn.active {
+  background: rgba(24, 119, 242, 0.2);
+  border-color: #1877f2;
+  color: #fff;
+}
+
+/* ==========================================================================
+   MÓDULO: AUTO-DETECCIÓN DE NICHO & MARCA POR URL
+   ========================================================================== */
+.url-niche-scanner-box {
+  background: rgba(4, 9, 32, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.url-scanner-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+}
+
+.url-scanner-title {
+  font-weight: 700;
+  color: var(--cyan);
+}
+
+.url-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.url-input-group input {
+  flex: 1;
+  background: #080f2c;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 0.84rem;
+}
+
+.niche-results-drawer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(150, 175, 255, 0.15);
+}
+
+.niche-info-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.niche-info-bar strong {
+  color: #fff;
+}
+
+.niche-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.niche-post-choice {
+  background: rgba(2, 6, 20, 0.8);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+
+.niche-post-choice:hover {
+  border-color: var(--cyan);
+}
+
+.niche-choice-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.niche-choice-sub {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
