@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaGuard Social AutoPoster · Suite de Escritorio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Barra Superior del Sistema -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="logo-shield">
+        <svg viewBox="0 0 64 64" width="32" height="32">
+          <path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="#15214f" stroke="#ffcf33" stroke-width="3"/>
+          <path d="M22 42V22L42 42V22" fill="none" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>NexaGuard <span>Social AutoPoster</span></h1>
+        <p class="subtitle">Automatización Inteligente para Grupos de Facebook &amp; Instagram</p>
+      </div>
+    </div>
+
+    <!-- Indicadores de Estado -->
+    <div class="header-status">
+      <div class="status-badge" id="chromeBadge">
+        <span class="status-dot green"></span>
+        <span id="chromeText">Chrome Detectado</span>
+      </div>
+      <div class="status-badge" id="sessionBadge">
+        <span class="status-dot yellow"></span>
+        <span id="sessionText">Perfil Activo</span>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="openLoginWindow('facebook')">
+        🔑 Sesión de Facebook
+      </button>
+      <button class="btn btn-outline btn-sm" onclick="openLoginWindow('instagram')">
+        📸 Sesión de Instagram
+      </button>
+    </div>
+  </header>
+
+  <!-- Pestañas de Navegación -->
+  <nav class="app-tabs">
+    <button class="tab-btn active" data-tab="tab-composer">🚀 Publicador &amp; Campaña</button>
+    <button class="tab-btn" data-tab="tab-groups">👥 Gestor de Grupos (<span id="groupsCountBadge">0</span>)</button>
+    <button class="tab-btn" data-tab="tab-history">📜 Historial &amp; Capturas (<span id="historyCountBadge">0</span>)</button>
+    <button class="tab-btn" data-tab="tab-settings">⚙️ Configuración Anti-Ban</button>
+  </nav>
+
+  <!-- Contenedor Principal de la Aplicación -->
+  <main class="app-main">
+
+    <!-- 1. PESTAÑA: PUBLICADOR & CAMPAÑA -->
+    <section id="tab-composer" class="tab-content active">
+      <div class="composer-grid">
+        
+        <!-- Panel Izquierdo: Editor del Post & Plantillas -->
+        <div class="panel composer-left">
+          <div class="panel-header">
+            <h2>✍️ Redactor de Publicación</h2>
+            <div class="template-selector">
+              <label for="templateSelect">Plantilla NexaGuard:</label>
+              <select id="templateSelect" onchange="applySelectedTemplate()">
+                <!-- Opciones dinámicas -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="label-row">
+              <label for="postSpintax">Texto del Post con Spintax Anti-Baneo <code>{opción1|opción2}</code>:</label>
+              <span class="badge-info" id="variationsCount">Calculando variaciones...</span>
+            </div>
+            <textarea id="postSpintax" rows="12" placeholder="Escribe aquí tu post. Puedes usar {Hola|Buenas|Saludos} para que cada grupo reciba un texto único..."></textarea>
+          </div>
+
+          <!-- Previsualizador de Spintax -->
+          <div class="spintax-preview-box">
+            <div class="preview-header">
+              <span>👁️ Vista Previa Aleatoria (así lo verá Facebook):</span>
+              <button class="btn btn-xs" onclick="regeneratePreview()">🔄 Generar Otra Variación</button>
+            </div>
+            <div class="preview-body" id="spintaxPreviewText">Escribe o selecciona una plantilla para previsualizar.</div>
+          </div>
+
+          <!-- Adjuntar Imagen Creativa -->
+          <div class="form-group image-attach-box">
+            <label>🖼️ Imagen Adjunta (Opcional para Facebook, Obligatoria para Instagram):</label>
+            <div class="image-uploader">
+              <input type="file" id="imageFileInput" accept="image/*" onchange="handleImageUpload(event)" style="display:none">
+              <button type="button" class="btn btn-outline" onclick="document.getElementById('imageFileInput').click()">
+                📁 Seleccionar Imagen de tu PC
+              </button>
+              <span id="attachedImageName" class="attached-name">Ninguna imagen seleccionada</span>
+              <div id="imagePreviewContainer" class="img-preview" style="display:none">
+                <img id="imagePreviewImg" src="" alt="Vista previa">
+                <button type="button" class="btn-remove" onclick="removeAttachedImage()">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel Derecho: Parámetros de Envío & Terminal de Logs -->
+        <div class="panel composer-right">
+          <div class="panel-header">
+            <h2>🎯 Parámetros de la Campaña</h2>
+            <span class="badge-live" id="campaignStatusBadge">Listo para iniciar</span>
+          </div>
+
+          <div class="campaign-options">
+            <div class="opt-row">
+              <span class="opt-label">Grupos Activos a Publicar:</span>
+              <strong id="selectedGroupsCount">0 grupos seleccionados</strong>
+            </div>
+            <div class="opt-row">
+              <span class="opt-label">Espera aleatoria entre grupos:</span>
+              <span class="opt-val">45s a 120s (Anti-detección humana)</span>
+            </div>
+            <div class="opt-row">
+              <span class="opt-label">Simulación de tipeo:</span>
+              <span class="opt-val tag-green">Activada (Escribe carácter a carácter)</span>
+            </div>
+          </div>
+
+          <!-- Barra de Progreso de la Campaña -->
+          <div class="campaign-progress-wrap" id="progressWrap" style="display:none">
+            <div class="progress-labels">
+              <span id="progressText">Publicando en grupo 1 de 5...</span>
+              <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+            </div>
+            <div class="countdown-box" id="countdownBox" style="display:none">
+              ⏳ Pausa de seguridad anti-ban: Siguiente post en <strong id="countdownSeconds">0</strong>s...
+            </div>
+          </div>
+
+          <!-- Botones de Acción de Campaña -->
+          <div class="campaign-actions">
+            <button class="btn btn-primary btn-lg" id="btnStartCampaign" onclick="startCampaign()">
+              ▶ INICIAR AUTO-POSTEO EN GRUPOS
+            </button>
+            <button class="btn btn-danger btn-lg" id="btnStopCampaign" onclick="stopCampaign()" style="display:none">
+              🛑 DETENER CAMPAÑA
+            </button>
+          </div>
+
+          <!-- Terminal de Logs en Tiempo Real -->
+          <div class="terminal-panel">
+            <div class="terminal-header">
+              <div class="terminal-title">
+                <span class="term-dot"></span>
+                <span>REGISTRO DE AUTOMATIZACIÓN EN VIVO</span>
+              </div>
+              <button class="btn btn-xs" onclick="clearTerminalLogs()">Limpiar Consola</button>
+            </div>
+            <div class="terminal-body" id="terminalLogs">
+              <div class="log-line info">[SISTEMA] Motor de automatización NexaGuard Social iniciado.</div>
+              <div class="log-line info">[INFO] Listo para comenzar. Selecciona una plantilla y pulsa "Iniciar".</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 2. PESTAÑA: GESTOR DE GRUPOS -->
+    <section id="tab-groups" class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>👥 Grupos de Facebook Registrados</h2>
+            <p class="subtitle">Gestiona y organiza los grupos donde compartirás NexaGuard.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openAddGroupModal()">+ Agregar Nuevo Grupo</button>
+        </div>
+
+        <div class="groups-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th width="40">Activo</th>
+                <th>Nombre del Grupo</th>
+                <th>URL / Identificador</th>
+                <th>Categoría</th>
+                <th>Posts Realizados</th>
+                <th>Último Post</th>
+                <th width="90">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="groupsTableBody">
+              <!-- Filas dinámicas -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. PESTAÑA: HISTORIAL & CAPTURAS -->
+    <section id="tab-history" class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>📜 Historial de Publicaciones &amp; Comprobantes</h2>
+            <p class="subtitle">Registro de cada post publicado con captura de pantalla verificada.</p>
+          </div>
+          <button class="btn btn-outline" onclick="loadHistory()">🔄 Actualizar Historial</button>
+        </div>
+
+        <div class="history-grid" id="historyGrid">
+          <!-- Tarjetas de historial dinámicas -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PESTAÑA: CONFIGURACIÓN ANTI-BAN -->
+    <section id="tab-settings" class="tab-content">
+      <div class="panel settings-panel">
+        <div class="panel-header">
+          <h2>⚙️ Ajustes de Seguridad Anti-Ban y Navegador</h2>
+          <p class="subtitle">Configuración para emular comportamiento humano 100% indetectable.</p>
+        </div>
+
+        <div class="settings-form">
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label>Intervalo Mínimo de Espera entre Grupos (segundos):</label>
+              <input type="number" id="settingMinDelay" value="45" min="20" max="300">
+              <small>Recomendado: 45s o más para evitar alertas de spam.</small>
+            </div>
+            <div class="form-group col-6">
+              <label>Intervalo Máximo de Espera entre Grupos (segundos):</label>
+              <input type="number" id="settingMaxDelay" value="120" min="40" max="600">
+              <small>El sistema elegirá un tiempo aleatorio entre el mínimo y el máximo.</small>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label>Límite Diario Recomendado de Posts:</label>
+              <input type="number" id="settingDailyLimit" value="25" min="5" max="100">
+              <small>Facebook recomienda no exceder 25-30 posts diarios por perfil personal.</small>
+            </div>
+            <div class="form-group col-6">
+              <label>Ruta del Ejecutable de Google Chrome:</label>
+              <input type="text" id="settingChromePath" value="C:\Program Files\Google\Chrome\Application\chrome.exe">
+              <small>Usa tu Chrome real para conservar logins y evitar detecciones de bot.</small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="settingSimulateTyping" checked>
+              <span>Escribir texto con simulación humana (teclea con velocidad variable y pausas aleatorias)</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="settingScreenshots" checked>
+              <span>Tomar captura de pantalla automática como comprobante tras cada publicación</span>
+            </label>
+          </div>
+
+          <button class="btn btn-primary" onclick="saveSettings()">💾 Guardar Configuración</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal: Agregar / Editar Grupo -->
+  <div class="modal" id="groupModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="groupModalTitle">Agregar Grupo de Facebook</h3>
+        <button class="btn-close" onclick="closeGroupModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nombre del Grupo:</label>
+          <input type="text" id="modalGroupName" placeholder="Ej: Comunidad WordPress España">
+        </div>
+        <div class="form-group">
+          <label>URL Completa del Grupo en Facebook:</label>
+          <input type="url" id="modalGroupUrl" placeholder="https://www.facebook.com/groups/nombre_del_grupo">
+          <small>Copia y pega la URL directa de la barra de direcciones de Facebook.</small>
+        </div>
+        <div class="form-group">
+          <label>Categoría / Etiqueta:</label>
+          <input type="text" id="modalGroupCategory" placeholder="Ej: WordPress, WooCommerce, SEO, Freelancers">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeGroupModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveGroupModal()">Guardar Grupo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ver Captura de Pantalla Completa -->
+  <div class="modal" id="imageModal" onclick="closeImageModal()">
+    <div class="modal-image-wrap">
+      <img id="modalFullImage" src="" alt="Comprobante">
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
