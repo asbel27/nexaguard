@@ -11,7 +11,13 @@ let state = {
   selectedGroupIds: new Set(),
   activeCategoryFilter: 'all',
   composerSearchQuery: '',
-  tableSearchQuery: ''
+  tableSearchQuery: '',
+  createdPosts: [],
+  historyItems: [],
+  activePostCatFilter: 'all',
+  activePostStatusFilter: 'all',
+  postSearchQuery: '',
+  currentPreviewPost: null
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -21,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAutopilotStatus();
   loadTemplates();
   loadGroups();
+  loadCreatedPosts();
   loadHistory();
   initSpintaxEvents();
   initLogStream();
@@ -41,6 +48,7 @@ function initTabs() {
       const target = document.getElementById(tabId);
       if (target) target.classList.add('active');
 
+      if (tabId === 'tab-created-posts') loadCreatedPosts();
       if (tabId === 'tab-groups') renderGroupsTable();
       if (tabId === 'tab-history') loadHistory();
     });
@@ -482,29 +490,47 @@ function regeneratePreview() {
   updateSpintaxPreview();
 }
 
-// 8. Subida de Imagen Creativa
+// 8. Subida de Archivos Multimedia (Imágenes y Videos)
 async function handleImageUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
 
+  const isVideo = file.type.startsWith('video/') || /\.(mp4|mov|webm)$/i.test(file.name);
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append('file', file);
 
   try {
-    appendTerminalLog('info', `Subiendo imagen: ${file.name}...`);
-    const res = await fetch('/api/upload-image', {
+    appendTerminalLog('info', `Subiendo ${isVideo ? 'video' : 'imagen'}: ${file.name}...`);
+    const res = await fetch('/api/upload-media', {
       method: 'POST',
       body: formData
     });
     const data = await res.json();
     if (data.ok) {
       state.attachedImagePath = data.path;
-      document.getElementById('attachedImageName').textContent = file.name;
-      document.getElementById('imagePreviewImg').src = data.url;
+      document.getElementById('attachedImageName').textContent = `${isVideo ? '🎬' : '📸'} ${file.name}`;
+      
+      const imgEl = document.getElementById('imagePreviewImg');
+      const vidEl = document.getElementById('imagePreviewVideo');
+
+      if (isVideo) {
+        if (imgEl) imgEl.style.display = 'none';
+        if (vidEl) {
+          vidEl.src = data.url;
+          vidEl.style.display = 'block';
+        }
+      } else {
+        if (vidEl) vidEl.style.display = 'none';
+        if (imgEl) {
+          imgEl.src = data.url;
+          imgEl.style.display = 'block';
+        }
+      }
+
       document.getElementById('imagePreviewContainer').style.display = 'block';
-      appendTerminalLog('success', `Imagen cargada con éxito.`);
+      appendTerminalLog('success', `${isVideo ? 'Video' : 'Imagen'} cargado con éxito.`);
     } else {
-      alert('Error al subir imagen: ' + data.error);
+      alert('Error al subir archivo: ' + data.error);
     }
   } catch (err) {
     alert('Error de subida: ' + err.message);
@@ -514,7 +540,15 @@ async function handleImageUpload(e) {
 function removeAttachedImage() {
   state.attachedImagePath = null;
   document.getElementById('imageFileInput').value = '';
-  document.getElementById('attachedImageName').textContent = 'Ninguna imagen seleccionada';
+  document.getElementById('attachedImageName').textContent = 'Ningún archivo multimedia';
+  const imgEl = document.getElementById('imagePreviewImg');
+  const vidEl = document.getElementById('imagePreviewVideo');
+  if (imgEl) imgEl.style.display = 'none';
+  if (vidEl) {
+    vidEl.pause();
+    vidEl.src = '';
+    vidEl.style.display = 'none';
+  }
   document.getElementById('imagePreviewContainer').style.display = 'none';
 }
 
@@ -844,14 +878,682 @@ async function saveAutopilotConfig() {
   }
 }
 
-// 11. Historial de Publicaciones
+// ==========================================================================
+// 11. GESTIÓN DE POSTS CREADOS (FEED, VISTA PREVIA, EDICIÓN Y BORRADO)
+// ==========================================================================
+async function loadCreatedPosts() {
+  try {
+    const res = await fetch('/api/posts');
+    const data = await res.json();
+    if (data.ok) {
+      state.createdPosts = data.posts || [];
+      const badge = document.getElementById('createdPostsCountBadge');
+      if (badge) badge.textContent = state.createdPosts.length;
+      const catAllBadge = document.getElementById('catCountAll');
+      if (catAllBadge) catAllBadge.textContent = state.createdPosts.length;
+      renderCreatedPosts();
+    }
+  } catch (e) {
+    console.error('Error cargando posts creados:', e);
+  }
+}
+
+function renderCreatedPosts() {
+  const container = document.getElementById('createdPostsFeed');
+  if (!container) return;
+  container.innerHTML = '';
+
+  let list = [...state.createdPosts];
+
+  // Filtro por categoría
+  if (state.activePostCatFilter && state.activePostCatFilter !== 'all') {
+    list = list.filter(p => (p.category || '').toLowerCase() === state.activePostCatFilter.toLowerCase());
+  }
+
+  // Filtro por estado
+  if (state.activePostStatusFilter && state.activePostStatusFilter !== 'all') {
+    list = list.filter(p => (p.status || '').toLowerCase() === state.activePostStatusFilter.toLowerCase());
+  }
+
+  // Búsqueda por texto
+  if (state.postSearchQuery && state.postSearchQuery.trim()) {
+    const q = state.postSearchQuery.toLowerCase().trim();
+    list = list.filter(p => (p.title || '').toLowerCase().includes(q) || (p.message || '').toLowerCase().includes(q));
+  }
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted); background: rgba(5,9,28,0.5); border-radius: 12px; border: 1px dashed var(--line);">
+        <p style="font-size:1.1rem;margin-bottom:8px">No se encontraron publicaciones con estos filtros.</p>
+        <button class="btn btn-primary btn-sm" onclick="openCreatePostModal()">+ Crear Nueva Publicación</button>
+      </div>`;
+    return;
+  }
+
+  list.forEach(post => {
+    const card = document.createElement('div');
+    card.className = 'created-post-card';
+
+    const isPublished = post.status === 'published';
+    const statusTag = isPublished 
+      ? '<span class="tag-badge tag-published">✓ Publicado en FB</span>' 
+      : '<span class="tag-badge tag-ready">● Listo</span>';
+    
+    const catTag = `<span class="tag-badge tag-category">${escapeHtml(post.category || 'General')}</span>`;
+    const targetGroup = escapeHtml(post.groupName || 'Grupo de Facebook');
+    const fbUrl = post.postUrl || 'https://www.facebook.com';
+
+    // Formatear texto con hashtags resaltados
+    const formattedSnippet = highlightHashtagsAndLinks(post.message || '');
+
+    // Formatear media preview (imagen o video)
+    let mediaHtml = '';
+    if (post.mediaUrl) {
+      const isVideo = post.mediaType === 'video' || /\.(mp4|mov|webm)$/i.test(post.mediaUrl);
+      if (isVideo) {
+        mediaHtml = `
+          <div class="card-media-preview" onclick="openFacebookPreviewModalById('${post.id}')" title="Clic para ver en pantalla completa">
+            <video src="${post.mediaUrl}" muted style="width:100%;height:160px;object-fit:cover"></video>
+            <span style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);color:#fff;padding:2px 8px;border-radius:4px;font-size:0.75rem">🎬 Video</span>
+          </div>`;
+      } else {
+        mediaHtml = `
+          <div class="card-media-preview" onclick="openFacebookPreviewModalById('${post.id}')" title="Clic para ver en pantalla completa">
+            <img src="${post.mediaUrl}" alt="Media" loading="lazy">
+          </div>`;
+      }
+    }
+
+    card.innerHTML = `
+      <div>
+        <div class="card-top-row">
+          <div class="card-title-wrap">
+            <div class="card-meta-tags">
+              ${statusTag}
+              ${catTag}
+            </div>
+            <h3 onclick="openDirectFbPost('${escapeHtml(fbUrl)}')" title="Clic para ir directamente a este post en Facebook">
+              ${escapeHtml(post.title || 'Publicación NexaGuard')}
+            </h3>
+          </div>
+        </div>
+
+        <div class="card-target-group" style="margin-top:8px">
+          <span>🎯 Destino:</span>
+          <strong>${targetGroup}</strong>
+        </div>
+
+        <a class="card-fb-link-banner" style="margin-top:10px" href="${escapeHtml(fbUrl)}" target="_blank" rel="noopener noreferrer" title="Abrir enlace directo en Facebook">
+          <span>🔗 <strong>Ver en Facebook:</strong> ${escapeHtml(truncateUrl(fbUrl, 38))}</span>
+          <span>↗</span>
+        </a>
+
+        <div class="card-message-preview" style="margin-top:12px">
+          ${formattedSnippet}
+        </div>
+
+        ${mediaHtml ? `<div style="margin-top:12px">${mediaHtml}</div>` : ''}
+      </div>
+
+      <div class="card-actions-bar">
+        <button class="btn btn-outline btn-xs" onclick="openFacebookPreviewModalById('${post.id}')" title="Ver vista previa idéntica a Facebook">
+          👁️ Vista Previa
+        </button>
+        <button class="btn btn-outline btn-xs" onclick="openDirectFbPost('${escapeHtml(fbUrl)}')" title="Abrir en Facebook">
+          🔗 Ir a FB
+        </button>
+        <button class="btn btn-outline btn-xs" onclick="openEditPostModal('${post.id}', 'posts')" title="Editar texto y configuración del post">
+          ✏️ Editar
+        </button>
+        <button class="btn btn-primary btn-xs" onclick="publishSinglePost('${post.id}')" title="Publicar este post ahora">
+          🚀 Publicar
+        </button>
+        <button class="btn btn-danger btn-xs" onclick="deleteCreatedPost('${post.id}')" title="Eliminar este post">
+          🗑️
+        </button>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function truncateUrl(url, maxLen = 35) {
+  if (!url) return '';
+  return url.length > maxLen ? url.slice(0, maxLen) + '...' : url;
+}
+
+function highlightHashtagsAndLinks(text) {
+  if (!text) return '';
+  let escaped = escapeHtml(text);
+  // Resaltar hashtags #Etiqueta
+  escaped = escaped.replace(/(#[a-zA-Z0-9_\u00C0-\u017F]+)/g, '<span class="hashtag">$1</span>');
+  // Resaltar enlaces http/https
+  escaped = escaped.replace(/(https?:\/\/[^\s]+)/g, '<span style="color:#00f0ff;text-decoration:underline">$1</span>');
+  return escaped;
+}
+
+// Filtros y Búsqueda de Posts
+function filterCreatedPostsCategory(cat, btn) {
+  state.activePostCatFilter = cat;
+  const pills = document.querySelectorAll('#postCategoryPills .cat-pill');
+  pills.forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderCreatedPosts();
+}
+
+function filterCreatedPostsStatus(status) {
+  state.activePostStatusFilter = status;
+  renderCreatedPosts();
+}
+
+function searchCreatedPosts(query) {
+  state.postSearchQuery = query;
+  renderCreatedPosts();
+}
+
+// Guardar el post actual del Composer como Borrador / Post Creado
+async function saveCurrentPostAsDraft() {
+  const spintaxText = document.getElementById('postSpintax').value;
+  if (!spintaxText || !spintaxText.trim()) {
+    alert('Por favor redacta un texto o selecciona una plantilla antes de guardar.');
+    return;
+  }
+
+  const frameworkSelect = document.getElementById('frameworkSelect');
+  const frameworkName = frameworkSelect ? frameworkSelect.options[frameworkSelect.selectedIndex].text : 'Publicación NexaGuard';
+  const title = prompt('Ingresa un título para guardar esta publicación:', frameworkName);
+  if (!title) return;
+
+  const selectedIds = Array.from(state.selectedGroupIds);
+  let groupName = 'Múltiples grupos';
+  let postUrl = 'https://www.facebook.com';
+  if (selectedIds.length > 0) {
+    const firstGrp = state.groups.find(g => g.id === selectedIds[0]);
+    if (firstGrp) {
+      groupName = firstGrp.name;
+      postUrl = firstGrp.url;
+    }
+  }
+
+  let mediaRelUrl = null;
+  let mediaType = 'image';
+  if (state.attachedImagePath) {
+    if (state.attachedImagePath.includes('public')) {
+      mediaRelUrl = state.attachedImagePath.replace(/.*public/, '').replace(/\\/g, '/');
+    } else {
+      mediaRelUrl = `/assets/uploads/${state.attachedImagePath.split(/[\\/]/).pop()}`;
+    }
+    if (/\.(mp4|mov|webm)$/i.test(state.attachedImagePath)) {
+      mediaType = 'video';
+    }
+  }
+
+  try {
+    const res = await fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        message: spintaxText,
+        category: 'WordPress',
+        mediaUrl: mediaRelUrl,
+        mediaType,
+        targetGroupIds: selectedIds,
+        groupName,
+        postUrl
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      appendTerminalLog('success', `[GUARDADO] Post guardado con éxito en la biblioteca.`);
+      alert('¡Publicación guardada con éxito en la biblioteca de posts!');
+      loadCreatedPosts();
+    } else {
+      alert('Error al guardar post: ' + data.error);
+    }
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// Previsualizar en Facebook el post actual del compositor
+function previewCurrentComposerPost() {
+  const spintaxText = document.getElementById('postSpintax').value;
+  if (!spintaxText || !spintaxText.trim()) {
+    alert('Por favor redacta algún texto o plantilla para poder previsualizar.');
+    return;
+  }
+
+  let mediaRelUrl = null;
+  let mediaType = 'image';
+  if (state.attachedImagePath) {
+    if (state.attachedImagePath.includes('public')) {
+      mediaRelUrl = state.attachedImagePath.replace(/.*public/, '').replace(/\\/g, '/');
+    } else {
+      mediaRelUrl = `/assets/uploads/${state.attachedImagePath.split(/[\\/]/).pop()}`;
+    }
+    if (/\.(mp4|mov|webm)$/i.test(state.attachedImagePath)) mediaType = 'video';
+  }
+
+  const selectedIds = Array.from(state.selectedGroupIds);
+  let groupName = 'Comunidad WordPress & Ciberseguridad';
+  let postUrl = 'https://www.facebook.com/groups';
+  if (selectedIds.length > 0) {
+    const g = state.groups.find(x => x.id === selectedIds[0]);
+    if (g) {
+      groupName = g.name;
+      postUrl = g.url;
+    }
+  }
+
+  const samplePost = {
+    id: 'temp-composer-preview',
+    title: 'Vista Previa del Compositor',
+    message: parseSpintax(spintaxText),
+    mediaUrl: mediaRelUrl,
+    mediaType,
+    groupName,
+    postUrl,
+    createdAt: new Date().toISOString()
+  };
+
+  openFacebookPreviewModal(samplePost);
+}
+
+// ==========================================================================
+// 11.1 MODAL DE VISTA PREVIA FACEBOOK (DARK THEME)
+// ==========================================================================
+function openFacebookPreviewModalById(postId) {
+  const post = state.createdPosts.find(p => p.id === postId) || state.historyItems.find(h => h.id === postId);
+  if (post) {
+    openFacebookPreviewModal(post);
+  }
+}
+
+function openFacebookPreviewModal(post) {
+  state.currentPreviewPost = post;
+
+  const groupTargetEl = document.getElementById('fbPreviewGroupTarget');
+  if (groupTargetEl) {
+    groupTargetEl.textContent = `publicó en ${post.groupName || 'un Grupo de Facebook'}`;
+  }
+
+  const timeEl = document.getElementById('fbPreviewTime');
+  if (timeEl) {
+    timeEl.textContent = post.createdAt ? new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Hace un momento';
+  }
+
+  // Contenido con hashtags y enlaces de Facebook
+  const contentEl = document.getElementById('fbPreviewContent');
+  if (contentEl) {
+    let resolvedText = parseSpintax(post.message || '');
+    let escaped = escapeHtml(resolvedText);
+    escaped = escaped.replace(/(#[a-zA-Z0-9_\u00C0-\u017F]+)/g, '<span class="fb-hashtag">$1</span>');
+    escaped = escaped.replace(/(https?:\/\/[^\s]+)/g, '<a class="fb-link" href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+    contentEl.innerHTML = escaped;
+  }
+
+  // Media (imagen o video)
+  const imgEl = document.getElementById('fbPreviewImage');
+  const vidEl = document.getElementById('fbPreviewVideo');
+  const mediaContainer = document.getElementById('fbPreviewMediaContainer');
+
+  const mediaUrl = post.mediaUrl || post.imageUrl;
+  const isVideo = post.mediaType === 'video' || (mediaUrl && /\.(mp4|mov|webm)$/i.test(mediaUrl));
+
+  if (mediaUrl) {
+    mediaContainer.style.display = 'flex';
+    if (isVideo) {
+      if (imgEl) imgEl.style.display = 'none';
+      if (vidEl) {
+        vidEl.src = mediaUrl;
+        vidEl.style.display = 'block';
+      }
+    } else {
+      if (vidEl) {
+        vidEl.pause();
+        vidEl.src = '';
+        vidEl.style.display = 'none';
+      }
+      if (imgEl) {
+        imgEl.src = mediaUrl;
+        imgEl.style.display = 'block';
+      }
+    }
+  } else {
+    mediaContainer.style.display = 'none';
+  }
+
+  // Botón directo a Facebook
+  const directBtn = document.getElementById('fbPreviewDirectLinkBtn');
+  if (directBtn) {
+    const fbUrl = post.postUrl || post.groupUrl || 'https://www.facebook.com';
+    directBtn.setAttribute('data-url', fbUrl);
+  }
+
+  document.getElementById('facebookPreviewModal').classList.add('active');
+}
+
+function closeFacebookPreviewModal() {
+  const vidEl = document.getElementById('fbPreviewVideo');
+  if (vidEl) {
+    vidEl.pause();
+    vidEl.src = '';
+  }
+  document.getElementById('facebookPreviewModal').classList.remove('active');
+  state.currentPreviewPost = null;
+}
+
+function toggleFbLike() {
+  const btn = document.getElementById('fbLikeBtn');
+  const countEl = document.getElementById('fbReactionCount');
+  if (!btn || !countEl) return;
+
+  const isLiked = btn.classList.toggle('active');
+  let currentCount = 142;
+  const match = countEl.textContent.match(/\d+/);
+  if (match) currentCount = parseInt(match[0], 10);
+
+  if (isLiked) {
+    btn.innerHTML = '<span class="fb-btn-icon">👍</span> <span>¡Te gusta!</span>';
+    countEl.textContent = `${currentCount + 1} personas`;
+  } else {
+    btn.innerHTML = '<span class="fb-btn-icon">👍</span> <span>Me gusta</span>';
+    countEl.textContent = `${Math.max(1, currentCount - 1)} personas`;
+  }
+}
+
+// Abrir el post directamente en Facebook en una pestaña nueva
+function openDirectFbPost(overrideUrl) {
+  let url = overrideUrl;
+  if (!url && state.currentPreviewPost) {
+    url = state.currentPreviewPost.postUrl || state.currentPreviewPost.groupUrl;
+  }
+  if (!url) {
+    const directBtn = document.getElementById('fbPreviewDirectLinkBtn');
+    url = directBtn ? directBtn.getAttribute('data-url') : 'https://www.facebook.com';
+  }
+  if (!url.startsWith('http')) {
+    url = 'https://www.facebook.com';
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function editFromPreview() {
+  if (state.currentPreviewPost) {
+    const p = state.currentPreviewPost;
+    closeFacebookPreviewModal();
+    openEditPostModal(p.id, p.id.startsWith('post-hist') ? 'history' : 'posts');
+  }
+}
+
+// ==========================================================================
+// 11.2 MODAL DE EDICIÓN DE POST (POSTS O HISTORIAL)
+// ==========================================================================
+function openEditPostModal(id, source = 'posts') {
+  let item = null;
+  if (source === 'posts') {
+    item = state.createdPosts.find(p => p.id === id);
+  } else {
+    item = state.historyItems.find(h => h.id === id);
+  }
+
+  if (!item) {
+    alert('Publicación no encontrada.');
+    return;
+  }
+
+  document.getElementById('editPostId').value = item.id;
+  document.getElementById('editPostSource').value = source;
+  document.getElementById('editPostTitle').value = item.title || item.groupName || 'Publicación NexaGuard';
+  document.getElementById('editPostCategory').value = item.category || 'WordPress';
+  document.getElementById('editPostMessage').value = item.message || item.messagePreview || '';
+  document.getElementById('editPostGroupName').value = item.groupName || '';
+  document.getElementById('editPostUrl').value = item.postUrl || item.groupUrl || 'https://www.facebook.com';
+  document.getElementById('editPostMediaUrl').value = item.mediaUrl || item.imageUrl || '';
+
+  updateEditCharCount();
+  updateEditMediaPreview();
+
+  document.getElementById('editPostModal').classList.add('active');
+}
+
+function closeEditPostModal() {
+  document.getElementById('editPostModal').classList.remove('active');
+}
+
+function updateEditCharCount() {
+  const val = document.getElementById('editPostMessage').value || '';
+  const countBadge = document.getElementById('editPostCharCount');
+  if (countBadge) countBadge.textContent = `${val.length} caracteres`;
+}
+
+function updateEditMediaPreview() {
+  const url = document.getElementById('editPostMediaUrl').value.trim();
+  const previewDiv = document.getElementById('editMediaPreview');
+  if (!previewDiv) return;
+
+  if (!url) {
+    previewDiv.innerHTML = '';
+    return;
+  }
+
+  const isVideo = /\.(mp4|mov|webm)$/i.test(url);
+  if (isVideo) {
+    previewDiv.innerHTML = `<video src="${url}" controls style="max-height:100px;border-radius:6px"></video>`;
+  } else {
+    previewDiv.innerHTML = `<img src="${url}" alt="Preview" style="max-height:100px;border-radius:6px;object-fit:cover">`;
+  }
+}
+
+async function handleEditMediaUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload-media', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('editPostMediaUrl').value = data.url;
+      updateEditMediaPreview();
+    } else {
+      alert('Error al subir archivo: ' + data.error);
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function saveEditedPost() {
+  const id = document.getElementById('editPostId').value;
+  const source = document.getElementById('editPostSource').value;
+  const title = document.getElementById('editPostTitle').value;
+  const category = document.getElementById('editPostCategory').value;
+  const message = document.getElementById('editPostMessage').value;
+  const groupName = document.getElementById('editPostGroupName').value;
+  const postUrl = document.getElementById('editPostUrl').value;
+  const mediaUrl = document.getElementById('editPostMediaUrl').value;
+
+  if (!message.trim()) {
+    alert('El texto del post no puede estar vacío.');
+    return;
+  }
+
+  const isVideo = /\.(mp4|mov|webm)$/i.test(mediaUrl);
+
+  try {
+    if (source === 'posts') {
+      const res = await fetch(`/api/posts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          category,
+          message,
+          groupName,
+          postUrl,
+          mediaUrl,
+          mediaType: isVideo ? 'video' : 'image'
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        closeEditPostModal();
+        loadCreatedPosts();
+        appendTerminalLog('success', `[POST EDITADO] Cambios guardados para: "${title}"`);
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } else {
+      // Editar en historial
+      const res = await fetch(`/api/history/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          groupName,
+          postUrl
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        closeEditPostModal();
+        loadHistory();
+        appendTerminalLog('success', `[HISTORIAL EDITADO] Registro de historial actualizado.`);
+      } else {
+        alert('Error: ' + data.error);
+      }
+    }
+  } catch (err) {
+    alert('Error al guardar: ' + err.message);
+  }
+}
+
+// Eliminar Post Creado
+async function deleteCreatedPost(id) {
+  if (!confirm('¿Estás seguro de que deseas eliminar este post de tu biblioteca?')) return;
+
+  try {
+    const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      loadCreatedPosts();
+      appendTerminalLog('warn', `[POST ELIMINADO] Post ${id} eliminado de la biblioteca.`);
+    } else {
+      alert('Error al eliminar post: ' + data.error);
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+// Publicar un Post Creado de forma individual e inmediata
+async function publishSinglePost(id) {
+  const post = state.createdPosts.find(p => p.id === id);
+  if (!post) return;
+
+  if (!confirm(`¿Publicar inmediatamente el post "${post.title}" en Facebook?`)) return;
+
+  try {
+    appendTerminalLog('step', `[PUBLICACIÓN INDIVIDUAL] Iniciando posteo de "${post.title}"...`);
+    const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      appendTerminalLog('success', `🎉 ¡Post publicado exitosamente en Facebook!`);
+      alert('¡Publicación realizada con éxito en el grupo de Facebook!');
+      loadCreatedPosts();
+      loadHistory();
+    } else {
+      appendTerminalLog('error', `❌ Error al publicar: ${data.error || (data.postResult ? data.postResult.message : '')}`);
+      alert('Error al publicar: ' + (data.error || (data.postResult ? data.postResult.message : 'Error desconocido')));
+    }
+  } catch (err) {
+    alert('Error al conectar con el servidor: ' + err.message);
+  }
+}
+
+// Crear Nuevo Post Manual
+function openCreatePostModal() {
+  const select = document.getElementById('newPostGroupSelect');
+  if (select) {
+    select.innerHTML = '';
+    state.groups.forEach(g => {
+      const opt = document.createElement('option');
+      opt.value = g.id;
+      opt.textContent = `${g.name} (${g.category})`;
+      select.appendChild(opt);
+    });
+  }
+  document.getElementById('newPostTitle').value = '';
+  document.getElementById('newPostMessage').value = '';
+  document.getElementById('newPostUrl').value = state.groups[0] ? state.groups[0].url : 'https://www.facebook.com/groups';
+  document.getElementById('createPostModal').classList.add('active');
+}
+
+function closeCreatePostModal() {
+  document.getElementById('createPostModal').classList.remove('active');
+}
+
+async function saveNewCreatedPost() {
+  const title = document.getElementById('newPostTitle').value.trim();
+  const category = document.getElementById('newPostCategory').value;
+  const message = document.getElementById('newPostMessage').value.trim();
+  const groupId = document.getElementById('newPostGroupSelect').value;
+  const postUrl = document.getElementById('newPostUrl').value.trim();
+
+  if (!title || !message) {
+    alert('Por favor ingresa un título y el contenido del post.');
+    return;
+  }
+
+  const grp = state.groups.find(g => g.id === groupId);
+  const groupName = grp ? grp.name : 'Grupo de Facebook';
+
+  try {
+    const res = await fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        category,
+        message,
+        groupName,
+        targetGroupIds: groupId ? [groupId] : [],
+        postUrl: postUrl || (grp ? grp.url : 'https://www.facebook.com')
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      closeCreatePostModal();
+      loadCreatedPosts();
+      appendTerminalLog('success', `[NUEVO POST] Creado exitosamente: "${title}"`);
+    } else {
+      alert('Error al crear post: ' + data.error);
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+// ==========================================================================
+// 12. HISTORIAL DE PUBLICACIONES MEJORADO (CON ACCIONES, LINKS Y BORRADO)
+// ==========================================================================
 async function loadHistory() {
   try {
     const res = await fetch('/api/history');
     const data = await res.json();
     if (data.ok) {
-      renderHistoryGrid(data.history);
-      document.getElementById('historyCountBadge').textContent = data.history.length;
+      state.historyItems = data.history || [];
+      renderHistoryGrid(state.historyItems);
+      const countEl = document.getElementById('historyCountBadge');
+      if (countEl) countEl.textContent = state.historyItems.length;
     }
   } catch (e) {
     console.error('Error cargando historial:', e);
@@ -860,28 +1562,77 @@ async function loadHistory() {
 
 function renderHistoryGrid(history) {
   const grid = document.getElementById('historyGrid');
+  if (!grid) return;
   grid.innerHTML = '';
 
   if (history.length === 0) {
-    grid.innerHTML = '<div style="color:var(--muted);padding:20px;grid-column:1/-1">Aún no hay publicaciones registradas en el historial.</div>';
+    grid.innerHTML = '<div style="color:var(--muted);padding:30px;text-align:center;grid-column:1/-1">Aún no hay publicaciones registradas en el historial.</div>';
     return;
   }
 
   history.forEach(item => {
     const card = document.createElement('div');
     card.className = `history-card ${item.ok ? 'success' : 'failed'}`;
+    const fbUrl = item.postUrl || item.groupUrl || 'https://www.facebook.com';
+
     card.innerHTML = `
       <div class="history-top">
         <span>${new Date(item.timestamp).toLocaleString()}</span>
         <span class="${item.ok ? 'tag-green' : 'log-line error'}">${item.ok ? '✓ Publicado' : '✗ Error'}</span>
       </div>
-      <div class="history-title">${escapeHtml(item.groupName || 'Grupo')}</div>
-      <div class="history-msg">${escapeHtml(item.messagePreview || '')}</div>
-      ${item.screenshot ? `<img src="${item.screenshot}" class="history-shot" alt="Comprobante" onclick="openImageModal('${item.screenshot}')">` : ''}
+      <div class="history-title" onclick="openDirectFbPost('${escapeHtml(fbUrl)}')" title="Clic para ir directamente a este post en Facebook">
+        ${escapeHtml(item.groupName || 'Grupo de Facebook')} ↗
+      </div>
+      <div class="history-msg">${escapeHtml(item.messagePreview || item.message || '')}</div>
+      ${item.screenshot ? `<img src="${item.screenshot}" class="history-shot" alt="Comprobante" onclick="openImageModal('${item.screenshot}')" title="Clic para ampliar comprobante">` : ''}
       <div style="font-size:0.75rem;color:var(--muted)">${escapeHtml(item.details || '')}</div>
+
+      <!-- Barra de acciones directas para cada post del historial -->
+      <div class="history-actions-row">
+        <button class="btn btn-primary btn-xs" onclick="openDirectFbPost('${escapeHtml(fbUrl)}')" title="Abrir publicación en Facebook">
+          🔗 Ver en FB
+        </button>
+        <button class="btn btn-outline btn-xs" onclick="openFacebookPreviewModalById('${item.id}')" title="Ver vista previa realista de Facebook">
+          👁️ Vista Previa
+        </button>
+        <button class="btn btn-outline btn-xs" onclick="openEditPostModal('${item.id}', 'history')" title="Editar texto o enlace">
+          ✏️ Editar
+        </button>
+        <button class="btn btn-danger btn-xs" onclick="deleteHistoryItem('${item.id}')" title="Eliminar del historial">
+          🗑️
+        </button>
+      </div>
     `;
     grid.appendChild(card);
   });
+}
+
+async function deleteHistoryItem(id) {
+  if (!confirm('¿Eliminar esta publicación del historial?')) return;
+  try {
+    const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      loadHistory();
+      appendTerminalLog('warn', `[HISTORIAL] Publicación eliminada del historial.`);
+    }
+  } catch (err) {
+    alert('Error al eliminar: ' + err.message);
+  }
+}
+
+async function clearAllHistory() {
+  if (!confirm('¿Estás seguro de que deseas VACIAR TODO el historial de publicaciones?')) return;
+  try {
+    const res = await fetch('/api/history', { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      loadHistory();
+      appendTerminalLog('warn', `[HISTORIAL] Todo el historial ha sido vaciado.`);
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
 }
 
 function openImageModal(src) {

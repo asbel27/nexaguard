@@ -74,9 +74,10 @@ async function postToInstagram({ caption, imagePath, onLog = console.log }) {
     onLog('✓ Modal de creación abierto.');
     await sleep(randomDelay(2000, 3500));
 
-    // Esperar input de archivo
-    onLog(`📸 Subiendo archivo de imagen: ${path.basename(imagePath)}...`);
-    const fileInput = await page.$('input[type="file"][accept*="image"]');
+    // Esperar input de archivo multimedia
+    const isVideo = /\.(mp4|mov|avi|webm)$/i.test(imagePath);
+    onLog(`📁 Subiendo archivo ${isVideo ? 'de video' : 'de imagen'}: ${path.basename(imagePath)}...`);
+    const fileInput = await page.$('input[type="file"][accept*="image"], input[type="file"][accept*="video"], input[type="file"]');
     if (!fileInput) {
       throw new Error('No se encontró el selector de archivos de Instagram.');
     }

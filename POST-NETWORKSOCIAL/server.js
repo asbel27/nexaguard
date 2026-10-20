@@ -260,13 +260,28 @@ app.post('/api/spintax/preview', (req, res) => {
   res.json({ ok: true, sample, variations });
 });
 
-// 5. Subida de Imagen Creativa
-app.post('/api/upload-image', upload.single('image'), (req, res) => {
+// 5. Subida de Archivos Multimedia (Imágenes y Videos)
+app.post('/api/upload-media', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ ok: false, error: 'No se subió ningún archivo.' });
+  const isVideo = req.file.mimetype.startsWith('video/') || /\.(mp4|mov|webm)$/i.test(req.file.originalname);
   res.json({
     ok: true,
     path: req.file.path,
-    url: `/assets/uploads/${req.file.filename}`
+    url: `/assets/uploads/${req.file.filename}`,
+    filename: req.file.filename,
+    type: isVideo ? 'video' : 'image'
+  });
+});
+
+app.post('/api/upload-image', upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ ok: false, error: 'No se subió ningún archivo.' });
+  const isVideo = req.file.mimetype.startsWith('video/') || /\.(mp4|mov|webm)$/i.test(req.file.originalname);
+  res.json({
+    ok: true,
+    path: req.file.path,
+    url: `/assets/uploads/${req.file.filename}`,
+    filename: req.file.filename,
+    type: isVideo ? 'video' : 'image'
   });
 });
 
@@ -285,10 +300,233 @@ app.post('/api/creative/generate', async (req, res) => {
   }
 });
 
-// 6. Historial de Publicaciones
+// ==========================================
+// 6. GESTIÓN DE POSTS CREADOS (CRUD COMPLETO)
+// ==========================================
+const DEFAULT_POSTS = [
+  {
+    id: "post-wp-01",
+    title: "Alerta Pantalla Roja de Google Safe Browsing",
+    category: "WordPress",
+    status: "ready",
+    groupName: "WordPress en Español (Oficial & Comunidad)",
+    targetGroupIds: ["grp-1", "grp-4"],
+    postUrl: "https://www.facebook.com/groups/wordpresseh",
+    mediaUrl: "/assets/generated/banner_pantalla_roja.png",
+    mediaType: "image",
+    message: "🛑 ¿Tu sitio WordPress o el de un cliente amaneció con la pantalla roja de 'Sitio engañoso adelante'?\n\nNo entres en pánico ni borres archivos a ciegas. El 89% de estas advertencias se deben a inyecciones de JavaScript ofuscado en wp-includes/template-loader.php o redirecciones condicionales a bots.\n\n🛡️ Protocolo forense de rescate:\n1. Revisa las tareas cron en WordPress (wp cron event list).\n2. Compara el core con los hashes oficiales de WordPress.org (wp core verify-checksums).\n3. Limpia la base de datos de transients y opciones sospechosas en wp_options.\n\nSi necesitas auditar tu dominio en 15 segundos, hemos liberado nuestro escáner forense gratuito en 👉 https://nexaguards.com\n\n#WordPress #Ciberseguridad #Malware #GoogleSafeBrowsing #Webmasters",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "post-seo-02",
+    title: "Caso de Estudio Forense: Japanese Keyword Hack",
+    category: "SEO",
+    status: "published",
+    groupName: "SEO & Posicionamiento Web en Google",
+    targetGroupIds: ["grp-5"],
+    postUrl: "https://www.facebook.com/groups/seoposicionamiento",
+    mediaUrl: "/assets/generated/banner_japanese_seo.png",
+    mediaType: "image",
+    message: "🧠 CASO FORENSE REAL: Cómo desinfectamos un e-commerce atacado por el 'Japanese Keyword Hack' con más de 14,000 URLs spam indexadas en Google.\n\nEl ataque utilizaba una técnica de cloaking HTTP: si entraba un usuario normal, veía la tienda limpia. Pero si entraba Googlebot con User-Agent de rastreo, el servidor inyectaba miles de títulos en caracteres asiáticos vendiendo réplicas.\n\n🔧 Solución aplicada:\n✓ Desinfección del archivo .htaccess malicioso y rules de rewrite ocultas.\n✓ Purga de sitemaps dinámicos zombies y emisión masiva de cabeceras HTTP 410 Gone para que Google desindexe en tiempo récord.\n✓ Activación de firewall perimetral NexaGuard Core Sentinel.\n\nGuía completa y auditoría gratuita en vivo en 👉 https://nexaguards.com\n\n#SEO #WordPress #WooCommerce #JapaneseKeywordHack #Ciberseguridad",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "post-woo-03",
+    title: "Blindaje WooCommerce contra Skimmers Magecart",
+    category: "WooCommerce",
+    status: "ready",
+    groupName: "Comunidad WooCommerce & WordPress España y Latam",
+    targetGroupIds: ["grp-2", "grp-3"],
+    postUrl: "https://www.facebook.com/groups/comunidadwoocommerce",
+    mediaUrl: "/assets/generated/banner_woocommerce.png",
+    mediaType: "image",
+    message: "💳 ATENCIÓN TIENDAS ONLINE: Si gestionas un WooCommerce con pasarelas de pago (Stripe, PayPal, Redsys), verifica hoy mismo tus scripts de checkout.\n\nHemos detectado una oleada de ataques silenciosos tipo 'Magecart' que inyectan lectores de tarjetas en el DOM sin alterar el funcionamiento de la compra. El cliente paga normal, pero sus datos se filtran a un servidor en el extranjero.\n\n🔒 ¿Cómo protegerte hoy mismo?\n1. Bloquea la edición de archivos desde el dashboard (DISALLOW_FILE_EDIT).\n2. Implementa Content Security Policy (CSP) estricto en los scripts de pago.\n3. Ejecuta una auditoría de integridad periódica.\n\nPuedes probar nuestro escáner en vivo y sin registro en 👉 https://nexaguards.com/#escaner\n\n#WooCommerce #ECommerce #SeguridadWeb #Magecart #NexaGuard",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
+
+app.get('/api/posts', (req, res) => {
+  let posts = readJson('posts.json', DEFAULT_POSTS);
+  if (!posts || posts.length === 0) {
+    posts = DEFAULT_POSTS;
+    writeJson('posts.json', posts);
+  }
+  res.json({ ok: true, posts });
+});
+
+app.post('/api/posts', (req, res) => {
+  const { title, message, category, mediaUrl, mediaType, targetGroupIds, groupName, postUrl } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ ok: false, error: 'El mensaje del post es requerido.' });
+  }
+
+  const posts = readJson('posts.json', []);
+  const newPost = {
+    id: `post-${Date.now()}`,
+    title: (title || 'Publicación NexaGuard').trim(),
+    message: message.trim(),
+    category: category || 'General',
+    status: 'ready',
+    groupName: groupName || 'Grupo de Facebook',
+    targetGroupIds: Array.isArray(targetGroupIds) ? targetGroupIds : [],
+    postUrl: postUrl || 'https://www.facebook.com',
+    mediaUrl: mediaUrl || null,
+    mediaType: mediaType || (mediaUrl && /\.(mp4|mov|webm)$/i.test(mediaUrl) ? 'video' : 'image'),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  posts.unshift(newPost);
+  writeJson('posts.json', posts);
+  res.json({ ok: true, post: newPost });
+});
+
+app.put('/api/posts/:id', (req, res) => {
+  const { id } = req.params;
+  const { title, message, category, mediaUrl, mediaType, targetGroupIds, groupName, postUrl, status } = req.body;
+  const posts = readJson('posts.json', []);
+  const idx = posts.findIndex(p => p.id === id);
+
+  if (idx === -1) {
+    return res.status(404).json({ ok: false, error: 'Post no encontrado.' });
+  }
+
+  const current = posts[idx];
+  posts[idx] = {
+    ...current,
+    title: title !== undefined ? title.trim() : current.title,
+    message: message !== undefined ? message.trim() : current.message,
+    category: category !== undefined ? category : current.category,
+    mediaUrl: mediaUrl !== undefined ? mediaUrl : current.mediaUrl,
+    mediaType: mediaType !== undefined ? mediaType : current.mediaType,
+    targetGroupIds: targetGroupIds !== undefined ? targetGroupIds : current.targetGroupIds,
+    groupName: groupName !== undefined ? groupName : current.groupName,
+    postUrl: postUrl !== undefined ? postUrl : current.postUrl,
+    status: status !== undefined ? status : current.status,
+    updatedAt: new Date().toISOString()
+  };
+
+  writeJson('posts.json', posts);
+  res.json({ ok: true, post: posts[idx] });
+});
+
+app.delete('/api/posts/:id', (req, res) => {
+  const { id } = req.params;
+  let posts = readJson('posts.json', []);
+  const initialLength = posts.length;
+  posts = posts.filter(p => p.id !== id);
+
+  if (posts.length === initialLength) {
+    return res.status(404).json({ ok: false, error: 'Post no encontrado.' });
+  }
+
+  writeJson('posts.json', posts);
+  res.json({ ok: true, message: 'Post eliminado correctamente.' });
+});
+
+app.post('/api/posts/:id/publish', async (req, res) => {
+  const { id } = req.params;
+  const posts = readJson('posts.json', []);
+  const post = posts.find(p => p.id === id);
+  if (!post) return res.status(404).json({ ok: false, error: 'Post no encontrado.' });
+
+  const allGroups = readJson('groups.json', []);
+  const targetGroup = allGroups.find(g => post.targetGroupIds && post.targetGroupIds.includes(g.id)) || allGroups[0];
+  const groupUrl = targetGroup ? targetGroup.url : (post.postUrl || 'https://www.facebook.com');
+
+  const resolvedMessage = parseSpintax(post.message);
+  let localImagePath = null;
+  if (post.mediaUrl) {
+    localImagePath = path.join(__dirname, 'public', post.mediaUrl.replace(/^\//, ''));
+  }
+
+  broadcastLog({ type: 'step', msg: `🚀 Publicando post individual "${post.title}" en "${targetGroup ? targetGroup.name : groupUrl}"...` });
+
+  try {
+    const postResult = await postToFacebookGroup({
+      groupUrl,
+      message: resolvedMessage,
+      imagePath: localImagePath,
+      simulateTyping: true,
+      onLog: (msg) => broadcastLog({ type: 'log', msg })
+    });
+
+    const finalPostUrl = postResult.postUrl || groupUrl;
+    post.status = postResult.ok ? 'published' : 'failed';
+    post.postUrl = finalPostUrl;
+    post.updatedAt = new Date().toISOString();
+    writeJson('posts.json', posts);
+
+    const history = readJson('history.json', []);
+    history.unshift({
+      id: `post-hist-${Date.now()}`,
+      groupId: targetGroup ? targetGroup.id : null,
+      groupName: targetGroup ? targetGroup.name : 'Grupo de Facebook',
+      groupUrl,
+      postUrl: finalPostUrl,
+      ok: postResult.ok,
+      timestamp: new Date().toISOString(),
+      message: resolvedMessage,
+      messagePreview: resolvedMessage.slice(0, 140) + '...',
+      imageUrl: post.mediaUrl,
+      mediaType: post.mediaType,
+      screenshot: postResult.screenshot,
+      details: postResult.message
+    });
+    writeJson('history.json', history.slice(0, 200));
+
+    res.json({ ok: postResult.ok, post, postResult });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ==========================================
+// 6.1 HISTORIAL DE PUBLICACIONES (CON EDICIÓN Y BORRADO)
+// ==========================================
 app.get('/api/history', (req, res) => {
   const history = readJson('history.json', []);
   res.json({ ok: true, history });
+});
+
+app.put('/api/history/:id', (req, res) => {
+  const { id } = req.params;
+  const { message, postUrl, groupName, details } = req.body;
+  const history = readJson('history.json', []);
+  const idx = history.findIndex(h => h.id === id);
+
+  if (idx === -1) {
+    return res.status(404).json({ ok: false, error: 'Registro de historial no encontrado.' });
+  }
+
+  const current = history[idx];
+  history[idx] = {
+    ...current,
+    message: message !== undefined ? message : current.message,
+    messagePreview: message !== undefined ? (message.slice(0, 140) + '...') : current.messagePreview,
+    postUrl: postUrl !== undefined ? postUrl : current.postUrl,
+    groupName: groupName !== undefined ? groupName : current.groupName,
+    details: details !== undefined ? details : current.details
+  };
+
+  writeJson('history.json', history);
+  res.json({ ok: true, item: history[idx] });
+});
+
+app.delete('/api/history/:id', (req, res) => {
+  const { id } = req.params;
+  let history = readJson('history.json', []);
+  history = history.filter(h => h.id !== id);
+  writeJson('history.json', history);
+  res.json({ ok: true, message: 'Publicación eliminada del historial.' });
+});
+
+app.delete('/api/history', (req, res) => {
+  writeJson('history.json', []);
+  res.json({ ok: true, message: 'Historial vaciado por completo.' });
 });
 
 // 7. Lanzamiento de Campaña de Auto-Posteo en Grupos
@@ -369,19 +607,49 @@ app.post('/api/campaign/start', async (req, res) => {
         activeCampaign.progress.failed++;
       }
 
-      // Guardar en historial
+      // Guardar en historial completo
+      const postUrlFinal = postResult.postUrl || group.url;
+      const mediaRelUrl = imagePath ? (imagePath.includes('public') ? imagePath.replace(/.*public/, '').replace(/\\/g, '/') : `/assets/uploads/${path.basename(imagePath)}`) : null;
+      const isVideoMedia = imagePath ? /\.(mp4|mov|webm)$/i.test(imagePath) : false;
+
       history.unshift({
         id: `post-${Date.now()}`,
         groupId: group.id,
         groupName: group.name,
         groupUrl: group.url,
+        postUrl: postUrlFinal,
         ok: postResult.ok,
         timestamp: new Date().toISOString(),
+        message: uniqueMessage,
         messagePreview: uniqueMessage.slice(0, 140) + '...',
+        imageUrl: mediaRelUrl,
+        mediaType: isVideoMedia ? 'video' : 'image',
         screenshot: postResult.screenshot,
         details: postResult.message
       });
       writeJson('history.json', history.slice(0, 200));
+
+      // Si el post fue exitoso, registrarlo también en la biblioteca de posts creados
+      if (postResult.ok) {
+        try {
+          const currentPosts = readJson('posts.json', []);
+          currentPosts.unshift({
+            id: `post-${Date.now()}`,
+            title: `Post en ${group.name.slice(0, 35)}`,
+            message: uniqueMessage,
+            category: group.category || 'General',
+            status: 'published',
+            groupName: group.name,
+            targetGroupIds: [group.id],
+            postUrl: postUrlFinal,
+            mediaUrl: mediaRelUrl,
+            mediaType: isVideoMedia ? 'video' : 'image',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+          writeJson('posts.json', currentPosts.slice(0, 100));
+        } catch (ePosts) {}
+      }
 
       // Actualizar grupos
       const currentAllGroups = readJson('groups.json', []);

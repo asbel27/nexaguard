@@ -243,18 +243,46 @@ class BotAutopilot {
       }
 
       // Guardar en historial
+      const postUrlFinal = postResult.postUrl || group.url;
+      const bannerRelUrl = generatedImagePath ? `/assets/generated/${path.basename(generatedImagePath)}` : null;
+
       history.unshift({
         id: `autopilot-${Date.now()}`,
         groupId: group.id,
         groupName: group.name,
         groupUrl: group.url,
+        postUrl: postUrlFinal,
         ok: postResult.ok,
         timestamp: new Date().toISOString(),
+        message: uniqueMessage,
         messagePreview: uniqueMessage.slice(0, 140) + '...',
+        imageUrl: bannerRelUrl,
+        mediaType: 'image',
         screenshot: postResult.screenshot,
         details: `[Piloto Automático] ${postResult.message}`
       });
       writeJson('history.json', history.slice(0, 250));
+
+      if (postResult.ok) {
+        try {
+          const currentPosts = readJson('posts.json', []);
+          currentPosts.unshift({
+            id: `autopilot-post-${Date.now()}`,
+            title: `[Bot] ${framework.name}`,
+            message: uniqueMessage,
+            category: group.category || 'General',
+            status: 'published',
+            groupName: group.name,
+            targetGroupIds: [group.id],
+            postUrl: postUrlFinal,
+            mediaUrl: bannerRelUrl,
+            mediaType: 'image',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+          writeJson('posts.json', currentPosts.slice(0, 150));
+        } catch (eP) {}
+      }
 
       // Actualizar grupos
       const gIdx = allGroups.findIndex(x => x.id === group.id);

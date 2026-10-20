@@ -51,6 +51,7 @@
   <!-- Pestañas de Navegación -->
   <nav class="app-tabs">
     <button class="tab-btn active" data-tab="tab-composer">🚀 Publicador &amp; Selección de Grupos</button>
+    <button class="tab-btn" data-tab="tab-created-posts">📑 Posts Creados (<span id="createdPostsCountBadge">0</span>)</button>
     <button class="tab-btn" data-tab="tab-autopilot">🤖 Piloto Automático (Bot 24/7)</button>
     <button class="tab-btn" data-tab="tab-groups">👥 Gestor de Grupos (<span id="groupsCountBadge">0</span>)</button>
     <button class="tab-btn" data-tab="tab-history">📜 Historial &amp; Capturas (<span id="historyCountBadge">0</span>)</button>
@@ -115,13 +116,14 @@
               </div>
             </div>
             <div class="image-uploader">
-              <input type="file" id="imageFileInput" accept="image/*" onchange="handleImageUpload(event)" style="display:none">
+              <input type="file" id="imageFileInput" accept="image/*,video/*" onchange="handleImageUpload(event)" style="display:none">
               <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('imageFileInput').click()">
-                📁 O Subir Imagen Local
+                📁 O Subir Imagen / Video Local
               </button>
-              <span id="attachedImageName" class="attached-name">Ninguna imagen seleccionada</span>
+              <span id="attachedImageName" class="attached-name">Ningún archivo multimedia</span>
               <div id="imagePreviewContainer" class="img-preview" style="display:none;width:120px;height:65px">
                 <img id="imagePreviewImg" src="" alt="Vista previa">
+                <video id="imagePreviewVideo" src="" controls style="display:none;width:100%;height:100%;object-fit:cover"></video>
                 <button type="button" class="btn-remove" onclick="removeAttachedImage()">×</button>
               </div>
             </div>
@@ -212,6 +214,12 @@
             <button class="btn btn-primary btn-lg" id="btnStartCampaign" onclick="startCampaign()">
               ▶ INICIAR AUTO-POSTEO EN GRUPOS
             </button>
+            <button type="button" class="btn btn-secondary btn-lg" onclick="saveCurrentPostAsDraft()">
+              💾 GUARDAR EN MIS POSTS
+            </button>
+            <button type="button" class="btn btn-outline btn-lg" onclick="previewCurrentComposerPost()">
+              👁️ VISTA PREVIA FACEBOOK
+            </button>
             <button class="btn btn-danger btn-lg" id="btnStopCampaign" onclick="stopCampaign()" style="display:none">
               🛑 DETENER CAMPAÑA
             </button>
@@ -236,7 +244,46 @@
       </div>
     </section>
 
-    <!-- PESTAÑA: PILOTO AUTOMÁTICO (BOT 24/7) -->
+    <!-- 1.1 PESTAÑA: POSTS CREADOS & FEED -->
+    <section id="tab-created-posts" class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>📑 Biblioteca de Posts Creados &amp; Feed</h2>
+            <p class="subtitle">Gestiona todos tus contenidos: edita el texto, elimina publicaciones, mira la vista previa idéntica a Facebook y haz clic para abrir el post en vivo en Facebook.</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-outline" onclick="loadCreatedPosts()">🔄 Actualizar Feed</button>
+            <button class="btn btn-primary" onclick="openCreatePostModal()">+ Crear Nuevo Post</button>
+          </div>
+        </div>
+
+        <!-- Barra de Búsqueda y Filtros de Posts -->
+        <div class="posts-filter-bar">
+          <div class="category-pills" id="postCategoryPills">
+            <button class="cat-pill active" onclick="filterCreatedPostsCategory('all', this)">Todos (<span id="catCountAll">0</span>)</button>
+            <button class="cat-pill" onclick="filterCreatedPostsCategory('WordPress', this)">WordPress</button>
+            <button class="cat-pill" onclick="filterCreatedPostsCategory('WooCommerce', this)">WooCommerce</button>
+            <button class="cat-pill" onclick="filterCreatedPostsCategory('SEO', this)">SEO</button>
+            <button class="cat-pill" onclick="filterCreatedPostsCategory('General', this)">General</button>
+          </div>
+
+          <div class="posts-search-wrap">
+            <select id="postStatusFilter" onchange="filterCreatedPostsStatus(this.value)">
+              <option value="all">Todos los estados</option>
+              <option value="ready">Listos para Publicar</option>
+              <option value="published">Publicados en Facebook</option>
+            </select>
+            <input type="text" class="search-input" id="searchPostsInput" placeholder="🔍 Buscar posts por título o texto..." oninput="searchCreatedPosts(this.value)">
+          </div>
+        </div>
+
+        <!-- Grid de Posts Creados -->
+        <div class="created-posts-grid" id="createdPostsFeed">
+          <!-- Tarjetas de posts generadas dinámicamente -->
+        </div>
+      </div>
+    </section>
     <section id="tab-autopilot" class="tab-content">
       <div class="autopilot-dashboard">
         
@@ -389,9 +436,12 @@
         <div class="panel-header">
           <div>
             <h2>📜 Historial de Publicaciones &amp; Comprobantes</h2>
-            <p class="subtitle">Registro de cada post publicado con captura de pantalla verificada.</p>
+            <p class="subtitle">Registro de cada post publicado en Facebook con enlace directo, vista previa, comprobante y opciones de edición/borrado.</p>
           </div>
-          <button class="btn btn-outline" onclick="loadHistory()">🔄 Actualizar Historial</button>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-outline" onclick="loadHistory()">🔄 Actualizar Historial</button>
+            <button class="btn btn-danger btn-sm" onclick="clearAllHistory()">🗑️ Vaciar Historial</button>
+          </div>
         </div>
 
         <div class="history-grid" id="historyGrid">
@@ -489,6 +539,233 @@
   <div class="modal" id="imageModal" onclick="closeImageModal()">
     <div class="modal-image-wrap">
       <img id="modalFullImage" src="" alt="Comprobante">
+    </div>
+  </div>
+
+  <!-- Modal: Vista Previa Realista de Post en Facebook (Dark Mode) -->
+  <div class="modal fb-preview-modal" id="facebookPreviewModal">
+    <div class="modal-card fb-preview-card">
+      <div class="modal-header fb-header">
+        <div class="fb-modal-title">
+          <svg class="fb-icon" viewBox="0 0 24 24" width="22" height="22">
+            <path fill="#1877f2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          <span>Vista Previa de Publicación en Facebook</span>
+        </div>
+        <button class="btn-close" onclick="closeFacebookPreviewModal()">×</button>
+      </div>
+
+      <div class="modal-body fb-feed-wrap">
+        <!-- Tarjeta de Facebook Post -->
+        <div class="fb-post-box">
+          <!-- Cabecera del Autor -->
+          <div class="fb-post-header">
+            <div class="fb-avatar">
+              <svg viewBox="0 0 64 64" width="40" height="40">
+                <path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="#15214f" stroke="#00f0ff" stroke-width="3"/>
+                <path d="M22 42V22L42 42V22" fill="none" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="fb-author-info">
+              <div class="fb-author-name">
+                <span class="fb-brand">NexaGuard · Rescate Web &amp; Ciberseguridad</span>
+                <span class="fb-verified" title="Verificado">✓</span>
+                <span class="fb-post-to" id="fbPreviewGroupTarget">publicó en Grupo</span>
+              </div>
+              <div class="fb-post-meta">
+                <span id="fbPreviewTime">Hace un momento</span> · 
+                <span title="Público">🌐</span>
+              </div>
+            </div>
+            <div class="fb-more-dots">•••</div>
+          </div>
+
+          <!-- Texto del Post -->
+          <div class="fb-post-content" id="fbPreviewContent">
+            <!-- Texto dinámico -->
+          </div>
+
+          <!-- Archivo Multimedia (Imagen o Video) -->
+          <div class="fb-post-media" id="fbPreviewMediaContainer">
+            <img id="fbPreviewImage" src="" alt="Media" style="display:none">
+            <video id="fbPreviewVideo" src="" controls style="display:none"></video>
+          </div>
+
+          <!-- Resumen de Reacciones -->
+          <div class="fb-reactions-bar">
+            <div class="fb-reaction-icons">
+              <span class="fb-react-badge fb-like">👍</span>
+              <span class="fb-react-badge fb-love">❤️</span>
+              <span class="fb-react-badge fb-care">🔥</span>
+              <span class="fb-reaction-count" id="fbReactionCount">142 personas</span>
+            </div>
+            <div class="fb-counts">
+              <span>24 comentarios</span> · <span>11 compartidos</span>
+            </div>
+          </div>
+
+          <!-- Botones de Acción de Facebook -->
+          <div class="fb-actions-bar">
+            <button class="fb-act-btn" id="fbLikeBtn" onclick="toggleFbLike()">
+              <span class="fb-btn-icon">👍</span> <span>Me gusta</span>
+            </button>
+            <button class="fb-act-btn" onclick="document.getElementById('fbSimCommentInput').focus()">
+              <span class="fb-btn-icon">💬</span> <span>Comentar</span>
+            </button>
+            <button class="fb-act-btn" onclick="openDirectFbPost()">
+              <span class="fb-btn-icon">↗️</span> <span>Compartir</span>
+            </button>
+          </div>
+
+          <!-- Hilo de comentarios simulado -->
+          <div class="fb-comments-section">
+            <div class="fb-comment-item">
+              <div class="fb-user-avatar">👨‍💻</div>
+              <div class="fb-comment-bubble">
+                <div class="fb-comment-author">Carlos Gómez (Admin de Grupo)</div>
+                <div class="fb-comment-text">Excelente aporte forense para la comunidad. Muy útil el escáner gratuito sin registro 👍</div>
+              </div>
+            </div>
+            <div class="fb-comment-item">
+              <div class="fb-user-avatar">👩‍💻</div>
+              <div class="fb-comment-bubble">
+                <div class="fb-comment-author">Elena Martínez</div>
+                <div class="fb-comment-text">Justo me pasó con un cliente infectado por el cloaking japonés, ¡guardada la guía!</div>
+              </div>
+            </div>
+            <div class="fb-add-comment">
+              <div class="fb-user-avatar">🛡️</div>
+              <input type="text" id="fbSimCommentInput" class="fb-comment-input" placeholder="Escribe un comentario como NexaGuard...">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer fb-footer">
+        <button class="btn btn-outline" onclick="closeFacebookPreviewModal()">✖️ Cerrar Vista Previa</button>
+        <button class="btn btn-secondary" id="fbPreviewEditBtn" onclick="editFromPreview()">✏️ Editar este Post</button>
+        <button class="btn btn-primary" id="fbPreviewDirectLinkBtn" onclick="openDirectFbPost()">
+          🔗 Abrir Directamente en Facebook
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Editar Post -->
+  <div class="modal" id="editPostModal">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3 id="editPostModalTitle">✏️ Editar Publicación</h3>
+        <button class="btn-close" onclick="closeEditPostModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editPostId">
+        <input type="hidden" id="editPostSource" value="posts"> <!-- 'posts' o 'history' -->
+
+        <div class="form-row">
+          <div class="form-group col-8">
+            <label>Título o Identificador del Post:</label>
+            <input type="text" id="editPostTitle" placeholder="Ej: Caso de Estudio: Recuperación WordPress">
+          </div>
+          <div class="form-group col-4">
+            <label>Categoría:</label>
+            <select id="editPostCategory">
+              <option value="WordPress">WordPress</option>
+              <option value="WooCommerce">WooCommerce</option>
+              <option value="SEO">SEO</option>
+              <option value="General">General</option>
+              <option value="Alertas">Alertas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label>Texto del Post (con Spintax o texto final):</label>
+            <span id="editPostCharCount" class="badge-info">0 caracteres</span>
+          </div>
+          <textarea id="editPostMessage" rows="9" oninput="updateEditCharCount()" placeholder="Escribe aquí el contenido del post..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>Nombre del Grupo Destino:</label>
+            <input type="text" id="editPostGroupName" placeholder="Ej: WordPress en Español">
+          </div>
+          <div class="form-group col-6">
+            <label>URL Directa del Post o Grupo de Facebook:</label>
+            <input type="url" id="editPostUrl" placeholder="https://www.facebook.com/groups/...">
+            <small>Al hacer clic en el post, llevará directamente a este enlace en Facebook.</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>URL del Archivo Multimedia (Imagen o Video):</label>
+          <div style="display:flex;gap:10px">
+            <input type="text" id="editPostMediaUrl" placeholder="/assets/generated/banner_... o /assets/uploads/..." style="flex:1">
+            <input type="file" id="editPostFileInput" accept="image/*,video/*" onchange="handleEditMediaUpload(event)" style="display:none">
+            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('editPostFileInput').click()">
+              📁 Reemplazar Archivo
+            </button>
+          </div>
+          <div id="editMediaPreview" style="margin-top:10px;max-height:120px;overflow:hidden;border-radius:8px"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeEditPostModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEditedPost()">💾 Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Crear Nuevo Post Manual -->
+  <div class="modal" id="createPostModal">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3>+ Crear Nueva Publicación para Facebook</h3>
+        <button class="btn-close" onclick="closeCreatePostModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group col-8">
+            <label>Título del Post:</label>
+            <input type="text" id="newPostTitle" placeholder="Ej: Alerta Crítica para WooCommerce">
+          </div>
+          <div class="form-group col-4">
+            <label>Categoría:</label>
+            <select id="newPostCategory">
+              <option value="WordPress">WordPress</option>
+              <option value="WooCommerce">WooCommerce</option>
+              <option value="SEO">SEO</option>
+              <option value="Alertas">Alertas</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Contenido del Post:</label>
+          <textarea id="newPostMessage" rows="7" placeholder="Escribe el texto persuasivo aquí. Puedes incluir emojis y enlaces a https://nexaguards.com"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>Grupo de Facebook Asignado:</label>
+            <select id="newPostGroupSelect">
+              <!-- Se llena con los grupos existentes -->
+            </select>
+          </div>
+          <div class="form-group col-6">
+            <label>Enlace Directo / URL de Facebook:</label>
+            <input type="url" id="newPostUrl" placeholder="https://www.facebook.com/groups/...">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeCreatePostModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveNewCreatedPost()">💾 Guardar en Biblioteca</button>
+      </div>
     </div>
   </div>
 

@@ -224,20 +224,21 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
 
     await sleep(randomDelay(2000, 4000));
 
-    // Adjuntar imagen si existe
+    // Adjuntar imagen o video si existe
     if (imagePath && fs.existsSync(imagePath)) {
-      onLog(`📸 Adjuntando imagen: ${path.basename(imagePath)}...`);
+      const isVideo = /\.(mp4|mov|avi|webm)$/i.test(imagePath);
+      onLog(`📁 Adjuntando ${isVideo ? 'video' : 'imagen'}: ${path.basename(imagePath)}...`);
       try {
-        const fileInput = await page.$('input[type="file"][accept*="image"]');
+        const fileInput = await page.$('input[type="file"][accept*="image"], input[type="file"][accept*="video"], input[type="file"]');
         if (fileInput) {
           await fileInput.uploadFile(imagePath);
-          onLog('✓ Imagen subida con éxito. Esperando vista previa...');
-          await sleep(randomDelay(3000, 5000));
+          onLog(`✓ ${isVideo ? 'Video' : 'Imagen'} cargado con éxito. Esperando procesamiento de Facebook...`);
+          await sleep(isVideo ? randomDelay(6000, 10000) : randomDelay(3000, 5000));
         } else {
-          onLog('⚠️ No se encontró input de imagen directo.');
+          onLog('⚠️ No se encontró input de archivo directo.');
         }
       } catch (errImg) {
-        onLog(`⚠️ No se pudo adjuntar la imagen: ${errImg.message}`);
+        onLog(`⚠️ No se pudo adjuntar el archivo multimedia: ${errImg.message}`);
       }
     }
 
@@ -270,6 +271,23 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     onLog('⏳ Esperando confirmación de Facebook...');
     await sleep(randomDelay(5000, 8000));
 
+    // Intentar capturar la URL directa del post publicado
+    let postDirectUrl = groupUrl;
+    try {
+      const detected = await page.evaluate((fallbackUrl) => {
+        // Enlaces de timestamp o permalinks en el feed recién actualizado
+        const links = Array.from(document.querySelectorAll('a[href*="/posts/"], a[href*="/permalink/"]'));
+        for (const a of links) {
+          const href = a.href || '';
+          if (href && (href.includes('/posts/') || href.includes('/permalink/'))) {
+            return href;
+          }
+        }
+        return fallbackUrl;
+      }, groupUrl);
+      if (detected) postDirectUrl = detected;
+    } catch (eDet) {}
+
     // Tomar captura de pantalla de comprobación
     const screenshotsDir = path.join(__dirname, '..', 'screenshots');
     if (!fs.existsSync(screenshotsDir)) fs.mkdirSync(screenshotsDir, { recursive: true });
@@ -282,9 +300,10 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     onLog(`📸 Captura guardada como comprobante: ${shotFilename}`);
 
     result.ok = true;
+    result.postUrl = postDirectUrl;
     result.screenshot = `/screenshots/${shotFilename}`;
     result.message = 'Publicado exitosamente en el grupo.';
-    onLog('🎉 ¡Publicación completada con éxito!');
+    onLog(`🎉 ¡Publicación completada con éxito! Enlace: ${postDirectUrl}`);
   } catch (error) {
     onLog(`❌ Error al publicar: ${error.message}`);
     result.ok = false;
