@@ -1,6 +1,7 @@
 /**
- * Facebook Group Auto-Poster Engine
+ * Facebook Group Auto-Poster Engine (Con Auto-Join para Grupos No Vinculados)
  * Automatiza la publicación segura en grupos de Facebook simulando comportamiento humano.
+ * Si no eres miembro del grupo, intenta unirse automáticamente antes de publicar.
  */
 
 const fs = require('fs');
@@ -13,6 +14,62 @@ function sleep(ms) {
 
 function randomDelay(minMs, maxMs) {
   return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+}
+
+/**
+ * Intenta unirse a un grupo si aún no somos miembros
+ */
+async function tryAutoJoinGroup(page, onLog) {
+  const joinResult = await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('div[role="button"], button'));
+    const joinBtn = btns.find(b => {
+      const t = (b.innerText || '').toLowerCase().trim();
+      const a = (b.getAttribute('aria-label') || '').toLowerCase().trim();
+      return (
+        t === 'unirte al grupo' ||
+        t === 'join group' ||
+        t === 'unirse al grupo' ||
+        a === 'unirte al grupo' ||
+        a === 'join group'
+      );
+    });
+
+    if (joinBtn) {
+      joinBtn.click();
+      return { clicked: true };
+    }
+    return { clicked: false };
+  });
+
+  if (joinResult.clicked) {
+    onLog('🤝 [AUTO-JOIN] Detectado grupo no vinculado. Pulsando botón "Unirte al grupo"...');
+    await sleep(2500);
+
+    // Comprobar si apareció modal de preguntas o aceptación de normas
+    await page.evaluate(() => {
+      const dialog = document.querySelector('div[role="dialog"]');
+      if (dialog) {
+        // Marcar checkboxes de normas ("Acepto las normas")
+        const checkboxes = Array.from(dialog.querySelectorAll('input[type="checkbox"], div[role="checkbox"]'));
+        checkboxes.forEach(cb => {
+          if (cb.getAttribute('aria-checked') !== 'true') cb.click();
+        });
+
+        // Buscar botón de enviar respuestas
+        const submitBtn = Array.from(dialog.querySelectorAll('div[role="button"], button')).find(b => {
+          const t = (b.innerText || '').toLowerCase();
+          return t.includes('enviar') || t.includes('submit') || t.includes('listo') || t.includes('done');
+        });
+        if (submitBtn) submitBtn.click();
+      }
+    });
+
+    await sleep(3000);
+    onLog('✓ [AUTO-JOIN] Solicitud de unión procesada.');
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -53,6 +110,12 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
 
     if (!isLogged) {
       throw new Error('No has iniciado sesión en Facebook. Abre primero la ventana de inicio de sesión desde el panel.');
+    }
+
+    // 1. Verificar si NO somos miembros e intentar Auto-Join
+    const didJoin = await tryAutoJoinGroup(page, onLog);
+    if (didJoin) {
+      await sleep(2000);
     }
 
     onLog('🔍 Buscando el cajón de publicación en el grupo...');
@@ -106,8 +169,22 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
       }
     }
 
+    // Si aún no se puede abrir el cajón:
     if (!clickedTrigger) {
-      throw new Error('No se pudo abrir el cajón de publicación. Verifica si eres miembro del grupo o si los administradores limitaron los permisos.');
+      // Comprobar si el grupo tiene membresía pendiente de aprobación
+      const isPending = await page.evaluate(() => {
+        const text = (document.body.innerText || '').toLowerCase();
+        return text.includes('solicitud pendiente') || text.includes('pending request') || text.includes('pendiente de aprobación');
+      });
+
+      if (isPending) {
+        onLog('⏳ [MEMBRESÍA PENDIENTE] Tu solicitud de unión está a la espera de que los administradores la aprueben.');
+        result.ok = false;
+        result.message = 'Solicitud de unión enviada. Pendiente de aprobación de los administradores del grupo.';
+        return result;
+      }
+
+      throw new Error('No se pudo abrir el cajón de publicación. Es posible que el grupo sea cerrado o requiera aprobación previa de miembros.');
     }
 
     await sleep(randomDelay(2000, 3500));
@@ -128,7 +205,6 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     // Escribir el mensaje
     onLog('📝 Escribiendo mensaje con simulación humana...');
     if (simulateTyping) {
-      // Escribir en fragmentos naturales
       const paragraphs = message.split('\n');
       for (let i = 0; i < paragraphs.length; i++) {
         const p = paragraphs[i];
@@ -136,7 +212,6 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
           await page.keyboard.type(p, { delay: randomDelay(15, 45) });
         }
         if (i < paragraphs.length - 1) {
-          // Salto de línea con Shift+Enter
           await page.keyboard.down('Shift');
           await page.keyboard.press('Enter');
           await page.keyboard.up('Shift');
@@ -144,7 +219,6 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
         }
       }
     } else {
-      // Inyección rápida si no se simula tipeo lento
       await page.keyboard.type(message);
     }
 
@@ -160,7 +234,7 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
           onLog('✓ Imagen subida con éxito. Esperando vista previa...');
           await sleep(randomDelay(3000, 5000));
         } else {
-          onLog('⚠️ No se encontró input de imagen directo, buscando botón de fotos...');
+          onLog('⚠️ No se encontró input de imagen directo.');
         }
       } catch (errImg) {
         onLog(`⚠️ No se pudo adjuntar la imagen: ${errImg.message}`);
@@ -216,7 +290,6 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     result.ok = false;
     result.message = error.message;
 
-    // Capturar pantalla del error para diagnóstico
     try {
       const errShot = path.join(__dirname, '..', 'screenshots', `error_${Date.now()}.png`);
       await page.screenshot({ path: errShot });
@@ -232,5 +305,6 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
 }
 
 module.exports = {
-  postToFacebookGroup
+  postToFacebookGroup,
+  tryAutoJoinGroup
 };

@@ -15,6 +15,7 @@ const { parseSpintax, countSpintaxVariations } = require('./engine/spintax');
 const { TEMPLATES } = require('./engine/templates');
 const { postToFacebookGroup } = require('./engine/facebook-poster');
 const { postToInstagram } = require('./engine/instagram-poster');
+const { detectUserFacebookGroups } = require('./engine/group-detector');
 
 const PORT = process.env.PORT || 4242;
 const app = express();
@@ -163,6 +164,53 @@ app.delete('/api/groups/:id', (req, res) => {
   groups = groups.filter(g => g.id !== req.params.id);
   writeJson('groups.json', groups);
   res.json({ ok: true });
+});
+
+// 3.1 Detección automática de grupos vinculados en el perfil de Facebook
+app.post('/api/groups/detect', async (req, res) => {
+  try {
+    broadcastLog({ type: 'step', msg: '🔍 [SINCRONIZACIÓN] Iniciando detección automática de grupos vinculados en Facebook...' });
+    const detected = await detectUserFacebookGroups((msg) => broadcastLog({ type: 'log', msg }));
+    
+    // Unir con los existentes sin duplicar URL
+    const existing = readJson('groups.json', []);
+    const existingUrls = new Set(existing.map(g => (g.url || '').toLowerCase().replace(/\/+$/, '')));
+    let addedCount = 0;
+
+    for (const d of detected) {
+      const clean = (d.url || '').toLowerCase().replace(/\/+$/, '');
+      if (!existingUrls.has(clean)) {
+        existingUrls.add(clean);
+        existing.push(d);
+        addedCount++;
+      }
+    }
+
+    writeJson('groups.json', existing);
+    broadcastLog({ type: 'done', msg: `🎉 ¡Sincronización completada! Se detectaron ${detected.length} grupos (${addedCount} nuevos agregados a tu lista).` });
+    res.json({ ok: true, detectedCount: detected.length, addedCount, groups: existing });
+  } catch (err) {
+    broadcastLog({ type: 'error', msg: `❌ Error al detectar grupos: ${err.message}` });
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// 3.2 Selección múltiple / masiva de grupos
+app.post('/api/groups/batch-toggle', (req, res) => {
+  const { enabled, ids, category } = req.body;
+  let groups = readJson('groups.json', []);
+  groups = groups.map(g => {
+    if (ids && ids.length > 0) {
+      if (ids.includes(g.id)) return { ...g, enabled: !!enabled };
+    } else if (category && category !== 'all') {
+      if (g.category === category) return { ...g, enabled: !!enabled };
+    } else {
+      return { ...g, enabled: !!enabled };
+    }
+    return g;
+  });
+  writeJson('groups.json', groups);
+  res.json({ ok: true, groups });
 });
 
 // 4. Plantillas y Spintax

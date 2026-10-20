@@ -1,5 +1,5 @@
 /**
- * NexaGuard Social AutoPoster · Frontend State & Logic
+ * NexaGuard Social AutoPoster · Frontend State & Logic (Con Detección de Grupos & Selección Múltiple)
  */
 
 let state = {
@@ -7,7 +7,11 @@ let state = {
   templates: [],
   attachedImagePath: null,
   activeCampaign: false,
-  logSource: null
+  logSource: null,
+  selectedGroupIds: new Set(),
+  activeCategoryFilter: 'all',
+  composerSearchQuery: '',
+  tableSearchQuery: ''
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -32,7 +36,7 @@ function initTabs() {
       const target = document.getElementById(tabId);
       if (target) target.classList.add('active');
 
-      if (tabId === 'tab-groups') loadGroups();
+      if (tabId === 'tab-groups') renderGroupsTable();
       if (tabId === 'tab-history') loadHistory();
     });
   });
@@ -84,7 +88,7 @@ async function openLoginWindow(platform) {
     });
     const data = await res.json();
     if (data.ok) {
-      alert(`Se abrió Google Chrome en ${platform}. Por favor ingresa tus credenciales y cuando estés dentro, puedes cerrar la ventana o dejarla abierta.`);
+      alert(`Se abrió Google Chrome en ${platform}. Por favor ingresa tus credenciales y cuando estés dentro, puedes cerrar la ventana.`);
       loadStatus();
     } else {
       alert('Error: ' + data.error);
@@ -94,7 +98,265 @@ async function openLoginWindow(platform) {
   }
 }
 
-// 4. Plantillas
+// 4. Detección Automática de Grupos Vinculados
+async function triggerDetectGroups() {
+  const btn = event ? event.target : null;
+  if (btn) btn.disabled = true;
+
+  appendTerminalLog('step', '[SINCRONIZACIÓN] Iniciando detección automática de grupos en Facebook...');
+  try {
+    const res = await fetch('/api/groups/detect', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      alert(`¡Sincronización exitosa! Se encontraron ${data.detectedCount} grupos (${data.addedCount} nuevos agregados a tu lista).`);
+      state.groups = data.groups;
+      // Por defecto seleccionar los habilitados
+      data.groups.forEach(g => {
+        if (g.enabled) state.selectedGroupIds.add(g.id);
+      });
+      renderGroupsTable();
+      renderComposerChecklist();
+    } else {
+      alert('Error al detectar grupos: ' + data.error);
+    }
+  } catch (err) {
+    alert('Error al conectar con el detector: ' + err.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// 5. Cargar y Gestionar Grupos
+async function loadGroups() {
+  try {
+    const res = await fetch('/api/groups');
+    const data = await res.json();
+    if (data.ok) {
+      state.groups = data.groups;
+      state.selectedGroupIds.clear();
+      data.groups.forEach(g => {
+        if (g.enabled) state.selectedGroupIds.add(g.id);
+      });
+      renderGroupsTable();
+      renderComposerChecklist();
+    }
+  } catch (e) {
+    console.error('Error cargando grupos:', e);
+  }
+}
+
+function renderComposerChecklist() {
+  const container = document.getElementById('groupsChecklist');
+  container.innerHTML = '';
+
+  const filtered = state.groups.filter(g => {
+    const matchesCat = state.activeCategoryFilter === 'all' || g.category === state.activeCategoryFilter;
+    const matchesQuery = !state.composerSearchQuery || g.name.toLowerCase().includes(state.composerSearchQuery.toLowerCase());
+    return matchesCat && matchesQuery;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="color:var(--muted);padding:10px;font-size:0.8rem">No hay grupos que coincidan con el filtro.</div>';
+    updateSelectedSummary();
+    return;
+  }
+
+  filtered.forEach(g => {
+    const item = document.createElement('div');
+    item.className = 'checklist-item';
+    const isChecked = state.selectedGroupIds.has(g.id);
+    const isMember = g.isMember !== false;
+
+    item.innerHTML = `
+      <label>
+        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleComposerGroupSelect('${g.id}', this.checked)">
+        <span>${escapeHtml(g.name)}</span>
+      </label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="badge-info" style="font-size:0.68rem">${escapeHtml(g.category || 'General')}</span>
+        ${isMember ? '<span class="tag-member">✓ Vinculado</span>' : '<span class="tag-autojoin">➕ Auto-Join</span>'}
+      </div>
+    `;
+    container.appendChild(item);
+  });
+
+  updateSelectedSummary();
+}
+
+function toggleComposerGroupSelect(id, checked) {
+  if (checked) {
+    state.selectedGroupIds.add(id);
+  } else {
+    state.selectedGroupIds.delete(id);
+  }
+  updateSelectedSummary();
+}
+
+function batchSelectGroups(selectAll) {
+  const filtered = state.groups.filter(g => {
+    const matchesCat = state.activeCategoryFilter === 'all' || g.category === state.activeCategoryFilter;
+    const matchesQuery = !state.composerSearchQuery || g.name.toLowerCase().includes(state.composerSearchQuery.toLowerCase());
+    return matchesCat && matchesQuery;
+  });
+
+  filtered.forEach(g => {
+    if (selectAll) state.selectedGroupIds.add(g.id);
+    else state.selectedGroupIds.delete(g.id);
+  });
+
+  renderComposerChecklist();
+}
+
+function filterComposerGroups(category, btn) {
+  state.activeCategoryFilter = category;
+  document.querySelectorAll('#categoryPills .cat-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderComposerChecklist();
+}
+
+function searchComposerGroups(val) {
+  state.composerSearchQuery = (val || '').trim();
+  renderComposerChecklist();
+}
+
+function updateSelectedSummary() {
+  const count = state.selectedGroupIds.size;
+  document.getElementById('selectedGroupsCount').textContent = `${count} grupos seleccionados para este post`;
+
+  // Comprobar si alguno no es miembro para mostrar aviso de Auto-Join
+  const hasAutoJoin = state.groups.some(g => state.selectedGroupIds.has(g.id) && g.isMember === false);
+  const notice = document.getElementById('autoJoinNotice');
+  if (notice) notice.style.display = hasAutoJoin ? 'block' : 'none';
+}
+
+function renderGroupsTable() {
+  const tbody = document.getElementById('groupsTableBody');
+  tbody.innerHTML = '';
+
+  document.getElementById('groupsCountBadge').textContent = state.groups.length;
+
+  const filtered = state.groups.filter(g => {
+    if (!state.tableSearchQuery) return true;
+    return g.name.toLowerCase().includes(state.tableSearchQuery.toLowerCase()) || (g.category || '').toLowerCase().includes(state.tableSearchQuery.toLowerCase());
+  });
+
+  filtered.forEach(g => {
+    const tr = document.createElement('tr');
+    const isMember = g.isMember !== false;
+
+    tr.innerHTML = `
+      <td>
+        <label class="switch">
+          <input type="checkbox" ${g.enabled ? 'checked' : ''} onchange="toggleGroupStatus('${g.id}', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </td>
+      <td><strong>${escapeHtml(g.name)}</strong></td>
+      <td><a href="${escapeHtml(g.url)}" target="_blank" style="color:var(--cyan);text-decoration:none">${escapeHtml(g.url)}</a></td>
+      <td><span class="badge-info">${escapeHtml(g.category || 'General')}</span></td>
+      <td>${isMember ? '<span class="tag-member">✓ Vinculado</span>' : '<span class="tag-autojoin">➕ Auto-Join al Publicar</span>'}</td>
+      <td><strong>${g.postCount || 0}</strong></td>
+      <td><small style="color:var(--muted)">${g.lastPosted ? new Date(g.lastPosted).toLocaleString() : 'Nunca'}</small></td>
+      <td>
+        <button class="btn btn-danger btn-xs" onclick="deleteGroup('${g.id}')">Eliminar</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterTableGroups(val) {
+  state.tableSearchQuery = (val || '').trim();
+  renderGroupsTable();
+}
+
+async function batchToggleGroupsApi(enabled) {
+  try {
+    const res = await fetch('/api/groups/batch-toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      state.groups = data.groups;
+      if (enabled) {
+        data.groups.forEach(g => state.selectedGroupIds.add(g.id));
+      } else {
+        state.selectedGroupIds.clear();
+      }
+      renderGroupsTable();
+      renderComposerChecklist();
+    }
+  } catch (e) {}
+}
+
+async function toggleGroupStatus(id, enabled) {
+  try {
+    await fetch(`/api/groups/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled })
+    });
+    const g = state.groups.find(x => x.id === id);
+    if (g) {
+      g.enabled = enabled;
+      if (enabled) state.selectedGroupIds.add(id);
+      else state.selectedGroupIds.delete(id);
+      renderComposerChecklist();
+    }
+  } catch (e) {}
+}
+
+async function deleteGroup(id) {
+  if (!confirm('¿Estás seguro de eliminar este grupo de tu lista?')) return;
+  try {
+    await fetch(`/api/groups/${id}`, { method: 'DELETE' });
+    state.selectedGroupIds.delete(id);
+    loadGroups();
+  } catch (e) {}
+}
+
+function openAddGroupModal() {
+  document.getElementById('modalGroupName').value = '';
+  document.getElementById('modalGroupUrl').value = '';
+  document.getElementById('modalGroupCategory').value = 'WordPress';
+  document.getElementById('groupModal').classList.add('active');
+}
+
+function closeGroupModal() {
+  document.getElementById('groupModal').classList.remove('active');
+}
+
+async function saveGroupModal() {
+  const name = document.getElementById('modalGroupName').value.trim();
+  const url = document.getElementById('modalGroupUrl').value.trim();
+  const category = document.getElementById('modalGroupCategory').value.trim();
+
+  if (!url) {
+    alert('Por favor introduce la URL del grupo de Facebook.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/groups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name || 'Grupo Facebook', url, category, isMember: false })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      closeGroupModal();
+      loadGroups();
+    } else {
+      alert('Error: ' + data.error);
+    }
+  } catch (e) {
+    alert('Error al guardar grupo: ' + e.message);
+  }
+}
+
+// 6. Plantillas
 async function loadTemplates() {
   try {
     const res = await fetch('/api/templates');
@@ -110,7 +372,6 @@ async function loadTemplates() {
         select.appendChild(opt);
       });
 
-      // Seleccionar la primera por defecto
       if (data.templates.length > 0) {
         select.value = data.templates[0].id;
         applySelectedTemplate();
@@ -131,7 +392,7 @@ function applySelectedTemplate() {
   }
 }
 
-// 5. Spintax Tester y Previsualización
+// 7. Spintax Tester y Previsualización
 function initSpintaxEvents() {
   const textarea = document.getElementById('postSpintax');
   let timeout = null;
@@ -167,7 +428,7 @@ function regeneratePreview() {
   updateSpintaxPreview();
 }
 
-// 6. Subida de Imagen Creativa
+// 8. Subida de Imagen Creativa
 async function handleImageUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -203,115 +464,7 @@ function removeAttachedImage() {
   document.getElementById('imagePreviewContainer').style.display = 'none';
 }
 
-// 7. Gestión de Grupos
-async function loadGroups() {
-  try {
-    const res = await fetch('/api/groups');
-    const data = await res.json();
-    if (data.ok) {
-      state.groups = data.groups;
-      renderGroupsTable();
-      updateSelectedGroupsCount();
-    }
-  } catch (e) {
-    console.error('Error cargando grupos:', e);
-  }
-}
-
-function renderGroupsTable() {
-  const tbody = document.getElementById('groupsTableBody');
-  tbody.innerHTML = '';
-
-  document.getElementById('groupsCountBadge').textContent = state.groups.length;
-
-  state.groups.forEach(g => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <label class="switch">
-          <input type="checkbox" ${g.enabled ? 'checked' : ''} onchange="toggleGroupStatus('${g.id}', this.checked)">
-          <span class="slider"></span>
-        </label>
-      </td>
-      <td><strong>${escapeHtml(g.name)}</strong></td>
-      <td><a href="${escapeHtml(g.url)}" target="_blank" style="color:var(--cyan);text-decoration:none">${escapeHtml(g.url)}</a></td>
-      <td><span class="badge-info">${escapeHtml(g.category || 'General')}</span></td>
-      <td><strong>${g.postCount || 0}</strong></td>
-      <td><small style="color:var(--muted)">${g.lastPosted ? new Date(g.lastPosted).toLocaleString() : 'Nunca'}</small></td>
-      <td>
-        <button class="btn btn-danger btn-xs" onclick="deleteGroup('${g.id}')">Eliminar</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function updateSelectedGroupsCount() {
-  const activeCount = state.groups.filter(g => g.enabled).length;
-  document.getElementById('selectedGroupsCount').textContent = `${activeCount} grupos seleccionados`;
-}
-
-async function toggleGroupStatus(id, enabled) {
-  try {
-    await fetch(`/api/groups/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ enabled })
-    });
-    const g = state.groups.find(x => x.id === id);
-    if (g) g.enabled = enabled;
-    updateSelectedGroupsCount();
-  } catch (e) {}
-}
-
-async function deleteGroup(id) {
-  if (!confirm('¿Estás seguro de eliminar este grupo de tu lista?')) return;
-  try {
-    await fetch(`/api/groups/${id}`, { method: 'DELETE' });
-    loadGroups();
-  } catch (e) {}
-}
-
-function openAddGroupModal() {
-  document.getElementById('modalGroupName').value = '';
-  document.getElementById('modalGroupUrl').value = '';
-  document.getElementById('modalGroupCategory').value = 'WordPress';
-  document.getElementById('groupModal').classList.add('active');
-}
-
-function closeGroupModal() {
-  document.getElementById('groupModal').classList.remove('active');
-}
-
-async function saveGroupModal() {
-  const name = document.getElementById('modalGroupName').value.trim();
-  const url = document.getElementById('modalGroupUrl').value.trim();
-  const category = document.getElementById('modalGroupCategory').value.trim();
-
-  if (!url) {
-    alert('Por favor introduce la URL del grupo de Facebook.');
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/groups', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name || 'Grupo Facebook', url, category })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      closeGroupModal();
-      loadGroups();
-    } else {
-      alert('Error: ' + data.error);
-    }
-  } catch (e) {
-    alert('Error al guardar grupo: ' + e.message);
-  }
-}
-
-// 8. Campaña de Auto-Publicación
+// 9. Campaña de Auto-Publicación
 async function startCampaign() {
   const spintaxText = document.getElementById('postSpintax').value.trim();
   if (!spintaxText) {
@@ -319,19 +472,19 @@ async function startCampaign() {
     return;
   }
 
-  const activeGroups = state.groups.filter(g => g.enabled);
-  if (activeGroups.length === 0) {
-    alert('No tienes ningún grupo activado para publicar. Ve a la pestaña "Gestor de Grupos" y activa al menos uno.');
+  const selectedIds = Array.from(state.selectedGroupIds);
+  if (selectedIds.length === 0) {
+    alert('No has seleccionado ningún grupo para publicar. Marca al menos una casilla en el selector de grupos.');
     return;
   }
 
-  if (!confirm(`¿Iniciar la campaña de auto-posteo en ${activeGroups.length} grupos de Facebook? Se utilizarán pausas de seguridad automáticas.`)) {
+  if (!confirm(`¿Iniciar auto-posteo en los ${selectedIds.length} grupos seleccionados? Si hay grupos no vinculados, el sistema solicitará unirse antes de publicar.`)) {
     return;
   }
 
   try {
     setCampaignUI(true);
-    appendTerminalLog('step', `[INICIO] Lanzando campaña para ${activeGroups.length} grupos...`);
+    appendTerminalLog('step', `[INICIO] Lanzando campaña para ${selectedIds.length} grupos...`);
 
     const res = await fetch('/api/campaign/start', {
       method: 'POST',
@@ -339,7 +492,7 @@ async function startCampaign() {
       body: JSON.stringify({
         spintaxText,
         imagePath: state.attachedImagePath,
-        selectedGroupIds: activeGroups.map(g => g.id)
+        selectedGroupIds: selectedIds
       })
     });
 
@@ -387,7 +540,7 @@ function setCampaignUI(running) {
   }
 }
 
-// 9. Streaming de Logs en Tiempo Real (SSE)
+// 10. Streaming de Logs en Tiempo Real (SSE)
 function initLogStream() {
   if (state.logSource) state.logSource.close();
 
@@ -465,7 +618,7 @@ function clearTerminalLogs() {
   document.getElementById('terminalLogs').innerHTML = '<div class="log-line info">[SISTEMA] Consola limpia.</div>';
 }
 
-// 10. Historial de Publicaciones
+// 11. Historial de Publicaciones
 async function loadHistory() {
   try {
     const res = await fetch('/api/history');

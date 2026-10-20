@@ -62,3 +62,4 @@ En la pestaña **"Configuración Anti-Ban"**:
 - Configurar pausas mínimas y máximas entre envíos.
 - Establecer límite diario de publicaciones.
 - Activar/desactivar simulación de tipeo.
+

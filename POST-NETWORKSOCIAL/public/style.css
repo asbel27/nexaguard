@@ -86,7 +86,8 @@ body {
 .header-status {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .status-badge {
@@ -187,11 +188,11 @@ body {
 /* ---------- Cuadrícula del Publicador ---------- */
 .composer-grid {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 1fr 1.05fr;
   gap: 22px;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1120px) {
   .composer-grid {
     grid-template-columns: 1fr;
   }
@@ -272,7 +273,7 @@ textarea:focus, input:focus, select:focus {
   font-size: 0.88rem;
   color: #e2eafc;
   white-space: pre-wrap;
-  max-height: 160px;
+  max-height: 140px;
   overflow-y: auto;
   line-height: 1.55;
   background: rgba(255, 255, 255, 0.02);
@@ -325,21 +326,155 @@ textarea:focus, input:focus, select:focus {
   place-items: center;
 }
 
+/* ---------- Selector Múltiple de Grupos (Checklist) ---------- */
+.group-selector-box {
+  background: rgba(4, 8, 28, 0.75);
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.group-selector-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.head-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.category-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.cat-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cat-pill:hover, .cat-pill.active {
+  background: var(--yellow);
+  color: var(--yellow-ink);
+  border-color: var(--yellow);
+  font-weight: 700;
+}
+
+.search-input {
+  width: 100%;
+  padding: 7px 12px;
+  font-size: 0.84rem;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.groups-checklist {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.checklist-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.checklist-item label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+  font-size: 0.85rem;
+  color: #fff;
+  margin: 0;
+}
+
+.checklist-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--yellow);
+  cursor: pointer;
+}
+
+.groups-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 0.84rem;
+}
+
+/* Badges de estado de membresía */
+.tag-member {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(61, 232, 164, 0.12);
+  color: var(--green);
+  border: 1px solid rgba(61, 232, 164, 0.3);
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-family: var(--fm);
+}
+
+.tag-autojoin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 207, 51, 0.12);
+  color: var(--yellow);
+  border: 1px solid rgba(255, 207, 51, 0.35);
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-family: var(--fm);
+}
+
 /* ---------- Opciones de Campaña & Acciones ---------- */
 .campaign-options {
   background: rgba(4, 8, 28, 0.6);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 14px 18px;
-  margin-bottom: 18px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
 }
 
 .opt-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.86rem;
-  padding: 5px 0;
+  font-size: 0.84rem;
+  padding: 4px 0;
 }
 
 .opt-label {
@@ -356,7 +491,7 @@ textarea:focus, input:focus, select:focus {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 /* ---------- Barra de Progreso ---------- */
@@ -434,7 +569,7 @@ textarea:focus, input:focus, select:focus {
 
 .terminal-body {
   padding: 12px 14px;
-  height: 240px;
+  height: 220px;
   overflow-y: auto;
   font-size: 0.78rem;
   line-height: 1.6;
@@ -453,7 +588,21 @@ textarea:focus, input:focus, select:focus {
 .log-line.warn { color: #ffb020; }
 .log-line.error { color: var(--red); font-weight: 700; }
 
-/* ---------- Tablas ---------- */
+/* ---------- Tablas y Barras de Herramientas ---------- */
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.table-toolbar .search-input {
+  max-width: 320px;
+  margin-bottom: 0;
+}
+
 .groups-table-wrap {
   overflow-x: auto;
 }

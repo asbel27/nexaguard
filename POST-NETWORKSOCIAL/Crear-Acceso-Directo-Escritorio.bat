@@ -20,3 +20,4 @@ if exist "%SHORTCUT_PATH%" (
 )
 
 pause
+
