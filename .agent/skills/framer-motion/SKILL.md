@@ -123,3 +123,4 @@ import { motion, AnimatePresence } from 'framer-motion';
   const shouldReduceMotion = useReducedMotion();
   ```
 * **Lazy Motion**: In large Next.js apps, use `<LazyMotion features={domAnimation}>` to reduce initial bundle size by ~20KB.
+

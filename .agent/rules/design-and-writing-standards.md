@@ -31,3 +31,4 @@ Siempre que se trabaje en componentes visuales, páginas web, maquetación, esti
 * **Iconografía SVG Minimalista:** Trazos finos, colores neutros sutiles acordes a la paleta de la marca.
 * **Animaciones con Propósito (Física Real):** Tiempos rápidos (150ms - 250ms), curvas `cubic-bezier` naturales o resortes, retroalimentación táctil en botones.
 * **Copywriting Humano y Contundente:** Hablarle al cliente con empatía, claridad técnica sin rodeos y respuestas exactas al dolor que está experimentando.
+
