@@ -30,7 +30,7 @@ const CFG = {
   maxConcurrent: +process.env.MAX_CONCURRENT || 4,     // análisis simultáneos
   safeBrowsingKey: process.env.SAFE_BROWSING_KEY || '', // clave de Google Safe Browsing (opcional)
   enableDnsbl: process.env.ENABLE_DNSBL !== '0',        // consulta Spamhaus DBL
-  trustProxy: process.env.TRUST_PROXY === '1',          // usar X-Forwarded-For (detrás de nginx/Cloudflare)
+  trustProxy: true, // usar X-Forwarded-For siempre tras proxy/Cloudflare/Render          // usar X-Forwarded-For (detrás de nginx/Cloudflare)
   wpApi: (process.env.WP_API_BASE || 'https://api.wordpress.org').replace(/\/$/, ''),
   staticDir: process.env.STATIC_DIR || path.join(__dirname, 'public'),
   allowPrivate: process.env.PARCHE_ALLOW_PRIVATE === '1', // SOLO para pruebas locales. No activar en producción.

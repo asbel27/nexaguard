@@ -102,8 +102,9 @@ function createServer(opts = {}) {
     try { p = decodeURIComponent(req.url.split('?')[0]); } catch { return sendJson(res, 400, { error: 'Petición no válida' }); }
     if (p === '/panel' || p === '/panel/') p = '/panel.html';
     if (p.endsWith('/')) p += 'index.html';
-    const file = path.normalize(path.join(staticDir, p));
+    let file = path.normalize(path.join(staticDir, p));
     if (!file.startsWith(path.normalize(staticDir))) return sendJson(res, 403, { error: 'Prohibido' });
+    try { if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html'); } catch {}
 
     // Blindaje de archivos estáticos: Bloqueo estricto de dotfiles, archivos de entorno y extensiones peligrosas
     const baseName = path.basename(file).toLowerCase();
@@ -129,7 +130,7 @@ function createServer(opts = {}) {
     const url = req.url.split('?')[0];
     if (url.startsWith('/api/')) { if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); } return app.handle(req, res); }
     if (req.method === 'OPTIONS') { if (!corsOk(req, res)) return sendJson(res, 403, { error: 'Origen no permitido' }); res.writeHead(204); return res.end(); }
-    if (req.method === 'GET' && url === '/health') return sendJson(res, 200, { ok: true });
+    if (req.method === 'GET' && url === '/health') return sendJson(res, 200, { ok: true, v: '2.1.2' });
     if (req.method === 'GET' || req.method === 'HEAD') return serveStatic(req, res);
     if (req.method !== 'POST' || url !== '/scan') return sendJson(res, 404, { error: 'No encontrado' });
     if (!corsOk(req, res)) return sendJson(res, 403, { t: 'error', message: 'Origen no permitido.' });
