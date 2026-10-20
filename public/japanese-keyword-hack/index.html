@@ -12,9 +12,9 @@
 <meta name="theme-color" content="#070c22">
 
 <!-- Favicons & App Icons -->
-<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32x32.png">
-<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="/brand/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../brand/favicon-32x32.png">
+<link rel="icon" type="image/svg+xml" href="../brand/favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../brand/apple-touch-icon.png">
 <link rel="image_src" href="https://www.nexaguards.com/brand/og-image.png">
 
 <!-- Open Graph / Redes Sociales -->
@@ -461,7 +461,7 @@ h1 {
 
 <!-- Cabecera Oficial -->
 <header class="nav">
-  <a href="/" class="logo" aria-label="NexaGuard">
+  <a href="../index.html" class="logo" aria-label="NexaGuard">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64" aria-hidden="true">
       <defs>
         <linearGradient id="nxgn" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse">
@@ -489,15 +489,15 @@ h1 {
     </svg>
   </a>
   <nav class="nav-links">
-    <a href="/#sintomas" class="nav-link">Síntomas</a>
-    <a href="/#servicios" class="nav-link">Servicios</a>
-    <a href="/#escaner" class="nav-link">Escáner</a>
-    <a href="/#planes" class="nav-link">Planes</a>
-    <a href="/reparar-wordpress-hackeado/" class="nav-link">Guía Forense</a>
+    <a href="../index.html#sintomas" class="nav-link">Síntomas</a>
+    <a href="../index.html#servicios" class="nav-link">Servicios</a>
+    <a href="../index.html#escaner" class="nav-link">Escáner</a>
+    <a href="../index.html#planes" class="nav-link">Planes</a>
+    <a href="../reparar-wordpress-hackeado/index.html" class="nav-link">Guía Forense</a>
   </nav>
   <div style="display:flex;gap:10px">
-    <a href="/#escaner" class="btn btn-o">Escáner Gratis</a>
-    <a href="/#contacto" class="btn btn-y">Rescate Urgente</a>
+    <a href="../index.html#escaner" class="btn btn-o">Escáner Gratis</a>
+    <a href="../index.html#contacto" class="btn btn-y">Rescate Urgente</a>
   </div>
 </header>
 
@@ -528,10 +528,10 @@ h1 {
     </div>
 
     <div style="display:flex;gap:14px;flex-wrap:wrap">
-      <a href="/#contacto" class="btn btn-red">
+      <a href="../index.html#contacto" class="btn btn-red">
         🚨 Rescate de Emergencia ($89 USD)
       </a>
-      <a href="/downloads/nexaguard-malware-scanner.zip" class="btn btn-o">
+      <a href="../downloads/nexaguard-malware-scanner.zip" class="btn btn-o">
         Descargar Plugin NexaGuard
       </a>
     </div>
@@ -635,10 +635,10 @@ h1 {
           Nuestros expertos forenses eliminan los scripts de cloaking, reparan la base de datos y envían el protocolo de limpieza a Google Search Console para recuperar tu negocio hoy.
         </p>
         <div style="display:flex;gap:14px;flex-wrap:wrap">
-          <a href="/#contacto" class="btn btn-red" style="font-size:1.05rem;padding:15px 30px">
+          <a href="../index.html#contacto" class="btn btn-red" style="font-size:1.05rem;padding:15px 30px">
             🚨 Solicitar Rescate Inmediato ($89 USD)
           </a>
-          <a href="/#escaner" class="btn btn-o">
+          <a href="../index.html#escaner" class="btn btn-o">
             Escanear Mi Web Gratis
           </a>
         </div>
@@ -650,7 +650,7 @@ h1 {
         <p style="color:#b5c4ea;font-size:0.92rem;margin-bottom:18px">
           Rescate completo sin suscripciones. Garantía total de satisfacción por 30 días.
         </p>
-        <a href="/#contacto" class="btn btn-y" style="width:100%">
+        <a href="../index.html#contacto" class="btn btn-y" style="width:100%">
           Contratar Ahora
         </a>
       </div>
@@ -665,11 +665,11 @@ h1 {
       © 2026 NexaGuard Security. Ciberseguridad, Escáner Forense y Blindaje WAF para WordPress.
     </div>
     <div class="footer-links">
-      <a href="/">Inicio</a>
-      <a href="/#escaner">Escáner Web</a>
-      <a href="/#planes">Planes & Precios</a>
-      <a href="/reparar-wordpress-hackeado/">Guía Desinfección</a>
-      <a href="/#contacto">Contacto Urgente</a>
+      <a href="../index.html">Inicio</a>
+      <a href="../index.html#escaner">Escáner Web</a>
+      <a href="../index.html#planes">Planes & Precios</a>
+      <a href="../reparar-wordpress-hackeado/index.html">Guía Desinfección</a>
+      <a href="../index.html#contacto">Contacto Urgente</a>
     </div>
     <div class="footer-badge">
       <i></i> Sistemas Forenses Operativos 24/7
@@ -766,7 +766,7 @@ h1 {
     if (!raw) return;
     var clean = raw.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').trim();
     if (!clean) return;
-    window.location.href = '/?scan=' + encodeURIComponent(clean) + '#escaner';
+    var base = (window.location.protocol === 'file:') ? '../index.html' : '/'; window.location.href = base + '?scan=' + encodeURIComponent(clean) + '#escaner';
   };
 })();
 </script>
