@@ -2245,6 +2245,10 @@ a[data-go],a[data-act]{cursor:pointer}
 
 <footer class="foot">
   <span>© 2026 NexaGuard. Servicio de reparación y seguridad para sitios WordPress.</span>
+  <span style="opacity:0.4">|</span>
+  <a href="/reparar-wordpress-hackeado/" style="color:var(--muted);text-decoration:none">Guía: Reparar WordPress Hackeado</a>
+  <span style="opacity:0.4">|</span>
+  <a href="/japanese-keyword-hack/" style="color:var(--muted);text-decoration:none">Guía: Japanese Keyword Hack</a>
 </footer>
 
 <dialog id="authDlg" aria-label="Cuenta">
@@ -4254,6 +4258,29 @@ document.addEventListener('keydown', function (e) {
    Arranque
    ===================================================== */
 layout();
+try {
+  var urlParams = new URLSearchParams(window.location.search);
+  var scanParam = urlParams.get('scan') || urlParams.get('url');
+  if (scanParam) {
+    var scUrlInput = document.getElementById('sc-url');
+    var scOkBox = document.getElementById('sc-ok');
+    if (scUrlInput) scUrlInput.value = scanParam;
+    if (scOkBox) scOkBox.checked = true;
+    setTimeout(function () {
+      goTo('escaner');
+      if (scUrlInput) scUrlInput.focus();
+    }, 450);
+  } else if (window.location.hash === '#escaner' || window.location.hash === '#scanner') {
+    setTimeout(function () { goTo('escaner'); }, 350);
+  } else if (window.location.hash === '#contacto') {
+    setTimeout(function () {
+      var dlg = document.getElementById('contactDlg');
+      if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+    }, 350);
+  } else if (window.location.hash === '#planes') {
+    setTimeout(function () { goTo('planes'); }, 350);
+  }
+} catch (e) {}
 requestAnimationFrame(function (t) { tPrev = t; frame(t); });
 
 })();

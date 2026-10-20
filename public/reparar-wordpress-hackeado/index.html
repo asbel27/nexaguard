@@ -3,195 +3,1404 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cómo Reparar y Desinfectar un WordPress Hackeado (Guía Definitiva) | NexaGuard</title>
-<meta name="description" content="Guía paso a paso para limpiar malware, erradicar backdoors y retirar alertas de Google en sitios WordPress hackeados. Escanea tu sitio gratis o solicita rescate urgente.">
-<meta name="keywords" content="reparar wordpress hackeado, desinfectar wordpress, limpiar malware wordpress, eliminar virus wordpress, quitar alerta google sitio engañoso, backdoor wordpress">
+<title>Cómo Reparar y Desinfectar un WordPress Hackeado (Guía Forense 2026) | NexaGuard</title>
+<meta name="description" content="Protocolo técnico para limpiar malware, erradicar webshells, reparar redirecciones maliciosas y retirar la pantalla roja de Google en WordPress. Escanea tu sitio gratis o solicita rescate urgente.">
+<meta name="keywords" content="reparar wordpress hackeado, desinfectar wordpress, limpiar malware wordpress, eliminar virus wordpress, quitar alerta google sitio engañoso, backdoor wordpress, webshell wordpress, desinfeccion wordpress">
+<meta name="author" content="NexaGuard Cybersecurity Team">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="canonical" href="https://www.nexaguards.com/reparar-wordpress-hackeado/">
 <meta name="theme-color" content="#070c22">
 
-<!-- Open Graph -->
+<!-- Favicons & App Icons -->
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32x32.png">
+<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/brand/apple-touch-icon.png">
+<link rel="image_src" href="https://www.nexaguards.com/brand/og-image.png">
+
+<!-- Open Graph / Redes Sociales -->
 <meta property="og:locale" content="es_ES">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Cómo Reparar y Desinfectar un WordPress Hackeado">
-<meta property="og:description" content="Pasos exactos para erradicar webshells, backdoors y recuperar tu tráfico y posicionamiento en Google.">
+<meta property="og:title" content="Cómo Reparar y Desinfectar un WordPress Hackeado (Guía Forense 2026)">
+<meta property="og:description" content="Protocolo paso a paso para erradicar malware, recuperar tu tráfico y retirar advertencias de Google de forma segura.">
 <meta property="og:url" content="https://www.nexaguards.com/reparar-wordpress-hackeado/">
+<meta property="og:site_name" content="NexaGuard Security">
 <meta property="og:image" content="https://www.nexaguards.com/brand/og-image.png">
 <meta property="og:image:secure_url" content="https://www.nexaguards.com/brand/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 
-<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32x32.png">
-<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="/brand/apple-touch-icon.png">
-<link rel="image_src" href="https://www.nexaguards.com/brand/og-image.png">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cómo Reparar y Desinfectar un WordPress Hackeado | NexaGuard">
+<meta name="twitter:description" content="Guía técnica forense para limpiar sitios WordPress comprometidos. Escáner gratis en vivo y rescate de emergencia.">
+<meta name="twitter:image" content="https://www.nexaguards.com/brand/og-image.png">
 
-<!-- Schema.org Article / HowTo -->
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Schema.org HowTo / TechArticle -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "HowTo",
-  "name": "Cómo Reparar y Desinfectar un Sitio WordPress Hackeado",
-  "description": "Protocolo forense para limpiar infecciones de malware, restaurar archivos vitales y blindar la instalación.",
-  "step": [
+  "@graph": [
     {
-      "@type": "HowToStep",
-      "name": "Paso 1: Aislar el sitio y realizar copia forense",
-      "text": "Bloquea accesos externos temporalmente y descarga un respaldo completo de la base de datos y archivos antes de modificar nada."
+      "@type": "HowTo",
+      "name": "Cómo Reparar y Desinfectar un Sitio WordPress Hackeado",
+      "description": "Protocolo forense para limpiar infecciones de malware, restaurar la integridad del núcleo de WordPress y retirar alertas de Google.",
+      "totalTime": "PT45M",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Paso 1: Aislar el sitio y realizar copia forense",
+          "text": "Bloquea accesos externos temporalmente mediante .htaccess y descarga un respaldo completo de la base de datos y archivos antes de modificar nada."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Paso 2: Auditar integridad con NexaGuard Core Sentinel",
+          "text": "Verifica los checksums criptográficos SHA-256 de los archivos principales de WordPress contra los servidores oficiales para detectar modificaciones maliciosas."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Paso 3: Erradicar webshells y backdoors en uploads y base de datos",
+          "text": "Inspecciona la carpeta wp-content/uploads/ eliminando scripts PHP ocultos y desinfecta inyecciones base64 en wp_options y tablas del sistema."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Paso 4: Blindar con Firewall WAF y solicitar reconsideración a Google",
+          "text": "Activa reglas WAF para bloquear nuevas inyecciones, regenera las claves SALT en wp-config.php y solicita una revisión en Google Search Console."
+        }
+      ]
     },
     {
-      "@type": "HowToStep",
-      "name": "Paso 2: Auditar integridad con NexaGuard Sentinel",
-      "text": "Verifica los checksums SHA-256 de los archivos principales de WordPress contra los servidores oficiales para detectar archivos modificados."
-    },
-    {
-      "@type": "HowToStep",
-      "name": "Paso 3: Erradicar webshells y backdoors en uploads y base de datos",
-      "text": "Inspecciona la carpeta wp-content/uploads/ eliminando scripts PHP ocultos y desinfecta inyecciones base64 en wp_options."
-    },
-    {
-      "@type": "HowToStep",
-      "name": "Paso 4: Blindar con Firewall WAF y solicitar reconsideración a Google",
-      "text": "Activa reglas WAF para bloquear nuevas inyecciones y solicita una revisión en Google Search Console para retirar la pantalla roja."
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Inicio",
+          "item": "https://www.nexaguards.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Reparar WordPress Hackeado",
+          "item": "https://www.nexaguards.com/reparar-wordpress-hackeado/"
+        }
+      ]
     }
   ]
 }
 </script>
 
-<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-
 <style>
-:root{
-  --bg:#070c22;--bg2:#0d1538;--panel:rgba(17,28,70,.65);
-  --line:rgba(150,175,255,.16);--line2:rgba(170,195,255,.32);
-  --text:#eaf0ff;--muted:#a0acd2;
-  --yellow:#ffcf33;--yellow-ink:#1a1400;--blue:#6b8cff;--red:#ff4560;--green:#3de8a4;--cyan:#00f0ff;
-  --fd:'Unbounded',sans-serif;--fb:'Schibsted Grotesk',sans-serif;--fm:'JetBrains Mono',monospace;
+@property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg: #070c22;
+  --bg2: #0d1538;
+  --bg-card: rgba(13, 21, 56, 0.72);
+  --panel: rgba(17, 28, 70, 0.65);
+  --line: rgba(150, 175, 255, 0.16);
+  --line2: rgba(170, 195, 255, 0.32);
+  --text: #eaf0ff;
+  --muted: #a0acd2;
+  --yellow: #ffcf33;
+  --yellow-ink: #1a1400;
+  --blue: #6b8cff;
+  --red: #ff4560;
+  --green: #3de8a4;
+  --amber: #ffb020;
+  --cyan: #00f0ff;
+  --fd: 'Unbounded', 'Segoe UI', system-ui, sans-serif;
+  --fb: 'Schibsted Grotesk', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --fm: 'JetBrains Mono', monospace;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:17px;line-height:1.7}
-a{color:var(--cyan);text-decoration:none;transition:opacity .2s}
-a:hover{opacity:.85}
-.nav{padding:16px max(20px,5vw);display:flex;align-items:center;justify-content:space-between;background:rgba(7,12,34,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
-.logo svg{height:34px;width:auto}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;font-weight:700;font-size:.95rem;text-decoration:none;cursor:pointer;border:none}
-.btn-y{background:var(--yellow);color:var(--yellow-ink)}
-.btn-y:hover{background:#ffe066}
-.btn-o{border:1px solid var(--line2);color:var(--text);background:rgba(255,255,255,.04)}
-.btn-o:hover{background:rgba(255,255,255,.08)}
-.btn-red{background:var(--red);color:#fff}
 
-.container{max-width:880px;margin:40px auto;padding:0 24px}
-.hero-tag{display:inline-block;padding:4px 12px;background:rgba(255,69,96,.15);border:1px solid var(--red);color:#ff7a8e;border-radius:999px;font-size:.78rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:16px}
-h1{font-family:var(--fd);font-size:clamp(1.9rem,4vw,2.7rem);line-height:1.18;margin-bottom:20px;color:#fff}
-.meta-info{display:flex;gap:18px;font-size:.85rem;color:var(--muted);margin-bottom:30px;padding-bottom:16px;border-bottom:1px solid var(--line)}
-.alert-box{background:rgba(255,69,96,.08);border:1px solid var(--red);border-left-width:6px;border-radius:12px;padding:20px;margin:28px 0}
-.alert-box h3{color:var(--red);font-size:1.15rem;margin-bottom:6px;font-family:var(--fd)}
-.content h2{font-family:var(--fd);font-size:1.55rem;margin:38px 0 16px;color:#fff;border-bottom:1px solid var(--line);padding-bottom:8px}
-.content h3{font-size:1.2rem;margin:24px 0 10px;color:var(--yellow)}
-.content p{margin-bottom:18px;color:#cdd7f5}
-.content ul, .content ol{margin:0 0 22px 24px;color:#cdd7f5}
-.content li{margin-bottom:8px}
-.step-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;margin:20px 0}
-.step-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:var(--cyan);color:#05091a;font-weight:800;font-family:var(--fm);margin-bottom:12px}
-code{background:#04081c;padding:3px 7px;border-radius:6px;color:#ff9fb0;font-family:var(--fm);font-size:.88rem;border:1px solid rgba(255,255,255,.08)}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--fb);
+  font-size: 17px;
+  line-height: 1.7;
+  overflow-x: hidden;
+  position: relative;
+  min-height: 100vh;
+}
 
-.cta-banner{background:linear-gradient(135deg,#0e1a47,#13225a);border:1px solid rgba(0,240,255,.3);border-radius:16px;padding:34px 28px;text-align:center;margin:46px 0;box-shadow:0 12px 36px rgba(0,0,0,.4)}
-.cta-banner h2{font-family:var(--fd);font-size:1.6rem;color:#fff;margin-bottom:10px}
-.cta-banner p{color:var(--muted);max-width:580px;margin:0 auto 24px}
-.cta-group{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+/* Canvas de fondo y ruido */
+#gl {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.65;
+}
 
-footer{text-align:center;padding:40px 20px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);margin-top:60px}
+.noise {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: .05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.glow-ambient {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1000px;
+  height: 600px;
+  background: radial-gradient(circle at 50% 15%, rgba(107, 140, 255, 0.22), rgba(255, 69, 96, 0.08) 45%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Enlaces y botones */
+a {
+  color: var(--cyan);
+  text-decoration: none;
+  transition: all .2s ease;
+}
+a:hover {
+  color: #fff;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 24px;
+  border-radius: 12px;
+  font-family: var(--fb);
+  font-weight: 700;
+  font-size: 0.96rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.btn-y {
+  background: var(--yellow);
+  color: var(--yellow-ink);
+  box-shadow: 0 4px 20px -4px rgba(255, 207, 51, 0.45);
+}
+.btn-y:hover {
+  background: #ffe066;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px -4px rgba(255, 207, 51, 0.65);
+  color: var(--yellow-ink);
+}
+
+.btn-red {
+  background: linear-gradient(135deg, #ff4560, #d91c39);
+  color: #fff;
+  box-shadow: 0 4px 20px -4px rgba(255, 69, 96, 0.45);
+}
+.btn-red:hover {
+  background: linear-gradient(135deg, #ff5e76, #eb2745);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px -4px rgba(255, 69, 96, 0.65);
+  color: #fff;
+}
+
+.btn-o {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--line2);
+  color: var(--text);
+  backdrop-filter: blur(8px);
+}
+.btn-o:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-cyan {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: var(--cyan);
+}
+.btn-cyan:hover {
+  background: rgba(0, 240, 255, 0.22);
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+/* Header de navegación idéntico a NexaGuard */
+.nav {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px max(20px, 5vw);
+  background: rgba(7, 12, 34, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+
+.nav::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--red), var(--yellow), var(--cyan), transparent);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+}
+.logo svg {
+  height: 38px;
+  width: auto;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.nav-link {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: color .2s ease;
+}
+.nav-link:hover {
+  color: #fff;
+}
+
+.nav-cta {
+  display: flex;
+  gap: 10px;
+}
+
+/* Hero Section */
+.hero-wrapper {
+  position: relative;
+  z-index: 2;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(50px, 8vw, 90px) 24px 40px;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 69, 96, 0.35);
+  background: rgba(255, 69, 96, 0.12);
+  color: #ff8b9d;
+  font-family: var(--fm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+
+.pill i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 10px var(--red);
+  animation: pulse-red 1.8s infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+h1 {
+  font-family: var(--fd);
+  font-size: clamp(2rem, 4.4vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin-bottom: 22px;
+}
+
+/* Efecto glitch cromático */
+.glitch {
+  position: relative;
+  display: inline-block;
+  color: var(--red);
+}
+.glitch::before, .glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: inset(0 0 100% 0);
+}
+.glitch::before {
+  color: #3ff0ff;
+  animation: gl1 3.4s infinite steps(1);
+}
+.glitch::after {
+  color: #ff3dd0;
+  animation: gl2 4.1s infinite steps(1);
+}
+@keyframes gl1 {
+  0%, 86%, 100% { clip-path: inset(0 0 100% 0); transform: none; }
+  88% { clip-path: inset(8% 0 58% 0); transform: translate(-4px, 0); }
+  92% { clip-path: inset(46% 0 22% 0); transform: translate(3px, 0); }
+  96% { clip-path: inset(0 0 100% 0); }
+}
+@keyframes gl2 {
+  0%, 78%, 100% { clip-path: inset(0 0 100% 0); transform: none; }
+  80% { clip-path: inset(60% 0 8% 0); transform: translate(4px, 0); }
+  84% { clip-path: inset(20% 0 52% 0); transform: translate(3px, 0); }
+  88% { clip-path: inset(0 0 100% 0); }
+}
+
+.hero-lead {
+  font-size: clamp(1.05rem, 1.8vw, 1.22rem);
+  color: #c9d6f6;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+/* Barra interactiva de escaneo rápido en el Hero */
+.hero-scan-card {
+  background: rgba(14, 23, 62, 0.78);
+  border: 1px solid var(--line2);
+  border-radius: 18px;
+  padding: 22px 24px;
+  box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(14px);
+  margin-bottom: 28px;
+}
+
+.hsc-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 14px;
+}
+.hsc-title span {
+  color: var(--yellow);
+}
+
+.hsc-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hsc-input-wrap {
+  flex: 1;
+  min-width: 240px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.hsc-input-prefix {
+  position: absolute;
+  left: 14px;
+  color: var(--muted);
+  font-family: var(--fm);
+  font-size: 0.86rem;
+  pointer-events: none;
+}
+
+.hsc-input {
+  width: 100%;
+  padding: 14px 16px 14px 68px;
+  border-radius: 12px;
+  border: 1px solid var(--line2);
+  background: rgba(6, 11, 31, 0.85);
+  color: #fff;
+  font-family: var(--fm);
+  font-size: 0.92rem;
+  outline: none;
+  transition: all .2s ease;
+}
+.hsc-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.25);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Terminal interactivo con simulación de escáner forense */
+.term-card {
+  border: 1px solid var(--line2);
+  border-radius: 18px;
+  background: rgba(5, 9, 26, 0.88);
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.8);
+  font-family: var(--fm);
+}
+
+.term-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(14, 22, 58, 0.5);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.term-dots {
+  display: flex;
+  gap: 7px;
+}
+.term-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.term-dot.r { background: #ff5f56; }
+.term-dot.y { background: #ffbd2e; }
+.term-dot.g { background: #27c93f; }
+
+.term-body {
+  padding: 18px 20px;
+  height: 310px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+.tl {
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: tl-fade 0.3s ease both;
+}
+@keyframes tl-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.tl.c { color: #c8d4ff; }
+.tl.i { color: var(--muted); }
+.tl.e { color: #ff6f89; }
+.tl.w { color: var(--amber); }
+.tl.o { color: var(--green); }
+.tl.y { color: var(--yellow); }
+
+/* Main Container & Sections */
+.main-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+/* Selector Interactivo de Síntomas */
+.diag-section {
+  margin: 50px 0 80px;
+}
+
+.sec-badge {
+  display: inline-block;
+  color: var(--cyan);
+  font-family: var(--fm);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.sec-title {
+  font-family: var(--fd);
+  font-size: clamp(1.7rem, 3.2vw, 2.3rem);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.sec-sub {
+  color: var(--muted);
+  font-size: 1.05rem;
+  max-width: 680px;
+  margin-bottom: 34px;
+}
+
+.symptoms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.symptom-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all .25s ease;
+  position: relative;
+  user-select: none;
+}
+.symptom-card:hover {
+  border-color: var(--line2);
+  transform: translateY(-3px);
+  background: rgba(17, 28, 70, 0.85);
+}
+.symptom-card.active {
+  border-color: var(--yellow);
+  background: rgba(255, 207, 51, 0.08);
+  box-shadow: 0 0 24px rgba(255, 207, 51, 0.15);
+}
+
+.sym-icon {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  display: inline-block;
+}
+.sym-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.sym-desc {
+  font-size: 0.86rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+/* Cuadro de Diagnóstico Dinámico */
+.diag-result {
+  background: rgba(8, 14, 40, 0.9);
+  border: 1px solid var(--line2);
+  border-radius: 16px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.dr-info {
+  flex: 1;
+  min-width: 260px;
+}
+.dr-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--fm);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.dr-level.crit { background: rgba(255, 69, 96, 0.2); color: #ff6f89; border: 1px solid var(--red); }
+.dr-title {
+  font-family: var(--fd);
+  font-size: 1.15rem;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.dr-advice {
+  font-size: 0.92rem;
+  color: #c0cde8;
+}
+
+/* Protocolo en 4 Pasos */
+.protocol-section {
+  margin: 80px 0;
+}
+
+.steps-list {
+  display: grid;
+  gap: 24px;
+}
+
+.step-box {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 32px 36px;
+  backdrop-filter: blur(12px);
+  position: relative;
+  transition: all .25s ease;
+}
+.step-box:hover {
+  border-color: var(--line2);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+.step-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.step-number {
+  font-family: var(--fd);
+  font-size: 1.3rem;
+  font-weight: 800;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--cyan);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.step-box h3 {
+  font-family: var(--fd);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.step-box p {
+  color: #c5d3f2;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.step-box ul {
+  margin: 12px 0 16px 20px;
+  color: #b8c8eb;
+}
+.step-box li {
+  margin-bottom: 8px;
+}
+
+.code-pill {
+  background: #04081b;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px 8px;
+  color: #ff9cb0;
+  font-family: var(--fm);
+  font-size: 0.88rem;
+}
+
+.step-tip {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: rgba(255, 207, 51, 0.08);
+  border-left: 4px solid var(--yellow);
+  color: #e2e8f8;
+  font-size: 0.92rem;
+  margin-top: 14px;
+}
+
+/* Banner de Rescate Forense Urgente */
+.rescue-card {
+  background: linear-gradient(135deg, rgba(14, 24, 70, 0.95), rgba(7, 13, 38, 0.95));
+  border: 1px solid rgba(255, 207, 51, 0.35);
+  border-radius: 24px;
+  padding: clamp(34px, 5vw, 56px);
+  margin: 90px 0 40px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.7);
+  position: relative;
+  overflow: hidden;
+}
+
+.rescue-card::before {
+  content: "";
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(255, 207, 51, 0.18), transparent 70%);
+  pointer-events: none;
+}
+
+.rc-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 36px;
+  align-items: center;
+}
+
+.rc-title {
+  font-family: var(--fd);
+  font-size: clamp(1.8rem, 3.4vw, 2.4rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.18;
+  margin-bottom: 16px;
+}
+
+.rc-lead {
+  font-size: 1.06rem;
+  color: #cad8fa;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.rc-perks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.rc-perk {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.94rem;
+  color: #e5edff;
+}
+.rc-perk svg {
+  width: 18px;
+  height: 18px;
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.rc-price-box {
+  background: rgba(5, 10, 30, 0.8);
+  border: 1px solid var(--line2);
+  border-radius: 18px;
+  padding: 30px 26px;
+  text-align: center;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+}
+
+.rc-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(61, 232, 164, 0.15);
+  border: 1px solid var(--green);
+  color: var(--green);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.rc-cost {
+  font-family: var(--fd);
+  font-size: 3rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.rc-cost span {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rc-guarantee {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 14px;
+}
+
+/* Footer idéntico a NexaGuard */
+.site-footer {
+  border-top: 1px solid var(--line);
+  padding: 50px 24px 34px;
+  position: relative;
+  z-index: 2;
+  background: rgba(5, 9, 24, 0.85);
+}
+
+.footer-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.footer-copy {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+}
+.footer-links a {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-family: var(--fm);
+  color: var(--green);
+}
+.footer-badge i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+
+@media (max-width: 900px) {
+  .hero-wrapper {
+    grid-template-columns: 1fr;
+    padding-top: 40px;
+  }
+  .rc-grid {
+    grid-template-columns: 1fr;
+  }
+  .nav-links {
+    display: none;
+  }
+}
 </style>
 </head>
 <body>
 
+<!-- Fondo de animación WebGL / Canvas -->
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="noise" aria-hidden="true"></div>
+<div class="glow-ambient" aria-hidden="true"></div>
+
+<!-- Cabecera Oficial NexaGuard -->
 <header class="nav">
-  <a href="/" class="logo" aria-label="NexaGuard">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64"><defs><linearGradient id="g1" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffcf33"/><stop offset="1" stop-color="#6b8cff"/></linearGradient></defs><path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="#15214f" stroke="url(#g1)" stroke-width="3.2"/><path d="M22 42V22L42 42V22" fill="none" stroke="#fff" stroke-width="4.4" stroke-linecap="round"/><circle cx="22" cy="22" r="4" fill="#ffcf33"/><circle cx="22" cy="42" r="4" fill="#ffcf33"/><circle cx="42" cy="42" r="4" fill="#ffcf33"/><circle cx="42" cy="22" r="4" fill="#ffcf33"/></svg>
+  <a href="/" class="logo" aria-label="NexaGuard - Ir a la página principal">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="nxgn" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#ffcf33"/>
+          <stop offset="1" stop-color="#6b8cff"/>
+        </linearGradient>
+        <linearGradient id="nxfn" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#15214f"/>
+          <stop offset="1" stop-color="#0b1235"/>
+        </linearGradient>
+      </defs>
+      <path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="url(#nxfn)" stroke="url(#nxgn)" stroke-width="3.2" stroke-linejoin="round"/>
+      <path d="M22 42V22L42 42V22" fill="none" stroke="#eaf0ff" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="22" cy="22" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/>
+      <circle cx="22" cy="42" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/>
+      <circle cx="42" cy="42" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/>
+      <circle cx="42" cy="22" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/>
+      <defs><clipPath id="nxcn"><rect x="-2" y="0" width="240" height="20"/></clipPath></defs>
+      <g transform="translate(78.0 19.0) scale(1.3)">
+        <g clip-path="url(#nxcn)">
+          <path d="M 2.1 20V 0M 2.1 0L 14.9 20M 14.9 20V 0 M 23.1 0V 20M 21 2.1H 35.5M 21 10H 33.5M 21 17.9H 35.5 M 40 0L 58 20M 58 0L 40 20 M 62 20L 72 0L 82 20M 66.6 14.2H 77.4" fill="none" stroke="#eaf0ff" stroke-width="4.2" stroke-linejoin="miter" stroke-miterlimit="10"/>
+          <path d="M 102.05 4.92A 7.9 7.9 0 1 0 103.9 10H 96.5 M 112.1 0V 11A 6.9 6.9 0 0 0 125.9 11V 0 M 132 20L 142 0L 152 20M 136.6 14.2H 147.4 M 158.1 20V 0M 156 2.1H 165.6A 3.9 3.9 0 0 1 165.6 9.9H 158.1M 164 9.9L 171.5 20 M 179.1 0V 20M 177 2.1H 184.6A 7.9 7.9 0 0 1 184.6 17.9H 177" fill="none" stroke="#ffcf33" stroke-width="4.2" stroke-linejoin="miter" stroke-miterlimit="10"/>
+        </g>
+      </g>
+    </svg>
   </a>
-  <div style="display:flex;gap:12px">
+  <nav class="nav-links">
+    <a href="/#sintomas" class="nav-link">Síntomas</a>
+    <a href="/#servicios" class="nav-link">Servicios</a>
+    <a href="/#escaner" class="nav-link">Escáner</a>
+    <a href="/#planes" class="nav-link">Planes</a>
+    <a href="/#faq" class="nav-link">Preguntas</a>
+  </nav>
+  <div class="nav-cta">
     <a href="/#escaner" class="btn btn-o">Escáner Gratis</a>
-    <a href="/#planes" class="btn btn-y">Planes y Precios</a>
+    <a href="/#contacto" class="btn btn-red">Rescate Urgente</a>
   </div>
 </header>
 
-<main class="container">
-  <span class="hero-tag">⚠️ Ciberseguridad de Emergencia</span>
-  <h1>Cómo Reparar y Desinfectar un WordPress Hackeado (Guía Forense 2026)</h1>
-  
-  <div class="meta-info">
-    <span>🛡️ Por Equipo Forense NexaGuard</span>
-    <span>⏱️ Tiempo de lectura: 6 min</span>
-    <span>🔄 Actualizado: Octubre 2026</span>
+<!-- Hero con Escáner Rápido y Terminal Forense -->
+<div class="hero-wrapper">
+  <div>
+    <span class="pill"><i></i> Respuesta Forense Inmediata · 24/7</span>
+    <h1>¿Tu WordPress fue <span class="glitch" data-text="hackeado">hackeado</span>? Protocolo para Limpiarlo Hoy</h1>
+    <p class="hero-lead">
+      Erradicamos malware oculto, webshells, spam SEO en Google y redirecciones fraudulentas sin perder tu base de datos ni tus pedidos. Diagnostica tu web gratis ahora o solicita una intervención forense prioritaria.
+    </p>
+
+    <!-- Caja interactiva de escaneo instantáneo conectada a NexaGuard -->
+    <div class="hero-scan-card">
+      <div class="hsc-title">
+        <span>⚡</span> Analizar Sitio en Tiempo Real con el Escáner de NexaGuard
+      </div>
+      <form id="heroScanForm" class="hsc-form" onsubmit="event.preventDefault(); triggerNexaScan();">
+        <div class="hsc-input-wrap">
+          <span class="hsc-input-prefix">https://</span>
+          <input type="text" id="scanTargetInput" class="hsc-input" placeholder="tusitio.com" autocomplete="off" required>
+        </div>
+        <button type="submit" class="btn btn-y" id="btnLaunchScan">
+          <span>Escanear Gratis</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <div class="hero-actions">
+      <a href="/#contacto" class="btn btn-red">
+        <span>🚨 Solicitar Rescate Forense ($89)</span>
+      </a>
+      <a href="/downloads/nexaguard-malware-scanner.zip" class="btn btn-o">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>Descargar Plugin Gratis</span>
+      </a>
+    </div>
   </div>
 
-  <div class="alert-box">
-    <h3>¿Tu web redirige a páginas extrañas o Google la marcó en rojo?</h3>
-    <p>Cada minuto que tu sitio permanece infectado se destruye tu reputación, Google desindexa tus páginas y tus clientes ven una advertencia de peligro. Si necesitas resolverlo hoy sin tocar código manualmente, puedes escanear tu web de inmediato o solicitar nuestro servicio de rescate.</p>
+  <!-- Terminal animado en vivo -->
+  <div class="term-card">
+    <div class="term-header">
+      <div class="term-dots">
+        <span class="term-dot r"></span>
+        <span class="term-dot y"></span>
+        <span class="term-dot g"></span>
+      </div>
+      <span>nexaguard-sentinel --live-forensics</span>
+    </div>
+    <div class="term-body" id="termLogs">
+      <div class="tl c">> NexaGuard Forensic Engine v1.5.7 inicializado.</div>
+      <div class="tl i">> Inspeccionando checksums oficiales de WordPress.org...</div>
+      <div class="tl e">> [CRÍTICO] Inyección encontrada en /wp-content/uploads/2026/04/cache.php</div>
+      <div class="tl w">> [ALERTA] Redirección no autorizada detectada en .htaccess (TrafficStealer)</div>
+      <div class="tl o">> [SENTINEL] Aislamiento en cuarentena segura: 2 amenazas neutralizadas.</div>
+      <div class="tl y">> Escudo WAF perimetral activo: Previniendo reinfección en tiempo real.</div>
+    </div>
   </div>
+</div>
 
-  <div class="content">
-    <h2>1. Síntomas comunes de una intrusión en WordPress</h2>
-    <p>Un hackeo rara vez destruye tu web por completo: los ciberdelincuentes prefieren mantenerla viva en silencio para monetizar tu tráfico. Presta atención a estas señales críticas:</p>
-    <ul>
-      <li><b>Redirecciones maliciosas:</b> Tus visitantes desde móviles son enviados a portales de apuestas, criptomonedas o páginas fraudulentas (ClearFake / EtherHiding).</li>
-      <li><b>Pantalla roja en Google:</b> <em>"El sitio web al que vas a acceder contiene software malicioso"</em> o <em>"Sitio engañoso"</em>.</li>
-      <li><b>Inyección masiva de URLs en Google:</b> Miles de páginas en caracteres extraños aparecen indexadas compitiendo con tus servicios reales (Japanese Keyword Hack).</li>
-      <li><b>Administradores fantasma:</b> Se crean usuarios con rol de administrador que nadie en tu equipo autorizó.</li>
-      <li><b>Archivos desconocidos en carpetas públicas:</b> Archivos <code>.php</code> sospechosos dentro de <code>/wp-content/uploads/</code> o <code>/wp-includes/</code>.</li>
-    </ul>
+<!-- Contenido Principal: Diagnóstico y Guía Técnica -->
+<main class="main-content">
 
-    <h2>2. Protocolo de Desinfección Forense en 4 Pasos</h2>
+  <!-- Sección de Diagnóstico de Síntomas Interactivo -->
+  <section class="diag-section">
+    <span class="sec-badge">Diagnóstico Forense Preliminar</span>
+    <h2 class="sec-title">¿Qué síntoma presenta tu instalación?</h2>
+    <p class="sec-sub">Selecciona los síntomas detectados para calcular el tipo de malware y la gravedad del ataque.</p>
 
-    <div class="step-card">
-      <div class="step-num">01</div>
-      <h3>Realiza un Respaldo Forense Inmediato</h3>
-      <p>Antes de borrar cualquier archivo o ejecutar scripts, descarga un respaldo completo de la base de datos (SQL) y los archivos de la web vía FTP/cPanel. Esto garantiza que no pierdas tus artículos, clientes ni productos de WooCommerce si algo sale mal.</p>
-    </div>
+    <div class="symptoms-grid">
+      <div class="symptom-card active" onclick="selectSymptom(this, 'redirect')">
+        <span class="sym-icon">🔀</span>
+        <div class="sym-title">Redirecciones Móviles</div>
+        <div class="sym-desc">Envía a tus usuarios a casinos, sitios cripto falsos o descargas sospechosas (ClearFake).</div>
+      </div>
 
-    <div class="step-card">
-      <div class="step-num">02</div>
-      <h3>Verifica la Integridad de los Archivos Núcleo (Core Sentinel)</h3>
-      <p>Los atacantes suelen modificar archivos legítimos como <code>index.php</code>, <code>wp-load.php</code> o <code>wp-blog-header.php</code>. <b>NexaGuard Security</b> incluye la tecnología <b>Core Sentinel</b> que compara en segundos cada archivo del núcleo con los hashes oficiales criptográficos de WordPress.org y restaura con 1 clic cualquier archivo adulterado.</p>
-    </div>
+      <div class="symptom-card" onclick="selectSymptom(this, 'redscreen')">
+        <span class="sym-icon">🛑</span>
+        <div class="sym-title">Pantalla Roja de Google</div>
+        <div class="sym-desc">Aviso "El sitio adelante contiene programas dañinos" en Chrome y desindexación de URLs.</div>
+      </div>
 
-    <div class="step-card">
-      <div class="step-num">03</div>
-      <h3>Limpia Backdoors en Uploads y Tablas Ocultas</h3>
-      <p>Revisa minuciosamente la carpeta <code>wp-content/uploads/</code>: bajo ninguna circunstancia debe existir un archivo <code>.php</code> en esa carpeta. Utiliza un escáner heurístico que localice funciones ofuscadas como <code>eval(base64_decode(...))</code>, <code>gzinflate()</code> y <code>str_rot13()</code>.</p>
-    </div>
+      <div class="symptom-card" onclick="selectSymptom(this, 'seo')">
+        <span class="sym-icon">🇯🇵</span>
+        <div class="sym-title">Japanese / SEO Spam</div>
+        <div class="sym-desc">Miles de enlaces con caracteres japoneses o fármacos indexados en los resultados de Google.</div>
+      </div>
 
-    <div class="step-card">
-      <div class="step-num">04</div>
-      <h3>Cambia Claves Maestras y Retira la Alerta de Google</h3>
-      <p>Una vez limpia la web:</p>
-      <ul>
-        <li>Regenera las sales criptográficas (SALT keys) en tu archivo <code>wp-config.php</code>.</li>
-        <li>Cambia las contraseñas de todos los administradores, FTP y cPanel.</li>
-        <li>Entra a <b>Google Search Console</b> > Seguridad y acciones manuales > Solicitar revisión de seguridad. Google suele levantar la advertencia en 24 a 48 horas.</li>
-      </ul>
-    </div>
-
-    <div class="cta-banner">
-      <h2>¿Prefieres que un experto forense limpie y blinde tu web hoy mismo?</h2>
-      <p>En NexaGuard eliminamos el 100% del malware, recuperamos tu web sin perder contenido y te damos 30 días de garantía con informe forense detallado.</p>
-      <div class="cta-group">
-        <a href="/#escaner" class="btn btn-y">Escanear Sitio Gratis Ahora</a>
-        <a href="/#contacto" class="btn btn-red">Solicitar Rescate Urgente ($89)</a>
+      <div class="symptom-card" onclick="selectSymptom(this, 'admin')">
+        <span class="sym-icon">👤</span>
+        <div class="sym-title">Administradores Fantasma</div>
+        <div class="sym-desc">Aparecen usuarios desconocidos con rol de administrador sin tu consentimiento.</div>
       </div>
     </div>
-  </div>
+
+    <!-- Resultado dinámico del síntoma -->
+    <div class="diag-result" id="diagResult">
+      <div class="dr-info">
+        <span class="dr-level crit" id="drBadge">Nivel: CRÍTICO</span>
+        <div class="dr-title" id="drTitle">Inyección Activa de Redirección (JavaScript / .htaccess)</div>
+        <div class="dr-advice" id="drAdvice">El atacante alteró archivos legítimos del núcleo o inyectó scripts en la cabecera de tus páginas para robar tráfico de Google. Se requiere aislamiento inmediato antes de que Google suspenda tu dominio.</div>
+      </div>
+      <div>
+        <a href="/#escaner" class="btn btn-y" onclick="carryToScanner()">Verificar con Escáner</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Protocolo Forense en 4 Pasos -->
+  <section class="protocol-section">
+    <span class="sec-badge">Protocolo Forense Certificado</span>
+    <h2 class="sec-title">Cómo Desinfectar un WordPress Hackeado (Paso a Paso)</h2>
+    <p class="sec-sub">Sigue este procedimiento técnico paso a paso para limpiar tu instalación sin dañar la base de datos ni los datos de tus usuarios.</p>
+
+    <div class="steps-list">
+
+      <!-- Paso 1 -->
+      <article class="step-box">
+        <div class="step-top">
+          <div class="step-number">01</div>
+          <div>
+            <h3>Aislar el Sitio y Generar una Copia de Seguridad Forense</h3>
+          </div>
+        </div>
+        <p>Antes de modificar o eliminar cualquier archivo, es indispensable tomar una instantánea del estado actual de tu instalación. Esto previene pérdidas accidentales de pedidos de WooCommerce, entradas de blog o configuraciones críticas si algo falla durante la limpieza.</p>
+        <ul>
+          <li>Descarga vía FTP o cPanel la carpeta <span class="code-pill">/wp-content/</span> y el archivo <span class="code-pill">wp-config.php</span>.</li>
+          <li>Exporta un volcado completo de la base de datos SQL a través de phpMyAdmin o WP-CLI (<span class="code-pill">wp db export</span>).</li>
+          <li>Coloca temporalmente tu web en modo mantenimiento o bloquea peticiones externas en <span class="code-pill">.htaccess</span> dejando acceso exclusivo únicamente a tu dirección IP.</li>
+        </ul>
+        <div class="step-tip">
+          <span>💡</span>
+          <div><b>Regla de Oro Forense:</b> Nunca ejecutes herramientas automáticas de limpieza sin antes contar con el volcado SQL y los archivos respaldados localmente en tu ordenador.</div>
+        </div>
+      </article>
+
+      <!-- Paso 2 -->
+      <article class="step-box">
+        <div class="step-top">
+          <div class="step-number">02</div>
+          <div>
+            <h3>Auditar la Integridad del Núcleo de WordPress (Core Sentinel)</h3>
+          </div>
+        </div>
+        <p>Los atacantes suelen esconder puertas traseras modificando archivos legítimos de WordPress como <span class="code-pill">index.php</span>, <span class="code-pill">wp-load.php</span> o <span class="code-pill">wp-settings.php</span>.</p>
+        <p>NexaGuard Security implementa <b>Core Sentinel</b>, una tecnología que consulta la API de sumas de verificación criptográficas (SHA-256 Checksums) de WordPress.org para comparar byte por byte cada archivo de tu versión oficial de WordPress:</p>
+        <ul>
+          <li>Si un archivo del núcleo ha sido alterado con una sola línea de código malicioso, Sentinel lo detectará de inmediato sin falsos positivos.</li>
+          <li>Puedes sustituir de forma segura las carpetas <span class="code-pill">/wp-admin/</span> y <span class="code-pill">/wp-includes/</span> descargando una versión limpia y oficial directamente desde WordPress.org.</li>
+        </ul>
+        <div class="step-tip">
+          <span>🛡️</span>
+          <div><b>Aviso de Seguridad:</b> Jamás borres la carpeta <span class="code-pill">/wp-content/</span> ni el archivo <span class="code-pill">wp-config.php</span>, ya que allí residen tus imágenes, temas, plugins y la conexión con la base de datos.</div>
+        </div>
+      </article>
+
+      <!-- Paso 3 -->
+      <article class="step-box">
+        <div class="step-top">
+          <div class="step-number">03</div>
+          <div>
+            <h3>Erradicar Webshells, Backdoors y Malware en Base de Datos</h3>
+          </div>
+        </div>
+        <p>La carpeta <span class="code-pill">/wp-content/uploads/</span> está diseñada únicamente para almacenar archivos estáticos (imágenes, documentos PDF, videos). Bajo ninguna circunstancia debe existir un archivo <span class="code-pill">.php</span> en este directorio.</p>
+        <ul>
+          <li>Busca archivos con extensiones dobles o sospechosas como <span class="code-pill">logo.php</span>, <span class="code-pill">uploader.php</span> o <span class="code-pill">cache.php</span> dentro de las carpetas de subidas.</li>
+          <li>Inspecciona el contenido en busca de funciones ofuscadas de ejecución remota: <span class="code-pill">eval(base64_decode(...))</span>, <span class="code-pill">gzinflate()</span> y <span class="code-pill">str_rot13()</span>.</li>
+          <li>Revisa en tu base de datos la tabla <span class="code-pill">wp_options</span> buscando registros con claves extrañas que contengan scripts maliciosos o iframes inyectados.</li>
+        </ul>
+      </article>
+
+      <!-- Paso 4 -->
+      <article class="step-box">
+        <div class="step-top">
+          <div class="step-number">04</div>
+          <div>
+            <h3>Rotar Claves Maestras, Activar WAF y Retirar Alertas de Google</h3>
+          </div>
+        </div>
+        <p>Una vez que el malware y las webshells han sido eliminados del servidor, es imprescindible cerrar todos los accesos para impedir una reinfección automática:</p>
+        <ul>
+          <li><b>Regenera las sales de seguridad (SALT Keys):</b> Edita <span class="code-pill">wp-config.php</span> e introduce claves nuevas generadas con el servicio oficial de la API de WordPress (<span class="code-pill">https://api.wordpress.org/secret-key/1.1/salt/</span>). Esto cerrará todas las sesiones activas de usuarios y atacantes.</li>
+          <li><b>Cambia todas las contraseñas:</b> Administradores de WordPress, base de datos MySQL, usuarios FTP, SFTP y credenciales del panel de hosting (cPanel, Plesk).</li>
+          <li><b>Activa el Firewall WAF de NexaGuard:</b> Despliega reglas perimetrales para bloquear inyecciones SQL, ejecución de PHP en uploads y ataques de fuerza bruta.</li>
+          <li><b>Solicita revisión en Google Search Console:</b> Ve a <em>Seguridad y acciones manuales > Problemas de seguridad</em> y presiona <b>Solicitar revisión</b> detallando que el malware ha sido completamente erradicado. La pantalla roja suele eliminarse en menos de 24 a 48 horas.</li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Tarjeta de Llamada a la Acción de Rescate Urgente (Alta Conversión) -->
+  <section class="rescue-card">
+    <div class="rc-grid">
+      <div>
+        <h2 class="rc-title">¿Tu web está perdiendo ventas o clientes en este momento?</h2>
+        <p class="rc-lead">
+          No arriesgues tu negocio intentando editar código PHP a ciegas. Nuestros ingenieros forenses intervienen tu servidor de inmediato, limpian el 100% del malware y te entregan tu sitio blindado con garantía de 30 días.
+        </p>
+        <div class="rc-perks">
+          <div class="rc-perk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Intervención forense humana</span>
+          </div>
+          <div class="rc-perk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Limpieza de base de datos y archivos</span>
+          </div>
+          <div class="rc-perk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Retiro de alerta roja de Google</span>
+          </div>
+          <div class="rc-perk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Garantía de 30 días sin reinfección</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <a href="/#contacto" class="btn btn-red" style="font-size:1.05rem;padding:15px 30px">
+            🚨 Solicitar Rescate Urgente Ahora
+          </a>
+          <a href="/#planes" class="btn btn-o">
+            Ver Todos los Planes
+          </a>
+        </div>
+      </div>
+
+      <div class="rc-price-box">
+        <span class="rc-badge">Servicio de Rescate Único</span>
+        <div class="rc-cost">$89 <span>USD</span></div>
+        <p style="color:#b5c4ea;font-size:0.92rem;line-height:1.45;margin-bottom:18px">
+          Pago único sin mensualidades obligatorias. Respuesta prioritaria en menos de 2 horas.
+        </p>
+        <a href="/#contacto" class="btn btn-y" style="width:100%">
+          Contratar Intervención
+        </a>
+        <div class="rc-guarantee">🛡️ Si no podemos limpiar tu sitio, te devolvemos el 100% de tu dinero.</div>
+      </div>
+    </div>
+  </section>
+
 </main>
 
-<footer>
-  <p>© 2026 NexaGuard Security. Ciberseguridad forense y protección perimetral para WordPress.</p>
+<!-- Pie de Página Oficial -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-copy">
+      © 2026 NexaGuard Security. Ciberseguridad, Escáner Forense y Blindaje WAF para WordPress.
+    </div>
+    <div class="footer-links">
+      <a href="/">Inicio</a>
+      <a href="/#escaner">Escáner Web</a>
+      <a href="/#planes">Planes & Precios</a>
+      <a href="/japanese-keyword-hack/">Guía Japanese Hack</a>
+      <a href="/#contacto">Contacto Urgente</a>
+    </div>
+    <div class="footer-badge">
+      <i></i> Sistemas Forenses Operativos 24/7
+    </div>
+  </div>
 </footer>
 
+<!-- Scripts de Animación e Interactividad -->
+<script>
+(function() {
+  'use strict';
+
+  // 1. Canvas 3D de Partículas y Constelación Forense
+  var canvas = document.getElementById('gl');
+  var ctx = canvas ? canvas.getContext('2d') : null;
+  var particles = [];
+  var mouse = { x: -1000, y: -1000 };
+  var W = 0, H = 0;
+
+  function resize() {
+    if (!canvas) return;
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  if (ctx) {
+    var count = Math.min(65, Math.floor((window.innerWidth * window.innerHeight) / 18000));
+    for (var i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: (Math.random() - 0.5) * 0.45,
+        size: Math.random() * 1.8 + 0.8,
+        color: Math.random() > 0.6 ? 'rgba(0, 240, 255, 0.55)' : (Math.random() > 0.4 ? 'rgba(255, 207, 51, 0.45)' : 'rgba(107, 140, 255, 0.45)')
+      });
+    }
+
+    window.addEventListener('mousemove', function(e) {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    function drawMesh() {
+      ctx.clearRect(0, 0, W, H);
+
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0) p.x = W;
+        if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H;
+        if (p.y > H) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+
+        // Líneas entre partículas
+        for (var j = i + 1; j < particles.length; j++) {
+          var p2 = particles[j];
+          var dx = p.x - p2.x;
+          var dy = p.y - p2.y;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 115) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = 'rgba(150, 175, 255, ' + (0.16 * (1 - dist / 115)) + ')';
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(drawMesh);
+    }
+    requestAnimationFrame(drawMesh);
+  }
+
+  // 2. Terminal interactivo con simulación forense
+  var termLogs = document.getElementById('termLogs');
+  var simulatedLogs = [
+    { cls: 'i', msg: '> Analizando firmas heurísticas en /wp-content/themes/...' },
+    { cls: 'w', msg: '> [ADVERTENCIA] Función eval(base64_decode) detectada en functions.php' },
+    { cls: 'e', msg: '> [ANOMALÍA] Webshell c99/b374k neutralizada en uploads' },
+    { cls: 'c', msg: '> Verificando sitemap.xml contra inyecciones de spam japonés...' },
+    { cls: 'o', msg: '> [ÉXITO] Archivos del núcleo validados 100% contra WordPress.org' },
+    { cls: 'y', msg: '> Despliegue de reglas NexaGuard WAF en ejecución...' }
+  ];
+  var logIndex = 0;
+
+  setInterval(function() {
+    if (!termLogs) return;
+    var next = simulatedLogs[logIndex % simulatedLogs.length];
+    logIndex++;
+    var div = document.createElement('div');
+    div.className = 'tl ' + next.cls;
+    div.textContent = next.msg;
+    termLogs.appendChild(div);
+    if (termLogs.children.length > 7) {
+      termLogs.removeChild(termLogs.children[0]);
+    }
+  }, 3200);
+
+  // 3. Diagnóstico de Síntomas interactivo
+  var SYMPTOMS_DATA = {
+    redirect: {
+      level: 'CRÍTICO',
+      badgeCls: 'crit',
+      title: 'Inyección Activa de Redirección (JavaScript / .htaccess)',
+      advice: 'El atacante alteró archivos legítimos del núcleo o inyectó scripts en la cabecera de tus páginas para robar tráfico de Google. Se requiere aislamiento inmediato antes de que Google suspenda tu dominio.'
+    },
+    redscreen: {
+      level: 'CRÍTICO (PÉRDIDA DE TRÁFICO)',
+      badgeCls: 'crit',
+      title: 'Lista Negra de Google Safe Browsing Activa',
+      advice: 'Google Chrome y Firefox están bloqueando a tus visitantes con la pantalla roja de "Sitio Engañoso". Cada hora que pasa pierdes posicionamiento SEO y ventas. Requiere limpieza forense y solicitud formal de reconsideración.'
+    },
+    seo: {
+      level: 'ALTO (SPAM INDEXADO)',
+      badgeCls: 'crit',
+      title: 'Infección Japanese Keyword Hack / SEO Spam Cloaking',
+      advice: 'Los hackers han inyectado un generador de páginas falsas en japonés o fármacos visible solo para Googlebot. Requiere erradicar los scripts de cloaking y desindexar miles de URLs falsas en Google Search Console.'
+    },
+    admin: {
+      level: 'CRÍTICO (CONTROL TOTAL)',
+      badgeCls: 'crit',
+      title: 'Puerta Trasera con Permisos de Superadministrador',
+      advice: 'Hay una brecha abierta en un plugin o tema desactualizado que permitió a los atacantes crear administradores fantasma. Se debe clausurar el backdoor y rotar todas las claves secretas SALT de inmediato.'
+    }
+  };
+
+  window.selectSymptom = function(card, key) {
+    document.querySelectorAll('.symptom-card').forEach(function(c) { c.classList.remove('active'); });
+    card.classList.add('active');
+
+    var data = SYMPTOMS_DATA[key];
+    if (!data) return;
+
+    var badge = document.getElementById('drBadge');
+    var title = document.getElementById('drTitle');
+    var advice = document.getElementById('drAdvice');
+
+    if (badge) {
+      badge.textContent = 'Nivel: ' + data.level;
+      badge.className = 'dr-level ' + data.badgeCls;
+    }
+    if (title) title.textContent = data.title;
+    if (advice) advice.textContent = data.advice;
+  };
+
+  // 4. Lanzador del Escáner conectado con NexaGuard
+  window.triggerNexaScan = function() {
+    var input = document.getElementById('scanTargetInput');
+    var raw = (input ? input.value : '').trim();
+    if (!raw) return;
+    
+    // Limpiar protocolo si lo pegó completo
+    var clean = raw.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').trim();
+    if (!clean) return;
+
+    // Redirigir directamente al escáner de la web de NexaGuard con el dominio prellenado
+    window.location.href = '/?scan=' + encodeURIComponent(clean) + '#escaner';
+  };
+
+  window.carryToScanner = function() {
+    var input = document.getElementById('scanTargetInput');
+    var val = (input && input.value ? input.value : '').trim();
+    if (val) {
+      window.location.href = '/?scan=' + encodeURIComponent(val) + '#escaner';
+    } else {
+      window.location.href = '/#escaner';
+    }
+  };
+
+})();
+</script>
 </body>
 </html>
-
