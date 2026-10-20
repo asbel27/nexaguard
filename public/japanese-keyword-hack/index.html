@@ -92,6 +92,43 @@
           "item": "https://www.nexaguards.com/japanese-keyword-hack/"
         }
       ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Por qué yo veo mi página normal pero en Google aparecen caracteres japoneses?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Esto se debe al cloaking (encubrimiento). El atacante programa el servidor para analizar la cabecera User-Agent de quien visita la web. Si eres un humano en Chrome o Safari, entrega la web legítima; si es el bot de Google (Googlebot), entrega miles de páginas de réplicas en japonés para indexarlas sin que te des cuenta."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cuánto tiempo tardan en desaparecer las URLs japonesas de Google?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Si se utiliza un simple error 404, Google puede tardar entre 3 y 6 meses en purgarlas. Sin embargo, mediante la implementación forense de respuestas HTTP 410 Gone y el reenvío de sitemaps limpios en Google Search Console, el tiempo de purga suele reducirse notablemente en las primeras semanas de reindexación."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Perderé el posicionamiento de mis páginas legítimas?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Al erradicar el cloaking de inmediato y enviar el informe a Search Console, Google restaura el sitemap original y reasigna la autoridad a tus páginas genuinas, evitando penalizaciones manuales permanentes en el dominio."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cómo evitan que el atacante vuelva a inyectar las páginas?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No nos limitamos a borrar URLs: cerramos la vulnerabilidad raíz que permitió el acceso (plugins desactualizados, backdoors en uploads o contraseñas filtradas) y desplegamos el WAF de NexaGuard para bloquear de forma preventiva cualquier intento de reinyección con 30 días de garantía."
+          }
+        }
+      ]
     }
   ]
 }
