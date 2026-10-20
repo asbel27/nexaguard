@@ -66,10 +66,14 @@
         <!-- Panel Izquierdo: Editor del Post & Plantillas -->
         <div class="panel composer-left">
           <div class="panel-header">
-            <h2>✍️ Redactor de Publicación</h2>
-            <div class="template-selector">
-              <label for="templateSelect">Plantilla NexaGuard:</label>
-              <select id="templateSelect" onchange="applySelectedTemplate()">
+            <h2>✍️ Redactor Inteligente (Copywriting &amp; IA)</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <select id="frameworkSelect" onchange="applyCopywritingFramework()" style="max-width:230px;font-size:0.8rem">
+                <option value="pas-dolor-urgencia">🔥 Fórmula PAS (Dolor y Urgencia)</option>
+                <option value="caso-estudio-educativo">🧠 Caso Técnico (0% Rechazo Admins)</option>
+                <option value="alerta-seguridad-comunidad">🚨 Alerta Preventiva (Alta Interacción)</option>
+              </select>
+              <select id="templateSelect" onchange="applySelectedTemplate()" style="max-width:170px;font-size:0.8rem">
                 <!-- Opciones dinámicas -->
               </select>
             </div>
@@ -150,19 +154,27 @@
             </div>
           </div>
 
-          <!-- Parámetros Anti-Detección -->
+          <!-- Parámetros Anti-Detección y Cumplimiento Meta -->
           <div class="campaign-options" style="margin-top:14px">
             <div class="opt-row">
-              <span class="opt-label">Modo Auto-Join:</span>
-              <span class="opt-val tag-green">✓ Activado (Pide unirse si no eres miembro)</span>
+              <span class="opt-label">Modo Cadencia Anti-Baneo:</span>
+              <select id="delayModeSelect" style="width:auto;padding:3px 8px;font-size:0.78rem">
+                <option value="safe" selected>🛡️ Seguro (15-30 min · Recomendado Meta)</option>
+                <option value="moderate">⚖️ Moderado (4-8 min)</option>
+                <option value="instant">⚡ Rápido / Pruebas (45-120 seg)</option>
+              </select>
             </div>
             <div class="opt-row">
-              <span class="opt-label">Espera aleatoria:</span>
-              <span class="opt-val">45s a 120s (Anti-detección humana)</span>
+              <span class="opt-label">Horario Óptimo Meta:</span>
+              <span class="opt-val tag-green" id="optimalHourBadge">Calculando...</span>
             </div>
             <div class="opt-row">
-              <span class="opt-label">Simulación de tipeo:</span>
-              <span class="opt-val tag-green">Activada (Escribe carácter a carácter)</span>
+              <span class="opt-label">Límite Diario Seguro:</span>
+              <span class="opt-val" id="dailyLimitBadge">Cargando...</span>
+            </div>
+            <div class="opt-row">
+              <span class="opt-label">Bypass Anti-Rechazo:</span>
+              <span class="opt-val tag-green">✓ Copywriting Value-First &amp; Auto-Join</span>
             </div>
           </div>
 

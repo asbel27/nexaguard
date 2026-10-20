@@ -140,3 +140,4 @@ async function detectUserFacebookGroups(onLog = console.log) {
 module.exports = {
   detectUserFacebookGroups
 };
+

@@ -17,6 +17,7 @@ let state = {
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   loadStatus();
+  loadComplianceStatus();
   loadTemplates();
   loadGroups();
   loadHistory();
@@ -392,6 +393,55 @@ function applySelectedTemplate() {
   }
 }
 
+async function applyCopywritingFramework() {
+  const select = document.getElementById('frameworkSelect');
+  const frameworkId = select.value;
+  try {
+    const res = await fetch('/api/copywriting/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ frameworkId })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('postSpintax').value = data.rawSpintax;
+      updateSpintaxPreview();
+      appendTerminalLog('info', `[COPYWRITING IA] Aplicada fórmula: "${data.name}"`);
+    }
+  } catch (e) {}
+}
+
+async function loadComplianceStatus() {
+  try {
+    const res = await fetch('/api/compliance/status');
+    const data = await res.json();
+    if (data.ok) {
+      const optBadge = document.getElementById('optimalHourBadge');
+      if (optBadge) {
+        if (data.isOptimalHour) {
+          optBadge.textContent = '✓ Horario Pico Activo (09-12h / 14-17h / 19-22h)';
+          optBadge.className = 'opt-val tag-green';
+        } else {
+          optBadge.textContent = '⏰ Fuera de Horario Pico (Se sugiere Modo Seguro)';
+          optBadge.className = 'opt-val';
+        }
+      }
+
+      const limitBadge = document.getElementById('dailyLimitBadge');
+      if (limitBadge) {
+        const count = data.postsToday || 0;
+        limitBadge.textContent = `${count}/8 posts hoy (Zona Segura)`;
+        if (count >= 8) {
+          limitBadge.className = 'opt-val';
+          limitBadge.style.color = 'var(--red)';
+        } else {
+          limitBadge.className = 'opt-val tag-green';
+        }
+      }
+    }
+  } catch (e) {}
+}
+
 // 7. Spintax Tester y Previsualización
 function initSpintaxEvents() {
   const textarea = document.getElementById('postSpintax');
@@ -486,13 +536,16 @@ async function startCampaign() {
     setCampaignUI(true);
     appendTerminalLog('step', `[INICIO] Lanzando campaña para ${selectedIds.length} grupos...`);
 
+    const delayMode = document.getElementById('delayModeSelect') ? document.getElementById('delayModeSelect').value : 'safe';
+
     const res = await fetch('/api/campaign/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         spintaxText,
         imagePath: state.attachedImagePath,
-        selectedGroupIds: selectedIds
+        selectedGroupIds: selectedIds,
+        delayMode
       })
     });
 

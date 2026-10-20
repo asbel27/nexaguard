@@ -16,6 +16,8 @@ const { TEMPLATES } = require('./engine/templates');
 const { postToFacebookGroup } = require('./engine/facebook-poster');
 const { postToInstagram } = require('./engine/instagram-poster');
 const { detectUserFacebookGroups } = require('./engine/group-detector');
+const { COPYWRITING_FRAMEWORKS, generatePersuasiveCopy } = require('./engine/ai-copywriter');
+const { isWithinOptimalHours, getSmartInterval, assessComplianceRisk, OPTIMAL_HOURS } = require('./engine/scheduler');
 
 const PORT = process.env.PORT || 4242;
 const app = express();
@@ -218,6 +220,37 @@ app.get('/api/templates', (req, res) => {
   res.json({ ok: true, templates: TEMPLATES });
 });
 
+// 4.1 Copywriting Persuasivo con IA & Frameworks
+app.get('/api/copywriting/frameworks', (req, res) => {
+  res.json({ ok: true, frameworks: COPYWRITING_FRAMEWORKS });
+});
+
+app.post('/api/copywriting/generate', (req, res) => {
+  const { frameworkId } = req.body;
+  const result = generatePersuasiveCopy(frameworkId);
+  res.json({ ok: true, ...result });
+});
+
+// 4.2 Evaluación de Cumplimiento de Políticas de Meta
+app.get('/api/compliance/status', (req, res) => {
+  const history = readJson('history.json', []);
+  const today = new Date().toISOString().slice(0, 10);
+  const postsToday = history.filter(h => (h.timestamp || '').slice(0, 10) === today && h.ok).length;
+
+  const assessment = assessComplianceRisk({
+    totalGroups: 0,
+    delayMode: 'safe',
+    dailyCount: postsToday
+  });
+
+  res.json({
+    ok: true,
+    postsToday,
+    optimalHours: OPTIMAL_HOURS,
+    ...assessment
+  });
+});
+
 app.post('/api/spintax/preview', (req, res) => {
   const { text } = req.body;
   const sample = parseSpintax(text || '');
@@ -247,7 +280,7 @@ app.post('/api/campaign/start', async (req, res) => {
     return res.status(400).json({ ok: false, error: 'Ya existe una campaña de auto-publicación en progreso.' });
   }
 
-  const { spintaxText, imagePath, selectedGroupIds } = req.body;
+  const { spintaxText, imagePath, selectedGroupIds, delayMode = 'safe' } = req.body;
   if (!spintaxText || !spintaxText.trim()) {
     return res.status(400).json({ ok: false, error: 'El texto del post no puede estar vacío.' });
   }
@@ -343,13 +376,24 @@ app.post('/api/campaign/start', async (req, res) => {
 
       // Intervalo de espera anti-ban entre grupos (si no es el último)
       if (i < targetGroups.length - 1 && !activeCampaign.shouldStop) {
-        const minS = Math.max(15, settings.minDelaySeconds || 45);
-        const maxS = Math.max(minS + 10, settings.maxDelaySeconds || 120);
-        const delaySec = Math.floor(Math.random() * (maxS - minS + 1)) + minS;
+        let delaySec = 45;
+        if (delayMode === 'safe') {
+          // 15 a 30 minutos (recomendado por Meta para 0 baneos)
+          delaySec = Math.floor(Math.random() * (1800 - 900 + 1)) + 900;
+        } else if (delayMode === 'moderate') {
+          // 4 a 8 minutos
+          delaySec = Math.floor(Math.random() * (480 - 240 + 1)) + 240;
+        } else {
+          // Instantáneo / Pruebas (45 a 120 segundos)
+          const minS = Math.max(15, settings.minDelaySeconds || 45);
+          const maxS = Math.max(minS + 10, settings.maxDelaySeconds || 120);
+          delaySec = Math.floor(Math.random() * (maxS - minS + 1)) + minS;
+        }
 
+        const mins = (delaySec / 60).toFixed(1);
         broadcastLog({
           type: 'delay',
-          msg: `⏳ Pausa de seguridad anti-ban: esperando ${delaySec} segundos antes del siguiente grupo...`,
+          msg: `⏳ Pausa de seguridad anti-ban [Modo: ${delayMode.toUpperCase()}]: esperando ${delaySec}s (~${mins} min) antes del siguiente grupo...`,
           delay: delaySec
         });
 
