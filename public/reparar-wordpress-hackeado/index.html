@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cómo Reparar y Desinfectar un WordPress Hackeado (Guía Forense 2026) | NexaGuard</title>
-<meta name="description" content="Protocolo técnico para limpiar malware, erradicar webshells, eliminar redirecciones maliciosas y retirar la pantalla roja de Google en WordPress.">
+<meta name="description" content="Protocolo técnico forense para limpiar malware, erradicar webshells, eliminar redirecciones maliciosas y retirar la pantalla roja de advertencia en Google.">
 <meta name="keywords" content="reparar wordpress hackeado, desinfectar wordpress, limpiar malware wordpress, eliminar virus wordpress, quitar alerta google sitio engañoso, backdoor wordpress, webshell wordpress, desinfeccion wordpress">
-<meta name="author" content="NexaGuard Security Team">
+<meta name="author" content="NexaGuard Security Forensics">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="canonical" href="https://www.nexaguards.com/reparar-wordpress-hackeado/">
 <meta name="theme-color" content="#070c22">
@@ -21,7 +21,7 @@
 <meta property="og:locale" content="es_ES">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Cómo Reparar y Desinfectar un WordPress Hackeado (Guía Forense 2026)">
-<meta property="og:description" content="Protocolo técnico paso a paso para erradicar malware, recuperar tu tráfico y retirar advertencias de Google de forma definitiva.">
+<meta property="og:description" content="Protocolo técnico para erradicar malware, recuperar tu tráfico legítimo y retirar advertencias de Google de forma definitiva.">
 <meta property="og:url" content="https://www.nexaguards.com/reparar-wordpress-hackeado/">
 <meta property="og:site_name" content="NexaGuard Security">
 <meta property="og:image" content="https://www.nexaguards.com/brand/og-image.png">
@@ -39,7 +39,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
-<!-- Estilos 100% Clonados de NexaGuard -->
+<!-- Motor de Estilos NexaGuard -->
 <link rel="stylesheet" href="../brand/nexaguard-engine.css">
 
 <!-- Schema.org HowTo / TechArticle -->
@@ -55,7 +55,7 @@
       "step": [
         {
           "@type": "HowToStep",
-          "name": "Paso 1: Aislamiento perimetral y respaldo forense",
+          "name": "Paso 1: Aislamiento perimetral y respaldo forense inmutable",
           "text": "Bloquea peticiones no autenticadas en el servidor y toma un volcado completo de la base de datos MySQL y la carpeta wp-content."
         },
         {
@@ -98,11 +98,11 @@
 </head>
 <body class="js">
 
-<!-- Canvas 3D de Tres Dimensiones con el Holograma Oficial y Capa de Ruido -->
+<!-- Canvas 3D Oficial y Capa de Ruido Subyacente -->
 <canvas id="gl" aria-hidden="true"></canvas>
 <div class="noise" aria-hidden="true"></div>
 
-<!-- Cabecera Oficial Idéntica a NexaGuard -->
+<!-- Cabecera Oficial Idéntica a NexaGuard con Estado y Menú Móvil -->
 <header class="nav" id="nav">
   <a class="logo" href="../index.html" aria-label="NexaGuard, ir al inicio">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64" aria-hidden="true">
@@ -138,167 +138,414 @@
     <a href="../index.html#planes">Planes</a>
     <a href="../japanese-keyword-hack/index.html">Guía Japanese Hack</a>
   </nav>
-  <div class="nav-cta">
-    <a class="btn btn-o" href="../index.html#escaner">Escáner Gratis</a>
-    <a class="btn btn-y" href="../index.html#planes">Ver Planes</a>
+  <div class="nav-r">
+    <div class="health" aria-label="Estado del sistema">
+      <div class="hbar"><i style="width:12%"></i></div>
+      <b>12%</b>
+      <em style="color:var(--red)">COMPROMETIDO</em>
+    </div>
+    <a class="btn btn-o sm" href="../index.html#escaner">Escáner</a>
+    <a class="btn btn-y sm" href="../index.html#planes">Ver Planes</a>
+    <button class="nav-burger" id="navBurger" aria-label="Abrir menú" aria-expanded="false">
+      <svg class="ic-burger" viewBox="0 0 24 24"><line class="b-top" x1="4" y1="6" x2="20" y2="6"/><line class="b-mid" x1="4" y1="12" x2="20" y2="12"/><line class="b-bot" x1="4" y1="18" x2="20" y2="18"/></svg>
+    </button>
   </div>
 </header>
 
-<!-- Hero con el Efecto Glitch y Terminal Idéntico de NexaGuard -->
-<section class="hero" id="inicio" style="min-height:85vh;padding-top:120px">
-  <div class="wrap" style="position:relative;z-index:2">
-    <div class="hero-copy" style="max-width:720px">
-      <span class="pill"><i></i>Atendemos emergencias de hackeo 24/7</span>
-      <h1>¿Tu WordPress fue <span class="glitch" data-text="hackeado">hackeado</span>? Lo dejamos limpio hoy.</h1>
+<!-- Menú Desplegable Móvil -->
+<div class="nav-drawer" id="navDrawer" aria-hidden="true">
+  <div class="drawer-links">
+    <a href="../index.html" class="d-link"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Inicio</a>
+    <a href="../index.html#sintomas" class="d-link"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Síntomas Comunes</a>
+    <a href="../index.html#escaner" class="d-link"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Escáner de Malware</a>
+    <a href="../index.html#planes" class="d-link"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Planes de Seguridad</a>
+    <a href="../japanese-keyword-hack/index.html" class="d-link"><svg class="ic" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Guía Japanese Hack</a>
+  </div>
+  <div class="drawer-foot">
+    <a href="../index.html#planes" class="btn btn-y d-btn">Contratar Rescate ($89 USD)</a>
+    <a href="../downloads/nexaguard-malware-scanner.zip" class="btn btn-o d-btn">Descargar Plugin Gratis</a>
+  </div>
+</div>
+
+<!-- Hero Editorial Asimétrico -->
+<section class="hero-editorial" id="inicio">
+  <div class="hero-editorial-inner">
+    <div>
+      <span class="pill"><i></i>Intervención Forense de Emergencia 24/7</span>
+      <h1 style="font-size:clamp(2.1rem, 4vw, 3.5rem); margin: 20px 0 14px; line-height: 1.15;">
+        Cómo Reparar y Desinfectar un WordPress <span class="glitch" data-text="Hackeado">Hackeado</span>
+      </h1>
       <p class="lead">
-        Eliminamos malware oculto y backdoors, reparamos errores críticos de base de datos y cerramos la brecha para que jamás vuelva a entrar. Sin perder tus productos de WooCommerce ni tu posicionamiento en Google.
+        Protocolo técnico para limpiar malware oculto, erradicar webshells ofuscadas y eliminar la pantalla roja de advertencia en Google sin perder pedidos de WooCommerce ni la estructura SEO de tu negocio.
       </p>
 
       <!-- Barra de Escáner Rápido en Vivo -->
-      <div style="background:rgba(17,28,70,0.65);border:1px solid var(--line2);border-radius:16px;padding:20px;margin:28px 0;backdrop-filter:blur(10px)">
-        <div style="font-size:0.92rem;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-          <span style="color:var(--yellow)">⚡</span> Analizar Sitio en Tiempo Real con NexaGuard Scanner:
+      <div class="quick-scan-card">
+        <div class="quick-scan-label">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Auditoría Inmediata con NexaGuard Cloud Scanner:
         </div>
-        <form onsubmit="event.preventDefault(); launchScan();" style="display:flex;gap:10px;flex-wrap:wrap">
-          <input type="text" id="landingUrlInput" class="in" style="flex:1;min-width:240px;background:rgba(5,9,26,0.9);border:1px solid var(--line2);color:#fff;padding:12px 16px;border-radius:10px;font-family:var(--fm);font-size:0.92rem" placeholder="https://tusitio.com" required>
-          <button type="submit" class="btn btn-y">Escanear Ahora</button>
+        <form class="quick-scan-form" onsubmit="event.preventDefault(); launchScan();">
+          <div class="quick-scan-input-box">
+            <span class="quick-scan-prefix">https://</span>
+            <input type="text" id="landingUrlInput" class="quick-scan-input" placeholder="tudominio.com" required autocomplete="off" spellcheck="false">
+          </div>
+          <button type="submit" class="btn btn-y">
+            <span>Escanear Ahora</span>
+            <svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </form>
       </div>
 
       <div class="cta-row">
-        <a class="btn btn-red" href="../index.html#planes">🚨 Solicitar Rescate Forense ($89 USD)</a>
-        <a class="btn btn-o" href="../downloads/nexaguard-malware-scanner.zip">Descargar Plugin Gratis</a>
+        <a class="btn btn-y" href="../index.html#planes">
+          <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Contratar Rescate Forense ($89 USD)</span>
+        </a>
+        <a class="btn btn-o" href="../downloads/nexaguard-malware-scanner.zip">
+          <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Descargar Plugin Oficial</span>
+        </a>
       </div>
 
-      <ul class="ticks" style="margin-top:20px">
-        <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;color:var(--green)"><polyline points="20 6 9 17 4 12"/></svg> Intervención prioritaria en menos de 2 horas</li>
-        <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;color:var(--green)"><polyline points="20 6 9 17 4 12"/></svg> Limpieza de base de datos y archivos infectados</li>
-        <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;color:var(--green)"><polyline points="20 6 9 17 4 12"/></svg> 30 días de garantía total sin reinfección</li>
+      <ul class="ticks" style="margin-top:24px">
+        <li>
+          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Respuesta y diagnóstico inicial en menos de 45 minutos
+        </li>
+        <li>
+          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Limpieza completa de archivos PHP y registros en base de datos
+        </li>
+        <li>
+          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          30 días de garantía total sin riesgo de reinfección
+        </li>
       </ul>
     </div>
 
-    <!-- Terminal Oficial de NexaGuard animado -->
-    <div class="term" style="position:absolute;right:0;top:10px">
-      <div class="term-bar">
-        <i></i><i></i><i></i>
-        <span>nexaguard-sentinel · forense</span>
+    <!-- HUD / Terminal Forense en Vivo -->
+    <div class="hero-hud-card">
+      <div class="hero-hud-topbar">
+        <div class="hero-hud-dots"><span></span><span></span><span></span></div>
+        <div class="hero-hud-title">
+          <svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px;color:var(--yellow)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          nexaguard-forensics · daemon
+        </div>
+        <span class="hero-hud-badge">V1.5.7 LIVE</span>
       </div>
-      <div class="term-body" id="heroTermBody">
-        <div class="tl c">> NexaGuard Forensic Engine v1.5.7 activo</div>
-        <div class="tl i">> Verificando integridad SHA-256 de archivos del núcleo...</div>
-        <div class="tl e">> [CRÍTICO] Inyección encontrada en /wp-content/uploads/cache.php</div>
-        <div class="tl w">> [ALERTA] Redirección no autorizada detectada en .htaccess</div>
-        <div class="tl o">> [SENTINEL] Aislamiento en cuarentena segura completado</div>
-        <div class="tl y">> Escudo WAF perimetral desplegado. Sitio blindado 100%</div>
+      <div class="term-body" id="heroTermBody" style="height:260px">
+        <div class="tl c">> NexaGuard Forensic Engine v1.5.7 inicializado</div>
+        <div class="tl i">> Inspeccionando hashes criptográficos SHA-256 contra WordPress.org</div>
+        <div class="tl e">> [CRÍTICO] Inyección eval(base64) hallada en /wp-content/uploads/cache.php</div>
+        <div class="tl w">> [ALERTA] Redirección condicional no autorizada en .htaccess</div>
+        <div class="tl o">> [SENTINEL] Cuarentena automática aplicada. Archivo aislado</div>
+        <div class="tl y">> Escudo WAF perimetral desplegado. Verificación de integridad completada</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Contenedor de la Guía Forense Técnica -->
-<main class="guide-container">
+<!-- Cobertor Curvo con Textura y Sombra Profunda -->
+<div class="cover">
+  <div class="wrap">
 
-  <!-- Artículo 1: Síntomas y Detección -->
-  <article class="guide-article">
-    <span class="pill"><i></i>Evaluación de Amenazas</span>
-    <h2>1. Síntomas comunes de una infección en WordPress</h2>
-    <p>
-      Un hackeo en WordPress rara vez destruye tu web por completo: a los ciberdelincuentes les interesa mantenerla funcionando en silencio para robarte el tráfico de compradores, enviar spam masivo o utilizar los recursos de tu servidor.
-    </p>
-
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:24px 0">
-      <div class="pnl" style="padding:22px">
-        <h4 style="color:var(--red);font-size:1.1rem;margin-bottom:8px">🔀 Redirecciones Maliciosas</h4>
-        <p style="color:#b3c3e8;font-size:0.92rem;line-height:1.5">Tus visitantes desde móviles o Google son desviados hacia páginas fraudulentas de criptomonedas o estafas (ClearFake).</p>
-      </div>
-      <div class="pnl" style="padding:22px">
-        <h4 style="color:var(--red);font-size:1.1rem;margin-bottom:8px">🛑 Pantalla Roja de Google</h4>
-        <p style="color:#b3c3e8;font-size:0.92rem;line-height:1.5">Google Chrome y Firefox despliegan la advertencia "El sitio al que vas a acceder es engañoso" bloqueando a tus clientes.</p>
-      </div>
-      <div class="pnl" style="padding:22px">
-        <h4 style="color:var(--yellow);font-size:1.1rem;margin-bottom:8px">🇯🇵 SEO Spam / Japanese Hack</h4>
-        <p style="color:#b3c3e8;font-size:0.92rem;line-height:1.5">Miles de páginas en caracteres japoneses o réplicas de marcas aparecen indexadas en los resultados de Google.</p>
-      </div>
-      <div class="pnl" style="padding:22px">
-        <h4 style="color:var(--yellow);font-size:1.1rem;margin-bottom:8px">👤 Administradores Fantasma</h4>
-        <p style="color:#b3c3e8;font-size:0.92rem;line-height:1.5">Se crean usuarios administradores en la base de datos que nadie de tu equipo autorizó.</p>
-      </div>
-    </div>
-  </article>
-
-  <!-- Artículo 2: Protocolo Quirúrgico en 4 Pasos -->
-  <article class="guide-article">
-    <span class="pill"><i></i>Procedimiento Certificado</span>
-    <h2>2. Protocolo de Desinfección Forense en 4 Pasos</h2>
-    <p>Sigue estas etapas técnicas paso a paso para restaurar tu web sin poner en riesgo tus bases de datos ni tu contenido:</p>
-
-    <div class="step-grid">
-      <div class="step-card">
-        <div class="step-num-pill">01</div>
-        <h3>Aislar el Sitio y Tomar una Copia Forense Inmutable</h3>
-        <p>Antes de borrar o tocar ningún archivo, es imprescindible generar una instantánea completa de tu instalación:</p>
-        <ul>
-          <li>Descarga vía FTP o SSH la carpeta <span class="code-box">/wp-content/</span> y el archivo <span class="code-box">wp-config.php</span>.</li>
-          <li>Exporta un volcado completo de la base de datos MySQL con <span class="code-box">mysqldump</span> o desde phpMyAdmin.</li>
-          <li>Coloca temporalmente el sitio en modo mantenimiento o restringe peticiones en <span class="code-box">.htaccess</span> únicamente a tu IP.</li>
-        </ul>
+    <!-- Sección 1: Señales y Amenazas -->
+    <section>
+      <div class="sec-h">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(255,69,96,0.12);border:1px solid rgba(255,69,96,0.3);color:#ff8ba0;font-size:0.78rem;font-weight:700;margin-bottom:12px">
+          <svg class="ic" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          DIAGNÓSTICO DE INFECCIÓN
+        </div>
+        <h2>Señales críticas de que tu servidor fue vulnerado</h2>
+        <p class="lead">
+          Los atacantes modernos no destruyen tu web: la mantienen operando en silencio para aprovechar la reputación de tu dominio ante buscadores y visitantes.
+        </p>
       </div>
 
-      <div class="step-card">
-        <div class="step-num-pill">02</div>
-        <h3>Auditoría Criptográfica con Core Sentinel & Hashes SHA-256</h3>
-        <p>Los atacantes suelen esconder código malicioso en archivos legítimos de WordPress (<span class="code-box">wp-load.php</span>, <span class="code-box">index.php</span>, <span class="code-box">wp-blog-header.php</span>):</p>
-        <ul>
-          <li>NexaGuard Core Sentinel contrasta cada archivo del núcleo con los checksums oficiales de WordPress.org.</li>
-          <li>Reemplaza de forma segura las carpetas completas <span class="code-box">/wp-admin/</span> y <span class="code-box">/wp-includes/</span> descargando una copia limpia oficial de WordPress.</li>
-        </ul>
+      <div class="threat-grid">
+        <div class="threat-card danger">
+          <div class="threat-card-icon">
+            <svg class="ic" viewBox="0 0 24 24"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+          </div>
+          <h3>Redirecciones Maliciosas</h3>
+          <p>
+            Al entrar desde teléfonos móviles o enlaces en redes sociales, tus usuarios son desviados hacia páginas de estafas, casinos o malware sin que tú lo notes en tu ordenador.
+          </p>
+        </div>
+
+        <div class="threat-card danger">
+          <div class="threat-card-icon">
+            <svg class="ic" viewBox="0 0 24 24"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <h3>Pantalla Roja de Google</h3>
+          <p>
+            Chrome y Firefox muestran el bloqueo: <em>"El sitio al que vas a acceder es engañoso"</em>. El tráfico cae a cero y tus clientes desconfían al instante de tu marca.
+          </p>
+        </div>
+
+        <div class="threat-card">
+          <div class="threat-card-icon">
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </div>
+          <h3>Inyección de Spam SEO</h3>
+          <p>
+            Miles de URLs fantasma en japonés o caracteres chinos sobre réplicas ilegales aparecen indexadas en Google, canibalizando la autoridad de tus palabras clave.
+          </p>
+        </div>
+
+        <div class="threat-card">
+          <div class="threat-card-icon">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="17" y1="8" x2="23" y2="8"/></svg>
+          </div>
+          <h3>Administradores Fantasma</h3>
+          <p>
+            Usuarios no autorizados creados silenciosamente en la base de datos y scripts de puerta trasera (<span class="code-box">webshells</span>) que permiten reinstalar el virus.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección 2: Visualizador Antes / Después Interactivo -->
+    <section style="margin: 70px 0;">
+      <div class="sec-h">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(255,207,51,0.12);border:1px solid rgba(255,207,51,0.3);color:var(--yellow);font-size:0.78rem;font-weight:700;margin-bottom:12px">
+          <svg class="ic" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><polygon points="12 8 8 12 12 16 12 8"/></svg>
+          CONTROL DESLIZANTE INTERACTIVO
+        </div>
+        <h2>Inspección Forense: Sitio Infectado vs. Sitio Desinfectado</h2>
+        <p class="lead">Arrastra el controlador central para comparar la experiencia del usuario entre una instalación vulnerada y una protegida por NexaGuard.</p>
       </div>
 
-      <div class="step-card">
-        <div class="step-num-pill">03</div>
-        <h3>Erradicación de Webshells en Uploads y Limpieza de Base de Datos</h3>
-        <p>La carpeta <span class="code-box">/wp-content/uploads/</span> solo debe contener archivos multimedia (imágenes, PDFs). Bajo ninguna circunstancia debe existir un script <span class="code-box">.php</span> en este directorio:</p>
-        <ul>
-          <li>Localiza scripts PHP ocultos con nombres aleatorios o simulados (<span class="code-box">cache.php</span>, <span class="code-box">wso.php</span>).</li>
-          <li>Rastrea funciones ofuscadas de ejecución remota: <span class="code-box">eval(base64_decode(...))</span>, <span class="code-box">gzinflate</span> y <span class="code-box">str_rot13</span>.</li>
-          <li>Inspecciona en la base de datos la tabla <span class="code-box">wp_options</span> purgando inyecciones en transients y scripts maliciosos.</li>
-        </ul>
+      <div class="cmp" id="cmp" style="--pos:50%">
+        <!-- Sitio Limpio (Derecha / Base) -->
+        <div class="pane clean" aria-hidden="true">
+          <div class="chrome"><b class="lk ok">Conexión Segura</b><span class="url">https://tuempresa.com</span></div>
+          <div class="site">
+            <div class="s-top"><span>Soporte Técnico 24/7</span><span>Certificado SSL Activo</span><span>contacto@tuempresa.com</span></div>
+            <div class="s-nav">
+              <div class="s-logo"><svg viewBox="0 0 32 32"><path d="M5 27C5 12 14 4 28 4c0 14-8 23-21 23z" fill="#2f9e5b"/><path d="M8 25c5-8 10-12 16-16" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Tu Tienda Oficial</div>
+              <nav><span class="on">Catálogo</span><span>Novedades</span><span>Nosotros</span><span>Garantía</span></nav>
+              <span class="s-cta">Comprar con Seguridad</span>
+            </div>
+            <div class="s-hero">
+              <div>
+                <span class="s-badge">Verificado por NexaGuard WAF</span>
+                <h4>Tus compras online protegidas y seguras</h4>
+                <p>Navegación cifrada de alta velocidad. Servidor auditado contra inyecciones SQL y backdoors PHP.</p>
+                <div class="s-btns"><span class="s-cta">Explorar Tienda</span><span class="s-ghost">Ver Certificado</span></div>
+                <div class="s-rate"><i>★★★★★</i> 4.9 de 5 — Más de 1,200 transacciones protegidas</div>
+              </div>
+              <div class="s-art">
+                <svg viewBox="0 0 600 440" preserveAspectRatio="xMidYMid slice" role="img">
+                  <defs>
+                    <linearGradient id="gSafe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#15284f"/><stop offset="1" stop-color="#0b1632"/></linearGradient>
+                  </defs>
+                  <rect width="600" height="440" fill="url(#gSafe)"/>
+                  <circle cx="300" cy="220" r="120" fill="rgba(61,232,164,0.12)" stroke="rgba(61,232,164,0.4)" stroke-width="3"/>
+                  <path d="M260 220l30 30 60-60" fill="none" stroke="#3de8a4" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sitio Hackeado (Izquierda / Recortado) -->
+        <div class="pane hacked">
+          <div class="chrome"><b class="lk bad">No Seguro / Bloqueado</b><span class="url">https://tuempresa.com/?r=redirect_spam</span></div>
+          <div class="hk">
+            <div class="hk-warn">ALERTA DE SEGURIDAD DE GOOGLE: SITIO WEB ENGAÑOSO</div>
+            <div class="hk-t">¡ADVERTENCIA CRÍTICA!</div>
+            <p>Los atacantes en tuempresa.com pueden intentar engañarte para que instales programas maliciosos o reveles información privada (contraseñas o tarjetas de crédito).</p>
+            <div class="hk-ads">
+              <span>CASINO BONUS $5000</span>
+              <span>COMPRA RÉPLICAS 90% OFF</span>
+              <span>ACTUALIZAR NAVEGADOR URGENTE</span>
+            </div>
+            <div class="hk-bars"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+
+        <span class="lbl b">WordPress Hackeado</span>
+        <span class="lbl a">Limpio y Blindado</span>
+        <div class="hdl" id="hdl" tabindex="0" role="slider" aria-label="Comparar antes y después" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+          <b><svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px"><polyline points="15 18 9 12 15 6"/></svg></b>
+        </div>
+      </div>
+      <p class="cmp-hint">Arrastra la barra divisoria o utiliza las flechas del teclado para explorar la comparativa.</p>
+
+      <div class="stats" style="margin-top: 40px">
+        <div class="stat"><b style="color:var(--yellow)">+1,200</b><span>sitios restaurados</span></div>
+        <div class="stat"><b style="color:var(--green)">45 min</b><span>diagnóstico forense</span></div>
+        <div class="stat"><b style="color:var(--text)">99.8%</b><span>tasa de efectividad</span></div>
+        <div class="stat"><b style="color:var(--yellow)">30 días</b><span>garantía total</span></div>
+      </div>
+    </section>
+
+    <!-- Sección 3: Protocolo Técnico Forense en 4 Pasos -->
+    <section style="margin: 80px 0;">
+      <div class="sec-h">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(107,140,255,0.12);border:1px solid rgba(107,140,255,0.3);color:#8ca6ff;font-size:0.78rem;font-weight:700;margin-bottom:12px">
+          <svg class="ic" style="width:14px;height:14px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          METODOLOGÍA DE DESINFECCIÓN
+        </div>
+        <h2>Protocolo Forense Certificado en 4 Fases</h2>
+        <p class="lead">Un procedimiento estructurado para desinfectar la instalación sin comprometer tus ventas de WooCommerce ni tu contenido histórico.</p>
       </div>
 
-      <div class="step-card">
-        <div class="step-num-pill">04</div>
-        <h3>Rotar Claves Maestras, Blindar con WAF y Retirar Alertas de Google</h3>
-        <p>Cierra todas las brechas para impedir que el atacante vuelva a entrar:</p>
-        <ul>
-          <li>Regenera las 8 claves secretas (SALT) en tu <span class="code-box">wp-config.php</span> para cerrar todas las sesiones activas de usuarios e intrusos.</li>
-          <li>Cambia todas las contraseñas de administradores, MySQL, FTP y hosting (cPanel).</li>
-          <li>Activa las reglas perimetrales del Firewall WAF de NexaGuard para bloquear nuevas inyecciones.</li>
-          <li>Presenta la solicitud formal en Google Search Console para retirar la pantalla roja de advertencia en 24 a 48 horas.</li>
-        </ul>
-      </div>
-    </div>
-  </article>
+      <div class="forensic-timeline">
+        <div class="forensic-step">
+          <div class="forensic-step-num">01</div>
+          <div class="forensic-step-body">
+            <h3>Aislamiento Perimetral y Respaldo Forense Inmutable</h3>
+            <p>Antes de alterar cualquier archivo, se debe preservar la evidencia y prevenir que el malware propague cargas maliciosas:</p>
+            <ul>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Bloqueo temporal en <span class="code-box">.htaccess</span> restringiendo el acceso exclusivamente a la IP del analista forense.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Exportación de un volcado completo de la base de datos MySQL (<span class="code-box">mysqldump</span>) sin modificar marcas de tiempo.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Congelamiento de archivos de medios en <span class="code-box">/wp-content/uploads/</span> para auditoría estática.</li>
+            </ul>
+          </div>
+        </div>
 
-  <!-- Banner de Rescate Forense (CRO) -->
-  <div class="landing-cta-banner">
-    <h2>¿Prefieres que un ingeniero forense limpie y blinde tu web hoy mismo?</h2>
-    <p>
-      En NexaGuard eliminamos el 100% del malware, recuperamos tu sitio sin perder tus pedidos de WooCommerce y te damos 30 días de garantía total sin reinfección.
-    </p>
-    <div class="cta-row" style="margin-bottom:12px">
-      <a href="../index.html#planes" class="btn btn-y" style="font-size:1.05rem;padding:15px 32px">🚨 Contratar Rescate Forense ($89 USD)</a>
-      <a href="../index.html#planes" class="btn btn-o">Ver Planes de Blindaje Anual</a>
-    </div>
-    <div style="font-size:0.86rem;color:#a8b9e4">🛡️ Garantía de devolución del 100% si no podemos limpiar tu sitio.</div>
+        <div class="forensic-step">
+          <div class="forensic-step-num">02</div>
+          <div class="forensic-step-body">
+            <h3>Auditoría Criptográfica con Core Sentinel & Hashes SHA-256</h3>
+            <p>Los ciberdelincuentes ocultan código malicioso en archivos legítimos del núcleo como <span class="code-box">wp-load.php</span> o <span class="code-box">index.php</span>:</p>
+            <ul>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Comparación archivo por archivo contra los checksums oficiales del repositorio de WordPress.org.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Reemplazo completo e higiénico de los directorios <span class="code-box">/wp-admin/</span> y <span class="code-box">/wp-includes/</span> por copias verificadas.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Detección de binarios desconocidos y desobfuscación de funciones <span class="code-box">eval()</span> y <span class="code-box">gzinflate()</span>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="forensic-step">
+          <div class="forensic-step-num">03</div>
+          <div class="forensic-step-body">
+            <h3>Erradicación de Webshells en Uploads y Limpieza de Base de Datos</h3>
+            <p>La carpeta de medios nunca debe ejecutar código ejecutable en el servidor:</p>
+            <ul>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Eliminación de scripts camuflados como imágenes (<span class="code-box">logo.png.php</span>, <span class="code-box">cache.php</span>, <span class="code-box">wso.php</span>).</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Purgado de inyecciones JavaScript en registros de la tabla <span class="code-box">wp_options</span> y transients corruptos.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Desinfección de ganchos (<span class="code-box">hooks</span>) persistentes inyectados en temas y plugins activos.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="forensic-step">
+          <div class="forensic-step-num">04</div>
+          <div class="forensic-step-body">
+            <h3>Rotación de Claves SALT, Blindaje WAF y Deslistado en Google</h3>
+            <p>Sellado definitivo de vulnerabilidades para impedir reinfecciones recurrentes:</p>
+            <ul>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Regeneración de las 8 claves secretas criptográficas en <span class="code-box">wp-config.php</span> para cerrar sesiones ilegítimas.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Despliegue de reglas de Firewall de Aplicaciones Web (WAF) para bloquear ataques de fuerza bruta y payloads maliciosos.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Tramitación formal del informe de desinfección en Google Search Console para retirar la pantalla roja en 24-48 horas.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección 4: Banner de Conversión Premium (CRO) -->
+    <section class="rescue-banner-box">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(255,207,51,0.12);border:1px solid rgba(255,207,51,0.3);color:var(--yellow);font-size:0.78rem;font-weight:700;margin-bottom:14px">
+          <svg class="ic" style="width:14px;height:14px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          SERVICIO FORENSE URGENTE
+        </div>
+        <h2 style="font-size:clamp(1.9rem, 3.2vw, 2.6rem); color:#fff; line-height:1.2; margin-bottom:16px;">
+          ¿Prefieres que un analista de NexaGuard limpie tu sitio hoy mismo?
+        </h2>
+        <p style="color:#c9d6f8; font-size:1.05rem; line-height:1.65; max-width:620px; margin-bottom:28px;">
+          Erradicamos el 100% de la infección, restauramos el acceso a tu panel de administración, retiramos la pantalla roja de Google y te otorgamos 30 días de garantía total.
+        </p>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <a href="../index.html#planes" class="btn btn-y" style="padding:14px 28px;font-size:1.02rem">
+            <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>Contratar Rescate Forense ($89 USD)</span>
+          </a>
+          <a href="../index.html#planes" class="btn btn-o">
+            <span>Ver Planes Anuales</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="rb-pricing-card">
+        <span class="rb-price-badge">Tarifa Única</span>
+        <div class="rb-amount">$89 <small>USD</small></div>
+        <p class="rb-price-sub">Sin suscripciones forzadas. Si tras el análisis forense no logramos desinfectar tu WordPress, te devolvemos el 100% de tu dinero.</p>
+        <a href="../index.html#planes" class="btn btn-y" style="width:100%">
+          <span>Solicitar Limpieza Ahora</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Sección 5: Preguntas Frecuentes Forenses (FAQ) -->
+    <section class="faq" style="margin: 80px 0 40px;">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(255,207,51,0.12);border:1px solid rgba(255,207,51,0.3);color:var(--yellow);font-size:0.78rem;font-weight:700;margin-bottom:12px">
+          <svg class="ic" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          RESOLUCIÓN DE DUDAS
+        </div>
+        <h2>Preguntas Frecuentes</h2>
+        <p class="lead">Respuestas claras sobre los tiempos de respuesta, conservación de datos y garantías de desinfección.</p>
+      </div>
+
+      <div>
+        <details>
+          <summary>
+            <span>¿Puedo perder mis pedidos de WooCommerce o entradas del blog?</span>
+            <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </summary>
+          <p>
+            No. El protocolo forense actúa de manera quirúrgica: antes de limpiar cualquier archivo se genera una instantánea inmutable. Desinfectamos el código PHP infectado y los registros parásitos en la base de datos sin alterar tu inventario, clientes, pedidos ni entradas existentes.
+          </p>
+        </details>
+
+        <details>
+          <summary>
+            <span>¿Cuánto tiempo tarda Google en retirar la pantalla roja de advertencia?</span>
+            <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </summary>
+          <p>
+            Una vez erradicado el malware y desplegado el WAF, redactamos y enviamos la solicitud formal de reconsideración en Google Search Console. En promedio, los rastreadores de Google validan la limpieza en un plazo de 12 a 48 horas, eliminando la pantalla roja de todos los navegadores.
+          </p>
+        </details>
+
+        <details>
+          <summary>
+            <span>¿Por qué el antivirus de mi hosting no pudo eliminar el problema?</span>
+            <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </summary>
+          <p>
+            Los escáneres genéricos de los proveedores de alojamiento solo buscan firmas de malware conocidas. Los ciberdelincuentes modernos utilizan código ofuscado que cambia dinámicamente o se inyecta directamente en tablas MySQL, zonas que los antivirus de hosting no analizan para evitar sobrecargar los servidores compartidos.
+          </p>
+        </details>
+
+        <details>
+          <summary>
+            <span>¿Qué ocurre si el sitio vuelve a infectarse tras la limpieza?</span>
+            <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </summary>
+          <p>
+            Tu servicio cuenta con 30 días de garantía total. Si durante ese período se detecta cualquier anomalía o intento de reinfección, nuestro equipo forense interviene de inmediato sin coste adicional.
+          </p>
+        </details>
+      </div>
+    </section>
+
   </div>
+</div>
 
-</main>
-
-<!-- Pie de Página Idéntico a NexaGuard -->
+<!-- Pie de Página Oficial NexaGuard -->
 <footer class="foot">
-  <span>© 2026 NexaGuard. Servicio de reparación y seguridad forense para sitios WordPress.</span>
+  <span>© 2026 NexaGuard Security. Ciberseguridad forense y erradicación de amenazas web.</span>
   <span style="opacity:0.4">|</span>
   <a href="../index.html" style="color:var(--muted);text-decoration:none">Inicio</a>
+  <span style="opacity:0.4">|</span>
+  <a href="../index.html#escaner" style="color:var(--muted);text-decoration:none">Escáner Web</a>
   <span style="opacity:0.4">|</span>
   <a href="../index.html#planes" style="color:var(--muted);text-decoration:none">Planes y Tarifas</a>
   <span style="opacity:0.4">|</span>
@@ -307,7 +554,7 @@
   <a href="../index.html#contacto" style="color:var(--muted);text-decoration:none">Contacto Urgente</a>
 </footer>
 
-<!-- Scripts: Three.js 3D Holographic Engine Oficial de NexaGuard -->
+<!-- Scripts: Three.js 3D WebGL Holographic Engine Oficial de NexaGuard -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="../brand/nexaguard-3d.js"></script>
 
@@ -315,7 +562,25 @@
 (function() {
   'use strict';
 
-  // Rotación del terminal en el Hero
+  // 1. Menú Móvil Hamburguesa
+  var burger = document.getElementById('navBurger');
+  var drawer = document.getElementById('navDrawer');
+  if (burger && drawer) {
+    burger.addEventListener('click', function() {
+      var isOpen = drawer.classList.toggle('open');
+      burger.classList.toggle('open', isOpen);
+      burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    drawer.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        drawer.classList.remove('open');
+        burger.classList.remove('open');
+        burger.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
+  // 2. Rotación del Terminal en el Hero
   var termBody = document.getElementById('heroTermBody');
   var logs = [
     { cls: 'i', msg: '> Rastreo de inyecciones PHP en wp-content/plugins/...' },
@@ -336,7 +601,44 @@
     if (termBody.children.length > 7) termBody.removeChild(termBody.children[0]);
   }, 3200);
 
-  // Lanzador al escáner de NexaGuard
+  // 3. Control Deslizante Interactivo Antes / Después (.cmp)
+  var cmp = document.getElementById('cmp');
+  var hdl = document.getElementById('hdl');
+  if (cmp && hdl) {
+    var dragging = false;
+    var cmpPos = 50;
+
+    function setPos(p) {
+      cmpPos = Math.max(0, Math.min(100, p));
+      cmp.style.setProperty('--pos', cmpPos + '%');
+      hdl.setAttribute('aria-valuenow', Math.round(cmpPos));
+    }
+
+    function move(e) {
+      var r = cmp.getBoundingClientRect();
+      var clientX = e.clientX;
+      if (e.touches && e.touches[0]) clientX = e.touches[0].clientX;
+      setPos(((clientX - r.left) / r.width) * 100);
+    }
+
+    cmp.addEventListener('pointerdown', function(e) {
+      dragging = true;
+      try { cmp.setPointerCapture(e.pointerId); } catch(x) {}
+      move(e);
+    });
+    cmp.addEventListener('pointermove', function(e) {
+      if (dragging) move(e);
+    });
+    window.addEventListener('pointerup', function() { dragging = false; });
+    window.addEventListener('pointercancel', function() { dragging = false; });
+
+    hdl.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); setPos(cmpPos - 5); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); setPos(cmpPos + 5); }
+    });
+  }
+
+  // 4. Lanzador de Escaneo a la Home
   window.launchScan = function() {
     var input = document.getElementById('landingUrlInput');
     var val = (input ? input.value : '').trim();

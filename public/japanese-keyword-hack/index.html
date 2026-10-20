@@ -39,7 +39,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
-<!-- Estilos 100% Clonados de NexaGuard -->
+<!-- Motor de Estilos NexaGuard -->
 <link rel="stylesheet" href="../brand/nexaguard-engine.css">
 
 <!-- Schema.org HowTo / TechArticle -->
@@ -98,11 +98,11 @@
 </head>
 <body class="js">
 
-<!-- Canvas 3D de Tres Dimensiones con el Holograma Oficial y Capa de Ruido -->
+<!-- Canvas 3D Oficial y Capa de Ruido Subyacente -->
 <canvas id="gl" aria-hidden="true"></canvas>
 <div class="noise" aria-hidden="true"></div>
 
-<!-- Cabecera Oficial Idéntica a NexaGuard -->
+<!-- Cabecera Oficial Idéntica a NexaGuard con Estado y Menú Móvil -->
 <header class="nav" id="nav">
   <a class="logo" href="../index.html" aria-label="NexaGuard, ir al inicio">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64" aria-hidden="true">
@@ -138,179 +138,422 @@
     <a href="../index.html#planes">Planes</a>
     <a href="../reparar-wordpress-hackeado/index.html">Guía Forense</a>
   </nav>
-  <div class="nav-cta">
-    <a class="btn btn-o" href="../index.html#escaner">Escáner Gratis</a>
-    <a class="btn btn-y" href="../index.html#planes">Ver Planes</a>
+  <div class="nav-r">
+    <div class="health" aria-label="Estado del sistema">
+      <div class="hbar"><i style="width:20%;background:var(--amber)"></i></div>
+      <b>20%</b>
+      <em style="color:var(--amber)">SEO COMPROMETIDO</em>
+    </div>
+    <a class="btn btn-o sm" href="../index.html#escaner">Escáner</a>
+    <a class="btn btn-y sm" href="../index.html#planes">Ver Planes</a>
+    <button class="nav-burger" id="navBurger" aria-label="Abrir menú" aria-expanded="false">
+      <svg class="ic-burger" viewBox="0 0 24 24"><line class="b-top" x1="4" y1="6" x2="20" y2="6"/><line class="b-mid" x1="4" y1="12" x2="20" y2="12"/><line class="b-bot" x1="4" y1="18" x2="20" y2="18"/></svg>
+    </button>
   </div>
 </header>
 
-<!-- Hero con el Efecto Glitch y Terminal Idéntico de NexaGuard -->
-<section class="hero" id="inicio" style="min-height:85vh;padding-top:120px">
-  <div class="wrap" style="position:relative;z-index:2">
-    <div class="hero-copy" style="max-width:720px">
-      <span class="pill"><i></i>Detección de Cloaking & Spam SEO en Google</span>
-      <h1>Miles de URLs en <span class="glitch" data-text="japonés">japonés</span> invadieron tu Google. Las erradicamos hoy.</h1>
+<!-- Menú Desplegable Móvil -->
+<div class="nav-drawer" id="navDrawer" aria-hidden="true">
+  <div class="drawer-links">
+    <a href="../index.html" class="d-link"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Inicio</a>
+    <a href="../index.html#sintomas" class="d-link"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Síntomas Comunes</a>
+    <a href="../index.html#escaner" class="d-link"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Escáner de Malware</a>
+    <a href="../index.html#planes" class="d-link"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Planes de Seguridad</a>
+    <a href="../reparar-wordpress-hackeado/index.html" class="d-link"><svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Guía Forense</a>
+  </div>
+  <div class="drawer-foot">
+    <a href="../index.html#planes" class="btn btn-y d-btn">Contratar Rescate ($89 USD)</a>
+    <a href="../downloads/nexaguard-malware-scanner.zip" class="btn btn-o d-btn">Descargar Plugin Gratis</a>
+  </div>
+</div>
+
+<!-- Hero Editorial Asimétrico -->
+<section class="hero-editorial" id="inicio">
+  <div class="hero-editorial-inner">
+    <div>
+      <span class="pill" style="background:rgba(255,176,32,0.12);border-color:rgba(255,176,32,0.4);color:#ffd375">
+        <i style="background:var(--amber)"></i>Detección de Cloaking & Spam SEO en Google
+      </span>
+      <h1 style="font-size:clamp(2.1rem, 4vw, 3.4rem); margin: 20px 0 14px; line-height: 1.15;">
+        Miles de URLs en <span class="glitch" data-text="Japonés">Japonés</span> invadieron tu Google. Las erradicamos hoy.
+      </h1>
       <p class="lead">
-        El atacante utiliza técnicas de cloaking para engañar a Googlebot indexando miles de páginas falsas mientras tú ves tu web aparentemente normal. Recuperamos tu tráfico legítimo y limpiamos tu Search Console.
+        El atacante utiliza técnicas avanzadas de cloaking para engañar a Googlebot: genera al vuelo miles de páginas falsas de réplicas mientras tú ves tu web normal. Recuperamos tu tráfico orgánico y desinfectamos Search Console.
       </p>
 
       <!-- Barra de Escáner Rápido en Vivo -->
-      <div style="background:rgba(17,28,70,0.65);border:1px solid var(--line2);border-radius:16px;padding:20px;margin:28px 0;backdrop-filter:blur(10px)">
-        <div style="font-size:0.92rem;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-          <span style="color:var(--yellow)">⚡</span> Rastreo Forense de Cloaking en Tiempo Real:
+      <div class="quick-scan-card">
+        <div class="quick-scan-label">
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Rastreo Forense de Cloaking & Directivas .htaccess:
         </div>
-        <form onsubmit="event.preventDefault(); launchScan();" style="display:flex;gap:10px;flex-wrap:wrap">
-          <input type="text" id="targetSiteInput" class="in" style="flex:1;min-width:240px;background:rgba(5,9,26,0.9);border:1px solid var(--line2);color:#fff;padding:12px 16px;border-radius:10px;font-family:var(--fm);font-size:0.92rem" placeholder="https://tudominio.com" required>
-          <button type="submit" class="btn btn-y">Escanear Ahora</button>
+        <form class="quick-scan-form" onsubmit="event.preventDefault(); launchScan();">
+          <div class="quick-scan-input-box">
+            <span class="quick-scan-prefix">https://</span>
+            <input type="text" id="targetSiteInput" class="quick-scan-input" placeholder="tudominio.com" required autocomplete="off" spellcheck="false">
+          </div>
+          <button type="submit" class="btn btn-y">
+            <span>Escanear Ahora</span>
+            <svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </form>
       </div>
 
       <div class="cta-row">
-        <a class="btn btn-red" href="../index.html#planes">🚨 Solicitar Rescate Forense ($89 USD)</a>
-        <a class="btn btn-o" href="../downloads/nexaguard-malware-scanner.zip">Descargar Plugin Gratis</a>
+        <a class="btn btn-y" href="../index.html#planes">
+          <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Contratar Rescate Forense ($89 USD)</span>
+        </a>
+        <a class="btn btn-o" href="../downloads/nexaguard-malware-scanner.zip">
+          <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Descargar Plugin Oficial</span>
+        </a>
       </div>
 
-      <ul class="ticks" style="margin-top:20px">
-        <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;color:var(--green)"><polyline points="20 6 9 17 4 12"/></svg> Desinfección completa de scripts de cloaking</li>
-        <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;color:var(--green)"><polyline points="20 6 9 17 4 12"/></svg> Desindexación masiva acelerada (Cabeceras HTTP 410 Gone)</li>
-        <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;color:var(--green)"><polyline points="20 6 9 17 4 12"/></svg> Recuperación total en Google Search Console sin penalización</li>
+      <ul class="ticks" style="margin-top:24px">
+        <li>
+          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Erradicación de generadores PHP parásitos en wp-content
+        </li>
+        <li>
+          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Desindexación masiva acelerada mediante cabeceras HTTP 410 Gone
+        </li>
+        <li>
+          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Tramitación del informe formal ante Google Search Console
+        </li>
       </ul>
     </div>
 
-    <!-- Terminal Oficial de NexaGuard animado -->
-    <div class="term" style="position:absolute;right:0;top:10px">
-      <div class="term-bar">
-        <i></i><i></i><i></i>
-        <span>nexaguard-cloaking · inspector</span>
+    <!-- HUD / Simulador de Cloaking Interactivo -->
+    <div class="hero-hud-card">
+      <div class="hero-hud-topbar">
+        <div class="hero-hud-dots"><span></span><span></span><span></span></div>
+        <div class="hero-hud-title">
+          <svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px;color:var(--yellow)"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          nexaguard-cloaking · inspector
+        </div>
+        <span class="hero-hud-badge" id="simBadge">HUMAN AGENT</span>
       </div>
-      <div class="term-body" id="heroTermBody">
-        <div class="tl c">> NexaGuard Anti-Cloaking Inspector v1.5.7 activo</div>
-        <div class="tl i">> Simulando petición con User-Agent: Googlebot/2.1...</div>
-        <div class="tl e">> [CLOAKING] Inyección detectada: グ ッ チ バ ッ グ 激安</div>
-        <div class="tl w">> [ALERTA] Generador dinámico en /wp-content/db-cache.php</div>
-        <div class="tl o">> [ACCION] Generando cabeceras HTTP 410 Gone para 12,480 URLs</div>
-        <div class="tl y">> Desindexación acelerada enviada a Google Search Console</div>
+
+      <div style="padding:14px 18px 8px">
+        <div class="sim-tabs-row">
+          <button id="simBtnHuman" class="sim-tab-btn active" onclick="setSimMode('human')">
+            <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Visitante Humano
+          </button>
+          <button id="simBtnGooglebot" class="sim-tab-btn" onclick="setSimMode('googlebot')">
+            <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Googlebot Crawler
+          </button>
+        </div>
+      </div>
+
+      <div class="term-body" id="simViewport" style="height:210px;font-size:0.75rem;line-height:1.55">
+        <!-- Renderizado dinámico vía JavaScript -->
       </div>
     </div>
   </div>
 </section>
 
-<!-- Contenedor Principal de la Guía Forense -->
-<main class="guide-container">
+<!-- Cobertor Curvo con Textura y Sombra Profunda -->
+<div class="cover">
+  <div class="wrap">
 
-  <!-- Simulador Interactivo de Cloaking HTTP -->
-  <article class="guide-article">
-    <span class="pill"><i></i>Simulador Forense en Vivo</span>
-    <h2>Anatomía del Engaño: ¿Por qué no lo viste venir?</h2>
-    <p>
-      El <strong>Japanese Keyword Hack</strong> utiliza una técnica de camuflaje llamada <em>Cloaking</em>. El servidor inspecciona la cabecera <code>User-Agent</code> de quien visita el sitio: entrega una web perfectamente limpia a tus ojos, pero genera al instante miles de páginas de réplicas en caracteres japoneses cuando el rastreador de Google entra a indexar.
-    </p>
-
-    <!-- Componente de Simulación -->
-    <div style="background:rgba(12, 18, 44, 0.75);border:1px solid var(--line2);border-radius:18px;padding:24px;margin:28px 0;backdrop-filter:blur(10px)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
-        <div style="font-family:var(--fm);font-size:0.85rem;color:var(--yellow);font-weight:700">
-          INSPECTOR DE RESPUESTAS HTTP POR CABECERA:
+    <!-- Sección 1: Anatomía del Cloaking -->
+    <section>
+      <div class="sec-h">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(255,207,51,0.12);border:1px solid rgba(255,207,51,0.3);color:var(--yellow);font-size:0.78rem;font-weight:700;margin-bottom:12px">
+          <svg class="ic" style="width:14px;height:14px"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          MECANISMO DE CAMUFLAJE
         </div>
-        <div style="display:flex;gap:8px">
-          <button id="simBtnHuman" class="btn btn-o" style="padding:7px 16px;font-size:0.82rem;background:rgba(255,207,51,0.15);border-color:var(--yellow);color:var(--yellow)" onclick="setSimMode('human')">👤 Visitante Humano</button>
-          <button id="simBtnGooglebot" class="btn btn-o" style="padding:7px 16px;font-size:0.82rem" onclick="setSimMode('googlebot')">🤖 Googlebot Crawler</button>
-        </div>
-      </div>
-
-      <div id="simViewport" style="font-family:var(--fm);font-size:0.88rem;background:rgba(4,7,20,0.9);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:18px;min-height:160px;line-height:1.6">
-        <!-- Inyección dinámica vía JS -->
-      </div>
-    </div>
-
-    <!-- Comparativa Visual -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:24px 0">
-      <div class="pnl" style="padding:22px">
-        <h4 style="color:var(--green);font-size:1.1rem;margin-bottom:8px">👤 Lo que ves tú en el navegador</h4>
-        <p style="color:#b3c3e8;font-size:0.92rem;line-height:1.5">
-          Tu página de inicio habitual, catálogo de productos y diseño intacto en español. El código del atacante detecta un navegador convencional y no muestra nada extraño para evitar ser descubierto.
+        <h2>Anatomía de la Infección: ¿Por qué no lo viste venir?</h2>
+        <p class="lead">
+          El atacante utiliza la técnica de <em>cloaking</em> para esconder el ataque de tus ojos y mostrarlo únicamente a los motores de búsqueda.
         </p>
       </div>
-      <div class="pnl" style="padding:22px">
-        <h4 style="color:var(--red);font-size:1.1rem;margin-bottom:8px">🤖 Lo que ve el rastreador de Google</h4>
-        <p style="color:#b3c3e8;font-size:0.92rem;line-height:1.5">
-          Al detectar <code>Googlebot</code>, el script malicioso genera al vuelo miles de páginas en japonés sobre bolsos, relojes y réplicas falsas, inyectándolas en tu índice y robando la autoridad de tu dominio.
+
+      <div class="threat-grid">
+        <div class="threat-card">
+          <div class="threat-card-icon" style="color:var(--green)">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <h3>Lo que ves en tu navegador</h3>
+          <p>
+            Al ingresar como visitante habitual, el malware verifica tu cabecera <code>User-Agent</code>. Al notar un navegador doméstico, te sirve tu sitio limpio y en español para no despertar sospechas.
+          </p>
+        </div>
+
+        <div class="threat-card danger">
+          <div class="threat-card-icon">
+            <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>Lo que ve el rastreador Googlebot</h3>
+          <p>
+            Cuando Googlebot llega a indexar tu contenido, el servidor activa un generador PHP en segundo plano que fabrica al vuelo miles de páginas en caracteres japoneses sobre réplicas falsas de lujo.
+          </p>
+        </div>
+
+        <div class="threat-card danger">
+          <div class="threat-card-icon">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3>Inyección de Sitemaps Falsos</h3>
+          <p>
+            El script malicioso introduce archivos como <span class="code-box">sitemap-fake.xml</span> o altera el sitemap de Yoast/RankMath para forzar a Google a indexar decenas de miles de URLs ficticias.
+          </p>
+        </div>
+
+        <div class="threat-card">
+          <div class="threat-card-icon">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+          </div>
+          <h3>Canibalización Orgánica & Penalización</h3>
+          <p>
+            Google detecta la discordancia y puede penalizar tu dominio por spam masivo, provocando una caída drástica del tráfico de clientes reales y pérdida de confianza.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección 2: Visualizador Antes / Después Interactivo en Google SERP -->
+    <section style="margin: 70px 0;">
+      <div class="sec-h">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(255,207,51,0.12);border:1px solid rgba(255,207,51,0.3);color:var(--yellow);font-size:0.78rem;font-weight:700;margin-bottom:12px">
+          <svg class="ic" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><polygon points="12 8 8 12 12 16 12 8"/></svg>
+          COMPARADOR DE RESULTADOS EN GOOGLE
+        </div>
+        <h2>Resultados de Búsqueda: Invasión de Spam vs. Limpieza Completa</h2>
+        <p class="lead">Arrastra el controlador para visualizar cómo se despliegan tus páginas en los resultados de búsqueda antes y después de la intervención de NexaGuard.</p>
+      </div>
+
+      <div class="cmp" id="cmp" style="--pos:50%">
+        <!-- Resultados Limpios en Google (Derecha) -->
+        <div class="pane clean" aria-hidden="true">
+          <div class="chrome"><b class="lk ok">Google Search</b><span class="url">https://www.google.com/search?q=site:tuempresa.com</span></div>
+          <div style="flex:1;background:#202124;color:#e8eaed;padding:3% 5%;font-family:var(--fb);display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:0.8rem;color:#9aa0a6">Aproximadamente 42 resultados limpios (0.28 segundos)</div>
+            
+            <div style="background:#303134;padding:16px 20px;border-radius:12px;border:1px solid #3c4043">
+              <div style="font-size:0.8rem;color:#bdc1c6;display:flex;align-items:center;gap:8px">
+                <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:#3de8a4"></span>
+                https://tuempresa.com
+              </div>
+              <div style="font-size:1.15rem;font-weight:700;color:#8ab4f8;margin:4px 0 6px">Tu Empresa Oficial | Servicios Profesionales y Tienda Online</div>
+              <div style="font-size:0.9rem;color:#bdc1c6;line-height:1.45">Bienvenido a la plataforma oficial. Encuentra productos garantizados, envíos rápidos y soporte especializado. Conexión segura validada.</div>
+            </div>
+
+            <div style="background:#303134;padding:16px 20px;border-radius:12px;border:1px solid #3c4043">
+              <div style="font-size:0.8rem;color:#bdc1c6">https://tuempresa.com/contacto</div>
+              <div style="font-size:1.15rem;font-weight:700;color:#8ab4f8;margin:4px 0 6px">Contacto y Soporte al Cliente — Tu Empresa</div>
+              <div style="font-size:0.9rem;color:#bdc1c6;line-height:1.45">Comunícate directamente con nuestro equipo de atención al cliente para resolver dudas o tramitar pedidos.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultados Contaminados con Japanese Hack (Izquierda) -->
+        <div class="pane hacked">
+          <div class="chrome"><b class="lk bad">Google Search (Spam Japonés)</b><span class="url">https://www.google.com/search?q=site:tuempresa.com</span></div>
+          <div style="flex:1;background:#1a0c0e;color:#ff9aa9;padding:3% 5%;font-family:var(--fm);display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:0.8rem;color:#ff6b81;background:rgba(255,69,96,0.15);padding:6px 12px;border-radius:6px;border:1px solid rgba(255,69,96,0.3)">
+              [ALERTA]: 18,450 resultados indexados con caracteres japoneses y enlaces a réplicas fraudulentas
+            </div>
+
+            <div style="background:#2b1216;padding:16px 20px;border-radius:12px;border:1px solid #ff4560">
+              <div style="font-size:0.8rem;color:#ff8598">https://tuempresa.com/?jp_bag=84729</div>
+              <div style="font-size:1.1rem;font-weight:700;color:#ff8598;margin:4px 0 6px">グッチ バッグ 激安 コピー ブランド 通販 | tuempresa.com</div>
+              <div style="font-size:0.86rem;color:#ffb3be;line-height:1.45">ルイヴィトン 財布 コピー, ロレックス 時計 偽物 通販. 全国送料無料, 品質保証 100%! 最安値でお届けいたします...</div>
+            </div>
+
+            <div style="background:#2b1216;padding:16px 20px;border-radius:12px;border:1px solid #ff4560">
+              <div style="font-size:0.8rem;color:#ff8598">https://tuempresa.com/?item=rolex_replica</div>
+              <div style="font-size:1.1rem;font-weight:700;color:#ff8598;margin:4px 0 6px">ロレックス スーパーコピー 自動巻き メンズ | tuempresa.com</div>
+              <div style="font-size:0.86rem;color:#ffb3be;line-height:1.45">最高級ロレックスコピー 代引き, n級品 スーパーコピー時計, 日本国内最高水準レプリカ...</div>
+            </div>
+          </div>
+        </div>
+
+        <span class="lbl b">Invasión de Spam Japonés</span>
+        <span class="lbl a">SERP Desinfectado</span>
+        <div class="hdl" id="hdl" tabindex="0" role="slider" aria-label="Comparar antes y después" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+          <b><svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px"><polyline points="15 18 9 12 15 6"/></svg></b>
+        </div>
+      </div>
+      <p class="cmp-hint">Arrastra la barra divisoria o utiliza las flechas del teclado para explorar la comparativa.</p>
+
+      <div class="stats" style="margin-top: 40px">
+        <div class="stat"><b style="color:var(--yellow)">+100k</b><span>URLs 410 desindexadas</span></div>
+        <div class="stat"><b style="color:var(--green)">100%</b><span>erradicación de cloaking</span></div>
+        <div class="stat"><b style="color:var(--text)">0 pérdida</b><span>de URLs legítimas</span></div>
+        <div class="stat"><b style="color:var(--yellow)">30 días</b><span>garantía total</span></div>
+      </div>
+    </section>
+
+    <!-- Sección 3: Protocolo Técnico Forense de Limpieza -->
+    <section style="margin: 80px 0;">
+      <div class="sec-h">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(107,140,255,0.12);border:1px solid rgba(107,140,255,0.3);color:#8ca6ff;font-size:0.78rem;font-weight:700;margin-bottom:12px">
+          <svg class="ic" style="width:14px;height:14px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          MÉTODO FORENSE CERTIFICADO
+        </div>
+        <h2>Protocolo de Erradicación y Desindexación Rápida</h2>
+        <p class="lead">Si solo borras archivos, Google tardará meses en limpiar el índice. Este protocolo elimina los generadores y fuerza la desindexación inmediata.</p>
+      </div>
+
+      <div class="forensic-timeline">
+        <div class="forensic-step">
+          <div class="forensic-step-num">01</div>
+          <div class="forensic-step-body">
+            <h3>Restaurar Archivos .htaccess y Neutralizar Reglas Condicionales</h3>
+            <p>Los ciberdelincuentes interceptan peticiones usando variables del servidor para redirigir a Googlebot:</p>
+            <ul>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Localizamos directivas maliciosas como <span class="code-box">RewriteCond %{HTTP_USER_AGENT} (googlebot|bingbot)</span> en la raíz.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Reemplazamos las reglas por la configuración oficial segura de WordPress y protegemos el archivo contra escritura.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Limpieza de cabeceras inyectadas en servidores Nginx / LiteSpeed.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="forensic-step">
+          <div class="forensic-step-num">02</div>
+          <div class="forensic-step-body">
+            <h3>Localizar y Destruir Generadores Dinámicos en /wp-content/</h3>
+            <p>El atacante crea scripts PHP que fabrican miles de páginas de réplicas en tiempo de ejecución:</p>
+            <ul>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Detección de archivos camuflados con nombres estándar: <span class="code-box">db-cache.php</span>, <span class="code-box">wp-l0ad.php</span> o <span class="code-box">class-cache.php</span>.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Validación criptográfica con Core Sentinel contra las sumas oficiales de WordPress.org para erradicar archivos huérfanos.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Desinfección de archivos de tema activos alterados para incluir fragmentos en caracteres japoneses.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="forensic-step">
+          <div class="forensic-step-num">03</div>
+          <div class="forensic-step-body">
+            <h3>Purgar Sitemaps Ficticios y Usuarios Parásito en Base de Datos</h3>
+            <p>El malware inyecta sitemaps falsos para acelerar el rastreo y crea administradores ocultos:</p>
+            <ul>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Eliminación física de <span class="code-box">sitemap-fake.xml</span> y archivos de índice falsificados en la raíz.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Auditoría en <span class="code-box">wp_users</span> revocando usuarios desconocidos con rol de administrador creados por el atacante.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Rotación obligatoria de las 8 claves secretas SALT en <span class="code-box">wp-config.php</span> para desconectar accesos ilegítimos.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="forensic-step">
+          <div class="forensic-step-num">04</div>
+          <div class="forensic-step-body">
+            <h3>Desindexación Acelerada con Cabeceras HTTP 410 Gone</h3>
+            <p>El error 404 común hace que Google reintente rastrear las URLs durante meses. La cabecera 410 acelera su eliminación definitiva:</p>
+            <ul>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Configuramos directivas en el servidor para que todas las URLs falsas devuelvan <span class="code-box">HTTP 410 Gone</span> (Desaparecido permanentemente).</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Notificación a Googlebot para purgar las páginas del índice sin penalizar el dominio.</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Tramitación formal del nuevo sitemap limpio en Google Search Console para recuperar tu tráfico original.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección 4: Banner de Conversión Premium (CRO) -->
+    <section class="rescue-banner-box">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(255,207,51,0.12);border:1px solid rgba(255,207,51,0.3);color:var(--yellow);font-size:0.78rem;font-weight:700;margin-bottom:14px">
+          <svg class="ic" style="width:14px;height:14px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          RESTAURACIÓN SEO PROFESIONAL
+        </div>
+        <h2 style="font-size:clamp(1.9rem, 3.2vw, 2.6rem); color:#fff; line-height:1.2; margin-bottom:16px;">
+          ¿Google inundó tu buscador con miles de URLs en japonés?
+        </h2>
+        <p style="color:#c9d6f8; font-size:1.05rem; line-height:1.65; max-width:620px; margin-bottom:28px;">
+          Nuestros expertos forenses limpian el código malicioso, destruyen los generadores dinámicos, configuran las directivas 410 Gone y tramitan el informe formal en Google Search Console para restaurar el ranking orgánico de tu negocio.
         </p>
-      </div>
-    </div>
-  </article>
-
-  <!-- Artículo 2: Protocolo Quirúrgico en 4 Pasos -->
-  <article class="guide-article">
-    <span class="pill"><i></i>Protocolo Quirúrgico Certificado</span>
-    <h2>Protocolo Forense: Cómo Erradicar el Japanese Keyword Hack</h2>
-    <p>Para solucionar esta infección no basta con borrar archivos al azar: si dejas una sola puerta trasera o no fuerzas la desindexación en Google, tu SEO continuará cayendo. Sigue estos 4 pasos:</p>
-
-    <div class="step-grid">
-      <div class="step-card">
-        <div class="step-num-pill">01</div>
-        <h3>Restaurar .htaccess y Purgar Reglas Condicionales</h3>
-        <p>Los ciberdelincuentes inyectan reglas de reescritura que interceptan exclusivamente el tráfico que proviene de motores de búsqueda:</p>
-        <ul>
-          <li>Revisa directivas de <span class="code-box">RewriteCond %{HTTP_USER_AGENT}</span> en la raíz del servidor.</li>
-          <li>Reemplaza el archivo <span class="code-box">.htaccess</span> por las reglas oficiales originales de WordPress.</li>
-          <li>Aplica permisos restrictivos (644 o 444) para impedir que los scripts vuelvan a sobrescribirlo.</li>
-        </ul>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <a href="../index.html#planes" class="btn btn-y" style="padding:14px 28px;font-size:1.02rem">
+            <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>Contratar Rescate Forense ($89 USD)</span>
+          </a>
+          <a href="../index.html#planes" class="btn btn-o">
+            <span>Ver Planes Anuales</span>
+          </a>
+        </div>
       </div>
 
-      <div class="step-card">
-        <div class="step-num-pill">02</div>
-        <h3>Localizar Generadores Dinámicos en /wp-content/</h3>
-        <p>El malware crea generadores PHP con nombres camuflados para sintetizar miles de páginas ficticias al vuelo:</p>
-        <ul>
-          <li>Examina archivos sospechosos en la raíz y en plugins: <span class="code-box">db-cache.php</span>, <span class="code-box">wp-l0ad.php</span> o <span class="code-box">class-wp-cache.php</span>.</li>
-          <li>NexaGuard Core Sentinel compara cada hash SHA-256 para identificar archivos que no pertenecen al núcleo oficial de WordPress.</li>
-        </ul>
+      <div class="rb-pricing-card">
+        <span class="rb-price-badge">Tarifa Única</span>
+        <div class="rb-amount">$89 <small>USD</small></div>
+        <p class="rb-price-sub">Pago único con 30 días de garantía total. Si no logramos desinfectar tu WordPress, te devolvemos el 100% de tu dinero.</p>
+        <a href="../index.html#planes" class="btn btn-y" style="width:100%">
+          <span>Solicitar Limpieza Ahora</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Sección 5: Preguntas Frecuentes Forenses (FAQ) -->
+    <section class="faq" style="margin: 80px 0 40px;">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(255,207,51,0.12);border:1px solid rgba(255,207,51,0.3);color:var(--yellow);font-size:0.78rem;font-weight:700;margin-bottom:12px">
+          <svg class="ic" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          DUDAS SOBRE JAPANESE HACK
+        </div>
+        <h2>Preguntas Frecuentes</h2>
+        <p class="lead">Todo lo que necesitas saber sobre el cloaking, Search Console y la recuperación de posicionamiento.</p>
       </div>
 
-      <div class="step-card">
-        <div class="step-num-pill">03</div>
-        <h3>Purgar Sitemaps Falsos y Usuarios Administradores Ocultos</h3>
-        <p>El script malicioso inyecta archivos XML falsos para que Google rastree todas las páginas trampa de inmediato:</p>
-        <ul>
-          <li>Elimina sitemaps espurios como <span class="code-box">sitemap-fake.xml</span> o <span class="code-box">sitemap_index.xml</span> no generados por tu plugin SEO.</li>
-          <li>Audita la tabla <span class="code-box">wp_users</span> y <span class="code-box">wp_usermeta</span> para revocar cualquier cuenta con privilegios de administrador que no reconozcas.</li>
-          <li>Regenera las 8 claves secretas (SALT) en <span class="code-box">wp-config.php</span> para anular cookies de sesión ilegítimas.</li>
-        </ul>
-      </div>
+      <div>
+        <details>
+          <summary>
+            <span>¿Por qué yo veo mi página normal pero en Google aparecen caracteres japoneses?</span>
+            <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </summary>
+          <p>
+            Esto se debe al cloaking (encubrimiento). El atacante programa el servidor para analizar la cabecera <code>User-Agent</code> de quien visita la web. Si eres un humano en Chrome o Safari, entrega la web legítima; si es el bot de Google (Googlebot), entrega miles de páginas de réplicas en japonés para indexarlas sin que te des cuenta.
+          </p>
+        </details>
 
-      <div class="step-card">
-        <div class="step-num-pill">04</div>
-        <h3>Desindexación Acelerada con Cabeceras HTTP 410 Gone en Google</h3>
-        <p>El mayor dolor de cabeza: Google puede tardar meses en desindexar miles de URLs si solo devuelven un error 404 común:</p>
-        <ul>
-          <li>Configuramos el servidor con la cabecera <span class="code-box">HTTP 410 Gone</span> (Desaparecido Definitivamente), indicándole a Googlebot que retire la URL sin esperar reintentos.</li>
-          <li>Generamos un sitemap temporal de URLs erradicadas y enviamos la solicitud de inspección a Google Search Console para restaurar el posicionamiento orgánico.</li>
-        </ul>
-      </div>
-    </div>
-  </article>
+        <details>
+          <summary>
+            <span>¿Cuánto tiempo tardan en desaparecer las URLs japonesas de Google?</span>
+            <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </summary>
+          <p>
+            Si se utiliza un simple error 404, Google puede tardar entre 3 y 6 meses en purgarlas. Sin embargo, mediante la implementación forense de respuestas <code>HTTP 410 Gone</code> y el reenvío de sitemaps limpios en Google Search Console, el tiempo de purga suele reducirse notablemente en las primeras semanas de reindexación.
+          </p>
+        </details>
 
-  <!-- Banner de Rescate Forense (CRO) -->
-  <div class="landing-cta-banner">
-    <h2>¿Google inundó tu buscador con spam japonés?</h2>
-    <p>
-      Nuestros ingenieros forenses erradican el cloaking de raíz, desinfectan la base de datos, configuran las directivas 410 Gone y tramitan el informe formal en Google Search Console para recuperar tu negocio en tiempo récord.
-    </p>
-    <div class="cta-row" style="margin-bottom:12px">
-      <a href="../index.html#planes" class="btn btn-y" style="font-size:1.05rem;padding:15px 32px">🚨 Contratar Rescate Forense ($89 USD)</a>
-      <a href="../index.html#planes" class="btn btn-o">Ver Planes de Blindaje Anual</a>
-    </div>
-    <div style="font-size:0.86rem;color:#a8b9e4">🛡️ 30 días de garantía total sin reinfección. Si no logramos limpiar tu web, te devolvemos el dinero.</div>
+        <details>
+          <summary>
+            <span>¿Perderé el posicionamiento de mis páginas legítimas?</span>
+            <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </summary>
+          <p>
+            Al erradicar el cloaking de inmediato y enviar el informe a Search Console, Google restaura el sitemap original y reasigna la autoridad a tus páginas genuinas, evitando penalizaciones manuales permanentes en el dominio.
+          </p>
+        </details>
+
+        <details>
+          <summary>
+            <span>¿Cómo evitan que el atacante vuelva a inyectar las páginas?</span>
+            <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </summary>
+          <p>
+            No nos limitamos a borrar URLs: cerramos la vulnerabilidad raíz que permitió el acceso (plugins desactualizados, backdoors en uploads o contraseñas filtradas) y desplegamos el WAF de NexaGuard para bloquear de forma preventiva cualquier intento de reinyección con 30 días de garantía.
+          </p>
+        </details>
+      </div>
+    </section>
+
   </div>
+</div>
 
-</main>
-
-<!-- Pie de Página Idéntico a NexaGuard -->
+<!-- Pie de Página Oficial NexaGuard -->
 <footer class="foot">
-  <span>© 2026 NexaGuard. Ciberseguridad forense y erradicación de amenazas web.</span>
+  <span>© 2026 NexaGuard Security. Ciberseguridad forense y erradicación de amenazas web.</span>
   <span style="opacity:0.4">|</span>
   <a href="../index.html" style="color:var(--muted);text-decoration:none">Inicio</a>
+  <span style="opacity:0.4">|</span>
+  <a href="../index.html#escaner" style="color:var(--muted);text-decoration:none">Escáner Web</a>
   <span style="opacity:0.4">|</span>
   <a href="../index.html#planes" style="color:var(--muted);text-decoration:none">Planes y Tarifas</a>
   <a href="../reparar-wordpress-hackeado/index.html" style="color:var(--muted);text-decoration:none">Guía Reparación</a>
@@ -318,7 +561,7 @@
   <a href="../index.html#contacto" style="color:var(--muted);text-decoration:none">Contacto Urgente</a>
 </footer>
 
-<!-- Scripts: Three.js 3D Holographic Engine Oficial de NexaGuard -->
+<!-- Scripts: Three.js 3D WebGL Holographic Engine Oficial de NexaGuard -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="../brand/nexaguard-3d.js"></script>
 
@@ -326,43 +569,40 @@
 (function() {
   'use strict';
 
-  // 1. Rotación del terminal en el Hero
-  var termBody = document.getElementById('heroTermBody');
-  var logs = [
-    { cls: 'i', msg: '> Rastreo de inyecciones de Cloaking en .htaccess...' },
-    { cls: 'w', msg: '> [ALERTA] Directiva RewriteCond HTTP_USER_AGENT localizada' },
-    { cls: 'e', msg: '> [BLOQUEADO] Generador dinámico /wp-content/db-cache.php neutralizado' },
-    { cls: 'o', msg: '> Sitemaps ficticios eliminados. 12,480 cabeceras HTTP 410 Gone listas' },
-    { cls: 'y', msg: '> Solicitud formal de desindexación procesada en Google Search Console.' }
-  ];
-  var idx = 0;
-  setInterval(function() {
-    if (!termBody) return;
-    var next = logs[idx % logs.length];
-    idx++;
-    var div = document.createElement('div');
-    div.className = 'tl ' + next.cls;
-    div.textContent = next.msg;
-    termBody.appendChild(div);
-    if (termBody.children.length > 7) termBody.removeChild(termBody.children[0]);
-  }, 3200);
+  // 1. Menú Móvil Hamburguesa
+  var burger = document.getElementById('navBurger');
+  var drawer = document.getElementById('navDrawer');
+  if (burger && drawer) {
+    burger.addEventListener('click', function() {
+      var isOpen = drawer.classList.toggle('open');
+      burger.classList.toggle('open', isOpen);
+      burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    drawer.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        drawer.classList.remove('open');
+        burger.classList.remove('open');
+        burger.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
 
-  // 2. Simulador de Cloaking Interactivo
-  var SIM_SCENARIOS = {
+  // 2. Simulador Interactivo de Cloaking HTTP
+  var SIM_DATA = {
     human: [
-      { t: 'ctx', s: 'GET / HTTP/1.1' },
-      { t: 'ctx', s: 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0' },
-      { t: 'ok',  s: 'HTTP/1.1 200 OK' },
-      { t: 'ok',  s: '<title>Mi Tienda Oficial en Español</title>' },
-      { t: 'ctx', s: '<!-- Contenido legítimo entregado con éxito al comprador -->' }
+      { t: 'c', s: 'GET / HTTP/1.1' },
+      { t: 'i', s: 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0' },
+      { t: 'o', s: 'HTTP/1.1 200 OK' },
+      { t: 'o', s: '<title>Mi Empresa Oficial — Soluciones en Español</title>' },
+      { t: 'c', s: '<!-- Contenido legítimo entregado con éxito al usuario sin cloaking -->' }
     ],
     googlebot: [
-      { t: 'ctx', s: 'GET / HTTP/1.1' },
-      { t: 'ctx', s: 'User-Agent: Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
-      { t: 'err', s: 'HTTP/1.1 200 OK (CLOAKING INYECTADO)' },
-      { t: 'err', s: '<title>グッチ バッグ 激安 コピー ブランド 通販</title>' },
-      { t: 'err', s: '<meta name="keywords" content="ルイヴィトン, ロレックス, 偽物通販">' },
-      { t: 'warn', s: '[NEXAGUARD ALERT]: Payload malicioso interceptado para Googlebot.' }
+      { t: 'c', s: 'GET / HTTP/1.1' },
+      { t: 'w', s: 'User-Agent: Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
+      { t: 'e', s: 'HTTP/1.1 200 OK [CLOAKING ACTIVADO VÍA DB-CACHE.PHP]' },
+      { t: 'e', s: '<title>グッチ バッグ 激安 コピー ブランド 通販</title>' },
+      { t: 'e', s: '<meta name="keywords" content="ルイヴィトン, ロレックス, 偽物通販">' },
+      { t: 'y', s: '[NEXAGUARD ALERTA]: Inyección de spam SEO interceptada en tiempo real.' }
     ]
   };
 
@@ -370,44 +610,68 @@
     var vp = document.getElementById('simViewport');
     var btnH = document.getElementById('simBtnHuman');
     var btnG = document.getElementById('simBtnGooglebot');
+    var badge = document.getElementById('simBadge');
     if (!vp) return;
 
     if (mode === 'human') {
-      if (btnH) { btnH.style.background = 'rgba(255,207,51,0.15)'; btnH.style.borderColor = 'var(--yellow)'; btnH.style.color = 'var(--yellow)'; }
-      if (btnG) { btnG.style.background = 'transparent'; btnG.style.borderColor = 'var(--line2)'; btnG.style.color = '#fff'; }
+      if (btnH) btnH.classList.add('active');
+      if (btnG) btnG.classList.remove('active', 'danger-mode');
+      if (badge) { badge.textContent = 'HUMAN AGENT'; badge.style.color = 'var(--green)'; badge.style.borderColor = 'rgba(61,232,164,0.3)'; }
     } else {
-      if (btnG) { btnG.style.background = 'rgba(255,69,96,0.15)'; btnG.style.borderColor = 'var(--red)'; btnG.style.color = 'var(--red)'; }
-      if (btnH) { btnH.style.background = 'transparent'; btnH.style.borderColor = 'var(--line2)'; btnH.style.color = '#fff'; }
+      if (btnG) { btnG.classList.add('active', 'danger-mode'); }
+      if (btnH) btnH.classList.remove('active');
+      if (badge) { badge.textContent = 'GOOGLEBOT DETECTED'; badge.style.color = '#ff8ba0'; badge.style.borderColor = 'rgba(255,69,96,0.3)'; }
     }
 
-    var lines = SIM_SCENARIOS[mode] || SIM_SCENARIOS.human;
+    var lines = SIM_DATA[mode] || SIM_DATA.human;
     vp.innerHTML = '';
     lines.forEach(function(l) {
-      var d = document.createElement('div');
-      d.style.padding = '4px 8px';
-      d.style.borderRadius = '6px';
-      d.style.marginBottom = '6px';
-      if (l.t === 'err') {
-        d.style.background = 'rgba(255, 69, 96, 0.15)';
-        d.style.color = '#ff8598';
-        d.style.borderLeft = '3px solid var(--red)';
-      } else if (l.t === 'ok') {
-        d.style.background = 'rgba(61, 232, 164, 0.15)';
-        d.style.color = 'var(--green)';
-        d.style.borderLeft = '3px solid var(--green)';
-      } else if (l.t === 'warn') {
-        d.style.background = 'rgba(255, 207, 51, 0.15)';
-        d.style.color = 'var(--yellow)';
-      } else {
-        d.style.color = 'var(--muted)';
-      }
-      d.textContent = l.s;
-      vp.appendChild(d);
+      var div = document.createElement('div');
+      div.className = 'tl ' + l.t;
+      div.textContent = l.s;
+      vp.appendChild(div);
     });
   };
   setSimMode('human');
 
-  // 3. Lanzador al escáner de NexaGuard
+  // 3. Control Deslizante Interactivo Antes / Después (.cmp)
+  var cmp = document.getElementById('cmp');
+  var hdl = document.getElementById('hdl');
+  if (cmp && hdl) {
+    var dragging = false;
+    var cmpPos = 50;
+
+    function setPos(p) {
+      cmpPos = Math.max(0, Math.min(100, p));
+      cmp.style.setProperty('--pos', cmpPos + '%');
+      hdl.setAttribute('aria-valuenow', Math.round(cmpPos));
+    }
+
+    function move(e) {
+      var r = cmp.getBoundingClientRect();
+      var clientX = e.clientX;
+      if (e.touches && e.touches[0]) clientX = e.touches[0].clientX;
+      setPos(((clientX - r.left) / r.width) * 100);
+    }
+
+    cmp.addEventListener('pointerdown', function(e) {
+      dragging = true;
+      try { cmp.setPointerCapture(e.pointerId); } catch(x) {}
+      move(e);
+    });
+    cmp.addEventListener('pointermove', function(e) {
+      if (dragging) move(e);
+    });
+    window.addEventListener('pointerup', function() { dragging = false; });
+    window.addEventListener('pointercancel', function() { dragging = false; });
+
+    hdl.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); setPos(cmpPos - 5); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); setPos(cmpPos + 5); }
+    });
+  }
+
+  // 4. Lanzador de Escaneo a la Home
   window.launchScan = function() {
     var input = document.getElementById('targetSiteInput');
     var val = (input ? input.value : '').trim();
