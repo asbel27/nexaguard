@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cómo Quitar la Pantalla Roja de Google en WordPress (Guía Forense 2026) | NexaGuard</title>
-<meta name="description" content="Protocolo técnico para retirar la alerta 'El sitio al que vas a acceder es engañoso' de Google Chrome, limpiar el malware y solicitar el deslistado en Search Console.">
-<meta name="keywords" content="quitar pantalla roja google, sitio engañoso google chrome, el sitio al que vas a acceder es engañoso, desinfectar wordpress pantalla roja, eliminar lista negra google safe browsing, advertencia de seguridad google wordpress">
+<title>Cómo Quitar la Pantalla Roja de Google "Sitio Engañoso" en WordPress (2026) | NexaGuard</title>
+<meta name="description" content="Guía técnica forense para retirar la pantalla roja de advertencia en Google Safe Browsing. Desinfecta el malware en WordPress y solicita la reconsideración con éxito.">
+<meta name="keywords" content="quitar pantalla roja google, sitio engañoso google wordpress, google safe browsing advertencia, el sitio al que vas a acceder contiene malware, desbloquear web hackeada google">
 <meta name="author" content="NexaGuard Security Forensics">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="canonical" href="https://www.nexaguards.com/quitar-pantalla-roja-google/">
-<meta name="theme-color" content="#070913">
+<meta name="theme-color" content="#070c22">
 
 <!-- Favicons & App Icons -->
 <link rel="icon" type="image/png" sizes="32x32" href="../brand/favicon-32x32.png">
@@ -20,8 +20,8 @@
 <!-- Open Graph / Redes Sociales -->
 <meta property="og:locale" content="es_ES">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Cómo Quitar la Pantalla Roja de Google en WordPress (Guía Forense 2026)">
-<meta property="og:description" content="Elimina la advertencia de 'Sitio engañoso' en Google Chrome, desinfecta tu servidor y recupera tus visitantes en menos de 24 horas.">
+<meta property="og:title" content="Cómo Quitar la Pantalla Roja de Google en WordPress (Guía 2026)">
+<meta property="og:description" content="Pasos exactos para erradicar el malware, tramitar la reconsideración en Search Console y retirar la alerta roja de Google.">
 <meta property="og:url" content="https://www.nexaguards.com/quitar-pantalla-roja-google/">
 <meta property="og:site_name" content="NexaGuard Security">
 <meta property="og:image" content="https://www.nexaguards.com/brand/og-image.png">
@@ -30,8 +30,8 @@
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Cómo Quitar la Pantalla Roja de Google | NexaGuard">
-<meta name="twitter:description" content="Protocolo técnico para eliminar la alerta de Google Safe Browsing en WordPress.">
+<meta name="twitter:title" content="Quitar Pantalla Roja Google WordPress | NexaGuard">
+<meta name="twitter:description" content="Desbloquea tu sitio de Google Safe Browsing y recupera tus visitas.">
 <meta name="twitter:image" content="https://www.nexaguards.com/brand/og-image.png">
 
 <!-- Google Fonts Oficiales -->
@@ -39,9 +39,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
-<!-- Estilos Base y Modern Landing Engine -->
-<link rel="stylesheet" href="../brand/nexaguard-engine.css">
-<link rel="stylesheet" href="../brand/modern-landing.css">
+<!-- Estilos Blog Landing de NexaGuard -->
+<link rel="stylesheet" href="../brand/blog-landing.css">
 
 <!-- Schema.org HowTo / FAQPage / BreadcrumbList -->
 <script type="application/ld+json">
@@ -119,14 +118,6 @@
             "@type": "Answer",
             "text": "Muchos atacantes emplean cloaking o inyectan scripts maliciosos que solo se ejecutan ante visitantes específicos (móviles o referidos de buscadores). Googlebot rastrea tu web desde múltiples servidores y detecta esas cargas peligrosas aunque tú no las percibas."
           }
-        },
-        {
-          "@type": "Question",
-          "name": "¿Ofrece NexaGuard garantía si contrato el servicio de rescate?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Sí. Incluye 30 días de garantía total. Si tras la intervención forense Google no retira la advertencia o se produce una reinfección, nuestro equipo interviene sin coste o te reembolsa el 100% de tu dinero."
-          }
         }
       ]
     }
@@ -134,17 +125,11 @@
 }
 </script>
 </head>
-<body class="js">
+<body>
 
-<!-- Canvas 3D Oficial y Capa de Ruido -->
-<canvas id="gl" aria-hidden="true"></canvas>
-<div class="noise" aria-hidden="true"></div>
-<div class="ambient-glow-1" aria-hidden="true"></div>
-<div class="ambient-glow-2" aria-hidden="true"></div>
-
-<!-- Cabecera Oficial Idéntica a NexaGuard con Estado y Menú Móvil -->
-<header class="nav" id="nav">
-  <a class="logo" href="../index.html" aria-label="NexaGuard, ir al inicio">
+<!-- Navegación Minimalista -->
+<header class="bl-nav">
+  <a href="../index.html" class="bl-logo" aria-label="NexaGuard Inicio">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64" aria-hidden="true">
       <defs>
         <linearGradient id="nxgn" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse">
@@ -153,7 +138,7 @@
         </linearGradient>
         <linearGradient id="nxfn" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#15214f"/>
-          <stop offset="1" stop-color="#0b1235"/>
+          <stop offset="0" stop-color="#0b1235"/>
         </linearGradient>
       </defs>
       <path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="url(#nxfn)" stroke="url(#nxgn)" stroke-width="3.2" stroke-linejoin="round"/>
@@ -171,458 +156,181 @@
       </g>
     </svg>
   </a>
-  <nav class="nav-links" aria-label="Principal">
-    <a href="../index.html#sintomas">Síntomas</a>
-    <a href="../index.html#servicios">Servicios</a>
-    <a href="../index.html#escaner">Escáner</a>
-    <a href="../index.html#planes">Planes</a>
-    <a href="../reparar-wordpress-hackeado/index.html">Guía Forense</a>
-  </nav>
-  <div class="nav-r">
-    <div class="health" aria-label="Estado del sistema">
-      <div class="hbar"><i style="width:10%;background:var(--red)"></i></div>
-      <b>10%</b>
-      <em style="color:var(--red)">BLOQUEO ACTIVO</em>
-    </div>
-    <a class="btn btn-o sm" href="../index.html#escaner">Escáner</a>
-    <a class="btn btn-y sm" href="../index.html#planes">Ver Planes</a>
-    <button class="nav-burger" id="navBurger" aria-label="Abrir menú" aria-expanded="false">
-      <svg class="ic-burger" viewBox="0 0 24 24"><line class="b-top" x1="4" y1="6" x2="20" y2="6"/><line class="b-mid" x1="4" y1="12" x2="20" y2="12"/><line class="b-bot" x1="4" y1="18" x2="20" y2="18"/></svg>
-    </button>
+  <div class="bl-nav-acts">
+    <a href="../index.html#escaner" class="btn btn-o">Escáner Gratis</a>
+    <a href="../index.html#planes" class="btn btn-y">Planes y Precios</a>
   </div>
 </header>
 
-<!-- Menú Desplegable Móvil -->
-<div class="nav-drawer" id="navDrawer" aria-hidden="true">
-  <div class="drawer-links">
-    <a href="../index.html" class="d-link"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Inicio</a>
-    <a href="../index.html#sintomas" class="d-link"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Síntomas Comunes</a>
-    <a href="../index.html#escaner" class="d-link"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Escáner de Malware</a>
-    <a href="../index.html#planes" class="d-link"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Planes de Seguridad</a>
-    <a href="../reparar-wordpress-hackeado/index.html" class="d-link"><svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Guía Forense</a>
+<!-- Contenedor Editorial Central -->
+<main class="bl-container">
+  <!-- Migas de Pan -->
+  <nav class="bl-breadcrumbs" aria-label="Migas de pan">
+    <a href="../index.html">Inicio</a>
+    <span>/</span>
+    <a href="../quitar-pantalla-roja-google/">Guías Forenses</a>
+    <span>/</span>
+    <span>Quitar Pantalla Roja Google</span>
+  </nav>
+
+  <!-- Badge y Título Principal -->
+  <span class="hero-tag">🛑 Advertencia de Seguridad Google</span>
+  <h1 class="bl-title">Cómo Quitar la Pantalla Roja de Google "Sitio Engañoso" en WordPress (2026)</h1>
+
+  <!-- Metadatos de Publicación -->
+  <div class="meta-info">
+    <span>🛡️ Por Equipo Forense NexaGuard</span>
+    <span>⏱️ Tiempo de lectura: 6 min</span>
+    <span>🔄 Actualizado: Octubre 2026</span>
   </div>
-  <div class="drawer-foot">
-    <a href="../index.html#planes" class="btn btn-y d-btn">Contratar Rescate ($89 USD)</a>
-    <a href="../downloads/nexaguard-malware-scanner.zip" class="btn btn-o d-btn">Descargar Plugin Gratis</a>
+
+  <!-- Caja de Alerta Destacada -->
+  <div class="alert-box">
+    <h3>¿Tus clientes ven la advertencia roja "El sitio web al que vas a acceder es engañoso"?</h3>
+    <p>Google Safe Browsing ha bloqueado tu dominio tras detectar malware, páginas de suplantación de identidad (phishing) o software dañino. Más del 95% de los visitantes abandonan tu web ante esta pantalla. El bloqueo no desaparecerá solo: debes desinfectar al 100% y tramitar la reconsideración oficial.</p>
   </div>
-</div>
 
-<!-- Hero Editorial Asimétrico -->
-<section class="ml-hero-wrap" id="inicio">
-  <div class="ml-hero-grid">
-    <div>
-      <div class="ml-pill">
-        <span class="ml-dot-radar" style="background:var(--ml-red);box-shadow:0 0 10px var(--ml-red)"></span>
-        Desbloqueo de Google Safe Browsing 24/7
-      </div>
-
-      <h1 class="ml-headline">
-        Google bloqueó tu web con <span class="glitch" data-text="pantalla roja">pantalla roja</span>. La retiramos hoy.
-      </h1>
-
-      <p class="ml-lead">
-        La advertencia <em>"El sitio al que vas a acceder es engañoso"</em> destruye el 95% de tus ventas y la confianza de tus clientes. Limpiamos la infección, cerramos la puerta trasera y tramitamos el deslistado urgente ante Google.
-      </p>
-
-      <!-- Barra de Escáner Rápido en Vivo -->
-      <form class="ml-scanner-card" onsubmit="event.preventDefault(); launchScan();">
-        <span class="ml-scanner-prefix">https://</span>
-        <input type="text" id="targetSiteInput" class="ml-scanner-input" placeholder="tudominio.com" required autocomplete="off" spellcheck="false">
-        <button type="submit" class="ml-btn-primary" style="padding:10px 20px;font-size:0.9rem">
-          <span>Verificar Alerta</span>
-          <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </form>
-
-      <div class="ml-btn-group">
-        <a class="ml-btn-primary" href="../index.html#planes">
-          <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>Retirar Alerta Roja Ahora ($89 USD)</span>
-        </a>
-        <a class="ml-btn-ghost" href="../downloads/nexaguard-malware-scanner.zip">
-          <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Descargar Plugin Oficial</span>
-        </a>
-      </div>
-
-      <ul class="ml-trust-list">
-        <li class="ml-trust-item">
-          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          Retirada del bloqueo en Chrome, Firefox y Safari en 12 a 48 horas
-        </li>
-        <li class="ml-trust-item">
-          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          Erradicación total de malware de ingeniería social y phishing
-        </li>
-        <li class="ml-trust-item">
-          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          Garantía de devolución del 100% si Google no retira la advertencia
-        </li>
-      </ul>
-    </div>
-
-    <!-- Terminal Raycast / Linear HUD con Estado de Safe Browsing -->
-    <div class="ml-terminal">
-      <div class="ml-term-header">
-        <div class="ml-term-dots">
-          <span class="ml-term-dot r"></span>
-          <span class="ml-term-dot y"></span>
-          <span class="ml-term-dot g"></span>
-        </div>
-        <div class="ml-term-title">google-safe-browsing · blacklist-resolver</div>
-        <span class="ml-term-badge" style="background:var(--ml-red-soft);border-color:rgba(251,113,133,0.3);color:var(--ml-red)">FLAGGED RED</span>
-      </div>
-      <div class="ml-term-stream" id="heroTermBody">
-        <div class="ml-log e">> [GOOGLE ALERTA]: Dominio listado en Google Safe Browsing API</div>
-        <div class="ml-log w">> Causa: Detección de ingeniería social / Phishing en /login/</div>
-        <div class="ml-log i">> Analizando hashes criptográficos de WordPress contra servidor origen...</div>
-        <div class="ml-log e">> [HALLAZGO] Inyección de script malicioso en wp-includes/formatting.php</div>
-        <div class="ml-log s">> [LIMPIEZA] Archivo restaurado a hash original oficial SHA-256</div>
-        <div class="ml-log c">> Generando reporte formal para Google Search Console Security Review</div>
-      </div>
+  <!-- Escaneo Rápido Dentro del Artículo -->
+  <div class="bl-quick-scan">
+    <h3>Verificar Estado de Google Safe Browsing</h3>
+    <p>Comprueba si tu sitio web contiene inyecciones activas o firmas detectadas por los sistemas de seguridad de Google:</p>
+    <div class="bl-scan-row">
+      <input type="text" id="quickScanInput" placeholder="tudominio.com" aria-label="Dominio a escanear" onkeydown="if(event.key==='Enter')launchBlogScan()">
+      <button class="btn btn-y" onclick="launchBlogScan()">Escanear Ahora</button>
     </div>
   </div>
-</section>
 
-<!-- Contenedor Editorial Amplio -->
-<main class="ml-content-section">
+  <!-- Contenido Editorial -->
+  <article class="bl-content">
+    <h2>1. ¿Por qué Google muestra la pantalla roja en tu WordPress?</h2>
+    <p>Google audita billones de páginas al día a través de su infraestructura de <b>Safe Browsing</b>. Cuando sus rastreadores detectan una anomalía de seguridad, despliegan una pantalla roja en Chrome, Firefox, Safari y Edge catalogando el sitio bajo tres tipos de amenazas principales:</p>
+    <ul>
+      <li><b>Sitio engañoso (Ingeniería Social / Phishing):</b> El atacante inyectó formularios falsos para robar credenciales de bancos, correos o cuentas de redes sociales haciéndose pasar por empresas conocidas.</li>
+      <li><b>El sitio contiene malware:</b> Tu WordPress aloja scripts que intentan descargar programas dañinos o exploits en los dispositivos de tus visitantes sin su consentimiento.</li>
+      <li><b>Software no deseado o dañino:</b> Inyecciones que alteran la configuración del navegador de los usuarios o instalan extensiones no deseadas.</li>
+    </ul>
 
-  <!-- Matriz de Causas Asimétrica -->
-  <section>
-    <div class="ml-sec-header">
-      <span class="ml-sec-tag">Diagnóstico de la Lista Negra</span>
-      <h2 class="ml-sec-title">¿Por qué Google colocó la pantalla roja en tu sitio?</h2>
-      <p class="ml-sec-desc">
-        Google Safe Browsing analiza miles de millones de páginas cada día. Cuando los rastreadores detectan una anomalía perjudicial para el usuario, imponen el bloqueo de forma implacable.
-      </p>
+    <h2>2. Protocolo para Retirar la Advertencia en 4 Pasos</h2>
+
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <h3>Identificar los Ejemplos de URLs en Google Search Console</h3>
+      <p>Inicia sesión en tu cuenta de <b>Google Search Console</b> y dirígete al menú lateral: <em>Seguridad y acciones manuales</em> &gt; <em>Problemas de seguridad</em>. Google listará los tipos de amenazas detectadas y ejemplos concretos de URLs infectadas que debes sanear de inmediato.</p>
     </div>
 
-    <div class="ml-matrix-grid">
-      <div class="ml-matrix-cell span-6 danger">
-        <div class="ml-matrix-icon-box">
-          <svg class="ic" viewBox="0 0 24 24"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        </div>
-        <h3 class="ml-matrix-title">Ingeniería Social (Phishing)</h3>
-        <p class="ml-matrix-text">
-          El atacante creó páginas falsas dentro de tu WordPress imitando portales de bancos, Microsoft 365 o pasarelas de pago para engañar a los visitantes y robar sus credenciales.
-        </p>
-      </div>
-
-      <div class="ml-matrix-cell span-6 danger">
-        <div class="ml-matrix-icon-box">
-          <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </div>
-        <h3 class="ml-matrix-title">Descargas Dañinas Ocultas</h3>
-        <p class="ml-matrix-text">
-          Tu servidor fue programado para forzar la descarga de troyanos o instaladores falsificados simulando actualizaciones de Flash, Chrome o códecs de vídeo (malware ClearFake).
-        </p>
-      </div>
-
-      <div class="ml-matrix-cell span-7">
-        <div class="ml-matrix-icon-box">
-          <svg class="ic" viewBox="0 0 24 24"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
-        </div>
-        <h3 class="ml-matrix-title">Redirecciones hacia Dominios Peligrosos</h3>
-        <p class="ml-matrix-text">
-          El atacante insertó fragmentos JavaScript que desvían a los usuarios hacia servidores ya boletinados en la lista negra internacional de Google, contagiando la reputación de tu dominio.
-        </p>
-      </div>
-
-      <div class="ml-matrix-cell span-5">
-        <div class="ml-matrix-icon-box">
-          <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </div>
-        <h3 class="ml-matrix-title">Inyección de Código Obfuscado</h3>
-        <p class="ml-matrix-text">
-          Archivos del núcleo o plugins modificados con cadenas <span class="ml-code">eval(base64_decode)</span> que descargan dinámicamente cargas peligrosas evadiendo filtros simples.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Visualizador Antes / Después Interactivo de la Pantalla Roja -->
-  <section style="margin: 90px 0;">
-    <div class="ml-sec-header">
-      <span class="ml-sec-tag">Simulador Visual en Navegadores</span>
-      <h2 class="ml-sec-title">Bloqueo de Google Safe Browsing vs. Acceso Restaurado</h2>
-      <p class="ml-sec-desc">Arrastra la barra divisoria para comprobar el contraste entre el bloqueo de Google Chrome y la página recuperada con certificación de seguridad.</p>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <h3>Erradicar Inyecciones y Restaurar la Integridad del Core</h3>
+      <p>Compara los archivos principales de WordPress con los hashes criptográficos SHA-256 de WordPress.org mediante <b>NexaGuard Core Sentinel</b>. Elimina cualquier modificación en <code>wp-blog-header.php</code>, <code>wp-config.php</code> o archivos de plantilla donde habitualmente se insertan scripts de phishing.</p>
     </div>
 
-    <div class="cmp" id="cmp" style="--pos:50%">
-      <!-- Sitio Restaurado (Derecha) -->
-      <div class="pane clean" aria-hidden="true">
-        <div class="chrome"><b class="lk ok">Conexión Segura</b><span class="url">https://tuweboficial.com</span></div>
-        <div class="site">
-          <div class="s-top"><span>Atención Inmediata</span><span>Certificado SSL Seguro</span><span>soporte@tuweboficial.com</span></div>
-          <div class="s-nav">
-            <div class="s-logo"><svg viewBox="0 0 32 32"><path d="M5 27C5 12 14 4 28 4c0 14-8 23-21 23z" fill="#2f9e5b"/><path d="M8 25c5-8 10-12 16-16" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Tu Web Oficial</div>
-            <nav><span class="on">Servicios</span><span>Soluciones</span><span>Garantía</span><span>Contacto</span></nav>
-            <span class="s-cta">Acceder al Portal</span>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <h3>Limpiar Backdoors en Uploads y Rotar Claves SALT</h3>
+      <p>Los atacantes dejan webshells ocultas con nombres inofensivos (como <code>style.css.php</code> o archivos PHP dentro de <code>uploads/</code>) para reinyectar el malware tras cualquier limpieza superficial. Elimina estas puertas traseras y regenera las claves de seguridad criptográficas (SALT) en <code>wp-config.php</code>.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">04</div>
+      <h3>Presentar la Solicitud Formal de Revisión ante Google</h3>
+      <p>Una vez verificado que el sitio está completamente limpio, vuelve a <b>Problemas de seguridad</b> en Search Console y pulsa en <em>"Solicitar revisión"</em>. Explica con claridad y detalle técnico qué archivos fueron desinfectados y qué medidas de firewall WAF se implementaron para evitar futuras intrusiones. Google suele retirar el bloqueo en un plazo de 12 a 48 horas.</p>
+    </div>
+
+    <h2>3. Comparativa: Sitio Bloqueado vs. Sitio Desbloqueado</h2>
+    <p>Comprueba la transformación entre la pantalla roja de advertencia de Google y un sitio web limpio con acceso SSL/HTTPS verificado:</p>
+
+    <!-- Slider Antes / Después (.cmp) -->
+    <div class="bl-cmp-wrap">
+      <div class="cmp" id="cmp" style="--pos:50%" role="region" aria-label="Comparador de pantalla roja de Google antes y después de la desinfección">
+        <!-- Panel Limpio / Después -->
+        <div class="pane site-clean-preview">
+          <div class="chrome" style="width:100%;margin-bottom:auto">
+            <span class="lk ok">🔒 HTTPS</span>
+            <span class="url">https://tudominio.com/ (Aprobado por Google)</span>
           </div>
-          <div class="s-hero">
-            <div>
-              <span class="s-badge">Verificado por NexaGuard Forensic</span>
-              <h4>Tu sitio web en línea y seguro para tus usuarios</h4>
-              <p>Tráfico orgánico recuperado al 100%. Sin advertencias en navegadores ni caídas de posicionamiento en Google.</p>
-              <div class="s-btns"><span class="s-cta">Nuestros Servicios</span><span class="s-ghost">Verificar Estado</span></div>
-              <div class="s-rate"><i>★★★★★</i> 100% libre de advertencias en Google Chrome</div>
-            </div>
-            <div class="s-art">
-              <svg viewBox="0 0 600 440" preserveAspectRatio="xMidYMid slice" role="img">
-                <rect width="600" height="440" fill="#15284f"/>
-                <circle cx="300" cy="220" r="100" fill="rgba(61,232,164,0.15)" stroke="#3de8a4" stroke-width="4"/>
-                <path d="M265 220l25 25 50-50" fill="none" stroke="#3de8a4" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
+          <div class="site-clean-badge">✓ Advertencia Retirada por Google Safe Browsing</div>
+          <h4>Acceso Libre y Seguro para tus Clientes</h4>
+          <p>Tu web carga de forma instantánea sin mensajes de advertencia, el candado de seguridad permanece verde y el tráfico de ventas se restablece.</p>
+        </div>
+
+        <!-- Panel Infectado / Antes -->
+        <div class="pane hacked">
+          <div class="chrome">
+            <span class="lk bad">🛑 PELIGRO</span>
+            <span class="url">chrome://interstitial/safe-browsing</span>
+          </div>
+          <div class="hk">
+            <div class="hk-warn">🛑 EL SITIO WEB AL QUE VAS A ACCEDER ES ENGAÑOSO</div>
+            <div class="hk-t">BLOQUEADO POR GOOGLE</div>
+            <p>Los atacantes insertaron código malicioso. Google ha bloqueado todo acceso a tu dominio para proteger a los usuarios.</p>
           </div>
         </div>
-      </div>
 
-      <!-- Pantalla Roja Real de Chrome (Izquierda) -->
-      <div class="pane hacked">
-        <div class="chrome"><b class="lk bad">Bloqueado por Google Safe Browsing</b><span class="url">https://tuweboficial.com</span></div>
-        <div style="flex:1;background:#d93025;color:#fff;padding:6% 8%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;flex-direction:column;justify-content:center;gap:18px">
-          <div style="display:flex;align-items:center;gap:14px">
-            <svg viewBox="0 0 24 24" style="width:48px;height:48px;fill:#fff"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
-            <h3 style="font-size:clamp(1.5rem, 3.2vw, 2.3rem);font-weight:700;line-height:1.15;margin:0">El sitio al que vas a acceder es engañoso</h3>
-          </div>
-          <p style="font-size:clamp(0.92rem, 1.3vw, 1.1rem);line-height:1.6;max-width:54ch;opacity:0.95">
-            Es posible que los atacantes de <strong>tuweboficial.com</strong> te engañen para que hagas algo peligroso, como instalar software o revelar información confidencial (por ejemplo, contraseñas, números de teléfono o tarjetas de crédito).
-          </p>
-          <div style="display:flex;gap:14px;margin-top:10px">
-            <span style="background:rgba(255,255,255,0.25);padding:10px 22px;border-radius:4px;font-weight:600;font-size:0.92rem;border:1px solid rgba(255,255,255,0.4)">Volver a un lugar seguro</span>
-            <span style="padding:10px 14px;font-size:0.92rem;opacity:0.8;text-decoration:underline">Detalles</span>
-          </div>
+        <!-- Controlador Deslizante -->
+        <div class="hdl" id="hdl" tabindex="0" role="slider" aria-label="Deslizar para comparar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+          <b>↔</b>
         </div>
       </div>
-
-      <span class="lbl b">Pantalla Roja de Google Chrome</span>
-      <span class="lbl a">Sitio Desbloqueado y Seguro</span>
-      <div class="hdl" id="hdl" tabindex="0" role="slider" aria-label="Comparar antes y después" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
-        <b><svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px"><polyline points="15 18 9 12 15 6"/></svg></b>
-      </div>
-    </div>
-    <p class="cmp-hint" style="margin-top:16px;color:var(--ml-text-dim);font-size:0.92rem;text-align:center">
-      Arrastra la barra divisoria con el ratón o utiliza las flechas del teclado.
-    </p>
-  </section>
-
-  <!-- Hoja de Ruta Forense Editorial -->
-  <section>
-    <div class="ml-sec-header">
-      <span class="ml-sec-tag">Protocolo de Desbloqueo</span>
-      <h2 class="ml-sec-title">Cómo Desbloqueamos tu Web en Google Safe Browsing</h2>
-      <p class="ml-sec-desc">
-        Google no retira la pantalla roja si no comprueba que todas las causas de la alerta fueron erradicadas y selladas. Este es nuestro protocolo forense:
-      </p>
+      <p class="cmp-hint">Desliza el botón central para comparar el estado del bloqueo</p>
     </div>
 
-    <div class="ml-roadmap">
-      <div class="ml-roadmap-row">
-        <div class="ml-roadmap-num">01</div>
-        <div class="ml-roadmap-title">Extracción del Registro en Search Console</div>
-        <div class="ml-roadmap-desc">
-          Analizamos las muestras exactas de URL que activaron la alarma de Google:
-          <ul>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Revisión de la sección <em>Problemas de Seguridad</em> en la consola de Google.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Detección de si se trata de inyecciones de ingeniería social, código malicioso o enlaces externos sospechosos.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Aislamiento del servidor para evitar que el bot de Google siga encontrando nuevas alteraciones mientras se limpia.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="ml-roadmap-row">
-        <div class="ml-roadmap-num">02</div>
-        <div class="ml-roadmap-title">Desinfección Quirúrgica de Archivos y Hashes SHA-256</div>
-        <div class="ml-roadmap-desc">
-          Limpiamos las carpetas del núcleo y temas alterados:
-          <ul>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Reemplazo íntegro de directorios de sistema con sumas de comprobación oficiales de WordPress.org.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Erradicación de backdoors y scripts ofuscados en <span class="ml-code">wp-content/uploads/</span>.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Purgado de scripts inyectados en la tabla <span class="ml-code">wp_options</span> de MySQL.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="ml-roadmap-row">
-        <div class="ml-roadmap-num">03</div>
-        <div class="ml-roadmap-title">Sellado de Brechas y Rotación Criptográfica</div>
-        <div class="ml-roadmap-desc">
-          Evitamos que el atacante recupere el control:
-          <ul>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Regeneración de las claves secretas SALT en <span class="ml-code">wp-config.php</span> para cerrar sesiones maliciosas.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Eliminación de usuarios administradores parásito creados por el atacante.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Despliegue de reglas en el firewall WAF para bloquear nuevas inyecciones.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="ml-roadmap-row">
-        <div class="ml-roadmap-num">04</div>
-        <div class="ml-roadmap-title">Presentación Formal del Informe a Google</div>
-        <div class="ml-roadmap-desc">
-          Tramitamos el deslistado rápido ante el equipo de seguridad de Google:
-          <ul>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Redacción del informe técnico detallando los archivos limpiados, parches de seguridad y WAF activo.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Solicitud de revisión de seguridad formal en Google Search Console.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Retirada de la pantalla roja en 12 a 48 horas en Chrome, Firefox y Safari.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Módulo de Conversión Elevado -->
-  <section class="ml-elevated-cta">
-    <div>
-      <div class="ml-pill" style="margin-bottom:14px">
-        <span class="ml-dot-radar" style="background:var(--ml-red);box-shadow:0 0 10px var(--ml-red)"></span>
-        Desbloqueo Urgente Safe Browsing
-      </div>
-      <h2 class="ml-cta-headline">
-        ¿Tu web tiene la pantalla roja de Google en este momento?
-      </h2>
-      <p class="ml-cta-body">
-        Cada hora con la pantalla roja espanta a tus clientes y destruye tu posicionamiento orgánico. Un analista de NexaGuard limpia tu servidor hoy y tramita el retiro formal ante Google con 30 días de garantía.
-      </p>
-      <div class="ml-btn-group">
-        <a class="ml-btn-primary" href="../index.html#planes" style="padding:15px 30px">
-          <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          <span>Retirar Pantalla Roja ($89 USD)</span>
-        </a>
-        <a class="ml-btn-ghost" href="../index.html#planes">
-          <span>Ver Planes de Blindaje Anual</span>
-        </a>
-      </div>
-    </div>
-
-    <div class="ml-pricing-box">
-      <span class="ml-pricing-badge">Tarifa Única</span>
-      <div class="ml-pricing-num">$89 <span>USD</span></div>
-      <p class="ml-pricing-sub">Pago único con garantía total de 30 días. Si Google no retira la pantalla roja, te reembolsamos el 100% de tu dinero sin preguntas.</p>
-      <a class="ml-btn-primary" href="../index.html#planes" style="width:100%">
-        <span>Solicitar Limpieza Ahora</span>
-      </a>
-    </div>
-  </section>
-
-  <!-- Preguntas Frecuentes Forenses (FAQ) -->
-  <section class="faq" style="margin: 80px 0 30px;">
-    <div>
-      <span class="ml-sec-tag">Transparencia Total</span>
-      <h2 style="font-family:var(--fd);font-size:clamp(1.8rem, 3vw, 2.4rem);color:#fff;margin-bottom:12px">Preguntas Frecuentes</h2>
-      <p style="color:var(--ml-text-muted);font-size:1.05rem;line-height:1.6">
-        Todo lo que necesitas saber sobre el proceso de desbloqueo en Google Safe Browsing.
-      </p>
-    </div>
-
-    <div>
+    <h2>4. Preguntas Frecuentes sobre la Pantalla Roja de Google</h2>
+    <div class="bl-faq">
       <details>
         <summary>
           <span>¿Cuánto tarda Google en retirar la pantalla roja tras enviar la solicitud?</span>
-          <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg class="ic-faq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         </summary>
-        <p>
-          Si el malware fue erradicado al 100% y se presenta el informe formal con las directivas de seguridad corregidas, el equipo automatizado de Google Safe Browsing suele retirar la advertencia entre 12 y 48 horas.
-        </p>
+        <p>Si el malware fue erradicado al 100% y se presenta el informe formal con las directivas de seguridad corregidas, el equipo automatizado de Google Safe Browsing suele retirar la advertencia entre 12 y 48 horas.</p>
       </details>
 
       <details>
         <summary>
           <span>¿Qué pasa si pido la revisión en Google antes de limpiar todo el malware?</span>
-          <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg class="ic-faq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         </summary>
-        <p>
-          Google rechazará la solicitud y catalogará tu dominio como "reincidente", lo que puede duplicar el tiempo de espera para futuras revisiones y prolongar el bloqueo durante semanas.
-        </p>
+        <p>Google rechazará la solicitud y catalogará tu dominio como "reincidente", lo que puede duplicar el tiempo de espera para futuras revisiones y prolongar el bloqueo durante semanas.</p>
       </details>
 
       <details>
         <summary>
           <span>¿Por qué Google bloqueó mi web si yo la veo normal?</span>
-          <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg class="ic-faq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         </summary>
-        <p>
-          Muchos atacantes emplean cloaking o inyectan scripts maliciosos que solo se ejecutan ante visitantes específicos (móviles o referidos de buscadores). Googlebot rastrea tu web desde múltiples servidores y detecta esas cargas peligrosas aunque tú no las percibas.
-        </p>
-      </details>
-
-      <details>
-        <summary>
-          <span>¿Ofrece NexaGuard garantía si contrato el servicio de rescate?</span>
-          <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </summary>
-        <p>
-          Sí. Incluye 30 días de garantía total. Si tras la intervención forense Google no retira la advertencia o se produce una reinfección, nuestro equipo interviene sin coste o te reembolsa el 100% de tu dinero.
-        </p>
+        <p>Muchos atacantes emplean cloaking o inyectan scripts maliciosos que solo se ejecutan ante visitantes específicos (móviles o referidos de buscadores). Googlebot rastrea tu web desde múltiples servidores y detecta esas cargas peligrosas aunque tú no las percibas.</p>
       </details>
     </div>
-  </section>
 
+    <!-- Banner de Conversión Final -->
+    <div class="cta-banner">
+      <h2>¿Necesitas desbloquear tu web y retirar la pantalla roja de Google hoy mismo?</h2>
+      <p>En NexaGuard limpiamos el malware al 100%, redactamos el informe técnico para Google Search Console y garantizamos el levantamiento de la penalización con 30 días de cobertura total.</p>
+      <div class="cta-group">
+        <a href="../index.html#escaner" class="btn btn-y">Escanear Sitio Gratis Ahora</a>
+        <a href="../index.html#planes" class="btn btn-red">Solicitar Rescate Urgente ($89)</a>
+      </div>
+    </div>
+  </article>
 </main>
 
-<!-- Pie de Página Oficial NexaGuard -->
-<footer class="foot">
-  <span>© 2026 NexaGuard Security. Ciberseguridad forense y erradicación de amenazas web.</span>
-  <span style="opacity:0.4">|</span>
-  <a href="../index.html" style="color:var(--muted);text-decoration:none">Inicio</a>
-  <span style="opacity:0.4">|</span>
-  <a href="../index.html#escaner" style="color:var(--muted);text-decoration:none">Escáner Web</a>
-  <span style="opacity:0.4">|</span>
-  <a href="../index.html#planes" style="color:var(--muted);text-decoration:none">Planes y Tarifas</a>
-  <a href="../reparar-wordpress-hackeado/index.html" style="color:var(--muted);text-decoration:none">Guía Forense</a>
-  <span style="opacity:0.4">|</span>
-  <a href="../index.html#contacto" style="color:var(--muted);text-decoration:none">Contacto Urgente</a>
+<!-- Pie de Página del Blog -->
+<footer class="bl-footer">
+  <div class="bl-footer-links">
+    <a href="../index.html">Inicio</a>
+    <a href="../reparar-wordpress-hackeado/">Reparar WordPress</a>
+    <a href="../japanese-keyword-hack/">Japanese Keyword Hack</a>
+    <a href="../quitar-pantalla-roja-google/">Pantalla Roja Google</a>
+    <a href="../limpiar-redirecciones-maliciosas-wordpress/">Redirecciones Maliciosas</a>
+    <a href="../desinfectar-woocommerce-hackeado/">Desinfectar WooCommerce</a>
+  </div>
+  <p>© 2026 NexaGuard Security. Ciberseguridad forense y protección perimetral para WordPress.</p>
 </footer>
 
-<!-- Scripts: Three.js 3D WebGL Holographic Engine Oficial de NexaGuard -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="../brand/nexaguard-3d.js"></script>
-
+<!-- Scripts: Deslizador Interactivo y Escáner Rápido -->
 <script>
 (function() {
   'use strict';
 
-  // 1. Menú Móvil Hamburguesa
-  var burger = document.getElementById('navBurger');
-  var drawer = document.getElementById('navDrawer');
-  if (burger && drawer) {
-    burger.addEventListener('click', function() {
-      var isOpen = drawer.classList.toggle('open');
-      burger.classList.toggle('open', isOpen);
-      burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    });
-    drawer.querySelectorAll('a').forEach(function(link) {
-      link.addEventListener('click', function() {
-        drawer.classList.remove('open');
-        burger.classList.remove('open');
-        burger.setAttribute('aria-expanded', 'false');
-      });
-    });
-  }
-
-  // 2. Rotación del Terminal en el Hero
-  var termBody = document.getElementById('heroTermBody');
-  var logs = [
-    { cls: 'i', msg: '> Rastreo de inyecciones en base de datos wp_options...' },
-    { cls: 'w', msg: '> [ALERTA] Directiva maliciosa localizada en .htaccess' },
-    { cls: 'e', msg: '> [BLOQUEADO] Script de descarga maliciosa aislado con éxito' },
-    { cls: 's', msg: '> Checksums del núcleo 100% verificados contra WordPress.org' },
-    { cls: 'c', msg: '> Solicitud formal de reconsideración preparada para Google.' }
-  ];
-  var idx = 0;
-  setInterval(function() {
-    if (!termBody) return;
-    var next = logs[idx % logs.length];
-    idx++;
-    var div = document.createElement('div');
-    div.className = 'ml-log ' + next.cls;
-    div.textContent = next.msg;
-    termBody.appendChild(div);
-    if (termBody.children.length > 7) termBody.removeChild(termBody.children[0]);
-  }, 3200);
-
-  // 3. Control Deslizante Interactivo Antes / Después (.cmp)
   var cmp = document.getElementById('cmp');
   var hdl = document.getElementById('hdl');
   if (cmp && hdl) {
@@ -659,16 +367,15 @@
     });
   }
 
-  // 4. Lanzador de Escaneo a la Home
-  window.launchScan = function() {
-    var input = document.getElementById('targetSiteInput');
+  window.launchBlogScan = function() {
+    var input = document.getElementById('quickScanInput');
     var val = (input ? input.value : '').trim();
-    if (!val) return;
+    if (!val) {
+      window.location.href = '../index.html#escaner';
+      return;
+    }
     var clean = val.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').trim();
-    if (!clean) return;
-
-    var base = (window.location.protocol === 'file:') ? '../index.html' : '/';
-    window.location.href = base + '?scan=' + encodeURIComponent(clean) + '#escaner';
+    window.location.href = '../index.html?scan=' + encodeURIComponent(clean) + '#escaner';
   };
 })();
 </script>

@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cómo Eliminar Redirecciones Maliciosas en WordPress (Guía 2026) | NexaGuard</title>
-<meta name="description" content="Protocolo técnico para limpiar el malware que desvía a tus visitantes móviles a páginas de estafas, casinos o falsas alertas de virus en WordPress.">
-<meta name="keywords" content="eliminar redirecciones maliciosas wordpress, virus redireccion movil wordpress, wordpress redirige a otra pagina, limpiar malware redireccion wordpress, virus casino wordpress, clearfake wordpress">
+<title>Cómo Limpiar Redirecciones Maliciosas en WordPress (Guía Definitiva 2026) | NexaGuard</title>
+<meta name="description" content="Guía paso a paso para erradicar redirecciones automáticas en WordPress. Limpia scripts en .htaccess, base de datos y temas afectados por ClearFake o Balada.">
+<meta name="keywords" content="redirecciones maliciosas wordpress, eliminar redireccion virus wordpress, wordpress redirige a otra web, limpiar virus redireccion movil, redireccion spam wordpress">
 <meta name="author" content="NexaGuard Security Forensics">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="canonical" href="https://www.nexaguards.com/limpiar-redirecciones-maliciosas-wordpress/">
-<meta name="theme-color" content="#070913">
+<meta name="theme-color" content="#070c22">
 
 <!-- Favicons & App Icons -->
 <link rel="icon" type="image/png" sizes="32x32" href="../brand/favicon-32x32.png">
@@ -20,8 +20,8 @@
 <!-- Open Graph / Redes Sociales -->
 <meta property="og:locale" content="es_ES">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Cómo Eliminar Redirecciones Maliciosas en WordPress (Guía 2026)">
-<meta property="og:description" content="Elimina el malware que desvía a tus clientes móviles hacia sitios fraudulentos y blinda tu servidor hoy mismo.">
+<meta property="og:title" content="Cómo Limpiar Redirecciones Maliciosas en WordPress (Guía 2026)">
+<meta property="og:description" content="Pasos exactos para erradicar el secuestro de tráfico en WordPress, limpiar la base de datos y proteger a tus visitantes.">
 <meta property="og:url" content="https://www.nexaguards.com/limpiar-redirecciones-maliciosas-wordpress/">
 <meta property="og:site_name" content="NexaGuard Security">
 <meta property="og:image" content="https://www.nexaguards.com/brand/og-image.png">
@@ -30,8 +30,8 @@
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Eliminar Redirecciones Maliciosas en WordPress | NexaGuard">
-<meta name="twitter:description" content="Protocolo técnico para limpiar malware de redirección en WordPress.">
+<meta name="twitter:title" content="Limpiar Redirecciones Maliciosas en WordPress | NexaGuard">
+<meta name="twitter:description" content="Elimina redirecciones condicionales en móviles y scripts de secuestro en tu web.">
 <meta name="twitter:image" content="https://www.nexaguards.com/brand/og-image.png">
 
 <!-- Google Fonts Oficiales -->
@@ -39,9 +39,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
-<!-- Estilos Base y Modern Landing Engine -->
-<link rel="stylesheet" href="../brand/nexaguard-engine.css">
-<link rel="stylesheet" href="../brand/modern-landing.css">
+<!-- Estilos Blog Landing de NexaGuard -->
+<link rel="stylesheet" href="../brand/blog-landing.css">
 
 <!-- Schema.org HowTo / FAQPage / BreadcrumbList -->
 <script type="application/ld+json">
@@ -119,14 +118,6 @@
             "@type": "Answer",
             "text": "Porque el atacante dejó instalada una puerta trasera (backdoor) en carpetas como uploads o un cron job en la base de datos que regenera el código malicioso automáticamente en cuanto detecta que fue eliminado."
           }
-        },
-        {
-          "@type": "Question",
-          "name": "¿Qué incluye el servicio de desinfección de NexaGuard?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Localización y erradicación del 100% de los scripts de redirección, destrucción de backdoors, sellado perimetral con firewall WAF y 30 días de garantía total sin reinfección."
-          }
         }
       ]
     }
@@ -134,17 +125,11 @@
 }
 </script>
 </head>
-<body class="js">
+<body>
 
-<!-- Canvas 3D Oficial y Capa de Ruido -->
-<canvas id="gl" aria-hidden="true"></canvas>
-<div class="noise" aria-hidden="true"></div>
-<div class="ambient-glow-1" aria-hidden="true"></div>
-<div class="ambient-glow-2" aria-hidden="true"></div>
-
-<!-- Cabecera Oficial Idéntica a NexaGuard con Estado y Menú Móvil -->
-<header class="nav" id="nav">
-  <a class="logo" href="../index.html" aria-label="NexaGuard, ir al inicio">
+<!-- Navegación Minimalista -->
+<header class="bl-nav">
+  <a href="../index.html" class="bl-logo" aria-label="NexaGuard Inicio">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64" aria-hidden="true">
       <defs>
         <linearGradient id="nxgn" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse">
@@ -153,7 +138,7 @@
         </linearGradient>
         <linearGradient id="nxfn" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#15214f"/>
-          <stop offset="1" stop-color="#0b1235"/>
+          <stop offset="0" stop-color="#0b1235"/>
         </linearGradient>
       </defs>
       <path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="url(#nxfn)" stroke="url(#nxgn)" stroke-width="3.2" stroke-linejoin="round"/>
@@ -171,459 +156,181 @@
       </g>
     </svg>
   </a>
-  <nav class="nav-links" aria-label="Principal">
-    <a href="../index.html#sintomas">Síntomas</a>
-    <a href="../index.html#servicios">Servicios</a>
-    <a href="../index.html#escaner">Escáner</a>
-    <a href="../index.html#planes">Planes</a>
-    <a href="../reparar-wordpress-hackeado/index.html">Guía Forense</a>
-  </nav>
-  <div class="nav-r">
-    <div class="health" aria-label="Estado del sistema">
-      <div class="hbar"><i style="width:18%;background:var(--red)"></i></div>
-      <b>18%</b>
-      <em style="color:var(--red)">REDIRECCIÓN ACTIVA</em>
-    </div>
-    <a class="btn btn-o sm" href="../index.html#escaner">Escáner</a>
-    <a class="btn btn-y sm" href="../index.html#planes">Ver Planes</a>
-    <button class="nav-burger" id="navBurger" aria-label="Abrir menú" aria-expanded="false">
-      <svg class="ic-burger" viewBox="0 0 24 24"><line class="b-top" x1="4" y1="6" x2="20" y2="6"/><line class="b-mid" x1="4" y1="12" x2="20" y2="12"/><line class="b-bot" x1="4" y1="18" x2="20" y2="18"/></svg>
-    </button>
+  <div class="bl-nav-acts">
+    <a href="../index.html#escaner" class="btn btn-o">Escáner Gratis</a>
+    <a href="../index.html#planes" class="btn btn-y">Planes y Precios</a>
   </div>
 </header>
 
-<!-- Menú Desplegable Móvil -->
-<div class="nav-drawer" id="navDrawer" aria-hidden="true">
-  <div class="drawer-links">
-    <a href="../index.html" class="d-link"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Inicio</a>
-    <a href="../index.html#sintomas" class="d-link"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Síntomas Comunes</a>
-    <a href="../index.html#escaner" class="d-link"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Escáner de Malware</a>
-    <a href="../index.html#planes" class="d-link"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Planes de Seguridad</a>
-    <a href="../reparar-wordpress-hackeado/index.html" class="d-link"><svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Guía Forense</a>
+<!-- Contenedor Editorial Central -->
+<main class="bl-container">
+  <!-- Migas de Pan -->
+  <nav class="bl-breadcrumbs" aria-label="Migas de pan">
+    <a href="../index.html">Inicio</a>
+    <span>/</span>
+    <a href="../limpiar-redirecciones-maliciosas-wordpress/">Guías Forenses</a>
+    <span>/</span>
+    <span>Limpiar Redirecciones Maliciosas</span>
+  </nav>
+
+  <!-- Badge y Título Principal -->
+  <span class="hero-tag">🔄 Secuestro de Tráfico Móvil</span>
+  <h1 class="bl-title">Cómo Limpiar Redirecciones Maliciosas en WordPress (Guía Definitiva 2026)</h1>
+
+  <!-- Metadatos de Publicación -->
+  <div class="meta-info">
+    <span>🛡️ Por Equipo Forense NexaGuard</span>
+    <span>⏱️ Tiempo de lectura: 6 min</span>
+    <span>🔄 Actualizado: Octubre 2026</span>
   </div>
-  <div class="drawer-foot">
-    <a href="../index.html#planes" class="btn btn-y d-btn">Contratar Rescate ($89 USD)</a>
-    <a href="../downloads/nexaguard-malware-scanner.zip" class="btn btn-o d-btn">Descargar Plugin Gratis</a>
+
+  <!-- Caja de Alerta Destacada -->
+  <div class="alert-box">
+    <h3>¿Tu web redirige a páginas de spam, falsos antivirus o sitios fraudulentos?</h3>
+    <p>Las redirecciones maliciosas (asociadas a campañas como ClearFake, Balada Injector y EtherHiding) secuestran a tus visitantes móviles para desviar tráfico legítimo hacia fraudes o malware. Causan el rechazo inmediato de tus clientes y ponen en riesgo tu posicionamiento SEO en Google.</p>
   </div>
-</div>
 
-<!-- Hero Editorial Asimétrico -->
-<section class="ml-hero-wrap" id="inicio">
-  <div class="ml-hero-grid">
-    <div>
-      <div class="ml-pill">
-        <span class="ml-dot-radar" style="background:var(--ml-red);box-shadow:0 0 10px var(--ml-red)"></span>
-        Neutralización de Redirecciones Maliciosas 24/7
-      </div>
-
-      <h1 class="ml-headline">
-        ¿Tu WordPress <span class="glitch" data-text="redirige">redirige</span> a páginas extrañas? Lo limpiamos hoy.
-      </h1>
-
-      <p class="ml-lead">
-        Tus clientes entran desde Google o su teléfono y son expulsados hacia webs de casinos, estafas cripto o alertas falsas. Erradicamos los scripts de desvío, purgamos las backdoors y blindamos tu tráfico.
-      </p>
-
-      <!-- Barra de Escáner Rápido en Vivo -->
-      <form class="ml-scanner-card" onsubmit="event.preventDefault(); launchScan();">
-        <span class="ml-scanner-prefix">https://</span>
-        <input type="text" id="targetSiteInput" class="ml-scanner-input" placeholder="tudominio.com" required autocomplete="off" spellcheck="false">
-        <button type="submit" class="ml-btn-primary" style="padding:10px 20px;font-size:0.9rem">
-          <span>Rastrear Redirección</span>
-          <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </form>
-
-      <div class="ml-btn-group">
-        <a class="ml-btn-primary" href="../index.html#planes">
-          <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>Eliminar Redirección ($89 USD)</span>
-        </a>
-        <a class="ml-btn-ghost" href="../downloads/nexaguard-malware-scanner.zip">
-          <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Descargar Plugin Oficial</span>
-        </a>
-      </div>
-
-      <ul class="ml-trust-list">
-        <li class="ml-trust-item">
-          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          Detección de redirecciones invisibles condicionales para móviles
-        </li>
-        <li class="ml-trust-item">
-          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          Limpieza en .htaccess, cabeceras de temas y base de datos
-        </li>
-        <li class="ml-trust-item">
-          <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          30 días de garantía total sin riesgo de reaparición
-        </li>
-      </ul>
-    </div>
-
-    <!-- Terminal Raycast / Linear HUD con Trazador de Redirecciones -->
-    <div class="ml-terminal">
-      <div class="ml-term-header">
-        <div class="ml-term-dots">
-          <span class="ml-term-dot r"></span>
-          <span class="ml-term-dot y"></span>
-          <span class="ml-term-dot g"></span>
-        </div>
-        <div class="ml-term-title">redirect-tracer · payload-interceptor</div>
-        <span class="ml-term-badge" style="background:var(--ml-red-soft);border-color:rgba(251,113,133,0.3);color:var(--ml-red)">HIJACK TRACED</span>
-      </div>
-      <div class="ml-term-stream" id="heroTermBody">
-        <div class="ml-log i">> Simulando petición móvil con User-Agent: iPhone Safari...</div>
-        <div class="ml-log e">> [302 FOUND] Redirección no autorizada a: https://track-ads-click.cc/redirect</div>
-        <div class="ml-log w">> Analizando vector de inyección en servidor web...</div>
-        <div class="ml-log e">> [HALLAZGO] Script ofuscado window.location en wp-content/themes/functions.php</div>
-        <div class="ml-log s">> [DESINFECCIÓN] Función maliciosa eliminada y archivo sanitizado</div>
-        <div class="ml-log c">> Escudo WAF activado: Bloqueando peticiones de secuestro de tráfico</div>
-      </div>
+  <!-- Escaneo Rápido Dentro del Artículo -->
+  <div class="bl-quick-scan">
+    <h3>Auditoría de Redirecciones Ocultas</h3>
+    <p>Ingresa tu URL para analizar si tu instalación ejecuta desvíos condicionales en JavaScript o directivas maliciosas a nivel de servidor:</p>
+    <div class="bl-scan-row">
+      <input type="text" id="quickScanInput" placeholder="tudominio.com" aria-label="Dominio a escanear" onkeydown="if(event.key==='Enter')launchBlogScan()">
+      <button class="btn btn-y" onclick="launchBlogScan()">Escanear Ahora</button>
     </div>
   </div>
-</section>
 
-<!-- Contenedor Editorial Amplio -->
-<main class="ml-content-section">
+  <!-- Contenido Editorial -->
+  <article class="bl-content">
+    <h2>1. ¿Cómo funcionan las redirecciones maliciosas modernas?</h2>
+    <p>A diferencia de los ataques antiguos que afectaban a todos los visitantes por igual, las cepas actuales de malware implementan <b>filtros de evasión inteligente</b>:</p>
+    <ul>
+      <li><b>Filtro por User-Agent y Referrer:</b> La redirección solo se ejecuta si la visita procede de un buscador como Google o Bing, y proviene de un dispositivo móvil (iOS / Android). Si entras escribiendo la URL directamente en tu PC, la web carga normal.</li>
+      <li><b>Control por Cookies y Sesiones:</b> El código malicioso guarda una cookie en el navegador del usuario para activarse únicamente una vez cada 24 horas por visitante, haciendo que sea muy difícil de reproducir cuando el dueño del sitio intenta comprobarlo.</li>
+      <li><b>Inyecciones en bases de datos:</b> Scripts JavaScript altamente ofuscados incrustados en la tabla <code>wp_posts</code> o dentro de opciones de temas en <code>wp_options</code> (ej. <code>siteurl</code>, <code>active_plugins</code> o scripts en <code>header</code> y <code>footer</code>).</li>
+    </ul>
 
-  <!-- Matriz de Tipos de Redirección Asimétrica -->
-  <section>
-    <div class="ml-sec-header">
-      <span class="ml-sec-tag">Tipología de Amenaza</span>
-      <h2 class="ml-sec-title">Cómo operan los secuestros de tráfico en WordPress</h2>
-      <p class="ml-sec-desc">
-        A diferencia de los ataques destructivos, el malware de redirección está diseñado para monetizar cada clic robándote los compradores legítimos.
-      </p>
+    <h2>2. Protocolo Forense para Erradicar Redirecciones</h2>
+
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <h3>Inspeccionar Archivos .htaccess en Todos los Niveles</h3>
+      <p>Revisa no solo el archivo <code>.htaccess</code> en la raíz de tu WordPress, sino también subdirectorios como <code>wp-content/</code>, <code>wp-content/uploads/</code> y <code>wp-includes/</code>. Los atacantes crean archivos ocultos con directivas <code>RewriteCond %{HTTP_USER_AGENT}</code> que fuerzan un código de redirección HTTP 301 o 302 sin pasar por PHP.</p>
     </div>
 
-    <div class="ml-matrix-grid">
-      <div class="ml-matrix-cell span-6 danger">
-        <div class="ml-matrix-icon-box">
-          <svg class="ic" viewBox="0 0 24 24"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
-        </div>
-        <h3 class="ml-matrix-title">Redirecciones Solo Móviles</h3>
-        <p class="ml-matrix-text">
-          El atacante detecta pantallas táctiles y desvía al usuario hacia alertas fraudulentas que afirman <em>"Tu teléfono tiene 13 virus"</em> o hacia suscripciones SMS de pago por uso.
-        </p>
-      </div>
-
-      <div class="ml-matrix-cell span-6 danger">
-        <div class="ml-matrix-icon-box">
-          <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-        </div>
-        <h3 class="ml-matrix-title">Redirección en el Primer Clic</h3>
-        <p class="ml-matrix-text">
-          La web carga aparentemente normal, pero al hacer clic en cualquier enlace, menú o botón, se abre una ventana emergente que secuestra la sesión del comprador.
-        </p>
-      </div>
-
-      <div class="ml-matrix-cell span-7">
-        <div class="ml-matrix-icon-box">
-          <svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-        </div>
-        <h3 class="ml-matrix-title">Condicionales de Búsqueda (Google Referrer)</h3>
-        <p class="ml-matrix-text">
-          Si el usuario teclea tu URL directamente, no pasa nada; pero si hace clic desde los resultados de Google, el código malicioso intercepta la cabecera <code>Referer</code> y lo envía a un casino ilegal.
-        </p>
-      </div>
-
-      <div class="ml-matrix-cell span-5">
-        <div class="ml-matrix-icon-box">
-          <svg class="ic" viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
-        </div>
-        <h3 class="ml-matrix-title">Infección ClearFake & Notificaciones Push</h3>
-        <p class="ml-matrix-text">
-          Superpone ventanas engañosas exigiendo actualizar el navegador o aceptar notificaciones web para luego inundar de anuncios maliciosos el ordenador del cliente.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Visualizador Antes / Después Interactivo -->
-  <section style="margin: 90px 0;">
-    <div class="ml-sec-header">
-      <span class="ml-sec-tag">Simulación de Navegación</span>
-      <h2 class="ml-sec-title">Experiencia de Navegación Secuestrada vs. Tráfico Limpio</h2>
-      <p class="ml-sec-desc">Comprueba la diferencia entre un usuario expulsado a una landing de estafa y la experiencia fluida de tu sitio web verificado.</p>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <h3>Verificar Archivos de Plantilla y Funciones (header.php, functions.php)</h3>
+      <p>Abre el archivo <code>header.php</code> y <code>functions.php</code> de tu tema activo. Busca llamadas remotas con etiquetas <code>&lt;script src="https://..."&gt;</code> apuntando a dominios con terminaciones sospechosas (<code>.top</code>, <code>.bid</code>, <code>.xyz</code>, <code>.pw</code>) o funciones en JavaScript con <code>eval(String.fromCharCode(...))</code>.</p>
     </div>
 
-    <div class="cmp" id="cmp" style="--pos:50%">
-      <!-- Sitio Limpio (Derecha) -->
-      <div class="pane clean" aria-hidden="true">
-        <div class="chrome"><b class="lk ok">Conexión Verificada</b><span class="url">https://minegocio.com/catalogo</span></div>
-        <div class="site">
-          <div class="s-top"><span>Envío Inmediato</span><span>Pago 100% Cifrado</span><span>hola@minegocio.com</span></div>
-          <div class="s-nav">
-            <div class="s-logo"><svg viewBox="0 0 32 32"><path d="M5 27C5 12 14 4 28 4c0 14-8 23-21 23z" fill="#2f9e5b"/><path d="M8 25c5-8 10-12 16-16" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Mi Negocio Online</div>
-            <nav><span class="on">Productos</span><span>Ofertas</span><span>Testimonios</span><span>Contacto</span></nav>
-            <span class="s-cta">Comprar Seguro</span>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <h3>Desinfectar Registros en la Base de Datos (wp_options, wp_posts)</h3>
+      <p>Los atacantes inyectan código JavaScript ofuscado en widgets, cabeceras personalizadas y dentro de los propios artículos. Con <b>NexaGuard Core Sentinel</b> escaneamos cada fila de la base de datos MySQL, purificando las inyecciones sin alterar el texto ni los formatos de tus publicaciones.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">04</div>
+      <h3>Eliminar Backdoors Persistentes y Blindar con Firewall WAF</h3>
+      <p>Si eliminas el código de redirección pero dejas el backdoor (puerta trasera), la redirección regresará en cuestión de horas. NexaGuard localiza y erradica los archivos PHP rebeldes y despliega reglas WAF que bloquean el vector de entrada para impedir reinfecciones.</p>
+    </div>
+
+    <h2>3. Comparativa: Tráfico Secuestrado vs. Navegación Segura</h2>
+    <p>Comprueba la diferencia entre el comportamiento de un sitio afectado por redirecciones invisibles y la navegación transparente que experimentan tus usuarios tras la limpieza:</p>
+
+    <!-- Slider Antes / Después (.cmp) -->
+    <div class="bl-cmp-wrap">
+      <div class="cmp" id="cmp" style="--pos:50%" role="region" aria-label="Comparador de redirecciones antes y después de la desinfección">
+        <!-- Panel Limpio / Después -->
+        <div class="pane site-clean-preview">
+          <div class="chrome" style="width:100%;margin-bottom:auto">
+            <span class="lk ok">🔒 HTTPS</span>
+            <span class="url">https://tudominio.com/ (Navegación Limpia)</span>
           </div>
-          <div class="s-hero">
-            <div>
-              <span class="s-badge">Verificado por NexaGuard WAF</span>
-              <h4>Catálogo oficial con entregas protegidas</h4>
-              <p>Tu cliente navega sin interrupciones, añade productos al carrito y completa la compra con total tranquilidad.</p>
-              <div class="s-btns"><span class="s-cta">Ver Productos</span><span class="s-ghost">Garantía</span></div>
-              <div class="s-rate"><i>★★★★★</i> 0% redirecciones no autorizadas</div>
-            </div>
-            <div class="s-art">
-              <svg viewBox="0 0 600 440" preserveAspectRatio="xMidYMid slice" role="img">
-                <rect width="600" height="440" fill="#15284f"/>
-                <circle cx="300" cy="220" r="110" fill="rgba(61,232,164,0.12)" stroke="#3de8a4" stroke-width="3"/>
-                <path d="M260 220l30 30 60-60" fill="none" stroke="#3de8a4" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
+          <div class="site-clean-badge">✓ Redirecciones Erradicadas al 100%</div>
+          <h4>Tus Visitantes Permanecen en tu Web</h4>
+          <p>Tanto en dispositivos móviles como de escritorio, el tráfico navega libremente sin ventanas emergentes fraudulentas ni desvíos involuntarios.</p>
+        </div>
+
+        <!-- Panel Infectado / Antes -->
+        <div class="pane hacked">
+          <div class="chrome">
+            <span class="lk bad">⚠️ REDIRECCIÓN FORZADA</span>
+            <span class="url">https://malicious-traffic-hub.top/promo/?aff=...</span>
+          </div>
+          <div class="hk">
+            <div class="hk-warn">🛑 TRÁFICO SECUESTRADO EN MÓVILES</div>
+            <div class="hk-t">DESVÍO A SITIO DE FRAUDE</div>
+            <p>El visitante hace clic en tu enlace de Google pero el malware lo desvía forzosamente a una estafa de falsos sorteos o virus.</p>
           </div>
         </div>
-      </div>
 
-      <!-- Sitio Secuestrado con Redirección a Casino / Estafa (Izquierda) -->
-      <div class="pane hacked">
-        <div class="chrome"><b class="lk bad">302 Redirigido a Servidor Desconocido</b><span class="url">https://lucky-spins-jackpot.biz/?click_id=9842</span></div>
-        <div style="flex:1;background:#0d0614;color:#ff4560;padding:6% 8%;font-family:var(--fm);display:flex;flex-direction:column;justify-content:center;gap:18px">
-          <div style="background:#ff4560;color:#fff;padding:8px 14px;border-radius:6px;font-weight:700;font-size:0.88rem;align-self:flex-start">
-            [SECUESTRO DE TRÁFICO DETECTADO]
-          </div>
-          <div style="font-size:clamp(1.6rem, 3.4vw, 2.5rem);font-weight:800;color:#ffd700;line-height:1.15">
-            ¡FELICIDADES! HAS SIDO SELECCIONADO: GANA $10,000 USD HOY
-          </div>
-          <p style="color:#ffb3c0;font-size:clamp(0.9rem, 1.2vw, 1.05rem);line-height:1.6;max-width:52ch">
-            Tu cliente nunca vio tus productos. El script en tu servidor desvió su conexión hacia esta red de juego fraudulenta para cobrar una comisión de afiliado malicioso.
-          </p>
-          <div style="display:flex;gap:12px">
-            <span style="background:#ffd700;color:#000;padding:12px 24px;font-weight:800;border-radius:6px">GIRAR LA RULETA AHORA</span>
-          </div>
+        <!-- Controlador Deslizante -->
+        <div class="hdl" id="hdl" tabindex="0" role="slider" aria-label="Deslizar para comparar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+          <b>↔</b>
         </div>
       </div>
-
-      <span class="lbl b">Redirección a Estafa Externa</span>
-      <span class="lbl a">Navegación Limpia y Segura</span>
-      <div class="hdl" id="hdl" tabindex="0" role="slider" aria-label="Comparar antes y después" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
-        <b><svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px"><polyline points="15 18 9 12 15 6"/></svg></b>
-      </div>
-    </div>
-    <p class="cmp-hint" style="margin-top:16px;color:var(--ml-text-dim);font-size:0.92rem;text-align:center">
-      Arrastra la barra divisoria con el ratón o utiliza las flechas del teclado.
-    </p>
-  </section>
-
-  <!-- Hoja de Ruta Forense Editorial -->
-  <section>
-    <div class="ml-sec-header">
-      <span class="ml-sec-tag">Procedimiento de Erradicación</span>
-      <h2 class="ml-sec-title">Protocolo de Limpieza de Redirecciones Maliciosas</h2>
-      <p class="ml-sec-desc">
-        Rastrear una redirección requiere analizar tanto el servidor como el código que se procesa en el navegador del visitante:
-      </p>
+      <p class="cmp-hint">Arrastra el botón central para comparar el comportamiento</p>
     </div>
 
-    <div class="ml-roadmap">
-      <div class="ml-roadmap-row">
-        <div class="ml-roadmap-num">01</div>
-        <div class="ml-roadmap-title">Inspección de Directivas en .htaccess y Nginx</div>
-        <div class="ml-roadmap-desc">
-          Limpiamos las reglas que interceptan el tráfico antes de llegar a WordPress:
-          <ul>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Eliminación de directivas <span class="ml-code">RewriteRule ^(.*)$ https://malicioso...</span> en la raíz.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Restablecimiento del archivo estándar de WordPress y sellado de permisos 444 contra escritura.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Revisión de configuraciones virtuales en servidores LiteSpeed y Apache.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="ml-roadmap-row">
-        <div class="ml-roadmap-num">02</div>
-        <div class="ml-roadmap-title">Rastreo de JavaScript Ofuscado en Temas y Plugins</div>
-        <div class="ml-roadmap-desc">
-          Buscamos código incrustado en el navegador:
-          <ul>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Desobfuscación de cadenas hexadecimales y llamadas externas como <span class="ml-code">document.write(String.fromCharCode(...))</span>.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Limpieza de <span class="ml-code">header.php</span>, <span class="ml-code">footer.php</span> y ganchos maliciosos en <span class="ml-code">wp_head</span>.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Verificación de integridad SHA-256 de plugins oficiales para detectar archivos adulterados.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="ml-roadmap-row">
-        <div class="ml-roadmap-num">03</div>
-        <div class="ml-roadmap-title">Purgado de Inyecciones en la Base de Datos</div>
-        <div class="ml-roadmap-desc">
-          Los atacantes modernos almacenan el malware en la base de datos para no dejar rastro en archivos:
-          <ul>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Auditoría en <span class="ml-code">wp_options</span> buscando transients y opciones parásito con código JS.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Desinfección de inyecciones en entradas (<span class="ml-code">wp_posts</span>) y widgets activos.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Destrucción de tareas programadas (WordPress Cron) que recreaban los scripts a medianoche.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="ml-roadmap-row">
-        <div class="ml-roadmap-num">04</div>
-        <div class="ml-roadmap-title">Blindaje WAF y Cierre de Puertas Traseras</div>
-        <div class="ml-roadmap-desc">
-          Aseguramos que el desvío jamás vuelva a reproducirse:
-          <ul>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Eliminación de webshells en <span class="ml-code">/wp-content/uploads/</span>.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Rotación de claves secretas SALT en <span class="ml-code">wp-config.php</span>.</li>
-            <li><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Activación del Firewall de NexaGuard para bloquear peticiones maliciosas en tiempo real con 30 días de garantía.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Módulo de Conversión Elevado -->
-  <section class="ml-elevated-cta">
-    <div>
-      <div class="ml-pill" style="margin-bottom:14px">
-        <span class="ml-dot-radar" style="background:var(--ml-red);box-shadow:0 0 10px var(--ml-red)"></span>
-        Rescate Urgente de Tráfico Web
-      </div>
-      <h2 class="ml-cta-headline">
-        ¿Tus clientes están siendo desviados a otras webs ahora mismo?
-      </h2>
-      <p class="ml-cta-body">
-        Cada minuto con redirecciones activas te hace perder compradores y destruye tu reputación. Un especialista forense de NexaGuard erradica el 100% de la infección hoy mismo con 30 días de garantía total.
-      </p>
-      <div class="ml-btn-group">
-        <a class="ml-btn-primary" href="../index.html#planes" style="padding:15px 30px">
-          <svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          <span>Eliminar Redirección ($89 USD)</span>
-        </a>
-        <a class="ml-btn-ghost" href="../index.html#planes">
-          <span>Ver Planes Anuales</span>
-        </a>
-      </div>
-    </div>
-
-    <div class="ml-pricing-box">
-      <span class="ml-pricing-badge">Tarifa Única</span>
-      <div class="ml-pricing-num">$89 <span>USD</span></div>
-      <p class="ml-pricing-sub">Pago único con 30 días de garantía total. Si no logramos erradicar la redirección, te devolvemos el 100% de tu dinero de inmediato.</p>
-      <a class="ml-btn-primary" href="../index.html#planes" style="width:100%">
-        <span>Solicitar Limpieza Ahora</span>
-      </a>
-    </div>
-  </section>
-
-  <!-- Preguntas Frecuentes Forenses (FAQ) -->
-  <section class="faq" style="margin: 80px 0 30px;">
-    <div>
-      <span class="ml-sec-tag">Transparencia Total</span>
-      <h2 style="font-family:var(--fd);font-size:clamp(1.8rem, 3vw, 2.4rem);color:#fff;margin-bottom:12px">Preguntas Frecuentes</h2>
-      <p style="color:var(--ml-text-muted);font-size:1.05rem;line-height:1.6">
-        Aclaraciones técnicas sobre las causas y soluciones para las redirecciones maliciosas.
-      </p>
-    </div>
-
-    <div>
+    <h2>4. Preguntas Frecuentes sobre Redirecciones Maliciosas</h2>
+    <div class="bl-faq">
       <details>
         <summary>
           <span>¿Por qué la redirección solo ocurre cuando entro desde el móvil y no desde el PC?</span>
-          <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg class="ic-faq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         </summary>
-        <p>
-          Los ciberdelincuentes programan el malware para comprobar la cabecera User-Agent y el referente de búsqueda. Si entras directamente desde tu ordenador como administrador, la web se muestra limpia para no levantar sospechas; si entra un cliente desde un móvil o un enlace de Google, se activa la redirección hacia la estafa.
-        </p>
+        <p>Los ciberdelincuentes programan el malware para comprobar la cabecera User-Agent y el referente de búsqueda. Si entras directamente desde tu ordenador como administrador, la web se muestra limpia para no levantar sospechas; si entra un cliente desde un móvil o un enlace de Google, se activa la redirección hacia la estafa.</p>
       </details>
 
       <details>
         <summary>
           <span>¿Puedo perder mis ventas o clientes debido a las redirecciones?</span>
-          <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg class="ic-faq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         </summary>
-        <p>
-          Sí. Al ser desviados a páginas fraudulentas o de spam, la tasa de rebote sube al 90%, los clientes pierden la confianza y Google puede penalizar el sitio colocándolo en su lista negra de dominios engañosos.
-        </p>
+        <p>Sí. Al ser desviados a páginas fraudulentas o de spam, la tasa de rebote sube al 90%, los clientes pierden la confianza y Google puede penalizar el sitio colocándolo en su lista negra de dominios engañosos.</p>
       </details>
 
       <details>
         <summary>
           <span>¿Por qué vuelven a aparecer las redirecciones después de borrarlas?</span>
-          <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg class="ic-faq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         </summary>
-        <p>
-          Porque el atacante dejó instalada una puerta trasera (backdoor) en carpetas como uploads o un cron job en la base de datos que regenera el código malicioso automáticamente en cuanto detecta que fue eliminado.
-        </p>
-      </details>
-
-      <details>
-        <summary>
-          <span>¿Qué incluye el servicio de desinfección de NexaGuard?</span>
-          <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </summary>
-        <p>
-          Localización y erradicación del 100% de los scripts de redirección, destrucción de backdoors, sellado perimetral con firewall WAF y 30 días de garantía total sin reinfección.
-        </p>
+        <p>Porque el atacante dejó instalada una puerta trasera (backdoor) en carpetas como uploads o un cron job en la base de datos que regenera el código malicioso automáticamente en cuanto detecta que fue eliminado.</p>
       </details>
     </div>
-  </section>
 
+    <!-- Banner de Conversión Final -->
+    <div class="cta-banner">
+      <h2>¿Tus clientes están siendo redirigidos a páginas no deseadas ahora mismo?</h2>
+      <p>En NexaGuard erradicamos el código de redirección en archivos y base de datos, eliminamos el backdoor que lo regenera y blindamos tu web contra futuros secuestros.</p>
+      <div class="cta-group">
+        <a href="../index.html#escaner" class="btn btn-y">Escanear Sitio Gratis Ahora</a>
+        <a href="../index.html#planes" class="btn btn-red">Solicitar Rescate Urgente ($89)</a>
+      </div>
+    </div>
+  </article>
 </main>
 
-<!-- Pie de Página Oficial NexaGuard -->
-<footer class="foot">
-  <span>© 2026 NexaGuard Security. Ciberseguridad forense y erradicación de amenazas web.</span>
-  <span style="opacity:0.4">|</span>
-  <a href="../index.html" style="color:var(--muted);text-decoration:none">Inicio</a>
-  <span style="opacity:0.4">|</span>
-  <a href="../index.html#escaner" style="color:var(--muted);text-decoration:none">Escáner Web</a>
-  <span style="opacity:0.4">|</span>
-  <a href="../index.html#planes" style="color:var(--muted);text-decoration:none">Planes y Tarifas</a>
-  <a href="../reparar-wordpress-hackeado/index.html" style="color:var(--muted);text-decoration:none">Guía Forense</a>
-  <span style="opacity:0.4">|</span>
-  <a href="../index.html#contacto" style="color:var(--muted);text-decoration:none">Contacto Urgente</a>
+<!-- Pie de Página del Blog -->
+<footer class="bl-footer">
+  <div class="bl-footer-links">
+    <a href="../index.html">Inicio</a>
+    <a href="../reparar-wordpress-hackeado/">Reparar WordPress</a>
+    <a href="../japanese-keyword-hack/">Japanese Keyword Hack</a>
+    <a href="../quitar-pantalla-roja-google/">Pantalla Roja Google</a>
+    <a href="../limpiar-redirecciones-maliciosas-wordpress/">Redirecciones Maliciosas</a>
+    <a href="../desinfectar-woocommerce-hackeado/">Desinfectar WooCommerce</a>
+  </div>
+  <p>© 2026 NexaGuard Security. Ciberseguridad forense y protección perimetral para WordPress.</p>
 </footer>
 
-<!-- Scripts: Three.js 3D WebGL Holographic Engine Oficial de NexaGuard -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="../brand/nexaguard-3d.js"></script>
-
+<!-- Scripts: Deslizador Interactivo y Escáner Rápido -->
 <script>
 (function() {
   'use strict';
 
-  // 1. Menú Móvil Hamburguesa
-  var burger = document.getElementById('navBurger');
-  var drawer = document.getElementById('navDrawer');
-  if (burger && drawer) {
-    burger.addEventListener('click', function() {
-      var isOpen = drawer.classList.toggle('open');
-      burger.classList.toggle('open', isOpen);
-      burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    });
-    drawer.querySelectorAll('a').forEach(function(link) {
-      link.addEventListener('click', function() {
-        drawer.classList.remove('open');
-        burger.classList.remove('open');
-        burger.setAttribute('aria-expanded', 'false');
-      });
-    });
-  }
-
-  // 2. Rotación del Terminal en el Hero
-  var termBody = document.getElementById('heroTermBody');
-  var logs = [
-    { cls: 'i', msg: '> Rastreo de inyecciones en base de datos wp_options...' },
-    { cls: 'w', msg: '> [ALERTA] Directiva maliciosa localizada en .htaccess' },
-    { cls: 'e', msg: '> [BLOQUEADO] Script de descarga maliciosa aislado con éxito' },
-    { cls: 's', msg: '> Checksums del núcleo 100% verificados contra WordPress.org' },
-    { cls: 'c', msg: '> Solicitud formal de reconsideración preparada para Google.' }
-  ];
-  var idx = 0;
-  setInterval(function() {
-    if (!termBody) return;
-    var next = logs[idx % logs.length];
-    idx++;
-    var div = document.createElement('div');
-    div.className = 'ml-log ' + next.cls;
-    div.textContent = next.msg;
-    termBody.appendChild(div);
-    if (termBody.children.length > 7) termBody.removeChild(termBody.children[0]);
-  }, 3200);
-
-  // 3. Control Deslizante Interactivo Antes / Después (.cmp)
   var cmp = document.getElementById('cmp');
   var hdl = document.getElementById('hdl');
   if (cmp && hdl) {
@@ -660,16 +367,15 @@
     });
   }
 
-  // 4. Lanzador de Escaneo a la Home
-  window.launchScan = function() {
-    var input = document.getElementById('targetSiteInput');
+  window.launchBlogScan = function() {
+    var input = document.getElementById('quickScanInput');
     var val = (input ? input.value : '').trim();
-    if (!val) return;
+    if (!val) {
+      window.location.href = '../index.html#escaner';
+      return;
+    }
     var clean = val.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').trim();
-    if (!clean) return;
-
-    var base = (window.location.protocol === 'file:') ? '../index.html' : '/';
-    window.location.href = base + '?scan=' + encodeURIComponent(clean) + '#escaner';
+    window.location.href = '../index.html?scan=' + encodeURIComponent(clean) + '#escaner';
   };
 })();
 </script>
