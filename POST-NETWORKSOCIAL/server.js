@@ -18,6 +18,7 @@ const { postToInstagram } = require('./engine/instagram-poster');
 const { detectUserFacebookGroups } = require('./engine/group-detector');
 const { COPYWRITING_FRAMEWORKS, generatePersuasiveCopy } = require('./engine/ai-copywriter');
 const { isWithinOptimalHours, getSmartInterval, assessComplianceRisk, OPTIMAL_HOURS } = require('./engine/scheduler');
+const { autopilotInstance } = require('./engine/bot-autopilot');
 
 const PORT = process.env.PORT || 4242;
 const app = express();
@@ -445,6 +446,38 @@ app.post('/api/instagram/post', async (req, res) => {
     res.status(500).json({ ok: false, error: e.message });
   }
 });
+
+// 10. API de Piloto Automático (Bot Autónomo 24/7)
+app.get('/api/autopilot/status', (req, res) => {
+  res.json({ ok: true, status: autopilotInstance.getStatus() });
+});
+
+app.post('/api/autopilot/toggle', (req, res) => {
+  const { enabled } = req.body;
+  if (enabled) {
+    autopilotInstance.start();
+  } else {
+    autopilotInstance.stop();
+  }
+  res.json({ ok: true, status: autopilotInstance.getStatus() });
+});
+
+app.post('/api/autopilot/config', (req, res) => {
+  const { dailyQuota, minIntervalMinutes, maxIntervalMinutes, optimalHoursOnly } = req.body;
+  const settings = readJson('settings.json', {});
+  settings.autopilot = {
+    ...settings.autopilot,
+    dailyQuota: Number(dailyQuota) || 6,
+    minIntervalMinutes: Number(minIntervalMinutes) || 45,
+    maxIntervalMinutes: Number(maxIntervalMinutes) || 90,
+    optimalHoursOnly: optimalHoursOnly !== false
+  };
+  writeJson('settings.json', settings);
+  res.json({ ok: true, config: settings.autopilot });
+});
+
+// Inicializar el bot con el canal de streaming de logs
+autopilotInstance.init((logObj) => broadcastLog(logObj));
 
 // Iniciar servidor local
 server.listen(PORT, '127.0.0.1', () => {

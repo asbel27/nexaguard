@@ -51,6 +51,7 @@
   <!-- Pestañas de Navegación -->
   <nav class="app-tabs">
     <button class="tab-btn active" data-tab="tab-composer">🚀 Publicador &amp; Selección de Grupos</button>
+    <button class="tab-btn" data-tab="tab-autopilot">🤖 Piloto Automático (Bot 24/7)</button>
     <button class="tab-btn" data-tab="tab-groups">👥 Gestor de Grupos (<span id="groupsCountBadge">0</span>)</button>
     <button class="tab-btn" data-tab="tab-history">📜 Historial &amp; Capturas (<span id="historyCountBadge">0</span>)</button>
     <button class="tab-btn" data-tab="tab-settings">⚙️ Configuración Anti-Ban</button>
@@ -214,6 +215,108 @@
             <div class="terminal-body" id="terminalLogs">
               <div class="log-line info">[SISTEMA] Motor de automatización NexaGuard Social iniciado.</div>
               <div class="log-line info">[INFO] Listo para comenzar. Puedes usar "Detectar Mis Grupos FB" para sincronizar tus grupos.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PESTAÑA: PILOTO AUTOMÁTICO (BOT 24/7) -->
+    <section id="tab-autopilot" class="tab-content">
+      <div class="autopilot-dashboard">
+        
+        <!-- Tarjeta Principal de Control Maestro -->
+        <div class="panel autopilot-main-card">
+          <div class="panel-header">
+            <div>
+              <h2>🤖 Piloto Automático 24/7 (Bot Autónomo Inteligente)</h2>
+              <p class="subtitle">Publica solo, en las mejores horas de Meta, rotando textos de IA y grupos sin que tengas que intervenir.</p>
+            </div>
+            <div class="master-switch-wrap">
+              <label class="master-toggle">
+                <input type="checkbox" id="autopilotToggle" onchange="toggleAutopilot(this.checked)">
+                <span class="toggle-track">
+                  <span class="toggle-thumb"></span>
+                </span>
+                <span id="autopilotToggleLabel" class="toggle-label">BOT APAGADO</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Cuadrícula de Estado en Tiempo Real -->
+          <div class="autopilot-stats-grid">
+            <div class="stat-box">
+              <span class="stat-label">Estado del Bot:</span>
+              <strong id="apStatusState" class="stat-value">Detenido</strong>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Próximo Post Programado:</span>
+              <strong id="apStatusNextTime" class="stat-value">--:--:--</strong>
+              <small id="apStatusCountdown" class="stat-sub">En espera de activación</small>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Cupo Publicado Hoy:</span>
+              <strong id="apStatusPostsToday" class="stat-value">0 / 6</strong>
+              <small class="stat-sub">Zona segura sin riesgo</small>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Próximo Grupo en Turno:</span>
+              <strong id="apStatusNextGroup" class="stat-value">Rotación activa</strong>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Próxima Fórmula IA:</span>
+              <strong id="apStatusNextFramework" class="stat-value">PAS (Dolor y Urgencia)</strong>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Ventana Horaria Meta:</span>
+              <strong id="apStatusOptimalHour" class="stat-value tag-green">Comprobando...</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel de Ajustes del Bot y Consola de Monitoreo -->
+        <div class="autopilot-grid">
+          <!-- Configuración del Bot -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3>⚙️ Reglas de Comportamiento del Bot</h3>
+            </div>
+            <div class="settings-form">
+              <div class="form-group">
+                <label>Cupo Máximo Diario de Posts (Recomendado: 5 a 8):</label>
+                <input type="number" id="apConfigDailyQuota" value="6" min="1" max="15">
+                <small>Al llegar a este número, el bot descansa hasta el día siguiente automáticamente.</small>
+              </div>
+              <div class="form-row">
+                <div class="form-group col-6">
+                  <label>Pausa Mínima (Minutos):</label>
+                  <input type="number" id="apConfigMinInterval" value="45" min="20" max="180">
+                </div>
+                <div class="form-group col-6">
+                  <label>Pausa Máxima (Minutos):</label>
+                  <input type="number" id="apConfigMaxInterval" value="90" min="40" max="300">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="apConfigOptimalHours" checked>
+                  <span>Publicar ÚNICAMENTE en Horarios Pico de Meta (09-12h, 14-17h, 19-22h)</span>
+                </label>
+                <small>Evita publicar de madrugada para no despertar sospechas algorítmicas de Meta.</small>
+              </div>
+              <button class="btn btn-primary" onclick="saveAutopilotConfig()">💾 Guardar Reglas del Bot</button>
+            </div>
+          </div>
+
+          <!-- Consola en Vivo del Bot -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3>📡 Actividad del Bot en Segundo Plano</h3>
+              <button class="btn btn-xs" onclick="clearTerminalLogs()">Limpiar</button>
+            </div>
+            <div class="terminal-body" id="autopilotTerminalBody" style="height:250px">
+              <div class="log-line info">[PILOTO AUTOMÁTICO] Listo. Enciende el interruptor maestro arriba para comenzar.</div>
             </div>
           </div>
         </div>

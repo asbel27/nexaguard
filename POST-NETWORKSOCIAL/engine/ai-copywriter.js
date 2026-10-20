@@ -95,3 +95,4 @@ module.exports = {
   COPYWRITING_FRAMEWORKS,
   generatePersuasiveCopy
 };
+

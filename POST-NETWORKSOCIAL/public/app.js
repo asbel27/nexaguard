@@ -18,11 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   loadStatus();
   loadComplianceStatus();
+  loadAutopilotStatus();
   loadTemplates();
   loadGroups();
   loadHistory();
   initSpintaxEvents();
   initLogStream();
+
+  // Actualizar estado del bot cada 4 segundos
+  setInterval(loadAutopilotStatus, 4000);
 });
 
 // 1. Gestión de Pestañas
@@ -659,16 +663,159 @@ function startCountdownUI(seconds) {
 
 function appendTerminalLog(type, msg) {
   const terminal = document.getElementById('terminalLogs');
-  const line = document.createElement('div');
-  line.className = `log-line ${type}`;
+  const apTerminal = document.getElementById('autopilotTerminalBody');
   const time = new Date().toLocaleTimeString();
-  line.textContent = `[${time}] ${msg}`;
-  terminal.appendChild(line);
-  terminal.scrollTop = terminal.scrollHeight;
+
+  if (terminal) {
+    const line = document.createElement('div');
+    line.className = `log-line ${type}`;
+    line.textContent = `[${time}] ${msg}`;
+    terminal.appendChild(line);
+    terminal.scrollTop = terminal.scrollHeight;
+  }
+
+  if (apTerminal) {
+    const line2 = document.createElement('div');
+    line2.className = `log-line ${type}`;
+    line2.textContent = `[${time}] ${msg}`;
+    apTerminal.appendChild(line2);
+    apTerminal.scrollTop = apTerminal.scrollHeight;
+  }
 }
 
 function clearTerminalLogs() {
-  document.getElementById('terminalLogs').innerHTML = '<div class="log-line info">[SISTEMA] Consola limpia.</div>';
+  const t = document.getElementById('terminalLogs');
+  if (t) t.innerHTML = '<div class="log-line info">[SISTEMA] Consola limpia.</div>';
+  const ap = document.getElementById('autopilotTerminalBody');
+  if (ap) ap.innerHTML = '<div class="log-line info">[PILOTO AUTOMÁTICO] Consola limpia.</div>';
+}
+
+// 12. Piloto Automático 24/7 (Bot Autónomo)
+async function loadAutopilotStatus() {
+  try {
+    const res = await fetch('/api/autopilot/status');
+    const data = await res.json();
+    if (!data.ok) return;
+
+    const s = data.status;
+    const toggle = document.getElementById('autopilotToggle');
+    const label = document.getElementById('autopilotToggleLabel');
+
+    if (toggle && label) {
+      toggle.checked = !!s.enabled;
+      label.textContent = s.enabled ? 'BOT ACTIVADO 24/7' : 'BOT APAGADO';
+    }
+
+    const stateEl = document.getElementById('apStatusState');
+    if (stateEl) {
+      if (!s.enabled) {
+        stateEl.textContent = 'Detenido';
+        stateEl.style.color = 'var(--muted)';
+      } else if (s.state === 'POSTING') {
+        stateEl.textContent = '🚀 Publicando Ahora...';
+        stateEl.style.color = 'var(--cyan)';
+      } else if (s.state === 'WAITING_HOURS') {
+        stateEl.textContent = '⏰ Esperando Horario Pico';
+        stateEl.style.color = 'var(--yellow)';
+      } else if (s.state === 'QUOTA_REACHED') {
+        stateEl.textContent = '🏁 Cupo Diario Completado';
+        stateEl.style.color = 'var(--green)';
+      } else {
+        stateEl.textContent = '● En Reposo (Activo)';
+        stateEl.style.color = 'var(--green)';
+      }
+    }
+
+    const nextTimeEl = document.getElementById('apStatusNextTime');
+    const countEl = document.getElementById('apStatusCountdown');
+    if (nextTimeEl && countEl) {
+      if (s.enabled && s.nextRunTime) {
+        nextTimeEl.textContent = s.nextRunTime;
+        const mins = Math.floor(s.nextInSeconds / 60);
+        const secs = s.nextInSeconds % 60;
+        countEl.textContent = `Próximo post en ${mins}m ${secs}s`;
+      } else {
+        nextTimeEl.textContent = '--:--:--';
+        countEl.textContent = s.enabled ? 'Programando...' : 'En espera de activación';
+      }
+    }
+
+    const quotaEl = document.getElementById('apStatusPostsToday');
+    if (quotaEl) {
+      quotaEl.textContent = `${s.postsToday} / ${s.dailyQuota}`;
+    }
+
+    const nextGrpEl = document.getElementById('apStatusNextGroup');
+    if (nextGrpEl) {
+      nextGrpEl.textContent = s.nextGroupName || 'Cola de grupos';
+    }
+
+    const nextFwEl = document.getElementById('apStatusNextFramework');
+    if (nextFwEl) {
+      nextFwEl.textContent = s.nextFrameworkName || 'PAS (Dolor)';
+    }
+
+    const optEl = document.getElementById('apStatusOptimalHour');
+    if (optEl) {
+      if (s.isOptimalHourNow) {
+        optEl.textContent = '✓ Horario Pico Activo';
+        optEl.className = 'stat-value tag-green';
+      } else {
+        optEl.textContent = '⏰ Fuera de Horario Pico';
+        optEl.className = 'stat-value';
+        optEl.style.color = 'var(--yellow)';
+      }
+    }
+
+  } catch (e) {}
+}
+
+async function toggleAutopilot(enabled) {
+  try {
+    const res = await fetch('/api/autopilot/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      loadAutopilotStatus();
+      if (enabled) {
+        appendTerminalLog('success', '[PILOTO AUTOMÁTICO] Bot iniciado. Publicará de forma desatendida respetando los horarios de Meta.');
+      } else {
+        appendTerminalLog('warn', '[PILOTO AUTOMÁTICO] Bot detenido por el usuario.');
+      }
+    }
+  } catch (e) {
+    alert('Error al cambiar estado del bot: ' + e.message);
+  }
+}
+
+async function saveAutopilotConfig() {
+  const dailyQuota = document.getElementById('apConfigDailyQuota').value;
+  const minIntervalMinutes = document.getElementById('apConfigMinInterval').value;
+  const maxIntervalMinutes = document.getElementById('apConfigMaxInterval').value;
+  const optimalHoursOnly = document.getElementById('apConfigOptimalHours').checked;
+
+  try {
+    const res = await fetch('/api/autopilot/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        dailyQuota,
+        minIntervalMinutes,
+        maxIntervalMinutes,
+        optimalHoursOnly
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert('¡Configuración del Piloto Automático guardada con éxito!');
+      loadAutopilotStatus();
+    }
+  } catch (e) {
+    alert('Error al guardar configuración: ' + e.message);
+  }
 }
 
 // 11. Historial de Publicaciones
