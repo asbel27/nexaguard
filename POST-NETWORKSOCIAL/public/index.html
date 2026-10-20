@@ -97,16 +97,30 @@
             <div class="preview-body" id="spintaxPreviewText">Escribe o selecciona una plantilla para previsualizar.</div>
           </div>
 
-          <!-- Adjuntar Imagen Creativa -->
+          <!-- Adjuntar o Generar Imagen Creativa con IA -->
           <div class="form-group image-attach-box">
-            <label>🖼️ Imagen Adjunta (Opcional para Facebook, Obligatoria para Instagram):</label>
+            <div class="label-row">
+              <label>🖼️ Imagen del Post (Generador IA o Subir de tu PC):</label>
+              <div style="display:flex;gap:6px">
+                <select id="bannerPresetSelect" style="width:auto;padding:3px 8px;font-size:0.75rem">
+                  <option value="pantalla-roja">🛑 Pantalla Roja Google</option>
+                  <option value="rescate-urgente" selected>⚠️ Rescate Forense Urgente</option>
+                  <option value="japanese-seo">🚨 Japanese Keyword Hack</option>
+                  <option value="escaner-radar">🛡️ Escáner Radar Gratuito</option>
+                  <option value="woocommerce-safe">💳 WooCommerce Checkout</option>
+                </select>
+                <button type="button" class="btn btn-primary btn-xs" onclick="generateAiBanner()">
+                  ✨ Generar Banner IA
+                </button>
+              </div>
+            </div>
             <div class="image-uploader">
               <input type="file" id="imageFileInput" accept="image/*" onchange="handleImageUpload(event)" style="display:none">
-              <button type="button" class="btn btn-outline" onclick="document.getElementById('imageFileInput').click()">
-                📁 Seleccionar Imagen de tu PC
+              <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('imageFileInput').click()">
+                📁 O Subir Imagen Local
               </button>
               <span id="attachedImageName" class="attached-name">Ninguna imagen seleccionada</span>
-              <div id="imagePreviewContainer" class="img-preview" style="display:none">
+              <div id="imagePreviewContainer" class="img-preview" style="display:none;width:120px;height:65px">
                 <img id="imagePreviewImg" src="" alt="Vista previa">
                 <button type="button" class="btn-remove" onclick="removeAttachedImage()">×</button>
               </div>

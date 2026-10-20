@@ -518,6 +518,32 @@ function removeAttachedImage() {
   document.getElementById('imagePreviewContainer').style.display = 'none';
 }
 
+async function generateAiBanner() {
+  const presetSelect = document.getElementById('bannerPresetSelect');
+  const presetId = presetSelect ? presetSelect.value : 'rescate-urgente';
+  appendTerminalLog('step', `[IA CREATIVA] Sintetizando banner publicitario con temática "${presetId}"...`);
+
+  try {
+    const res = await fetch('/api/creative/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ presetId, format: 'fb' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      state.attachedImagePath = data.filePath;
+      document.getElementById('attachedImageName').textContent = `Banner IA: ${data.preset.title.slice(0, 26)}...`;
+      document.getElementById('imagePreviewImg').src = data.publicUrl;
+      document.getElementById('imagePreviewContainer').style.display = 'block';
+      appendTerminalLog('success', `[IA CREATIVA] Banner generado exitosamente (1200x630 px) y adjuntado al post.`);
+    } else {
+      alert('Error al generar banner: ' + data.error);
+    }
+  } catch (err) {
+    alert('Error al generar imagen con IA: ' + err.message);
+  }
+}
+
 // 9. Campaña de Auto-Publicación
 async function startCampaign() {
   const spintaxText = document.getElementById('postSpintax').value.trim();

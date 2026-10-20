@@ -14,6 +14,7 @@ const { parseSpintax } = require('./spintax');
 const { COPYWRITING_FRAMEWORKS } = require('./ai-copywriter');
 const { postToFacebookGroup } = require('./facebook-poster');
 const { isWithinOptimalHours, OPTIMAL_HOURS } = require('./scheduler');
+const { generateMarketingBanner } = require('./image-generator');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -205,10 +206,27 @@ class BotAutopilot {
     this.log(`   Grupo: "${group.name}"`);
     this.log(`   Fórmula: "${framework.name}"`);
 
+    // Generar banner creativo con IA automáticamente
+    let generatedImagePath = null;
+    try {
+      this.log('🎨 Generando banner publicitario con IA para este post...');
+      let presetId = 'rescate-urgente';
+      if (framework.id.includes('dolor') || framework.id.includes('pantalla')) presetId = 'pantalla-roja';
+      else if (framework.id.includes('alerta')) presetId = 'escaner-radar';
+      else if (framework.id.includes('caso')) presetId = 'japanese-seo';
+
+      const creative = await generateMarketingBanner({ presetId, format: 'fb' });
+      generatedImagePath = creative.filePath;
+      this.log(`✓ Banner gráfico generado con éxito: ${path.basename(generatedImagePath)}`);
+    } catch (e) {
+      this.log(`⚠️ No se pudo generar imagen dinámica (${e.message}), publicando texto solo.`);
+    }
+
     try {
       const postResult = await postToFacebookGroup({
         groupUrl: group.url,
         message: uniqueMessage,
+        imagePath: generatedImagePath,
         simulateTyping: true,
         onLog: (msg) => this.log(msg)
       });
@@ -264,3 +282,4 @@ const autopilotInstance = new BotAutopilot();
 module.exports = {
   autopilotInstance
 };
+

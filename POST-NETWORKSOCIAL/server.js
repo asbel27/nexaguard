@@ -19,6 +19,7 @@ const { detectUserFacebookGroups } = require('./engine/group-detector');
 const { COPYWRITING_FRAMEWORKS, generatePersuasiveCopy } = require('./engine/ai-copywriter');
 const { isWithinOptimalHours, getSmartInterval, assessComplianceRisk, OPTIMAL_HOURS } = require('./engine/scheduler');
 const { autopilotInstance } = require('./engine/bot-autopilot');
+const { BANNER_PRESETS, generateMarketingBanner } = require('./engine/image-generator');
 
 const PORT = process.env.PORT || 4242;
 const app = express();
@@ -267,6 +268,21 @@ app.post('/api/upload-image', upload.single('image'), (req, res) => {
     path: req.file.path,
     url: `/assets/uploads/${req.file.filename}`
   });
+});
+
+// 5.1 Generador Automático de Banners con IA (1200x630 y 1080x1080)
+app.get('/api/creative/presets', (req, res) => {
+  res.json({ ok: true, presets: BANNER_PRESETS });
+});
+
+app.post('/api/creative/generate', async (req, res) => {
+  const { presetId, format, customData } = req.body;
+  try {
+    const result = await generateMarketingBanner({ presetId, format, customData });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 // 6. Historial de Publicaciones
