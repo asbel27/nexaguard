@@ -401,17 +401,17 @@ a[data-go],a[data-act]{cursor:pointer}
 .stat span{color:var(--muted);font-size:.92rem}
 
 /* ---------- Precios ---------- */
-.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--panel)}
-.plan{padding:34px 28px 30px;display:flex;flex-direction:column;gap:16px;border-right:1px solid var(--line)}
-.plan:last-child{border-right:0}
-.plan h3{font-size:1.1rem}
-.plan .d{color:var(--muted);font-size:.95rem;min-height:3em}
-.plan .price{font-family:var(--fd);font-size:2.3rem;font-weight:700;line-height:1}
-.plan .price small{font-family:var(--fb);font-size:.9rem;font-weight:500;color:var(--muted);margin-left:6px}
-.plan ul{list-style:none;display:grid;gap:9px;font-size:.94rem;margin:6px 0 10px}
-.plan li{display:flex;gap:10px;align-items:flex-start}
-.plan li .ic{color:var(--green);margin-top:.3em}
-.plan .btn{margin-top:auto}
+#planes .wrap{max-width:1620px;width:96%}
+.plans{display:grid;grid-template-columns:repeat(6,1fr);border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--line);gap:1px;align-items:stretch}
+.plan{padding:26px 16px 22px;display:flex;flex-direction:column;gap:12px;background:var(--panel);height:100%}
+.plan h3{font-size:1.02rem;line-height:1.25}
+.plan .d{color:var(--muted);font-size:.88rem;min-height:2.9em;line-height:1.35}
+.plan .price{font-family:var(--fd);font-size:1.95rem;font-weight:700;line-height:1}
+.plan .price small{font-family:var(--fb);font-size:.82rem;font-weight:500;color:var(--muted);margin-left:4px}
+.plan ul{list-style:none;display:grid;gap:7px;font-size:.84rem;margin:4px 0 10px;padding:0}
+.plan li{display:flex;gap:7px;align-items:flex-start;line-height:1.35}
+.plan li .ic{color:var(--green);margin-top:.25em;width:14px;height:14px;flex-shrink:0}
+.plan .btn{margin-top:auto;padding:10px 12px;font-size:.85rem;text-align:center}
 .plan.feat{background:var(--yellow);color:var(--yellow-ink)}
 .plan.feat .d,.plan.feat .price small{color:rgba(26,20,0,.75)}
 .plan.feat li .ic{color:#0b6b46}
@@ -822,10 +822,9 @@ a[data-go],a[data-act]{cursor:pointer}
 }
 
 /* ---------- Responsive ---------- */
-@media (max-width:1180px){
-  .plans{grid-template-columns:repeat(2,1fr)}
-  .plan:nth-child(2){border-right:0}
-  .plan:nth-child(-n+2){border-bottom:1px solid var(--line)}
+@media (max-width:1260px) and (min-width:761px){
+  .plans{grid-template-columns:repeat(3,1fr)}
+  .plan{padding:28px 20px 24px}
 }
 @media (max-width:1080px){
   .nav-links{display:none}
@@ -2103,7 +2102,7 @@ a[data-go],a[data-act]{cursor:pointer}
 
         <div style="margin:8px 0 4px;background:rgba(0,240,255,.05);border:1px solid rgba(0,240,255,.2);border-radius:8px;padding:8px">
           <span style="display:block;font-size:.72rem;color:#00f0ff;font-weight:700;text-transform:uppercase;margin-bottom:6px">Selecciona sitios a proteger:</span>
-          <div style="display:flex;gap:4px;justify-content:center" id="agencyPillsHome">
+          <div style="display:flex;gap:4px;justify-content:center" id="agencyPillsHome" style="flex-wrap:wrap">
             <button type="button" class="btn btn-y sm btn-agency-opt" style="padding:3px 8px;font-size:.78rem;font-weight:700" data-sites="5">5 Webs</button>
             <button type="button" class="btn btn-o sm btn-agency-opt" style="padding:3px 8px;font-size:.78rem" data-sites="10">10 Webs</button>
             <button type="button" class="btn btn-o sm btn-agency-opt" style="padding:3px 8px;font-size:.78rem" data-sites="25">25 Webs</button>
