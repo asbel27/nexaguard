@@ -469,7 +469,7 @@ jQuery(document).ready(function ($) {
                 }
 
                 if (t.clean_action === 'quarantine') {
-                    quarantineBtn = '<button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="' + t.full_path + '" data-id="' + t.id + '">🔒 Mover a Cuarentena</button>';
+                    quarantineBtn = '<button type="button" class="btn-ng btn-ng-outline btn-quarantine-file" data-file="' + t.full_path + '" data-id="' + t.id + '">📦 Mover a Cuarentena</button>';
                 }
             } else {
                 if (t.clean_action === 'clean_db_option') {
@@ -534,12 +534,7 @@ jQuery(document).ready(function ($) {
                             showToast('Archivo malicioso destruido con éxito.', 'success', 'Amenaza Neutralizada');
                         } else {
                             $btn.prop('disabled', false).text('Reintentar');
-                            if (res.data && res.data.code === 'pro_required') {
-                                showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para eliminar amenazas.', 'warning', 'Acción Restringida');
-                                openActionBlockedModal();
-                            } else {
-                                showAlert(res.data && res.data.message ? res.data.message : 'Error al eliminar el archivo.', 'error', 'Error al Eliminar');
-                            }
+                            showAlert(res.data && res.data.message ? res.data.message : 'Error al eliminar el archivo.', 'error', 'Error al Eliminar');
                         }
                     },
                     error: function () {
@@ -585,12 +580,7 @@ jQuery(document).ready(function ($) {
                             showToast(res.data && res.data.message ? res.data.message : 'Plugin destruido con éxito.', 'success', 'Carpeta Erradicada');
                         } else {
                             $btn.prop('disabled', false).text('Reintentar');
-                            if (res.data && res.data.code === 'pro_required') {
-                                showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para eliminar plugins maliciosos.', 'warning', 'Acción Restringida');
-                                openActionBlockedModal();
-                            } else {
-                                showAlert(res.data && res.data.message ? res.data.message : 'Error al eliminar carpeta del plugin.', 'error', 'Error al Eliminar');
-                            }
+                            showAlert(res.data && res.data.message ? res.data.message : 'Error al eliminar carpeta del plugin.', 'error', 'Error al Eliminar');
                         }
                     },
                     error: function () {
@@ -639,7 +629,7 @@ jQuery(document).ready(function ($) {
         } else if (type === 'apply_disallow_file_edit') {
             confirmMsg = '¿Deseas aplicar el blindaje en wp-config.php para deshabilitar la edición de temas y plugins desde el panel de WordPress?';
             confirmTitle = 'Blindar Editor PHP';
-            confirmIcon = '🔒';
+            confirmIcon = '🛡️';
             confirmOk = 'Aplicar Blindaje';
         } else if (type === 'apply_htaccess_no_indexes') {
             confirmMsg = '¿Deseas aplicar "Options -Indexes" en .htaccess para evitar que se puedan listar directorios en tu servidor?';
@@ -677,22 +667,6 @@ jQuery(document).ready(function ($) {
                     },
                     success: function (res) {
                         if (res.success) {
-                            if (res.data && res.data.free_clean) {
-                                nexaguardData.free_clean_remaining = res.data.free_remaining;
-                                nexaguardData.free_clean_used = res.data.free_used;
-                                $('.ng-free-quota-badge').text(res.data.free_remaining + ' de ' + res.data.free_limit);
-                                if (res.data.free_remaining <= 0) {
-                                    $('.ng-free-quota-banner').fadeOut(300);
-                                    $('.btn-clean-threat, .btn-quarantine-file, .btn-force-delete').each(function () {
-                                        var f = $(this).data('target') || $(this).data('file') || '';
-                                        $(this).replaceWith('<button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="' + f + '">🔒 Erradicar Amenaza (Función PRO)</button>');
-                                    });
-                                    setTimeout(function () {
-                                        $('#nexaguard-quota-modal').stop(true, true).fadeIn(250);
-                                    }, 1200);
-                                }
-                            }
-
                             if (type === 'delete_db_option' || type === 'remove_cron_hook') {
                                 $('#threat-' + id).fadeOut(350, function () {
                                     $(this).remove();
@@ -711,12 +685,7 @@ jQuery(document).ready(function ($) {
                             showToast(res.data && res.data.message ? res.data.message : 'Acción completada con éxito.', 'success', 'Operación Completada');
                         } else {
                             $btn.prop('disabled', false).text('Reintentar');
-                            if (res.data && res.data.code === 'pro_required') {
-                                showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para desinfectar amenazas.', 'warning', 'Acción Restringida');
-                                openActionBlockedModal();
-                            } else {
-                                showAlert(res.data && res.data.message ? res.data.message : 'Error al limpiar la amenaza.', 'error', 'Error al Limpiar');
-                            }
+                            showAlert(res.data && res.data.message ? res.data.message : 'Error al limpiar la amenaza.', 'error', 'Error al Limpiar');
                         }
                     },
                     error: function () {
@@ -768,12 +737,7 @@ jQuery(document).ready(function ($) {
                             showToast('Todas las amenazas detectadas fueron neutralizadas y blindadas con éxito.', 'success', 'Remediación Exitosa');
                         } else {
                             $btn.prop('disabled', false).html('⚡ LIMPIAR Y BLINDAR SITIO CON 1 CLIC');
-                            if (res.data && res.data.code === 'pro_required') {
-                                showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para reparar tu sitio.', 'warning', 'Acción Restringida');
-                                openActionBlockedModal();
-                            } else {
-                                showAlert(res.data && res.data.message ? res.data.message : 'Error durante la reparación automática.', 'error', 'Error');
-                            }
+                            showAlert(res.data && res.data.message ? res.data.message : 'Error durante la reparación automática.', 'error', 'Error');
                         }
                     },
                     error: function () {
@@ -809,22 +773,6 @@ jQuery(document).ready(function ($) {
                     },
                     success: function (res) {
                         if (res.success) {
-                            if (res.data && res.data.free_clean) {
-                                nexaguardData.free_clean_remaining = res.data.free_remaining;
-                                nexaguardData.free_clean_used = res.data.free_used;
-                                $('.ng-free-quota-badge').text(res.data.free_remaining + ' de ' + res.data.free_limit);
-                                if (res.data.free_remaining <= 0) {
-                                    $('.ng-free-quota-banner').fadeOut(300);
-                                    $('.btn-clean-threat, .btn-quarantine-file, .btn-force-delete').each(function () {
-                                        var f = $(this).data('target') || $(this).data('file') || '';
-                                        $(this).replaceWith('<button type="button" class="btn-ng btn-ng-danger btn-locked-clean" data-target="' + f + '">🔒 Erradicar Amenaza (Función PRO)</button>');
-                                    });
-                                    setTimeout(function () {
-                                        $('#nexaguard-quota-modal').stop(true, true).fadeIn(250);
-                                    }, 1200);
-                                }
-                            }
-
                             $('#threat-' + id).fadeOut(400, function () { 
                                 $(this).remove(); 
                                 updateThreatCounts();
@@ -840,12 +788,7 @@ jQuery(document).ready(function ($) {
                             showToast('El archivo ha sido neutralizado y trasladado a la bóveda de cuarentena protegida.', 'success', 'Archivo en Cuarentena');
                         } else {
                             $btn.prop('disabled', false).text('Reintentar');
-                            if (res.data && res.data.code === 'pro_required') {
-                                showToast(res.data.message || 'Función PRO requerida: Adquiere el Plan PRO ($9.99/mes) para aislar amenazas.', 'warning', 'Acción Restringida');
-                                openActionBlockedModal();
-                            } else {
-                                showAlert(res.data && res.data.message ? res.data.message : 'Error al aislar el archivo.', 'error', 'Error en Cuarentena');
-                            }
+                            showAlert(res.data && res.data.message ? res.data.message : 'Error al aislar el archivo.', 'error', 'Error en Cuarentena');
                         }
                     },
                     error: function () {
@@ -1019,36 +962,7 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    // Funciones auxiliares para apertura/cierre confiable de modales
-    window.nexaguardOpenUpgradeModal = function () {
-        var $modal = $('#clean-upgrade-modal');
-        if (!$modal.length) return;
-        if (!$modal.parent().is('body')) {
-            $modal.appendTo('body');
-        }
-        $modal.css({ display: 'flex', opacity: 0 }).stop(true, true).fadeTo(200, 1);
-    };
-
-    window.nexaguardCloseUpgradeModal = function () {
-        $('#clean-upgrade-modal').stop(true, true).fadeOut(150);
-    };
-
-    window.nexaguardOpenActionBlockedModal = function () {
-        var $modal = $('#nexaguard-action-blocked-modal');
-        if (!$modal.length) {
-            window.nexaguardOpenUpgradeModal();
-            return;
-        }
-        if (!$modal.parent().is('body')) {
-            $modal.appendTo('body');
-        }
-        $modal.css({ display: 'flex', opacity: 0 }).stop(true, true).fadeTo(200, 1);
-    };
-
-    window.nexaguardCloseActionBlockedModal = function () {
-        $('#nexaguard-action-blocked-modal').stop(true, true).fadeOut(150);
-    };
-
+    // Funciones auxiliares para apertura/cierre de modales
     window.nexaguardOpenLicenseModal = function (msg) {
         var $modal = $('#license-modal');
         if (!$modal.length) return;
@@ -1068,29 +982,8 @@ jQuery(document).ready(function ($) {
         $('#license-modal').stop(true, true).fadeOut(150);
     };
 
-    var openUpgradeModal = window.nexaguardOpenUpgradeModal;
-    var closeUpgradeModal = window.nexaguardCloseUpgradeModal;
-    var openActionBlockedModal = window.nexaguardOpenActionBlockedModal;
-    var closeActionBlockedModal = window.nexaguardCloseActionBlockedModal;
     var openLicenseModal = window.nexaguardOpenLicenseModal;
     var closeLicenseModal = window.nexaguardCloseLicenseModal;
-
-    // Abrir modal de mejora solo con botones de actualización explícitos
-    $(document).on('click', '.btn-open-upgrade-modal', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        window.nexaguardOpenUpgradeModal();
-        return false;
-    });
-
-    // Clic en opciones exclusivas PRO
-    $(document).on('click', '.row-pro-feature', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        showToast('Esta regla avanzada de ciberinteligencia requiere el Plan PRO ($9.99/mes).', 'info', 'Ciberinteligencia PRO');
-        window.nexaguardOpenUpgradeModal();
-        return false;
-    });
 
     function updateThreatCounts() {
         var count = $('#threats-list .threat-item').length;
@@ -2024,54 +1917,28 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    // ============ MODAL DE UPGRADE / PLAN PRO ============
-    $(document).on('click', '.btn-locked-clean, .btn-open-clean-modal', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        openUpgradeModal();
-    });
-
-    $('#btn-close-action-blocked').on('click', function (e) {
-        e.preventDefault();
-        closeActionBlockedModal();
-    });
-
-    $('#btn-close-clean-modal').on('click', function (e) {
-        e.preventDefault();
-        closeUpgradeModal();
-    });
-
-    $(document).on('click', '#btn-close-quota-modal', function (e) {
-        e.preventDefault();
-        $('#nexaguard-quota-modal').stop(true, true).fadeOut(150);
-    });
-
+    // ============ GESTIÓN DE MODALES ============
     $(document).on('click', '.btn-switch-to-key', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        closeUpgradeModal();
-        closeActionBlockedModal();
-        $('#nexaguard-quota-modal').stop(true, true).fadeOut(150);
-        openLicenseModal('Introduce tu clave de licencia del Plan PRO:');
+        openLicenseModal('Introduce tu clave de licencia:');
     });
 
     // Cerrar modales al hacer clic en el fondo oscuro exterior
     $(document).on('click', '.ng-modal', function (e) {
         if (e.target === this) {
-            closeUpgradeModal();
-            closeActionBlockedModal();
             closeLicenseModal();
-            $('#nexaguard-quota-modal').stop(true, true).fadeOut(150);
+            $('#threat-summary-modal').stop(true, true).fadeOut(150);
+            $('#nexaguard-confirm-modal').stop(true, true).fadeOut(150);
         }
     });
 
     // Cerrar modales con tecla ESC
     $(document).on('keydown', function (e) {
         if (e.key === 'Escape' || e.keyCode === 27) {
-            closeUpgradeModal();
-            closeActionBlockedModal();
             closeLicenseModal();
-            $('#nexaguard-quota-modal').stop(true, true).fadeOut(150);
+            $('#threat-summary-modal').stop(true, true).fadeOut(150);
+            $('#nexaguard-confirm-modal').stop(true, true).fadeOut(150);
         }
     });
 
