@@ -216,28 +216,57 @@ class BotAutopilot {
     const group = activeGroups[this.nextGroupIndex % activeGroups.length];
     this.nextGroupIndex++;
 
-    // 5. Seleccionar la fórmula persuasiva de rotación (PAS, Caso de Estudio, Alerta)
-    const framework = COPYWRITING_FRAMEWORKS[this.currentFrameworkIndex % COPYWRITING_FRAMEWORKS.length];
-    this.currentFrameworkIndex++;
+    // 5. Seleccionar la fórmula persuasiva (PAS, Caso de Estudio, Alerta o Nicho de URL escaneada)
+    let uniqueMessage = '';
+    let frameworkName = '';
+    let frameworkId = 'pas-dolor-urgencia';
+    let customBannerData = null;
 
-    // 6. Generar Spintax único con IA
-    const uniqueMessage = parseSpintax(framework.spintax);
+    const nicheProfile = settings.activeNicheProfile;
+    if (nicheProfile && Array.isArray(nicheProfile.generatedPosts) && nicheProfile.generatedPosts.length > 0) {
+      // Rotar entre los copys persuasivos generados para el nicho y marca activa
+      const nichePost = nicheProfile.generatedPosts[this.currentFrameworkIndex % nicheProfile.generatedPosts.length];
+      uniqueMessage = parseSpintax(nichePost.spintax || nichePost.message);
+      frameworkName = `${nicheProfile.brand} (${nichePost.title || nicheProfile.nicheName})`;
+      frameworkId = nichePost.framework || 'niche-custom';
+
+      // Banner publicitario contextual adaptado a la marca y nicho
+      customBannerData = {
+        title: (nichePost.title || nicheProfile.brand).toUpperCase(),
+        subtitle: `Soluciones profesionales en ${nicheProfile.nicheName}. Garantía y resultados reales.`,
+        badge: `⭐ ${nicheProfile.brand.toUpperCase()}`,
+        cta: `MÁS INFORMACIÓN · ${nicheProfile.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}`,
+        stats: ['✓ Calidad Premium', '✓ Soporte Inmediato', '✓ Resultados Comprobados']
+      };
+    } else {
+      // Fórmulas nativas de alto impacto (PAS, Casos de Estudio, Alertas de Seguridad)
+      const framework = COPYWRITING_FRAMEWORKS[this.currentFrameworkIndex % COPYWRITING_FRAMEWORKS.length];
+      uniqueMessage = parseSpintax(framework.spintax);
+      frameworkName = framework.name;
+      frameworkId = framework.id;
+    }
+    this.currentFrameworkIndex++;
 
     this.state = 'POSTING';
     this.log(`✨ Ejecutando publicación autónoma [${this.postsTodayCount + 1}/${config.dailyQuota}]`, 'step');
     this.log(`   Grupo: "${group.name}"`);
-    this.log(`   Fórmula: "${framework.name}"`);
+    this.log(`   Fórmula/Marca: "${frameworkName}"`);
 
     // Generar banner creativo con IA automáticamente
     let generatedImagePath = null;
     try {
       this.log('🎨 Generando banner publicitario con IA para este post...');
       let presetId = 'rescate-urgente';
-      if (framework.id.includes('dolor') || framework.id.includes('pantalla')) presetId = 'pantalla-roja';
-      else if (framework.id.includes('alerta')) presetId = 'escaner-radar';
-      else if (framework.id.includes('caso')) presetId = 'japanese-seo';
+      if (frameworkId.includes('dolor') || frameworkId.includes('pantalla')) presetId = 'pantalla-roja';
+      else if (frameworkId.includes('alerta') || frameworkId.includes('radar')) presetId = 'escaner-radar';
+      else if (frameworkId.includes('caso') || frameworkId.includes('seo')) presetId = 'japanese-seo';
+      else if (nicheProfile && nicheProfile.niche === 'ecommerce') presetId = 'woocommerce-safe';
 
-      const creative = await generateMarketingBanner({ presetId, format: 'fb' });
+      const creative = await generateMarketingBanner({
+        presetId,
+        format: 'fb',
+        customData: customBannerData
+      });
       generatedImagePath = creative.filePath;
       this.log(`✓ Banner gráfico generado con éxito: ${path.basename(generatedImagePath)}`);
     } catch (e) {
@@ -250,7 +279,7 @@ class BotAutopilot {
         message: uniqueMessage,
         imagePath: generatedImagePath,
         simulateTyping: true,
-        frameworkId: framework.id,
+        frameworkId: frameworkId,
         autoTranslateByGroupLanguage: true,
         onLog: (msg) => this.log(msg)
       });

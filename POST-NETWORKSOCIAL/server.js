@@ -585,6 +585,22 @@ app.post('/api/niche/scan-url', async (req, res) => {
       type: 'success',
       msg: `✓ Nicho detectado: [${result.nicheName}] | Marca: [${result.brand}] | Idioma: [${result.langName}]`
     });
+
+    // Guardar en settings para que el Piloto Automático y el bot conozcan la marca y nicho activo
+    const settings = readJson('settings.json', {});
+    settings.activeNicheProfile = {
+      url: url.trim(),
+      brand: result.brand,
+      niche: result.niche,
+      nicheName: result.nicheName,
+      lang: result.lang,
+      painPoints: result.painPoints,
+      hashtags: result.hashtags,
+      generatedPosts: result.generatedPosts,
+      updatedAt: new Date().toISOString()
+    };
+    writeJson('settings.json', settings);
+
     res.json(result);
   } catch (err) {
     broadcastLog({ type: 'error', msg: `❌ Error escaneando URL: ${err.message}` });
