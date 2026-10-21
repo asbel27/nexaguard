@@ -257,18 +257,11 @@ class NexaGuard_Plugin {
         );
 
         $is_pro = $this->is_pro_active() ? 1 : 0;
-        $free_limit = 2;
-        $free_used = (int)get_option('nexaguard_free_clean_count', 0);
-        $free_remaining = $is_pro ? -1 : max(0, $free_limit - $free_used);
-
         wp_localize_script('nexaguard-admin-js', 'nexaguardData', array(
-            'ajax_url'             => admin_url('admin-ajax.php'),
-            'nonce'                => wp_create_nonce('nexaguard_security_nonce'),
-            'site_url'             => site_url(),
-            'is_pro'               => $is_pro,
-            'free_clean_used'      => $free_used,
-            'free_clean_limit'     => $free_limit,
-            'free_clean_remaining' => $free_remaining
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce'    => wp_create_nonce('nexaguard_security_nonce'),
+            'site_url' => site_url(),
+            'is_pro'   => $is_pro
         ));
     }
 

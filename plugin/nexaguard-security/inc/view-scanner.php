@@ -355,9 +355,15 @@ $rollback_count = count($backup_history);
 
                                 <?php if (empty($t['is_db'])): ?>
                                     <?php if ($t['clean_action'] === 'restore_core_file'): ?>
-                                        <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Descargar y restaurar el archivo original limpio desde WordPress.org">
-                                            🔄 Restaurar Archivo Original (WordPress.org)
-                                        </button>
+                                        <?php if ($is_pro): ?>
+                                            <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Descargar y restaurar el archivo original limpio desde WordPress.org">
+                                                🔄 Restaurar Archivo Original (WordPress.org)
+                                            </button>
+                                        <?php else: ?>
+                                            <a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline" style="border-color:#3de8a4; color:#3de8a4; text-decoration:none;" title="Reinstalar el núcleo limpio desde el actualizador de WordPress">
+                                                🔄 Reinstalar Núcleo Oficial de WordPress
+                                            </a>
+                                        <?php endif; ?>
                                     <?php elseif ($t['clean_action'] === 'sanitize_injection'): ?>
                                         <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Extirpar código malicioso inyectado preservando el archivo original">
                                             🧹 Desinfectar Código (Extirpar Inyección)

@@ -443,8 +443,11 @@ jQuery(document).ready(function ($) {
 
             if (!t.is_db) {
                 if (t.clean_action === 'restore_core_file') {
-                    actBtn = '<a href="update-core.php" class="btn-ng btn-ng-outline" style="border-color:#ffcf33; color:#ffcf33; font-weight:700; text-decoration:none;" title="Reinstalar núcleo oficial de WordPress">🔄 Reinstalar WordPress</a>' +
-                        '<a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-primary" style="margin-left:6px; text-decoration:none; font-weight:700;">🩺 Intervención Experta</a>';
+                    if (nexaguardData && nexaguardData.is_pro) {
+                        actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Descargar y restaurar el archivo original limpio desde WordPress.org">🔄 Restaurar Archivo Original (WordPress.org)</button>';
+                    } else {
+                        actBtn = '<a href="update-core.php" class="btn-ng btn-ng-outline" style="border-color:#3de8a4; color:#3de8a4; font-weight:700; text-decoration:none;" title="Reinstalar núcleo oficial de WordPress">🔄 Reinstalar Núcleo Oficial de WordPress</a>';
+                    }
                 } else if (t.clean_action === 'sanitize_injection') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Extirpar código malicioso inyectado preservando el archivo original">🧹 Desinfectar Código (Extirpar Inyección)</button>';
                 } else if (t.clean_action === 'clean_dropin') {
