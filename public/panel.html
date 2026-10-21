@@ -1048,7 +1048,7 @@ CV.resumen = async function () {
 CV.licencias = async function () {
   var d = await loadDash(), root = h('div', null);
   root.appendChild(head('Mis Licencias Oficiales', 'Gestiona las licencias adquiridas para tus sitios WordPress y descarga el plugin oficial.',
-    h('a', { class: 'btn btn-y', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
+    h('a', { class: 'btn btn-y', href: '/downloads/nexaguard-malware-scanner.zip', download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
 
   var licOrders = d.orders.filter(function (o) { return o.licenseKey; });
 
@@ -1069,11 +1069,11 @@ CV.licencias = async function () {
         h('span', { class: 'pill ok', style: 'margin-bottom:6px;display:inline-block' }, '🚀 Activación en 3 Pasos'),
         h('h3', { style: 'margin:4px 0 6px;color:#fff;font-size:1.15rem' }, '¿Cómo activar tu licencia en WordPress?'),
         h('ol', { style: 'margin:8px 0 0 18px;font-size:.88rem;color:var(--muted);line-height:1.6' },
-          h('li', null, 'Descarga el paquete oficial ', h('b', { style: 'color:#fff' }, 'nexaguard-security.zip'), ' con el botón amarillo.'),
+          h('li', null, 'Descarga el paquete oficial ', h('b', { style: 'color:#fff' }, 'nexaguard-malware-scanner.zip'), ' con el botón amarillo.'),
           h('li', null, 'En tu panel de WordPress ve a ', h('b', { style: 'color:#fff' }, 'Plugins → Añadir nuevo → Subir plugin'), ' y actívalo.'),
           h('li', null, 'Entra en el menú ', h('b', { style: 'color:var(--yellow)' }, 'NexaGuard Security'), ', pega tu clave de licencia y haz clic en ', h('b', { style: 'color:#fff' }, 'Activar Licencia'), '.'),
           h('li', null, '¡Listo! Tu sitio quedará blindado con Vigilancia 24 Horas y sincronizado con NexaGuard Threat Cloud.'))),
-      h('a', { class: 'btn btn-y', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
+      h('a', { class: 'btn btn-y', href: '/downloads/nexaguard-malware-scanner.zip', download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
   root.appendChild(guideCard);
 
   // Tarjetas de Licencias
@@ -1110,8 +1110,8 @@ CV.licencias = async function () {
           }, '📋 Copiar Licencia'),
           h('a', {
             class: 'btn btn-o sm',
-            href: '/downloads/nexaguard-security.zip',
-            download: 'nexaguard-security.zip'
+            href: '/downloads/nexaguard-malware-scanner.zip',
+            download: 'nexaguard-malware-scanner.zip'
           }, ico('shield'), 'Descargar Plugin'))),
       h('div', { style: 'background:rgba(0,0,0,.3);border:1px solid rgba(255,207,51,.25);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px' },
         h('div', null,
@@ -1160,7 +1160,7 @@ CV.sitios = async function () {
         h('p', { class: 'hint', style: 'margin:0;line-height:1.5' }, 'Instala nuestro plugin en tu WordPress para escanear archivos internos, detectar y eliminar backdoors (ClearFake, webshells, PHP en uploads) y activar blindaje WAF en tiempo real.')
       ),
       h('div', { style: 'display:flex;gap:10px;align-items:center;flex-wrap:wrap' },
-        h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip', style: 'text-decoration:none' }, ico('shield'), 'Descargar Plugin (.zip)'),
+        h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-malware-scanner.zip', download: 'nexaguard-malware-scanner.zip', style: 'text-decoration:none' }, ico('shield'), 'Descargar Plugin (.zip)'),
         h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () {
           var m = modal('Instalación de NexaGuard Security', h('div', { class: 'stack' },
             h('p', null, 'Sigue estos 3 sencillos pasos para proteger tu WordPress:'),
@@ -1170,7 +1170,7 @@ CV.sitios = async function () {
               h('li', null, h('b', null, 'Activa e inicia el escáner: '), 'Haz clic en ', h('b', null, 'Activar'), ' y luego en el menú ', h('b', null, 'NexaGuard'), ' presiona ', h('b', null, 'Iniciar Análisis Forense'), '.')
             ),
             h('div', { class: 'acts' },
-              h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip', style: 'text-decoration:none' }, ico('shield'), 'Descargar ahora'),
+              h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-malware-scanner.zip', download: 'nexaguard-malware-scanner.zip', style: 'text-decoration:none' }, ico('shield'), 'Descargar ahora'),
               h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { m.close(); } } }, 'Cerrar')
             )
           ));
@@ -1250,7 +1250,7 @@ CV.pagos = async function () {
           h('code', { style: 'font-family:var(--fm);color:var(--yellow);background:rgba(255,207,51,.12);padding:4px 10px;border-radius:6px;font-size:.95rem;border:1px solid rgba(255,207,51,.25);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, o.licenseKey)),
         h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
           h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada al portapapeles'); } } }, 'Copiar Clave'),
-          h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-security.zip', download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar Plugin (.zip)'))));
+          h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-malware-scanner.zip', download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar Plugin (.zip)'))));
     });
   }
   var pendientes = d.orders.filter(function (o) { return o.status === 'pending_payment' && (!o.stage || o.stage < 1); });
@@ -1428,7 +1428,7 @@ AV.licencias = async function () {
   setLicenseBadge(data.expiringCount || 0);
 
   root.appendChild(head('Licencias & Plugin', 'Gestor maestro de licencias emitidas a clientes, control de vencimientos y descarga oficial del plugin.',
-    h('a', { class: 'btn btn-y', href: data.downloadUrl, download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
+    h('a', { class: 'btn btn-y', href: data.downloadUrl, download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
 
   // Aviso de licencias por vencer o vencidas
   if (data.expiringCount > 0 || data.expiredCount > 0) {
@@ -1451,7 +1451,7 @@ AV.licencias = async function () {
         h('span', { class: 'pill ok', style: 'margin-bottom:6px;display:inline-block' }, '🛡️ Edición Estándar para WordPress'),
         h('h3', { style: 'margin:4px 0 6px;color:#fff;font-size:1.15rem' }, 'Plugin Oficial NexaGuard Security v1.2.2'),
         h('p', { class: 'hint', style: 'max-width:65ch;margin:0' }, 'Paquete .zip limpio y estándar. Al instalarlo en WordPress viene en Modo Estándar con escáner local. El Radar y la Vigilancia 24H se desbloquean al activar una licencia PRO.')),
-      h('a', { class: 'btn btn-y', href: data.downloadUrl, download: 'nexaguard-security.zip' }, ico('shield'), 'Descargar NexaGuard (.zip)')));
+      h('a', { class: 'btn btn-y', href: data.downloadUrl, download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar NexaGuard (.zip)')));
   root.appendChild(dlCard);
 
   // Tabla de licencias generadas para clientes

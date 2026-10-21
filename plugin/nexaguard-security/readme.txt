@@ -62,6 +62,14 @@ This plugin can connect to the following external services:
 * **Terms of Service:** https://www.nexaguards.com/terminos
 * **Privacy Policy:** https://www.nexaguards.com/privacidad
 
+3. **NexaGuard License Verification API (Optional)**
+* **Service:** NexaGuard Licensing & Account Service
+* **URL:** https://www.nexaguards.com/api/license/
+* **Purpose:** Validates optional PRO licenses or free community license tokens when the user clicks the license activation buttons.
+* **Data transmitted:** Site domain name and license key. No administrative credentials or personal site content is transmitted.
+* **Terms of Service:** https://www.nexaguards.com/terminos
+* **Privacy Policy:** https://www.nexaguards.com/privacidad
+
 == Screenshots ==
 
 1. NexaGuard Dashboard: threat summary, scan controls, and perimeter defense status.

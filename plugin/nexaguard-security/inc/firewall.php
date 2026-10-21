@@ -30,33 +30,32 @@ class NexaGuard_Firewall {
     }
 
     public static function init() {
-        // En la versión estándar gratuita el Blindaje y Cortafuegos WAF perimetral permanecen en pausa
-        if (!self::is_pro()) {
-            return;
-        }
+        $is_pro = self::is_pro();
 
         $settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
+            // 4 Reglas Básicas (activas por defecto para todos los usuarios)
             'block_php_uploads'     => true,
-            'disable_xmlrpc'        => true,
-            'hide_wp_version'       => true,
-            'waf_enabled'           => true,
-            'anti_clearfake'        => true,
-            'emergency_lockdown'    => false,
-            'disallow_file_edit'    => false,
             'disable_dir_browsing'  => true,
-            'brute_force_protection'=> true,
+            'disallow_file_edit'    => true,
+            'block_user_enumeration'=> true,
+            // Módulos Avanzados PRO (inactivos en versión gratuita sin licencia)
+            'disable_xmlrpc'        => false,
+            'hide_wp_version'       => false,
+            'waf_enabled'           => false,
+            'anti_clearfake'        => false,
+            'emergency_lockdown'    => false,
+            'brute_force_protection'=> false,
             'bf_max_retries'        => 5,
             'bf_lockout_time'       => 20,
             'hide_backend'          => false,
             'login_slug'            => 'acceso-seguro',
-            'block_user_enumeration'=> true,
-            'generic_login_errors'  => true,
-            'protect_system_files'  => true,
-            'admin_login_alerts'    => true,
-            'threat_email_alerts'   => true,
+            'generic_login_errors'  => false,
+            'protect_system_files'  => false,
+            'admin_login_alerts'    => false,
+            'threat_email_alerts'   => false,
             'alert_email'           => '',
-            'waf_auto_jail'         => true,
-            'tripwire_enabled'      => true,
+            'waf_auto_jail'         => false,
+            'tripwire_enabled'      => false,
             'threat_webhook_url'    => '',
             'login_custom_design'   => false,
             'login_bg_image'        => '',
@@ -65,12 +64,37 @@ class NexaGuard_Firewall {
             'login_security_notice' => 'Estás iniciando sesión en tu WordPress protegido por NexaGuard'
         ));
 
-        // 0. Modo Aislamiento de Emergencia / Lockdown
+        // =========================================================================
+        // 1. REGLAS BÁSICAS ESENCIALES (Siempre activas para proteger la instalación)
+        // =========================================================================
+
+        // 1.1 Bloqueo de edición de temas y plugins desde el panel de WordPress (Hardening)
+        if (!empty($settings['disallow_file_edit']) && !defined('DISALLOW_FILE_EDIT')) {
+            define('DISALLOW_FILE_EDIT', true);
+        }
+
+        // 1.2 Bloqueo de Enumeración de Usuarios (Anti-Reconnaissance en REST API y autor)
+        if (!empty($settings['block_user_enumeration'])) {
+            add_filter('rest_dispatch_request', array(__CLASS__, 'filter_rest_user_enumeration'), 10, 4);
+            add_action('template_redirect', array(__CLASS__, 'block_author_query_scan'), 1);
+        }
+
+        // 1.3 Cabeceras de seguridad HTTP básicas
+        add_action('send_headers', array(__CLASS__, 'send_security_headers'));
+
+        // =========================================================================
+        // 2. MÓDULOS AVANZADOS PRO (Se activan exclusivamente con licencia válida)
+        // =========================================================================
+        if (!$is_pro) {
+            return;
+        }
+
+        // 2.1 Modo Aislamiento de Emergencia / Lockdown
         if (!empty($settings['emergency_lockdown'])) {
             add_action('init', array(__CLASS__, 'enforce_emergency_lockdown'), 1);
         }
 
-        // 0.1 Cárcel Automática de IPs por Reincidencia (IP Auto-Jail 24h)
+        // 2.2 Cárcel Automática de IPs por Reincidencia (IP Auto-Jail 24h)
         if (!empty($settings['waf_auto_jail'])) {
             add_action('init', array(__CLASS__, 'check_ip_jail'), 0);
             if (!is_admin()) {
@@ -78,23 +102,18 @@ class NexaGuard_Firewall {
             }
         }
 
-        // 0.2 Centinela de Integridad de Archivos (Tripwire Sentinel)
+        // 2.3 Centinela de Integridad de Archivos (Tripwire Sentinel)
         if (!empty($settings['tripwire_enabled'])) {
             add_action('init', array(__CLASS__, 'check_file_tripwire'), 5);
         }
 
-        // 1. Bloqueo de edición de temas y plugins desde el panel de WordPress (Hardening)
-        if (!empty($settings['disallow_file_edit']) && !defined('DISALLOW_FILE_EDIT')) {
-            define('DISALLOW_FILE_EDIT', true);
-        }
-
-        // 2. Ocultar versión de WordPress
+        // 2.4 Ocultar versión de WordPress
         if (!empty($settings['hide_wp_version'])) {
             remove_action('wp_head', 'wp_generator');
             add_filter('the_generator', '__return_empty_string');
         }
 
-        // 3. Deshabilitar XML-RPC (evita ataques de fuerza bruta y amplificación DDoS)
+        // 2.5 Deshabilitar XML-RPC (evita ataques de fuerza bruta y amplificación DDoS)
         if (!empty($settings['disable_xmlrpc'])) {
             add_filter('xmlrpc_enabled', '__return_false');
             add_filter('xmlrpc_methods', '__return_empty_array');
@@ -105,20 +124,17 @@ class NexaGuard_Firewall {
             }
         }
 
-        // 4. Cabeceras de seguridad HTTP
-        add_action('send_headers', array(__CLASS__, 'send_security_headers'));
-
-        // 5. Filtro en vivo Anti-ClearFake / EtherHiding (elimina el script malicioso en tiempo real)
+        // 2.6 Filtro en vivo Anti-ClearFake / EtherHiding (elimina el script malicioso en tiempo real)
         if (!empty($settings['anti_clearfake']) && !is_admin()) {
             add_filter('script_loader_tag', array(__CLASS__, 'filter_malicious_script_tag'), 10, 3);
         }
 
-        // 6. Inspección WAF de peticiones entrantes
+        // 2.7 Inspección WAF L7 de peticiones entrantes (SQLi, XSS, RCE, traversal, scanners)
         if (!empty($settings['waf_enabled']) && !is_admin()) {
             self::inspect_request();
         }
 
-        // 7. Protección Anti Fuerza Bruta Local
+        // 2.8 Protección Anti Fuerza Bruta Local
         if (!empty($settings['brute_force_protection'])) {
             add_action('wp_login_failed', array(__CLASS__, 'on_login_failed'));
             add_action('login_init', array(__CLASS__, 'check_login_lockout'), 1);
@@ -126,7 +142,7 @@ class NexaGuard_Firewall {
             add_action('wp_login', array(__CLASS__, 'on_login_success'), 10, 2);
         }
 
-        // 8. Ocultar URL de Acceso / Hide Backend
+        // 2.9 Ocultar URL de Acceso / Hide Backend
         if (!empty($settings['hide_backend']) && !empty($settings['login_slug'])) {
             add_action('init', array(__CLASS__, 'handle_hide_backend'), 1);
             add_filter('site_url', array(__CLASS__, 'filter_login_url'), 100, 2);
@@ -135,23 +151,17 @@ class NexaGuard_Firewall {
             add_filter('wp_redirect', array(__CLASS__, 'filter_login_redirect'), 100, 1);
         }
 
-        // 9. Bloqueo de Enumeración de Usuarios (REST API y query params)
-        if (!empty($settings['block_user_enumeration'])) {
-            add_filter('rest_dispatch_request', array(__CLASS__, 'filter_rest_user_enumeration'), 10, 4);
-            add_action('template_redirect', array(__CLASS__, 'block_author_query_scan'), 1);
-        }
-
-        // 10. Ofuscación Genérica de Errores de Acceso
+        // 2.10 Ofuscación Genérica de Errores de Acceso
         if (!empty($settings['generic_login_errors'])) {
             add_filter('login_errors', array(__CLASS__, 'generic_login_error_message'));
         }
 
-        // 11. Alerta por Email ante Inicio de Sesión de Administrador desde Nueva IP
+        // 2.11 Alerta por Email ante Inicio de Sesión de Administrador desde Nueva IP
         if (!empty($settings['admin_login_alerts'])) {
             add_action('wp_login', array(__CLASS__, 'alert_new_admin_login_ip'), 20, 2);
         }
 
-        // 12. Personalización y Embellecedor Visual de Login (Login Customizer & Branding)
+        // 2.12 Personalización y Embellecedor Visual de Login (Login Customizer & Branding)
         if (!empty($settings['login_custom_design'])) {
             add_action('login_enqueue_scripts', array(__CLASS__, 'render_custom_login_styles'));
             add_filter('login_headerurl', array(__CLASS__, 'custom_login_header_url'));
@@ -921,6 +931,7 @@ class NexaGuard_Firewall {
             wp_remote_post($webhook_url, array(
                 'method' => 'POST',
                 'timeout' => 5,
+                'sslverify' => true,
                 'blocking' => false,
                 'headers' => array(
                     'Content-Type' => 'application/json; charset=utf-8'
@@ -967,6 +978,7 @@ class NexaGuard_Firewall {
         $response = wp_remote_post($url, array(
             'method' => 'POST',
             'timeout' => 8,
+            'sslverify' => true,
             'blocking' => true,
             'headers' => array('Content-Type' => 'application/json; charset=utf-8'),
             'body' => json_encode($payload)

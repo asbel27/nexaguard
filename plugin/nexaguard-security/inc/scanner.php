@@ -356,7 +356,7 @@ class NexaGuard_Scanner {
             );
         }
 
-        $feed_url = 'https://nexaguard.onrender.com/api/threat-intel';
+        $feed_url = 'https://www.nexaguards.com/api/threat-intel';
         $response = wp_remote_get($feed_url, array('timeout' => 5, 'sslverify' => true));
         if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
             $data = json_decode(wp_remote_retrieve_body($response), true);
@@ -988,7 +988,7 @@ class NexaGuard_Scanner {
 
         if (empty($checksums) || !is_array($checksums)) {
             $api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale={$locale}";
-            $response = wp_remote_get($api_url, array('timeout' => 5));
+            $response = wp_remote_get($api_url, array('timeout' => 5, 'sslverify' => true));
             if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
                 $body = json_decode(wp_remote_retrieve_body($response), true);
                 if ($body && !empty($body['checksums'])) {
@@ -1032,7 +1032,7 @@ class NexaGuard_Scanner {
                         $en_checksums = get_transient($en_cache_key);
                         if (empty($en_checksums) || !is_array($en_checksums)) {
                             $en_api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale=en_US";
-                            $en_resp = wp_remote_get($en_api_url, array('timeout' => 5));
+                            $en_resp = wp_remote_get($en_api_url, array('timeout' => 5, 'sslverify' => true));
                             if (!is_wp_error($en_resp) && wp_remote_retrieve_response_code($en_resp) === 200) {
                                 $en_body = json_decode(wp_remote_retrieve_body($en_resp), true);
                                 if (!empty($en_body['checksums'])) {
@@ -1053,7 +1053,7 @@ class NexaGuard_Scanner {
                         $pkg_checksums = get_transient($pkg_cache_key);
                         if (empty($pkg_checksums) || !is_array($pkg_checksums)) {
                             $pkg_api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale={$wp_local_package}";
-                            $pkg_resp = wp_remote_get($pkg_api_url, array('timeout' => 5));
+                            $pkg_resp = wp_remote_get($pkg_api_url, array('timeout' => 5, 'sslverify' => true));
                             if (!is_wp_error($pkg_resp) && wp_remote_retrieve_response_code($pkg_resp) === 200) {
                                 $pkg_body = json_decode(wp_remote_retrieve_body($pkg_resp), true);
                                 if (!empty($pkg_body['checksums'])) {

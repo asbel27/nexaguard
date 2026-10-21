@@ -22,28 +22,36 @@ $vigilance_active = (int) get_option('nexaguard_vigilance_active', 1);
 
 // WAF settings (integrado en la misma vista)
 $settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
+    // 4 Reglas Básicas (activas por defecto para todos los usuarios)
     'block_php_uploads'     => true,
-    'disable_xmlrpc'        => true,
-    'hide_wp_version'       => true,
-    'waf_enabled'           => true,
-    'anti_clearfake'        => true,
-    'emergency_lockdown'    => false,
-    'disallow_file_edit'    => false,
     'disable_dir_browsing'  => true,
-    'brute_force_protection'=> true,
+    'disallow_file_edit'    => true,
+    'block_user_enumeration'=> true,
+    // Módulos Avanzados (activos únicamente con licencia PRO)
+    'disable_xmlrpc'        => $is_pro,
+    'hide_wp_version'       => $is_pro,
+    'waf_enabled'           => $is_pro,
+    'anti_clearfake'        => $is_pro,
+    'emergency_lockdown'    => false,
+    'brute_force_protection'=> $is_pro,
     'bf_max_retries'        => 5,
     'bf_lockout_time'       => 20,
     'hide_backend'          => false,
     'login_slug'            => 'acceso-seguro',
-    'block_user_enumeration'=> true,
-    'generic_login_errors'  => true,
-    'protect_system_files'  => true,
-    'admin_login_alerts'    => true,
+    'generic_login_errors'  => $is_pro,
+    'protect_system_files'  => $is_pro,
+    'admin_login_alerts'    => $is_pro,
+    'threat_email_alerts'   => false,
+    'alert_email'           => '',
+    'waf_auto_jail'         => $is_pro,
+    'tripwire_enabled'      => $is_pro,
+    'threat_webhook_url'    => '',
     'login_custom_design'   => false,
     'login_bg_image'        => '',
     'login_bg_preset'       => 'deep-navy',
     'login_logo_image'      => '',
-    'login_security_notice' => 'Estás iniciando sesión en tu WordPress protegido por NexaGuard'
+    'login_security_notice' => 'Estás iniciando sesión en tu WordPress protegido por NexaGuard',
+    'cloud_threat_intel'    => false
 ));
 $total_lockouts = intval(get_option('nexaguard_total_lockouts', 0));
 
@@ -78,7 +86,7 @@ $rollback_count = count($backup_history);
             <div class="lic-icon" style="font-size:2.4rem; line-height:1;">🛡️</div>
             <div class="lic-content" style="flex:1; min-width:260px;">
                 <strong style="display:block; font-size:1.08rem; font-weight:800; color:#ffffff !important; margin-bottom:4px;">EDICIÓN ESTÁNDAR: Escaneo Forense Local Activo.</strong>
-                <p style="font-size:0.94rem; color:#e2eafc !important; margin:0; line-height:1.55; font-weight:500;">Estás usando NexaGuard Security en modo gratuito. Activa tu <strong style="color:#3de8a4 !important;">Licencia Gratuita de la Comunidad</strong> o adquiere el <strong style="color:#ffd859 !important;">Plan PRO ($9.99/mes)</strong> para desbloquear Vigilancia 24H y Cortafuegos WAF activo.</p>
+                <p style="font-size:0.94rem; color:#e2eafc !important; margin:0; line-height:1.55; font-weight:500;">Estás usando NexaGuard Security (Escaneo Forense, Monitor de Núcleo y Blindaje Local 100% funcionales). Activa tu <strong style="color:#3de8a4 !important;">Licencia Gratuita de la Comunidad</strong> o adquiere el <strong style="color:#ffd859 !important;">Plan PRO ($9.99/mes)</strong> para desbloquear Threat Cloud Intelligence y soporte prioritario.</p>
             </div>
             <div class="lic-action" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <button type="button" class="btn-ng btn-ng-outline btn-activate-free-license" style="border-color:#3de8a4; color:#3de8a4; background:rgba(61,232,164,0.08); font-weight:700;">🛡️ Activar Licencia Gratuita (1-Clic)</button>
@@ -550,7 +558,7 @@ $rollback_count = count($backup_history);
                         Telemetría en Tiempo Real y Alertas con Voz Sintetizada
                     </h3>
                     <p style="color:#cad7f5; font-size:0.95rem; max-width:640px; margin:0 auto 20px; line-height:1.6; font-weight:500;">
-                        La versión Estándar realiza patrullajes programados diarios en segundo plano. Actualiza a <strong style="color:#ffcf33;">NexaGuard Security PRO</strong> para desbloquear la consola de intercepción táctica en vivo: streaming segundo a segundo de ataques botnet, voz sintetizada de alerta y telemetría de Kali Linux.
+                        La versión Estándar realiza patrullajes programados diarios en segundo plano. Actualiza a <strong style="color:#ffcf33;">NexaGuard Security PRO</strong> para desbloquear la consola de intercepción táctica en vivo: streaming segundo a segundo de ataques botnet y bloqueo perimetral de escáneres hostiles automatizados (SQLMap, Nikto y WPScan).
                     </p>
                     <div style="display:flex; justify-content:center; align-items:center; gap:14px; flex-wrap:wrap;">
                         <button type="button" class="btn-ng btn-ng-primary btn-open-upgrade-modal" style="font-size:0.95rem; padding:10px 22px;">⚡ Desbloquear Radar en Vivo ($9.99/mes)</button>
@@ -568,7 +576,7 @@ $rollback_count = count($backup_history);
                         </div>
                         <div class="terminal-title">
                             <span class="t-badge-live">LIVE TELEMETRY</span>
-                            <span>NEXAGUARD THREAT INTERCEPTOR // KALI LINUX & BOTNET RADAR STREAM</span>
+                            <span>NEXAGUARD THREAT INTERCEPTOR // RADAR DE TRÁFICO PERIMETRAL Y ATAQUES</span>
                         </div>
                         <div class="terminal-meta" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                             <div class="radar-volume-control" title="Ajustar volumen de voz y alerta">
@@ -624,18 +632,33 @@ $rollback_count = count($backup_history);
     <div class="ng-tab-panel" id="tab-waf">
 
         <!-- Estado del Cortafuegos Local -->
-        <div class="waf-info-card" style="background:#0e163e; border:1px solid rgba(61,232,164,0.3); border-radius:14px; padding:18px 24px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-            <div style="flex:1; min-width:280px;">
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#3de8a4; box-shadow:0 0 10px #3de8a4;"></span>
-                    <strong style="color:#ffffff; font-size:1.05rem; font-weight:800;">Cortafuegos WAF Activo en el Servidor</strong>
+        <?php if ($is_pro): ?>
+            <div class="waf-info-card" style="background:#0e163e; border:1px solid rgba(61,232,164,0.3); border-radius:14px; padding:18px 24px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+                <div style="flex:1; min-width:280px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#3de8a4; box-shadow:0 0 10px #3de8a4;"></span>
+                        <strong style="color:#ffffff; font-size:1.05rem; font-weight:800;">Cortafuegos WAF Capa 7 Activo en el Servidor</strong>
+                    </div>
+                    <p style="color:#8fa0cf; font-size:0.9rem; margin:0; line-height:1.5;">Protección perimetral avanzada y reglas de servidor operativas bajo tu licencia oficial. Inspección L7 contra inyecciones SQL, XSS, scripts Web3 y bloqueo de escáneres hostiles.</p>
                 </div>
-                <p style="color:#8fa0cf; font-size:0.9rem; margin:0; line-height:1.5;">Protección perimetral a nivel de aplicación PHP y directivas .htaccess contra inyecciones SQL, XSS, bots y puertas traseras.</p>
+                <div>
+                    <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-weight:800; padding:6px 14px; border-radius:999px; border:1px solid rgba(61,232,164,0.4);">✓ WAF Inteligente Activo</span>
+                </div>
             </div>
-            <div>
-                <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-outline" style="border-color:rgba(255,207,51,0.5); color:#ffcf33; font-weight:700; font-size:0.85rem;">⚡ Conectar NexaGuard Cloud WAF (PRO) ›</a>
+        <?php else: ?>
+            <div class="waf-info-card" style="background:#0e163e; border:1px solid rgba(255,207,51,0.3); border-radius:14px; padding:18px 24px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+                <div style="flex:1; min-width:280px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#3de8a4; box-shadow:0 0 10px #3de8a4;"></span>
+                        <strong style="color:#ffffff; font-size:1.05rem; font-weight:800;">Blindaje Básico de Servidor Activo (4 Reglas Esenciales)</strong>
+                    </div>
+                    <p style="color:#8fa0cf; font-size:0.9rem; margin:0; line-height:1.5;">Tu sitio está blindado con las 4 reglas esenciales de servidor (.htaccess y WordPress). Los módulos avanzados de Cortafuegos WAF Capa 7, Anti-ClearFake y Auto-Jail se activan al ingresar tu licencia PRO.</p>
+                </div>
+                <div>
+                    <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-outline" style="border-color:rgba(255,207,51,0.5); color:#ffcf33; font-weight:700; font-size:0.85rem;">⚡ Conectar NexaGuard Cloud WAF (PRO) ›</a>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
 
         <form id="form-waf-settings" class="ng-card" style="margin-top:18px;">
             <div class="card-title-bar">
@@ -650,9 +673,9 @@ $rollback_count = count($backup_history);
                 <div class="waf-rules-group-title" style="display:flex; justify-content:space-between; align-items:center; margin: 10px 0 12px; padding: 12px 16px; background: rgba(61,232,164,0.06); border-left: 4px solid #3de8a4; border-radius: 8px;">
                     <div>
                         <strong style="color:#ffffff; font-size:1rem; font-weight:800;">🛡️ Reglas de Seguridad Básica en Servidor (Edición Estándar)</strong>
-                        <span style="color:#8fa0cf; font-size:0.84rem; display:block; margin-top:2px;">Medidas directas de protección a nivel de servidor (.htaccess y PHP) para blindar tu instalación.</span>
+                        <span style="color:#8fa0cf; font-size:0.84rem; display:block; margin-top:2px;">Las 4 medidas esenciales de blindaje a nivel de servidor (.htaccess y WordPress) activas para tu instalación.</span>
                     </div>
-                    <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ 100% Funcional</span>
+                    <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ 4 Reglas 100% Funcionales</span>
                 </div>
 
                 <!-- 1. Bloqueo de PHP en Uploads -->
@@ -673,43 +696,7 @@ $rollback_count = count($backup_history);
                     <input type="checkbox" name="block_php_uploads" value="1" <?php checked(!empty($settings['block_php_uploads'])); ?> class="ng-toggle">
                 </label>
 
-                <!-- 2. Deshabilitar XML-RPC -->
-                <label class="toggle-row">
-                    <div class="toggle-info">
-                        <b>Deshabilitar completamente XML-RPC
-                            <span class="ng-tooltip-btn" tabindex="0">
-                                <span class="ng-tooltip-icon">ℹ️</span>
-                                <span class="ng-tooltip-popover">
-                                    <strong class="ng-tooltip-title">🚪 Clausura de Puerta XML-RPC</strong>
-                                    <span class="ng-tooltip-desc">XML-RPC es un protocolo legado muy abusado por ciberdelincuentes para ataques masivos de fuerza bruta a contraseñas y ataques de amplificación DDoS. Cerrarlo blinda tu servidor.</span>
-                                    <span class="ng-tooltip-rec">💡 Recomendado: ACTIVO (salvo si usas la app móvil clásica)</span>
-                                </span>
-                            </span>
-                        </b>
-                        <p class="ng-hint">Bloquea el archivo xmlrpc.php para detener ataques automatizados de fuerza bruta a contraseñas y ataques de amplificación DDoS.</p>
-                    </div>
-                    <input type="checkbox" name="disable_xmlrpc" value="1" <?php checked(!empty($settings['disable_xmlrpc'])); ?> class="ng-toggle">
-                </label>
-
-                <!-- 3. Ocultar versión de WordPress -->
-                <label class="toggle-row">
-                    <div class="toggle-info">
-                        <b>Ocultar versión de WordPress (wp_generator)
-                            <span class="ng-tooltip-btn" tabindex="0">
-                                <span class="ng-tooltip-icon">ℹ️</span>
-                                <span class="ng-tooltip-popover">
-                                    <strong class="ng-tooltip-title">🙈 Ocultamiento de Metadatos</strong>
-                                    <span class="ng-tooltip-desc">Elimina la etiqueta pública del código HTML que revela la versión exacta de tu WordPress. Dificulta que robots maliciosos detecten si tienes vulnerabilidades sin parchear.</span>
-                                    <span class="ng-tooltip-rec">💡 Recomendado: ACTIVO</span>
-                                </span>
-                            </span>
-                        </b>
-                        <p class="ng-hint">Elimina la etiqueta meta generator que expone la versión exacta de tu WordPress a bots que buscan vulnerabilidades conocidas.</p>
-                    </div>
-                    <input type="checkbox" name="hide_wp_version" value="1" <?php checked(!empty($settings['hide_wp_version'])); ?> class="ng-toggle">
-                </label>
-
-                <!-- 4. Prevenir Listado de Directorios Apache -->
+                <!-- 2. Prevenir Listado de Directorios Apache -->
                 <label class="toggle-row">
                     <div class="toggle-info">
                         <b>Bloquear Listado de Directorios Apache (Options -Indexes)
@@ -727,7 +714,7 @@ $rollback_count = count($backup_history);
                     <input type="checkbox" name="disable_dir_browsing" value="1" <?php checked(!empty($settings['disable_dir_browsing'])); ?> class="ng-toggle">
                 </label>
 
-                <!-- 5. Deshabilitar Editor de Temas y Plugins -->
+                <!-- 3. Deshabilitar Editor de Temas y Plugins -->
                 <label class="toggle-row">
                     <div class="toggle-info">
                         <b>Deshabilitar Editor de Temas y Plugins (DISALLOW_FILE_EDIT)
@@ -745,25 +732,7 @@ $rollback_count = count($backup_history);
                     <input type="checkbox" name="disallow_file_edit" value="1" <?php checked(!empty($settings['disallow_file_edit'])); ?> class="ng-toggle">
                 </label>
 
-                <!-- 6. Blindaje de Archivos del Sistema y wp-includes -->
-                <label class="toggle-row">
-                    <div class="toggle-info">
-                        <b>Blindaje de Archivos del Sistema y wp-includes (.htaccess)
-                            <span class="ng-tooltip-btn" tabindex="0">
-                                <span class="ng-tooltip-icon">ℹ️</span>
-                                <span class="ng-tooltip-popover">
-                                    <strong class="ng-tooltip-title">🏛️ Blindaje de Archivos Críticos</strong>
-                                    <span class="ng-tooltip-desc">Protege a nivel de servidor web tus archivos más sensibles: bloquea el acceso a wp-config.php, prohíbe llamadas directas a scripts en /wp-includes/ y bloquea métodos HTTP peligrosos.</span>
-                                    <span class="ng-tooltip-rec">💡 Recomendado: SIEMPRE ACTIVO</span>
-                                </span>
-                            </span>
-                        </b>
-                        <p class="ng-hint">Bloquea la ejecución directa de scripts PHP en la carpeta interna <code>/wp-includes/</code>, deniega el acceso a <code>wp-config.php</code>, <code>readme.html</code> y bloquea métodos HTTP no seguros (TRACE, TRACK, DEBUG).</p>
-                    </div>
-                    <input type="checkbox" name="protect_system_files" value="1" <?php checked(!empty($settings['protect_system_files'])); ?> class="ng-toggle">
-                </label>
-
-                <!-- 7. Bloqueo de Enumeración de Usuarios -->
+                <!-- 4. Bloqueo de Enumeración de Usuarios -->
                 <label class="toggle-row">
                     <div class="toggle-info">
                         <b>Bloquear Enumeración de Usuarios (Anti-Reconnaissance)
@@ -780,62 +749,206 @@ $rollback_count = count($backup_history);
                     </div>
                     <input type="checkbox" name="block_user_enumeration" value="1" <?php checked(!empty($settings['block_user_enumeration'])); ?> class="ng-toggle">
                 </label>
-
-                <!-- 8. Inteligencia de Amenazas en la Nube (Opt-in) -->
-                <label class="toggle-row">
-                    <div class="toggle-info">
-                        <b>Sincronización de Ciberinteligencia en la Nube (Opt-in)
-                            <span class="ng-tooltip-btn" tabindex="0">
-                                <span class="ng-tooltip-icon">ℹ️</span>
-                                <span class="ng-tooltip-popover">
-                                    <strong class="ng-tooltip-title">☁️ NexaGuard Threat Intelligence API</strong>
-                                    <span class="ng-tooltip-desc">Consulta de forma voluntaria la base de firmas de malware emergente de NexaGuard para enriquecer el escáner heurístico local. No transmite datos personales ni contraseñas.</span>
-                                    <span class="ng-tooltip-rec">💡 Opcional: Requiere conexión HTTPS saliente</span>
-                                </span>
-                            </span>
-                        </b>
-                        <p class="ng-hint">Permite al escáner heurístico consultar el feed oficial de firmas digitales en <code>https://nexaguard.onrender.com/api/threat-intel</code> para identificar patrones de malware recientes.</p>
-                    </div>
-                    <input type="checkbox" name="cloud_threat_intel" value="1" <?php checked(!empty($settings['cloud_threat_intel'])); ?> class="ng-toggle">
-                </label>
             </div>
 
-            <!-- ================= SECCIÓN 2: EXTENSIONES AVANZADAS PRO ================= -->
+            <!-- ================= SECCIÓN 2: MÓDULOS AVANZADOS PRO ================= -->
             <div class="waf-rules-group-title" style="margin: 32px 0 14px; padding: 18px 22px; background: rgba(255,207,51,0.08); border-left: 4px solid #ffcf33; border-radius: 12px;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px;">
                     <div style="flex:1; min-width:280px;">
                         <strong style="color:#ffcf33; font-size:1.06rem; font-weight:800; display:flex; align-items:center; gap:8px;">
-                            🚀 Extensiones Avanzadas NexaGuard Security PRO
+                            🚀 Módulos Avanzados de Cortafuegos WAF (Exclusivo Planes PRO)
                         </strong>
                         <p style="color:#cad7f5; font-size:0.88rem; line-height:1.55; margin:6px 0 0;">
-                            Las funciones especializadas de cortafuegos perimetral (WAF Capa 7), defensa activa contra ataques de ingeniería social Web3 (Anti-ClearFake), aislamiento disciplinario en Cyber Jail (24 horas) y personalización corporativa del panel de acceso están disponibles mediante la suscripción profesional descargable desde el panel de cliente en nuestra web oficial.
+                            <?php if ($is_pro): ?>
+                                Todas las funciones avanzadas de cortafuegos perimetral Capa 7, defensa activa Anti-ClearFake, auto-jail 24h y branding corporativo están activas y operando en tu servidor bajo tu suscripción profesional.
+                            <?php else: ?>
+                                Las siguientes funciones especializadas de cortafuegos perimetral (WAF Capa 7), defensa activa contra ataques Web3 (Anti-ClearFake), auto-jail 24h y personalización corporativa se activan de forma automática e instantánea al ingresar tu licencia en la pestaña <strong>Licencia</strong>.
+                            <?php endif; ?>
                         </p>
                     </div>
                     <div>
-                        <a href="https://www.nexaguards.com/#planes" target="_blank" rel="noopener noreferrer" class="btn-ng btn-ng-primary" style="font-size:0.85rem; padding:8px 16px; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
-                            ⚡ Conoce los Planes PRO ›
-                        </a>
+                        <?php if (!$is_pro): ?>
+                            <a href="https://www.nexaguards.com/#planes" target="_blank" rel="noopener noreferrer" class="btn-ng btn-ng-primary" style="font-size:0.85rem; padding:8px 16px; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                                ⚡ Conoce los Planes PRO ›
+                            </a>
+                        <?php else: ?>
+                            <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ Desbloqueado con tu Licencia</span>
+                        <?php endif; ?>
                     </div>
                 </div>
+            </div>
 
-                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:16px;">
-                    <div style="background:#091030; border:1px solid rgba(255,207,51,0.2); border-radius:10px; padding:12px 14px;">
-                        <strong style="color:#ffd859; font-size:0.86rem; display:block; margin-bottom:4px;">🛡️ WAF Perimetral Capa 7</strong>
-                        <span style="color:#8fa0cf; font-size:0.8rem; line-height:1.4; display:block;">Inspección y bloqueo perimetral de SQLi, XSS, RCE y scanners de Kali Linux.</span>
+            <div class="toggle-list" style="<?php echo !$is_pro ? 'opacity:0.75;' : ''; ?>">
+
+                <!-- PRO 1: Cortafuegos WAF Capa 7 PHP -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Cortafuegos WAF Perimetral Capa 7 (Runtime PHP)
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Inspección de peticiones entrantes en milisegundos contra inyecciones SQL, Cross-Site Scripting (XSS), Path Traversal y scanners de intrusión automatizados.</p>
                     </div>
-                    <div style="background:#091030; border:1px solid rgba(255,207,51,0.2); border-radius:10px; padding:12px 14px;">
-                        <strong style="color:#ffd859; font-size:0.86rem; display:block; margin-bottom:4px;">🛑 Escudo Anti-ClearFake Web3</strong>
-                        <span style="color:#8fa0cf; font-size:0.8rem; line-height:1.4; display:block;">Neutralización en tiempo real de scripts maliciosos inyectados en blockchain.</span>
+                    <input type="checkbox" name="waf_enabled" value="1" <?php checked(!empty($settings['waf_enabled'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 2: Escudo Anti-ClearFake / EtherHiding Web3 -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Escudo en Tiempo Real Anti-ClearFake & Falsos Captchas Web3
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Intercepta y erradica al vuelo scripts inyectados en blockchain (EtherHiding) y ventanas emergentes fraudulentas tipo ClickFix antes de que lleguen al navegador de tus visitantes.</p>
                     </div>
-                    <div style="background:#091030; border:1px solid rgba(255,207,51,0.2); border-radius:10px; padding:12px 14px;">
-                        <strong style="color:#ffd859; font-size:0.86rem; display:block; margin-bottom:4px;">🚨 Cyber Jail Reincidente 24H</strong>
-                        <span style="color:#8fa0cf; font-size:0.8rem; line-height:1.4; display:block;">Aislamiento perimetral automático de atacantes tras 3 intentos maliciosos consecutivos.</span>
+                    <input type="checkbox" name="anti_clearfake" value="1" <?php checked(!empty($settings['anti_clearfake'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 3: Modo Aislamiento de Emergencia / Lockdown -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Modo Aislamiento de Emergencia (Panic Lockdown 503)
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Desvía todo el tráfico público no autenticado a una pantalla de mantenimiento 503 mientras permite a los administradores logueados desinfectar el sitio.</p>
                     </div>
-                    <div style="background:#091030; border:1px solid rgba(255,207,51,0.2); border-radius:10px; padding:12px 14px;">
-                        <strong style="color:#ffd859; font-size:0.86rem; display:block; margin-bottom:4px;">✨ Login Branding Corporativo</strong>
-                        <span style="color:#8fa0cf; font-size:0.8rem; line-height:1.4; display:block;">Pantalla de acceso de alta tecnología con tu logotipo oficial y distintivo de blindaje.</span>
+                    <input type="checkbox" name="emergency_lockdown" value="1" <?php checked(!empty($settings['emergency_lockdown'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 4: Protección Anti Fuerza Bruta Local -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Protección Anti Fuerza Bruta Local en Pantalla de Login
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Bloquea temporalmente direcciones IP que excedan 5 intentos fallidos consecutivos de contraseña para evitar el hackeo por fuerza bruta.</p>
                     </div>
-                </div>
+                    <input type="checkbox" name="brute_force_protection" value="1" <?php checked(!empty($settings['brute_force_protection'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 5: Cárcel Automática de IPs 24h -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Cárcel Automática de IPs Reincidentes (Cyber Jail 24H)
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Aísla completamente durante 24 horas a cualquier IP que cometa 3 o más infracciones de inyección o ataque en el mismo día.</p>
+                    </div>
+                    <input type="checkbox" name="waf_auto_jail" value="1" <?php checked(!empty($settings['waf_auto_jail'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 6: Ocultar wp-login.php -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Ocultar URL de Acceso Estándar (/wp-login.php)
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Sustituye la ruta wp-login.php por un slug secreto personalizado para frustrar el 100% de los robots de ataque masivo.</p>
+                    </div>
+                    <input type="checkbox" name="hide_backend" value="1" <?php checked(!empty($settings['hide_backend'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 7: Blindaje de Archivos del Sistema y wp-includes -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Blindaje de Archivos del Sistema y /wp-includes/ (.htaccess)
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Bloquea la ejecución directa de scripts en <code>/wp-includes/</code>, protege <code>wp-config.php</code> y bloquea métodos HTTP peligrosos (TRACE, TRACK, DEBUG).</p>
+                    </div>
+                    <input type="checkbox" name="protect_system_files" value="1" <?php checked(!empty($settings['protect_system_files'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 8: Centinela Tripwire de Integridad de Archivos -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Centinela de Integridad de Archivos Vitales (Tripwire)
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Monitorea cambios no autorizados en archivos críticos como index.php, wp-config.php y .htaccess con verificación criptográfica en tiempo real.</p>
+                    </div>
+                    <input type="checkbox" name="tripwire_enabled" value="1" <?php checked(!empty($settings['tripwire_enabled'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 9: Deshabilitar XML-RPC -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Deshabilitar completamente XML-RPC
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Bloquea el archivo xmlrpc.php para detener ataques automatizados de fuerza bruta a contraseñas y ataques de amplificación DDoS.</p>
+                    </div>
+                    <input type="checkbox" name="disable_xmlrpc" value="1" <?php checked(!empty($settings['disable_xmlrpc'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 10: Ocultar versión de WordPress -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Ocultar versión de WordPress (wp_generator)
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Elimina la etiqueta meta generator que expone la versión exacta de tu WordPress a bots que buscan vulnerabilidades conocidas.</p>
+                    </div>
+                    <input type="checkbox" name="hide_wp_version" value="1" <?php checked(!empty($settings['hide_wp_version'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 11: Alertas por Email de Login Admin -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Alerta Inmediata por Email ante Login de Administrador desde Nueva IP
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Recibe un correo electrónico inmediato cada vez que un usuario administrador inicie sesión desde una ubicación o dirección IP no reconocida previamente.</p>
+                    </div>
+                    <input type="checkbox" name="admin_login_alerts" value="1" <?php checked(!empty($settings['admin_login_alerts'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 12: Login Customizer & Branding -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Personalización y Branding Corporativo en Pantalla de Acceso
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Transforma la pantalla estándar de WordPress con tu logotipo oficial corporativo, fondo temático de alta tecnología y distintivo de blindaje activo.</p>
+                    </div>
+                    <input type="checkbox" name="login_custom_design" value="1" <?php checked(!empty($settings['login_custom_design'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
+                <!-- PRO 13: Inteligencia de Amenazas en la Nube (Opt-in) -->
+                <label class="toggle-row">
+                    <div class="toggle-info">
+                        <b>Sincronización de Ciberinteligencia en la Nube (Opt-in)
+                            <?php if (!$is_pro): ?>
+                                <span class="badge-v" style="background:rgba(255,207,51,0.15); color:#ffcf33; font-size:0.72rem; border:1px solid rgba(255,207,51,0.3); margin-left:6px;">🔒 Plan PRO</span>
+                            <?php endif; ?>
+                        </b>
+                        <p class="ng-hint">Permite al escáner heurístico consultar el feed oficial de firmas digitales en <code>https://www.nexaguards.com/api/threat-intel</code> para identificar patrones de malware recientes.</p>
+                    </div>
+                    <input type="checkbox" name="cloud_threat_intel" value="1" <?php checked(!empty($settings['cloud_threat_intel'])); ?> <?php echo !$is_pro ? 'disabled="disabled"' : ''; ?> class="ng-toggle">
+                </label>
+
             </div>
 
             <div class="form-actions" style="margin-top:24px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -1241,10 +1354,10 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Bloqueo de PHP en uploads, XML-RPC off, -Indexes, bloqueo edición PHP en admin</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ 6 Reglas Activas</span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ 4 Reglas Esenciales</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
-                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ 6 Reglas Activas</span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Blindaje Completo + WAF L7</span>
                             </td>
                         </tr>
 

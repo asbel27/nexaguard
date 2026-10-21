@@ -1447,7 +1447,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       clientOrders,
       expiringCount,
       expiredCount,
-      downloadUrl: '/downloads/nexaguard-security.zip'
+      downloadUrl: '/downloads/nexaguard-malware-scanner.zip'
     });
   });
   route('GET', '/api/admin/tickets', 'admin', (ctx) => {

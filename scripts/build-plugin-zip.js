@@ -217,19 +217,18 @@ const downloadsDir = path.join(rootDir, 'public', 'downloads');
 // Generar manifiesto de integridad antes de comprimir
 generateIntegrityManifest(pluginSourceDir);
 
-// 1. Generar zip con slug original
+// 1. Generar zip principal con slug oficial de WordPress.org (nexaguard-malware-scanner)
+const officialZipPath = path.join(downloadsDir, 'nexaguard-malware-scanner.zip');
 createZip(
   pluginSourceDir,
-  path.join(downloadsDir, 'nexaguard-security.zip'),
-  'nexaguard-security'
-);
-
-// 2. Generar zip con nuevo slug oficial de WordPress.org
-createZip(
-  pluginSourceDir,
-  path.join(downloadsDir, 'nexaguard-malware-scanner.zip'),
+  officialZipPath,
   'nexaguard-malware-scanner'
 );
+
+// 2. Generar zip espejo idéntico nexaguard-security.zip para total compatibilidad con enlaces existentes
+const legacyZipPath = path.join(downloadsDir, 'nexaguard-security.zip');
+fs.copyFileSync(officialZipPath, legacyZipPath);
+console.log(`🔗 Archivo espejo sincronizado idénticamente: ${legacyZipPath} (100% idéntico a nexaguard-malware-scanner.zip)`);
 
 // Generar info.json para el auto-updater nativo de WordPress
 generateUpdateInfo(pluginSourceDir, downloadsDir);

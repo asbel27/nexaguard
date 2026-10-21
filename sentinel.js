@@ -34,7 +34,8 @@ const CRITICAL_FILES = [
   { path: 'public/panel.html', category: 'Consola Administrador', vital: true },
   { path: 'public/index.html', category: 'Portal Web Principal', vital: true },
   { path: 'public/downloads/info.json', category: 'Manifiesto Actualizaciones', vital: true },
-  { path: 'public/downloads/nexaguard-security.zip', category: 'Binario Plugin WordPress', vital: true }
+  { path: 'public/downloads/nexaguard-malware-scanner.zip', category: 'Binario Plugin WordPress Oficial', vital: true },
+  { path: 'public/downloads/nexaguard-security.zip', category: 'Binario Plugin WordPress Espejo', vital: true }
 ];
 
 function sha256File(filePath) {

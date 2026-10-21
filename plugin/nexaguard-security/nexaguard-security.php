@@ -158,7 +158,7 @@ class NexaGuard_Plugin {
 
         $response = wp_remote_post('https://www.nexaguards.com/api/license/validate', array(
             'timeout'   => 12,
-            'sslverify' => false,
+            'sslverify' => true,
             'headers'   => array('Content-Type' => 'application/json'),
             'body'      => wp_json_encode(array(
                 'key'    => $license['key'],
@@ -390,30 +390,34 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
+        $is_pro = NexaGuard_Firewall::is_pro();
+
         $settings = array(
+            // Reglas Básicas (100% operativas en Edición Estándar)
             'block_php_uploads'     => !empty($_POST['block_php_uploads']),
-            'disable_xmlrpc'        => !empty($_POST['disable_xmlrpc']),
-            'hide_wp_version'       => !empty($_POST['hide_wp_version']),
-            'waf_enabled'           => !empty($_POST['waf_enabled']),
-            'anti_clearfake'        => !empty($_POST['anti_clearfake']),
-            'emergency_lockdown'    => !empty($_POST['emergency_lockdown']),
-            'disallow_file_edit'    => !empty($_POST['disallow_file_edit']),
             'disable_dir_browsing'  => !empty($_POST['disable_dir_browsing']),
-            'brute_force_protection'=> !empty($_POST['brute_force_protection']),
+            'disallow_file_edit'    => !empty($_POST['disallow_file_edit']),
+            'block_user_enumeration'=> !empty($_POST['block_user_enumeration']),
+            // Módulos Avanzados PRO (disponibles exclusivamente con licencia activa)
+            'disable_xmlrpc'        => $is_pro ? !empty($_POST['disable_xmlrpc']) : false,
+            'hide_wp_version'       => $is_pro ? !empty($_POST['hide_wp_version']) : false,
+            'waf_enabled'           => $is_pro ? !empty($_POST['waf_enabled']) : false,
+            'anti_clearfake'        => $is_pro ? !empty($_POST['anti_clearfake']) : false,
+            'emergency_lockdown'    => $is_pro ? !empty($_POST['emergency_lockdown']) : false,
+            'brute_force_protection'=> $is_pro ? !empty($_POST['brute_force_protection']) : false,
             'bf_max_retries'        => isset($_POST['bf_max_retries']) ? max(3, min(20, intval($_POST['bf_max_retries']))) : 5,
             'bf_lockout_time'       => isset($_POST['bf_lockout_time']) ? max(5, min(1440, intval($_POST['bf_lockout_time']))) : 20,
-            'hide_backend'          => !empty($_POST['hide_backend']),
+            'hide_backend'          => $is_pro ? !empty($_POST['hide_backend']) : false,
             'login_slug'            => !empty($_POST['login_slug']) ? sanitize_title(trim($_POST['login_slug'])) : 'acceso-seguro',
-            'block_user_enumeration'=> !empty($_POST['block_user_enumeration']),
-            'generic_login_errors'  => !empty($_POST['generic_login_errors']),
-            'protect_system_files'  => !empty($_POST['protect_system_files']),
-            'admin_login_alerts'    => !empty($_POST['admin_login_alerts']),
-            'threat_email_alerts'   => !empty($_POST['threat_email_alerts']),
+            'generic_login_errors'  => $is_pro ? !empty($_POST['generic_login_errors']) : false,
+            'protect_system_files'  => $is_pro ? !empty($_POST['protect_system_files']) : false,
+            'admin_login_alerts'    => $is_pro ? !empty($_POST['admin_login_alerts']) : false,
+            'threat_email_alerts'   => $is_pro ? !empty($_POST['threat_email_alerts']) : false,
             'alert_email'           => !empty($_POST['alert_email']) ? sanitize_email($_POST['alert_email']) : '',
-            'waf_auto_jail'         => !empty($_POST['waf_auto_jail']),
-            'tripwire_enabled'      => !empty($_POST['tripwire_enabled']),
+            'waf_auto_jail'         => $is_pro ? !empty($_POST['waf_auto_jail']) : false,
+            'tripwire_enabled'      => $is_pro ? !empty($_POST['tripwire_enabled']) : false,
             'threat_webhook_url'    => !empty($_POST['threat_webhook_url']) ? esc_url_raw(trim($_POST['threat_webhook_url'])) : '',
-            'login_custom_design'   => !empty($_POST['login_custom_design']),
+            'login_custom_design'   => $is_pro ? !empty($_POST['login_custom_design']) : false,
             'login_bg_image'        => isset($_POST['login_bg_image']) ? esc_url_raw(trim($_POST['login_bg_image'])) : '',
             'login_bg_preset'       => isset($_POST['login_bg_preset']) ? sanitize_key($_POST['login_bg_preset']) : 'deep-navy',
             'login_logo_image'      => isset($_POST['login_logo_image']) ? esc_url_raw(trim($_POST['login_logo_image'])) : '',
@@ -608,11 +612,24 @@ class NexaGuard_Plugin {
             delete_transient('nexaguard_license_sync_lock');
             delete_transient('nexaguard_license_revoked_notice');
 
+            // Pausar módulos PRO del WAF y restablecer sólo las 4 reglas básicas
+            $reset_settings = wp_parse_args(get_option('nexaguard_settings', array()), array());
+            $reset_settings['waf_enabled']            = false;
+            $reset_settings['anti_clearfake']         = false;
+            $reset_settings['brute_force_protection'] = false;
+            $reset_settings['waf_auto_jail']          = false;
+            $reset_settings['emergency_lockdown']     = false;
+            $reset_settings['hide_backend']           = false;
+            $reset_settings['tripwire_enabled']       = false;
+            $reset_settings['admin_login_alerts']     = false;
+            $reset_settings['login_custom_design']    = false;
+            update_option('nexaguard_settings', $reset_settings);
+
             // 2. Notificar a la nube de NexaGuard para liberar este dominio
             if (!empty($prev_key)) {
                 @wp_remote_post('https://www.nexaguards.com/api/license/deactivate', array(
                     'timeout'   => 8,
-                    'sslverify' => false,
+                    'sslverify' => true,
                     'headers'   => array(
                         'Content-Type' => 'application/json',
                         'Accept'       => 'application/json'
@@ -641,12 +658,6 @@ class NexaGuard_Plugin {
 
         $response = wp_remote_post('https://www.nexaguards.com/api/license/validate', $req_args);
 
-        // Fallback si cURL local del hosting falla en la verificación de certificados SSL (frecuente en hosting compartido)
-        if (is_wp_error($response)) {
-            $req_args['sslverify'] = false;
-            $response = wp_remote_post('https://www.nexaguards.com/api/license/validate', $req_args);
-        }
-
         if (!is_wp_error($response)) {
             $code = wp_remote_retrieve_response_code($response);
             $body = wp_remote_retrieve_body($response);
@@ -657,6 +668,25 @@ class NexaGuard_Plugin {
                 update_option('nexaguard_license_data', $data);
                 delete_transient('nexaguard_license_sync_lock');
                 delete_transient('nexaguard_license_revoked_notice');
+
+                // Si la licencia es válida y activa, activar automáticamente todas las funciones avanzadas del WAF
+                if (!empty($data['valid']) && (!isset($data['status']) || $data['status'] === 'active' || $data['status'] === 'expiring_soon')) {
+                    $pro_settings = wp_parse_args(get_option('nexaguard_settings', array()), array());
+                    $pro_settings['waf_enabled']            = true;
+                    $pro_settings['anti_clearfake']         = true;
+                    $pro_settings['brute_force_protection'] = true;
+                    $pro_settings['waf_auto_jail']          = true;
+                    $pro_settings['disable_xmlrpc']         = true;
+                    $pro_settings['hide_wp_version']        = true;
+                    $pro_settings['protect_system_files']   = true;
+                    $pro_settings['admin_login_alerts']     = true;
+                    $pro_settings['tripwire_enabled']       = true;
+                    update_option('nexaguard_settings', $pro_settings);
+
+                    $cleaner = new NexaGuard_Cleaner();
+                    $cleaner->protect_system_files(true);
+                }
+
                 wp_send_json_success($data);
                 return;
             }
@@ -670,6 +700,20 @@ class NexaGuard_Plugin {
             delete_option('nexaguard_license_data');
             delete_transient('nexaguard_license_sync_lock');
             delete_transient('nexaguard_license_revoked_notice');
+
+            // Pausar módulos PRO en caso de revocación
+            $reset_settings = wp_parse_args(get_option('nexaguard_settings', array()), array());
+            $reset_settings['waf_enabled']            = false;
+            $reset_settings['anti_clearfake']         = false;
+            $reset_settings['brute_force_protection'] = false;
+            $reset_settings['waf_auto_jail']          = false;
+            $reset_settings['emergency_lockdown']     = false;
+            $reset_settings['hide_backend']           = false;
+            $reset_settings['tripwire_enabled']       = false;
+            $reset_settings['admin_login_alerts']     = false;
+            $reset_settings['login_custom_design']    = false;
+            update_option('nexaguard_settings', $reset_settings);
+
             wp_send_json_error(array(
                 'message' => $error_message,
                 'code'    => 'license_rejected'
@@ -729,7 +773,7 @@ class NexaGuard_Plugin {
         // Notificar al servidor en segundo plano
         @wp_remote_post('https://www.nexaguards.com/api/license/free', array(
             'timeout'   => 5,
-            'sslverify' => false,
+            'sslverify' => true,
             'headers'   => array('Content-Type' => 'application/json'),
             'body'      => wp_json_encode(array(
                 'email'  => $admin_email,
@@ -766,7 +810,7 @@ class NexaGuard_Plugin {
         $checksums = get_transient('nexaguard_wp_core_checksums_' . $core_version);
         if ($checksums === false || empty($checksums)) {
             $api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$core_version}&locale={$locale}";
-            $res = wp_remote_get($api_url, array('timeout' => 8, 'sslverify' => false));
+            $res = wp_remote_get($api_url, array('timeout' => 8, 'sslverify' => true));
             if (!is_wp_error($res) && wp_remote_retrieve_response_code($res) === 200) {
                 $body = json_decode(wp_remote_retrieve_body($res), true);
                 if (!empty($body['checksums']) && is_array($body['checksums'])) {
@@ -777,7 +821,7 @@ class NexaGuard_Plugin {
             // Fallback a en_US si el locale actual no devuelve lista de checksums (habitual en versiones nuevas)
             if (empty($checksums)) {
                 $api_url_en = "https://api.wordpress.org/core/checksums/1.0/?version={$core_version}&locale=en_US";
-                $res_en = wp_remote_get($api_url_en, array('timeout' => 8, 'sslverify' => false));
+                $res_en = wp_remote_get($api_url_en, array('timeout' => 8, 'sslverify' => true));
                 if (!is_wp_error($res_en) && wp_remote_retrieve_response_code($res_en) === 200) {
                     $body_en = json_decode(wp_remote_retrieve_body($res_en), true);
                     if (!empty($body_en['checksums']) && is_array($body_en['checksums'])) {
