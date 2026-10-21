@@ -117,8 +117,14 @@ files.forEach(file => {
 
     if (curlies < 0 || parens < 0 || brackets < 0) {
       const line = content.substring(0, i).split('\n').length;
-      console.log(`[MISMATCH] ${file} at line ${line}: curlies=${curlies}, parens=${parens}, brackets=${brackets}`);
+      console.error(`[MISMATCH ERROR] ${file} at line ${line}: curlies=${curlies}, parens=${parens}, brackets=${brackets}`);
+      process.exit(1);
     }
+  }
+
+  if (curlies !== 0 || parens !== 0 || brackets !== 0) {
+    console.error(`[SYNTAX ERROR] ${file} has unbalanced tokens -> curlies: ${curlies}, parens: ${parens}, brackets: ${brackets}`);
+    process.exit(1);
   }
 
   console.log(`[PHP-SYNTAX] ${file} -> curlies: ${curlies}, parens: ${parens}, brackets: ${brackets}, inSingleQuote: ${inSingleQuote}, inDoubleQuote: ${inDoubleQuote}`);

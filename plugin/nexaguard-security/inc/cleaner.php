@@ -680,29 +680,6 @@ class NexaGuard_Cleaner {
                 : 'Protección de subidas desactivada.'
         );
     }
-                    } else {
-                        $new_root = $root_block_str . $clean_root;
-                    }
-                    if (@file_put_contents($root_file, $new_root) !== false) {
-                        $written_any = true;
-                    }
-                } else {
-                    if (file_exists($root_file)) {
-                        $this->create_snapshot($root_file, 'Retirar Blindaje .htaccess (Bloqueo PHP Uploads)');
-                    }
-                    if (@file_put_contents($root_file, $clean_root) !== false) {
-                        $written_any = true;
-                    }
-                }
-            }
-        }
-
-        if ($enable && !$written_any) {
-            return array('success' => false, 'message' => 'No se pudo escribir en el archivo .htaccess debido a permisos de servidor restringidos (chmod).');
-        }
-
-        return array('success' => true, 'message' => 'Blindaje aplicado: Se bloqueó la ejecución de scripts PHP en wp-content/uploads/ y en el .htaccess principal de WordPress.');
-    }
 
     /**
      * Blindaje en wp-config.php: Deshabilitar editor de temas y plugins (Hardening)
