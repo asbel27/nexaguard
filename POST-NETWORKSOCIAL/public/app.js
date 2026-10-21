@@ -91,10 +91,40 @@ async function loadStatus() {
   }
 }
 
+// Sistema de Notificaciones Toast Elegantes
+function showToast(message, type = 'info', duration = 6000) {
+  let container = document.querySelector('.nexa-toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'nexa-toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `nexa-toast ${type}`;
+  const icon = type === 'success' ? '✅' : (type === 'error' ? '⚠️' : 'ℹ️');
+  toast.innerHTML = `
+    <span style="font-size:1.3rem;line-height:1">${icon}</span>
+    <div style="flex:1">
+      <div style="font-weight:700;margin-bottom:2px">${type === 'success' ? 'Navegador Listo' : (type === 'error' ? 'Atención' : 'Información')}</div>
+      <div style="font-size:0.83rem">${message}</div>
+    </div>
+  `;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-15px) scale(0.95)';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
 // 3. Abrir Ventana de Inicio de Sesión
 async function openLoginWindow(platform) {
   try {
     appendTerminalLog('info', `[SISTEMA] Abriendo navegador para iniciar sesión en ${platform.toUpperCase()}...`);
+    showToast(`Abriendo Google Chrome en ${platform.toUpperCase()}... Por favor espera un instante.`, 'info', 4000);
+
     const res = await fetch('/api/browser/open', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -102,13 +132,15 @@ async function openLoginWindow(platform) {
     });
     const data = await res.json();
     if (data.ok) {
-      alert(`Se abrió Google Chrome en ${platform}. Por favor ingresa tus credenciales y cuando estés dentro, puedes cerrar la ventana.`);
+      appendTerminalLog('success', `[SISTEMA] ¡Ventana de Google Chrome abierta para ${platform.toUpperCase()}!`);
+      appendTerminalLog('step', `[INSTRUCCIÓN] Ingresa tus datos en la ventana de Chrome que apareció en pantalla. Al iniciar sesión, tus cookies y perfil quedan guardados permanentemente.`);
+      showToast(`¡Ventana de Google Chrome abierta! Ingresa tus credenciales en ${platform.toUpperCase()} y al iniciar sesión tus credenciales quedarán guardadas automáticamente.`, 'success', 9000);
       loadStatus();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error al abrir navegador: ' + data.error, 'error', 6000);
     }
   } catch (e) {
-    alert('No se pudo abrir el navegador: ' + e.message);
+    showToast('No se pudo abrir el navegador: ' + e.message, 'error', 6000);
   }
 }
 

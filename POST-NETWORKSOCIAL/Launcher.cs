@@ -71,7 +71,6 @@ namespace NexaGuardSocialAutoPoster
                     WorkingDirectory = baseDir,
                     CreateNoWindow = true,
                     UseShellExecute = false,
-                    WindowStyle = ProcessWindowStyle.Hidden,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true
                 };

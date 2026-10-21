@@ -32,6 +32,15 @@ function getUserDataDir() {
   return dir;
 }
 
+function cleanStaleLocks(userDataDir) {
+  try {
+    const lockfile = path.join(userDataDir, 'lockfile');
+    if (fs.existsSync(lockfile)) {
+      try { fs.unlinkSync(lockfile); } catch (e) {}
+    }
+  } catch (e) {}
+}
+
 async function getOrLaunchBrowser(options = {}) {
   if (browserInstance && browserInstance.isConnected()) {
     return browserInstance;
@@ -43,27 +52,42 @@ async function getOrLaunchBrowser(options = {}) {
   }
 
   const userDataDir = getUserDataDir();
+  cleanStaleLocks(userDataDir);
+
   const headless = options.headless !== undefined ? options.headless : false;
 
   const launchArgs = [
     '--no-sandbox',
     '--disable-setuid-sandbox',
     '--disable-infobars',
-    '--window-position=0,0',
-    '--ignore-certifcate-errors',
-    '--ignore-certifcate-errors-spki-list',
+    '--start-maximized',
+    '--window-size=1280,800',
+    '--ignore-certificate-errors',
     '--disable-blink-features=AutomationControlled',
     '--disable-notifications'
   ];
 
-  browserInstance = await puppeteer.launch({
-    executablePath: chromePath,
-    headless: headless ? 'new' : false,
-    userDataDir: userDataDir,
-    defaultViewport: null,
-    args: launchArgs,
-    ignoreDefaultArgs: ['--enable-automation']
-  });
+  try {
+    browserInstance = await puppeteer.launch({
+      executablePath: chromePath,
+      headless: headless ? 'new' : false,
+      userDataDir: userDataDir,
+      defaultViewport: null,
+      args: launchArgs,
+      ignoreDefaultArgs: ['--enable-automation']
+    });
+  } catch (err) {
+    // Si falló por lock residual, intentar limpiar una vez y relanzar
+    cleanStaleLocks(userDataDir);
+    browserInstance = await puppeteer.launch({
+      executablePath: chromePath,
+      headless: headless ? 'new' : false,
+      userDataDir: userDataDir,
+      defaultViewport: null,
+      args: launchArgs,
+      ignoreDefaultArgs: ['--enable-automation']
+    });
+  }
 
   browserInstance.on('disconnected', () => {
     browserInstance = null;
@@ -73,9 +97,16 @@ async function getOrLaunchBrowser(options = {}) {
 }
 
 async function openInteractiveSession(url = 'https://www.facebook.com') {
+  if (browserInstance && !browserInstance.isConnected()) {
+    browserInstance = null;
+  }
+
   const browser = await getOrLaunchBrowser({ headless: false });
   const pages = await browser.pages();
   const page = pages.length > 0 ? pages[0] : await browser.newPage();
+  try {
+    await page.bringToFront();
+  } catch (e) {}
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
   return page;
 }
