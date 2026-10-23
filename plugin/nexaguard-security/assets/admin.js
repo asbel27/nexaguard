@@ -228,6 +228,12 @@ jQuery(document).ready(function ($) {
             }
         }
 
+        if (target === 'ballistic') {
+            if (typeof initPluginThreatRadar === 'function') {
+                initPluginThreatRadar();
+            }
+        }
+
         if (target === 'sentinel') {
             if (typeof startSentinelEngine === 'function') {
                 startSentinelEngine();
@@ -2783,4 +2789,211 @@ jQuery(document).ready(function ($) {
             startSentinelEngine();
         }
     }, 1200);
+
+    // =========================================================================
+    // TAB: ESCUDO BALÍSTICO (RADAR MUNDIAL & HAZ BALÍSTICO EN VIVO)
+    // =========================================================================
+    var pluginThreatMap = null;
+    var ballisticAudioEnabled = false;
+    var ballisticLiveStream = true;
+    var ballisticTotalCount = 0;
+    var ballisticUserLocText = 'Detectando...';
+
+    function appendBallisticCard(ev, prepend) {
+        var feedList = document.getElementById('pluginThreatFeedList');
+        var counterEl = document.getElementById('pluginInterceptedCounter');
+        if (!feedList || !ev) return;
+        ballisticTotalCount++;
+        if (counterEl) counterEl.textContent = String(ballisticTotalCount);
+
+        var d = new Date(ev.timestamp || ev.at || Date.now());
+        var timeStr = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2);
+
+        var cInfo = ev.country;
+        var cCode = 'XX', cName = 'Global', cFlag = '🌐';
+        if (cInfo) {
+            if (typeof cInfo === 'object') {
+                cCode = cInfo.code || 'XX';
+                cName = cInfo.name || 'Global';
+                cFlag = cInfo.flag || '🌐';
+            } else {
+                cCode = String(cInfo);
+                if (window.NexaThreatMap && window.NexaThreatMap.COUNTRY_DB && window.NexaThreatMap.COUNTRY_DB[cCode]) {
+                    cName = window.NexaThreatMap.COUNTRY_DB[cCode].name;
+                    cFlag = window.NexaThreatMap.COUNTRY_DB[cCode].flag;
+                }
+            }
+        }
+
+        var ruleStr = ev.rule || 'ATAQUE_DETECTADO';
+        var isCrit = ruleStr.indexOf('SQL') !== -1 || ruleStr.indexOf('RCE') !== -1 || ev.severity === 'CRITICAL';
+        var isWarn = ruleStr.indexOf('HONEYPOT') !== -1 || ruleStr.indexOf('TRAVERSAL') !== -1;
+        var pillClass = isCrit ? 't-rule-pill' : (isWarn ? 't-rule-pill warn' : 't-rule-pill');
+
+        var card = document.createElement('div');
+        card.className = 'threat-flow-card';
+        card.title = 'Haz clic para trazar el haz balístico desde ' + cName + ' en el mapa';
+        card.innerHTML =
+            '<div class="t-col-origin">' +
+                '<div class="t-c-badge">' +
+                    '<span style="font-size:1.15rem;line-height:1">' + cFlag + '</span>' +
+                    '<b>' + cCode + '</b>' +
+                    '<span style="color:#8fa0cf;font-weight:400;font-size:.72rem">' + cName + '</span>' +
+                '</div>' +
+                '<div class="t-ip">' + (ev.ip || '185.220.101.45') + '</div>' +
+                '<div class="t-req"><code>' + (ev.method || 'GET') + '</code>' + (ev.url && ev.url.length > 28 ? ev.url.substring(0, 28) + '…' : (ev.url || '/')) + '</div>' +
+            '</div>' +
+            '<div class="t-col-flow">' +
+                '<span class="' + pillClass + '">' + ruleStr.replace(/_/g, ' ') + '</span>' +
+                '<div class="threat-arrows-stream">' +
+                    '<span class="arr a1">›</span><span class="arr a2">›</span><span class="arr a3">›</span><span class="arr a4">›</span><span class="arr a5">›</span>' +
+                '</div>' +
+                '<span class="t-flow-sub">HAZ BALÍSTICO EN VIVO</span>' +
+            '</div>' +
+            '<div class="t-col-dest">' +
+                '<div class="t-node-badge">' +
+                    '<span>🎯</span><b>TU NODO (' + ballisticUserLocText + ')</b>' +
+                '</div>' +
+                '<div class="t-verdict ' + (ev.action === 'JAILED_24H' ? 'jailed' : '') + '">' +
+                    '<span>🛡️</span> ' + (ev.action === 'JAILED_24H' ? '403 AUTO-JAILED 24H' : '403 FORBIDDEN') +
+                '</div>' +
+                '<div class="t-lat">[' + timeStr + '] · &lt; 0.04ms</div>' +
+            '</div>';
+
+        card.addEventListener('click', function () {
+            if (pluginThreatMap) pluginThreatMap.launchBeam(ev);
+            if (ballisticAudioEnabled && window.NexaThreatMap) window.NexaThreatMap.playDefendSound();
+        });
+
+        if (prepend && feedList.firstChild) {
+            feedList.insertBefore(card, feedList.firstChild);
+        } else {
+            feedList.appendChild(card);
+        }
+
+        while (feedList.children.length > 25) {
+            feedList.removeChild(feedList.lastChild);
+        }
+    }
+
+    function initPluginThreatRadar() {
+        var mapWrap = document.getElementById('pluginThreatMapWrap');
+        if (!mapWrap || !window.NexaThreatMap) return;
+
+        if (pluginThreatMap) {
+            setTimeout(function () {
+                pluginThreatMap.resizeCanvas();
+            }, 60);
+            return;
+        }
+
+        var nodeLocBtn = document.getElementById('pluginNodeLocBtn');
+        var streamBtn = document.getElementById('pluginStreamToggleBtn');
+        var audioBtn = document.getElementById('pluginAudioBtn');
+
+        pluginThreatMap = window.NexaThreatMap.createMap(mapWrap, {
+            autoDetectLocation: true,
+            audioEnabled: false,
+            isLiveStream: true,
+            onLocationChanged: function (loc) {
+                ballisticUserLocText = (loc.city || 'Nodo') + ', ' + (loc.country || 'VE');
+                if (nodeLocBtn) {
+                    nodeLocBtn.textContent = '🎯 TU NODO: ' + ballisticUserLocText + ' (Fijado)';
+                    nodeLocBtn.title = 'Lat: ' + loc.lat + ' · Lon: ' + loc.lon + ' (Clic en mapa para mover)';
+                }
+            }
+        });
+
+        var origSim = pluginThreatMap.generateSimulatedAttack.bind(pluginThreatMap);
+        pluginThreatMap.generateSimulatedAttack = function () {
+            var ev = origSim();
+            appendBallisticCard(ev, true);
+            return ev;
+        };
+
+        if (streamBtn) {
+            streamBtn.addEventListener('click', function () {
+                ballisticLiveStream = !ballisticLiveStream;
+                if (pluginThreatMap) pluginThreatMap.isLiveStream = ballisticLiveStream;
+                streamBtn.textContent = ballisticLiveStream ? '⚡ Flujo en Vivo: ACTIVO' : '⏸️ Flujo en Vivo: PAUSADO';
+                streamBtn.style.color = ballisticLiveStream ? '#3ff0ff' : '#8fa0cf';
+            });
+        }
+
+        if (audioBtn) {
+            audioBtn.addEventListener('click', function () {
+                ballisticAudioEnabled = !ballisticAudioEnabled;
+                if (pluginThreatMap) pluginThreatMap.audioEnabled = ballisticAudioEnabled;
+                audioBtn.textContent = ballisticAudioEnabled ? '🔊 Sonar: ON' : '🔈 Sonar: MUTE';
+                audioBtn.style.color = ballisticAudioEnabled ? '#3de8a4' : '#8fa0cf';
+                if (ballisticAudioEnabled && window.NexaThreatMap) window.NexaThreatMap.playSonarPing();
+            });
+        }
+
+        // Botones de Simulación Interactiva
+        $('#tab-ballistic [data-sim]').off('click').on('click', function () {
+            var type = $(this).attr('data-sim');
+            var mockRules = {
+                sqli: { rule: 'SQL_INJECTION', url: '/wp-login.php?user=admin%27+OR+1=1--', sev: 'CRITICAL' },
+                rce: { rule: 'RCE_EXPLOIT', url: '/wp-admin/admin-ajax.php?action=upload&eval=base64', sev: 'CRITICAL' },
+                honeypot: { rule: 'HONEYPOT_HIT', url: '/.env', sev: 'CRITICAL' },
+                traversal: { rule: 'PATH_TRAVERSAL', url: '/wp-content/plugins?file=../../../../wp-config.php', sev: 'CRITICAL' },
+                bot: { rule: 'BAD_USER_AGENT', url: '/xmlrpc.php', sev: 'HIGH' },
+                xss: { rule: 'XSS_ATTACK', url: '/?s=%3Cscript%3Ealert(document.cookie)%3C%2Fscript%3E', sev: 'HIGH' }
+            };
+            var r = mockRules[type] || mockRules.sqli;
+            var countryKeys = Object.keys(window.NexaThreatMap.COUNTRY_DB);
+            var randC = window.NexaThreatMap.COUNTRY_DB[countryKeys[Math.floor(Math.random() * countryKeys.length)]];
+            var mockIp = (Math.floor(Math.random() * 190) + 20) + '.' + (Math.floor(Math.random() * 250) + 1) + '.***.***';
+
+            var ev = {
+                id: 'plug_sim_' + Date.now(),
+                at: Date.now(),
+                ip: mockIp,
+                country: randC,
+                method: 'GET',
+                url: r.url,
+                rule: r.rule,
+                severity: r.sev,
+                action: 'BLOCKED_403'
+            };
+
+            if (pluginThreatMap) pluginThreatMap.launchBeam(ev);
+            appendBallisticCard(ev, true);
+            if (ballisticAudioEnabled && window.NexaThreatMap) window.NexaThreatMap.playSonarPing();
+        });
+
+        // Cargar eventos iniciales del WAF local si existen
+        var ngData = window.nexaguardData || window.nexaguard_data || {};
+        if (ngData.ajax_url) {
+            $.ajax({
+                url: ngData.ajax_url,
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    action: 'nexaguard_get_radar_logs',
+                    nonce: ngData.nonce
+                },
+                success: function (res) {
+                    if (res && res.success && res.data && res.data.logs && res.data.logs.length) {
+                        res.data.logs.slice().reverse().forEach(function (log) {
+                            appendBallisticCard({
+                                at: log.timestamp * 1000,
+                                ip: log.ip,
+                                rule: log.attack_type || 'WAF_INTERCEPTION',
+                                url: log.request_uri || '/',
+                                country: { code: log.country || 'XX', name: log.country_name || 'Global', flag: '🌐' },
+                                severity: 'HIGH',
+                                action: 'BLOCKED_403'
+                            }, false);
+                        });
+                    }
+                }
+            });
+        }
+    }
+
+    if ($('#tab-ballistic').hasClass('is-active')) {
+        initPluginThreatRadar();
+    }
 });

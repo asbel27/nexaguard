@@ -243,6 +243,7 @@ class NexaGuard_Plugin {
 
         $css_ver = file_exists(NEXAGUARD_DIR . 'assets/admin.css') ? filemtime(NEXAGUARD_DIR . 'assets/admin.css') : NEXAGUARD_VERSION;
         $js_ver  = file_exists(NEXAGUARD_DIR . 'assets/admin.js') ? filemtime(NEXAGUARD_DIR . 'assets/admin.js') : NEXAGUARD_VERSION;
+        $map_ver = file_exists(NEXAGUARD_DIR . 'assets/threat-map.js') ? filemtime(NEXAGUARD_DIR . 'assets/threat-map.js') : NEXAGUARD_VERSION;
 
         wp_enqueue_style(
             'nexaguard-admin-css',
@@ -252,9 +253,17 @@ class NexaGuard_Plugin {
         );
 
         wp_enqueue_script(
+            'nexaguard-threat-map-js',
+            NEXAGUARD_URL . 'assets/threat-map.js',
+            array(),
+            $map_ver,
+            true
+        );
+
+        wp_enqueue_script(
             'nexaguard-admin-js',
             NEXAGUARD_URL . 'assets/admin.js',
-            array('jquery'),
+            array('jquery', 'nexaguard-threat-map-js'),
             $js_ver,
             true
         );

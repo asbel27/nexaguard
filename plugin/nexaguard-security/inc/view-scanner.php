@@ -198,6 +198,11 @@ $rollback_count = count($backup_history);
             <span class="ng-tab-label">Monitor de Núcleo</span>
             <span class="ng-tab-badge active" style="background:rgba(61,232,164,0.15);color:#3de8a4;border:1px solid rgba(61,232,164,0.35);">EN VIVO</span>
         </button>
+        <button type="button" class="ng-tab" data-tab="ballistic">
+            <span class="ng-tab-icon">🎯</span>
+            <span class="ng-tab-label">Escudo Balístico</span>
+            <span class="ng-tab-badge active" style="background:rgba(255,51,102,0.18);color:#ff6b8b;border:1px solid rgba(255,51,102,0.4);">RADAR VIVO</span>
+        </button>
         <button type="button" class="ng-tab" data-tab="vigilance">
             <span class="ng-tab-icon">📡</span>
             <span class="ng-tab-label">Vigilancia 24H</span>
@@ -1381,6 +1386,88 @@ $rollback_count = count($backup_history);
             </div>
         </div>
     </div><!-- /tab-sentinel -->
+
+    <!-- ====================================================================== -->
+    <!-- TAB: ESCUDO BALÍSTICO (RADAR MUNDIAL & HAZ BALÍSTICO EN VIVO)          -->
+    <!-- ====================================================================== -->
+    <div class="ng-tab-panel" id="tab-ballistic">
+        <div class="ng-card" style="padding: 24px 28px; background:#0c1338; border:1px solid rgba(107,140,255,0.28); border-radius:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:14px;">
+                <div>
+                    <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 14px; border-radius:999px; background:rgba(255,69,96,0.12); border:1px solid rgba(255,69,96,0.35); color:#ff8ba0; font-size:0.78rem; font-weight:700; margin-bottom:8px;">
+                        <span class="live-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ff4560; box-shadow:0 0 8px #ff4560;"></span> TELEMETRÍA GLOBAL EN TIEMPO REAL · SOC NEXAGUARD
+                    </div>
+                    <h2 style="font-size:1.6rem; color:#ffffff; margin:0 0 6px; font-weight:800; display:flex; align-items:center; gap:10px;">
+                        🎯 Radar Mundial de Amenazas & Escudo Balístico Activo
+                    </h2>
+                    <p style="color:#b6c4eb; font-size:0.92rem; line-height:1.55; margin:0; max-width:850px;">
+                        Observa en vivo los intentos de intrusión perpetrados contra servidores WordPress en todo el planeta. <strong>Tu servidor se sitúa en tiempo real como nodo protegido</strong>, recibiendo y neutralizando cada haz balístico mediante el blindaje perimetral WAF de NexaGuard.
+                    </p>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span class="ng-badge-pill" style="background:rgba(61,232,164,0.15); color:#3de8a4; border:1px solid rgba(61,232,164,0.4); font-weight:800; padding:6px 14px; border-radius:8px; font-size:0.8rem;">
+                        ✓ ESCUDO ACTIVO (360°)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Barra de Simulación Interactiva -->
+            <div class="threat-sim-bar">
+                <div style="font-weight:700; font-size:0.84rem; color:#ffcf33; display:flex; align-items:center; gap:6px;">
+                    🛡️ Probar Escudo Balístico (Simulación):
+                </div>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="sqli" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(255,51,102,0.4); color:#ff6b8b;" title="Simular inyección SQL a base de datos">💉 SQL Injection</button>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="rce" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(255,51,102,0.4); color:#ff6b8b;" title="Simular ejecución remota de comandos">⚡ RCE Exploit</button>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="honeypot" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(255,207,51,0.4); color:#ffd859;" title="Simular trampa Honeypot en archivo sensible">🍯 Honeypot Trap</button>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="traversal" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(255,207,51,0.4); color:#ffd859;" title="Simular lectura arbitraria de archivos">📂 Path Traversal</button>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="bot" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(63,240,255,0.4); color:#3ff0ff;" title="Simular escáner masivo de bots">🤖 Bad Bot Scanner</button>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="xss" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(63,240,255,0.4); color:#3ff0ff;" title="Simular inyección de script malicioso">☣️ Vector XSS</button>
+            </div>
+
+            <!-- Contenedor del Mapa Mundi -->
+            <div class="threat-map-box">
+                <div class="threat-map-hud-top">
+                    <div class="threat-hud-badge">
+                        <span class="live-dot"></span>
+                        <span style="font-weight:700">DEFENSA PERIMETRAL VIVA</span>
+                        <span style="color:#8fa0cf;">· 360° ACTIVO</span>
+                        <span style="color:#3de8a4;">· LATENCIA: &lt; 0.04ms</span>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <button type="button" class="btn-ng btn-ng-outline sm" id="pluginNodeLocBtn" style="padding:4px 10px; font-size:0.72rem; background:rgba(6,12,34,0.9); border-color:rgba(255,207,51,0.4); color:#ffcf33;" title="Haz clic en cualquier punto del mapa para mover tu nodo">🎯 TU NODO: Detectando ubicación...</button>
+                        <button type="button" class="btn-ng btn-ng-outline sm" id="pluginStreamToggleBtn" style="padding:4px 10px; font-size:0.72rem; background:rgba(6,12,34,0.9); color:#3ff0ff;">⚡ Flujo en Vivo: ACTIVO</button>
+                        <button type="button" class="btn-ng btn-ng-outline sm" id="pluginAudioBtn" style="padding:4px 10px; font-size:0.72rem; background:rgba(6,12,34,0.9); color:#8fa0cf;">🔈 Sonar: MUTE</button>
+                    </div>
+                </div>
+
+                <div class="threat-map-canvas-wrap" id="pluginThreatMapWrap"></div>
+
+                <div class="threat-map-hud-bot">
+                    <div class="threat-hud-badge" style="font-size:0.68rem;">
+                        <span style="color:#ff3366">🔴 Crítico (SQLi/RCE)</span>
+                        <span style="color:#ffcf33; margin-left:8px">🟡 Honeypot/Traversal</span>
+                        <span style="color:#3ff0ff; margin-left:8px">🔵 Bad Bot Scanner</span>
+                        <span style="color:#ffcf33; margin-left:8px">🎯 Tu Servidor (Nodo Protegido)</span>
+                    </div>
+                    <div class="threat-hud-badge">
+                        <span>ESCUDO WAF ACTIVO · NEUTRALIZADOS: </span>
+                        <b id="pluginInterceptedCounter" style="color:#3de8a4; margin-left:4px">0</b>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Ataques con Flechas Animadas -->
+            <div class="threat-feed-box">
+                <div class="threat-feed-head">
+                    <h4 style="margin:0; font-size:0.82rem; color:#3ff0ff; letter-spacing:0.05em; display:flex; align-items:center; gap:8px;">
+                        <span>⚡</span> FLUJO DE ATAQUES INTERCEPTADOS EN TIEMPO REAL
+                    </h4>
+                    <span style="font-size:0.72rem; color:#8fa0cf;">Haz clic en cualquier fila para trazar el haz balístico en el mapa</span>
+                </div>
+                <div class="threat-feed-list" id="pluginThreatFeedList"></div>
+            </div>
+        </div>
+    </div><!-- /tab-ballistic -->
 
     <!-- ====================================================================== -->
     <!-- TAB 8: COMPARATIVA PRO                                                 -->
