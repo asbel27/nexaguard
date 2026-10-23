@@ -229,8 +229,8 @@ $rollback_count = count($backup_history);
         </button>
         <button type="button" class="ng-tab" data-tab="compare">
             <span class="ng-tab-icon">⚖️</span>
-            <span class="ng-tab-label">Comparativa PRO</span>
-            <span class="ng-tab-badge" style="background:rgba(255,207,51,0.18);color:#ffcf33;border:1px solid rgba(255,207,51,0.4);">TABLA</span>
+            <span class="ng-tab-label">Comparativa</span>
+            <span class="ng-tab-badge" style="background:rgba(255,207,51,0.18);color:#ffcf33;border:1px solid rgba(255,207,51,0.4);">EDICIONES</span>
         </button>
     </div>
 
@@ -1524,7 +1524,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Cierra la puerta de enlace xmlrpc.php (ataques de amplificación DDoS) y oculta la versión de WP</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible (Requiere PRO)</span>
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Bloqueo Total + Cloaking de Versión</span>
@@ -1538,7 +1538,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Filtrado en milisegundos contra Inyecciones SQL, XSS, Path Traversal, RCE y bots maliciosos</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible (Requiere PRO)</span>
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ WAF L7 Activo en Tiempo Real</span>
@@ -1552,7 +1552,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Inspecciona el HTML de salida y neutraliza al vuelo popups fraudulentos y scripts Web3 maliciosos</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible (Requiere PRO)</span>
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Filtro en Vivo de Salida HTML</span>
@@ -1566,7 +1566,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Límite configurable de reintentos y encarcelamiento perimetral automático de atacantes</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible (Requiere PRO)</span>
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Auto-Jail Perimetral Autónomo</span>
@@ -1580,7 +1580,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Enlaces trampa invisibles para escáneres maliciosos con expulsión y baneo instantáneo</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible (Requiere PRO)</span>
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Honeypot Activo con Baneo Inmediato</span>
@@ -1622,7 +1622,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Pantalla de mantenimiento blindada para desinfección forense sin perder posicionamiento en Google</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible (Requiere PRO)</span>
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Aislamiento Seguro en 1 Clic</span>
@@ -1681,7 +1681,7 @@ $rollback_count = count($backup_history);
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="text-decoration: none; padding: 9px 20px; font-weight: 700;">
-                            Ver Planes y Activar Licencia PRO ›
+                            Conocer Más sobre NexaGuard Cloud ›
                         </a>
                     </div>
                 </div>
