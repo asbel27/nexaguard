@@ -747,7 +747,7 @@ function openCheckoutModal(planId, order, preselectedSites) {
   var pl = (S.plans && S.plans.find(function (x) { return x.id === planId; })) || {
     id: planId,
     name: (order && order.planName) || (planId === 'security_pro' ? 'Plan NexaGuard Security Pro' : (planId === 'rescate' ? 'Plan Rescate + Blindaje' : (planId === 'agency' ? 'Plan Agencia / Freelancer' : 'Plan Gratuito (Community)'))),
-    price: (order && typeof order.amount === 'number' && order.amount > 0) ? order.amount : (planId === 'free' ? 0 : (planId === 'rescate' ? 49.99 : 9.99)),
+    price: (planId === 'free' || planId === 'security_pro') ? 0 : ((order && typeof order.amount === 'number' && order.amount > 0) ? order.amount : (planId === 'rescate' ? 49.99 : 29.99)),
     currency: 'USD',
     period: planId === 'rescate' ? 'pago único' : 'al mes',
     sites: (order && order.maxSites) || 1,
@@ -769,9 +769,11 @@ function openCheckoutModal(planId, order, preselectedSites) {
     return 179.99;
   }
 
-  var curPrice = (order && typeof order.amount === 'number' && order.amount > 0)
-    ? order.amount
-    : (isAgency ? calcAgencyPrice(chosenSites) : pl.price);
+  var curPrice = (pl.price <= 0 || planId === 'free' || planId === 'security_pro')
+    ? 0
+    : ((order && typeof order.amount === 'number' && order.amount > 0)
+      ? order.amount
+      : (isAgency ? calcAgencyPrice(chosenSites) : pl.price));
 
   var isFree = curPrice <= 0 || planId === 'free';
 

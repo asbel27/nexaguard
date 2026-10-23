@@ -15,7 +15,7 @@ const PLANS = {
     features: ['Plugin Oficial NexaGuard Security (.zip)', 'Escáner interno de malware y webshells', 'Diagnóstico forense rápido en 15 segundos', 'Firewall WAF básico anti-inyecciones', 'Sin tarjeta de crédito requerida']
   },
   security_pro: {
-    id: 'security_pro', tier: 1, name: 'Plan NexaGuard Security Pro', price: 9.99, currency: 'USD', period: 'al mes', type: 'subscription',
+    id: 'security_pro', tier: 1, name: 'Plan NexaGuard Security Pro', price: 0, currency: 'USD', period: 'al mes', type: 'subscription',
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
     features: ['Licencia Oficial NexaGuard Security PRO para WordPress', 'Sistema de Vigilancia 24 Horas contra amenazas activo', 'Auditoría forense y erradicación de malware con 1 clic', 'Sincronización en tiempo real con NexaGuard Threat Cloud', 'Actualizaciones continuas de firmas Zero-Day']
   },
