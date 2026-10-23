@@ -2563,10 +2563,23 @@ jQuery(document).ready(function ($) {
                                         ? '<span style="color:#ffcf33;font-weight:700;">⚠️ ' + (file.verdict || 'Advertencia') + '</span>'
                                         : '<span style="color:#3de8a4;font-weight:700;">✓ ' + (file.verdict || 'Intacto') + '</span>'))
                                 : '<span style="color:#ff8ba0;font-weight:700;">⚠️ Ausente</span>';
+
+                            var actionCol = '';
+                            if (isPro) {
+                                if (file.rel_path === 'wp-config.php') {
+                                    actionCol = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline btn-sm" style="font-size:0.72rem; padding:2px 8px; border-color:rgba(255,207,51,0.4); color:#ffd859; cursor:pointer;" title="Endurecer wp-config.php a 0440">🔒 Endurecer</button>';
+                                } else if (file.rel_path === '.htaccess') {
+                                    actionCol = '<span style="color:#8fa0cf; font-size:0.75rem;">Reglas Activas</span>';
+                                } else {
+                                    actionCol = '<button type="button" class="btn-ng btn-ng-primary btn-sm btn-sentinel-rebuild" data-file="' + file.rel_path + '" style="font-size:0.72rem; padding:2px 8px; background:#10b981; color:#fff; border:none; border-radius:4px; font-weight:700; cursor:pointer;" title="Reconstruir con copia oficial limpia de WordPress.org">🛠️ Reconstruir</button>';
+                                }
+                            }
+
                             rowsHtml += '<tr>' +
                                 '<td><code>' + file.path + '</code></td>' +
                                 '<td><span class="badge-status-pill ' + (file.status === 'warning' || file.status === 'tampered' ? 'danger' : 'ok') + '">' + file.perms + '</span></td>' +
                                 '<td>' + statusCol + '</td>' +
+                                (isPro ? '<td style="text-align:right;">' + actionCol + '</td>' : '') +
                                 '</tr>';
                         });
                         $('#sentinel-vital-files-tbody').html(rowsHtml);
@@ -2708,6 +2721,49 @@ jQuery(document).ready(function ($) {
             },
             null,
             { title: 'Reconstruir Archivo Vital', icon: '🛠️', btnOkText: 'Reconstruir Ahora' }
+        );
+    });
+
+    // Reconstruir TODOS los archivos vitales de WordPress.org en 1 Clic (PRO)
+    $(document).on('click', '#btn-sentinel-rebuild-vital-files, #btn-sentinel-rebuild-all-vital, .btn-trigger-vital-rebuild', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var ngData = window.nexaguardData || window.nexaguard_data || {};
+
+        showConfirm(
+            '¿Deseas reconstruir todos los archivos vitales del núcleo (index.php, wp-load.php, wp-blog-header.php, wp-settings.php, version.php, etc.) restaurando sus copias oficiales limpias de WordPress.org? Se crearán copias de seguridad previas en cuarentena.',
+            function () {
+                var oldHtml = $btn.html();
+                $btn.prop('disabled', true).text('Reconstruyendo núcleo...');
+                $.ajax({
+                    url: ngData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_sentinel_rebuild_all_vital',
+                        nonce: ngData.nonce
+                    },
+                    success: function (res) {
+                        if (res.success && res.data) {
+                            showToast(res.data.message || 'Archivos vitales reconstruidos con éxito.', 'success', 'Reconstrucción Oficial');
+                            if (typeof runBackendSentinelScan === 'function') {
+                                runBackendSentinelScan(true);
+                            }
+                        } else {
+                            var msg = (res && res.data && res.data.message) ? res.data.message : 'Error al reconstruir archivos vitales.';
+                            showAlert(msg, 'warning', 'Reconstrucción');
+                        }
+                    },
+                    error: function () {
+                        showAlert('Error de conexión al intentar reconstruir archivos vitales.', 'danger', 'Error');
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).html(oldHtml);
+                    }
+                });
+            },
+            null,
+            { title: 'Reconstruir Archivos Vitales del Núcleo', icon: '🛠️', btnOkText: 'Reconstruir Todo Ahora' }
         );
     });
 

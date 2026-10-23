@@ -273,6 +273,11 @@ $rollback_count = count($backup_history);
                         <button type="button" id="btn-reset-scan" class="btn-ng btn-ng-outline" title="Borrar historial anterior e iniciar vista limpia">
                             🔄 Limpiar Vista / Resetear
                         </button>
+                        <?php if ($is_pro): ?>
+                            <button type="button" class="btn-ng btn-trigger-vital-rebuild" style="background:rgba(61,232,164,0.12); color:#3de8a4; border:1px solid rgba(61,232,164,0.35); font-weight:700; cursor:pointer;" title="Reconstruir archivos vitales del núcleo con copias oficiales de WordPress.org">
+                                🛠️ Reconstruir Archivos Vitales
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -1133,6 +1138,11 @@ $rollback_count = count($backup_history);
                     <button type="button" id="btn-sentinel-deep-scan" class="btn-ng btn-ng-primary" style="font-weight:800;">
                         <span>⚡</span> Inspección Forzada Inmediata
                     </button>
+                    <?php if ($is_pro): ?>
+                        <button type="button" class="btn-ng btn-trigger-vital-rebuild" style="font-weight:800; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#ffffff; border:1px solid #34d399; box-shadow:0 0 14px rgba(16,185,129,0.35); cursor:pointer;">
+                            <span>🛠️</span> Reconstruir Archivos Vitales
+                        </button>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -1257,12 +1267,17 @@ $rollback_count = count($backup_history);
 
             <!-- Bóveda Vital de Archivos Críticos -->
             <div class="ng-card" style="background:#0e163e;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
                     <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;">🛡️ Bóveda Vital de Archivos del Núcleo</h3>
                     <?php if ($is_pro): ?>
-                        <button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem;padding:4px 12px;border-color:rgba(61,232,164,0.4);color:#3de8a4;font-weight:700;cursor:pointer;background:rgba(61,232,164,0.08);border-radius:6px;" title="Endurecer permisos de wp-config.php a solo-lectura (0440)">
-                            🔒 Endurecer Permisos
-                        </button>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button type="button" id="btn-sentinel-rebuild-all-vital" class="btn-ng btn-ng-primary btn-trigger-vital-rebuild" style="font-size:0.78rem;padding:5px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 12px rgba(16,185,129,0.35);" title="Descargar y reconstruir todos los archivos vitales de WordPress con copias oficiales inmaculadas de WordPress.org">
+                                🛠️ Reconstruir Archivos Vitales
+                            </button>
+                            <button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.78rem;padding:5px 12px;border-color:rgba(255,207,51,0.4);color:#ffd859;font-weight:700;cursor:pointer;background:rgba(255,207,51,0.08);border-radius:6px;" title="Endurecer permisos de wp-config.php a solo-lectura (0440)">
+                                🔒 Endurecer Permisos
+                            </button>
+                        </div>
                     <?php else: ?>
                         <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ Monitoreo Activo</span>
                     <?php endif; ?>
@@ -1274,6 +1289,9 @@ $rollback_count = count($backup_history);
                                 <th>Archivo</th>
                                 <th>Permisos</th>
                                 <th>Estado</th>
+                                <?php if ($is_pro): ?>
+                                    <th style="text-align:right;">Acción (WordPress.org)</th>
+                                <?php endif; ?>
                             </tr>
                         </thead>
                         <tbody id="sentinel-vital-files-tbody">
@@ -1281,26 +1299,41 @@ $rollback_count = count($backup_history);
                                 <td><code>/wp-config.php</code></td>
                                 <td><span class="badge-status-pill ok">0440</span></td>
                                 <td><span style="color:#3de8a4;font-weight:700;">✓ Protegido</span></td>
+                                <?php if ($is_pro): ?>
+                                    <td style="text-align:right;"><button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline btn-sm" style="font-size:0.72rem; padding:2px 8px; border-color:rgba(255,207,51,0.4); color:#ffd859; cursor:pointer;">🔒 Endurecer</button></td>
+                                <?php endif; ?>
                             </tr>
                             <tr>
                                 <td><code>/.htaccess</code></td>
                                 <td><span class="badge-status-pill ok">0644</span></td>
                                 <td><span style="color:#3de8a4;font-weight:700;">✓ WAF Activo</span></td>
+                                <?php if ($is_pro): ?>
+                                    <td style="text-align:right;"><span style="color:#8fa0cf; font-size:0.75rem;">Reglas Activas</span></td>
+                                <?php endif; ?>
                             </tr>
                             <tr>
                                 <td><code>/index.php</code></td>
                                 <td><span class="badge-status-pill ok">0644</span></td>
                                 <td><span style="color:#3de8a4;font-weight:700;">✓ Firma Oficial</span></td>
+                                <?php if ($is_pro): ?>
+                                    <td style="text-align:right;"><button type="button" class="btn-ng btn-ng-primary btn-sm btn-sentinel-rebuild" data-file="index.php" style="font-size:0.72rem; padding:2px 8px; background:#10b981; color:#fff; border:none; border-radius:4px; font-weight:700; cursor:pointer;">🛠️ Reconstruir</button></td>
+                                <?php endif; ?>
                             </tr>
                             <tr>
                                 <td><code>/wp-load.php</code></td>
                                 <td><span class="badge-status-pill ok">0644</span></td>
                                 <td><span style="color:#3de8a4;font-weight:700;">✓ Firma Oficial</span></td>
+                                <?php if ($is_pro): ?>
+                                    <td style="text-align:right;"><button type="button" class="btn-ng btn-ng-primary btn-sm btn-sentinel-rebuild" data-file="wp-load.php" style="font-size:0.72rem; padding:2px 8px; background:#10b981; color:#fff; border:none; border-radius:4px; font-weight:700; cursor:pointer;">🛠️ Reconstruir</button></td>
+                                <?php endif; ?>
                             </tr>
                             <tr>
                                 <td><code>/wp-includes/version.php</code></td>
                                 <td><span class="badge-status-pill ok">0644</span></td>
                                 <td><span style="color:#3de8a4;font-weight:700;">✓ Intacto</span></td>
+                                <?php if ($is_pro): ?>
+                                    <td style="text-align:right;"><button type="button" class="btn-ng btn-ng-primary btn-sm btn-sentinel-rebuild" data-file="wp-includes/version.php" style="font-size:0.72rem; padding:2px 8px; background:#10b981; color:#fff; border:none; border-radius:4px; font-weight:700; cursor:pointer;">🛠️ Reconstruir</button></td>
+                                <?php endif; ?>
                             </tr>
                         </tbody>
                     </table>

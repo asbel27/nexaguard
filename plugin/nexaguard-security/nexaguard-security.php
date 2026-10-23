@@ -63,6 +63,7 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_sentinel_scan', array($this, 'ajax_sentinel_scan'));
         add_action('wp_ajax_nexaguard_sentinel_harden', array($this, 'ajax_sentinel_harden'));
         add_action('wp_ajax_nexaguard_sentinel_restore_file', array($this, 'ajax_sentinel_restore_file'));
+        add_action('wp_ajax_nexaguard_sentinel_rebuild_all_vital', array($this, 'ajax_sentinel_rebuild_all_vital'));
         add_action('nexaguard_daily_vigilance_scan', array($this, 'run_background_vigilance_scan'));
 
         // Aviso en el pie de página de administración
@@ -1046,6 +1047,52 @@ class NexaGuard_Plugin {
         } else {
             wp_send_json_error($result);
         }
+    }
+
+    /**
+     * Reconstrucción Masiva de Todos los Archivos Vitales de WordPress (PRO)
+     */
+    public function ajax_sentinel_rebuild_all_vital() {
+        check_ajax_referer('nexaguard_security_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        $cleaner = new NexaGuard_Cleaner();
+        $vital_files = array(
+            'index.php',
+            'wp-blog-header.php',
+            'wp-load.php',
+            'wp-settings.php',
+            'wp-login.php',
+            'wp-includes/version.php',
+            'wp-includes/pluggable.php',
+            'wp-content/index.php'
+        );
+
+        $restored = 0;
+        $details = array();
+
+        foreach ($vital_files as $rel) {
+            $full_path = ABSPATH . $rel;
+            $res = $cleaner->restore_core_file($full_path);
+            if (!empty($res['success'])) {
+                $restored++;
+                $details[] = "✓ /$rel restaurado con copia oficial.";
+            } else {
+                $details[] = "⚠️ /$rel: " . (isset($res['message']) ? $res['message'] : 'Error');
+            }
+        }
+
+        global $wp_version;
+        $core_version = !empty($wp_version) ? $wp_version : get_bloginfo('version');
+
+        wp_send_json_success(array(
+            'restored' => $restored,
+            'total'    => count($vital_files),
+            'details'  => $details,
+            'message'  => "¡Se han reconstruido y verificado {$restored} archivos vitales con copias oficiales inmaculadas de WordPress.org (v{$core_version})!"
+        ));
     }
 }
 
