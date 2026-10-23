@@ -381,14 +381,24 @@ function createWaf({ store = { db: {} }, config = {} } = {}) {
       topCountries[cName] = (topCountries[cName] || 0) + 1;
     });
 
+    const inspected = db.wafStats.inspected || 0;
+    const blocked = db.wafStats.blocked || 0;
+    const todayBlocked = db.wafStats.todayBlocked || 0;
+    const jailedCount = Array.isArray(db.wafJail) ? db.wafJail.length : 0;
+
     return {
-      inspected: db.wafStats.inspected || 0,
-      blocked: db.wafStats.blocked || 0,
-      todayBlocked: db.wafStats.todayBlocked || 0,
-      jailedCount: db.wafJail.length,
+      inspected,
+      requestsInspected: inspected,
+      blocked,
+      blockedTotal: blocked,
+      todayBlocked,
+      blockedToday: todayBlocked,
+      jailedCount,
+      jailedIps: jailedCount,
       topRules,
       topCountries,
       activeShield: true,
+      activeRules: 28,
       mode: 'ESTRICTO_ACTIVO_24H'
     };
   }

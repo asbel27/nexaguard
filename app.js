@@ -1701,7 +1701,8 @@ function createApp({ store, scanner, waf, sentinel, config }) {
 
   route('GET', '/api/admin/waf/stats', 'admin', (ctx) => {
     if (!waf) return send(ctx.res, 200, { ok: true, stats: {} });
-    send(ctx.res, 200, { ok: true, stats: waf.getStats() });
+    const s = waf.getStats();
+    send(ctx.res, 200, Object.assign({ ok: true, stats: s }, s));
   });
 
   route('GET', '/api/admin/waf/events', 'admin', (ctx) => {
@@ -1711,8 +1712,9 @@ function createApp({ store, scanner, waf, sentinel, config }) {
   });
 
   route('GET', '/api/admin/waf/jail', 'admin', (ctx) => {
-    if (!waf) return send(ctx.res, 200, { ok: true, jail: [] });
-    send(ctx.res, 200, { ok: true, jail: waf.getJail() });
+    if (!waf) return send(ctx.res, 200, { ok: true, jail: [], jailed: [] });
+    const j = waf.getJail();
+    send(ctx.res, 200, { ok: true, jail: j, jailed: j });
   });
 
   route('POST', '/api/admin/waf/jail', 'admin', (ctx) => {

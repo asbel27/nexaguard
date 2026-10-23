@@ -2043,12 +2043,28 @@ AV.radar = async function () {
   var root = h('div', null);
   root.appendChild(head('Radar WAF Web — Protección Perimetral', 'Centro de operaciones SOC en tiempo real para nexaguards.com. Detección, bloqueo perimetral de ataques y aislamiento automático IP.'));
 
+  function parseStats(raw) {
+    if (!raw) return { requestsInspected: 0, blockedTotal: 0, blockedToday: 0, jailedIps: 0, activeRules: 28 };
+    var s = raw.stats || raw;
+    var inspected = s.requestsInspected != null ? s.requestsInspected : (s.inspected != null ? s.inspected : 0);
+    var blocked = s.blockedTotal != null ? s.blockedTotal : (s.blocked != null ? s.blocked : 0);
+    var today = s.blockedToday != null ? s.blockedToday : (s.todayBlocked != null ? s.todayBlocked : 0);
+    var jailed = s.jailedIps != null ? s.jailedIps : (s.jailedCount != null ? s.jailedCount : 0);
+    return {
+      requestsInspected: inspected,
+      blockedTotal: blocked,
+      blockedToday: today,
+      jailedIps: jailed,
+      activeRules: s.activeRules || 28
+    };
+  }
+
   var stats = { requestsInspected: 0, blockedTotal: 0, blockedToday: 0, jailedIps: 0, activeRules: 28 };
   var events = [];
   var jailed = [];
   try {
     var resStats = await api('GET', '/api/admin/waf/stats');
-    if (resStats) stats = resStats;
+    if (resStats) stats = parseStats(resStats);
   } catch (e) {}
   try {
     var resEv = await api('GET', '/api/admin/waf/events');
@@ -2056,7 +2072,7 @@ AV.radar = async function () {
   } catch (e) {}
   try {
     var resJail = await api('GET', '/api/admin/waf/jail');
-    if (resJail && resJail.jailed) jailed = resJail.jailed;
+    if (resJail) jailed = resJail.jail || resJail.jailed || [];
   } catch (e) {}
   var sentinelData = null;
   try {
@@ -2065,6 +2081,11 @@ AV.radar = async function () {
   } catch (e) {}
 
   var audioEnabled = false;
+  var isLiveStream = true;
+  var isDestroyed = false;
+  var threatMap = null;
+  var userLocText = 'Detectando...';
+
   function playSonarPing() {
     if (!audioEnabled) return;
     try {
@@ -2085,7 +2106,10 @@ AV.radar = async function () {
     } catch (e) {}
   }
 
-  var kp = function (n, l, cls) { return h('div', { class: 'card kpi ' + (cls || '') }, h('b', null, String(n)), h('span', null, l)); };
+  var kp = function (n, l, cls) {
+    var val = (n !== undefined && n !== null) ? String(n) : '0';
+    return h('div', { class: 'card kpi ' + (cls || '') }, h('b', null, val), h('span', null, l));
+  };
   var kpiGrid = h('div', { class: 'grid g4', style: 'margin-bottom:16px' },
     kp(stats.requestsInspected, 'Peticiones Inspeccionadas', 'good'),
     kp(stats.blockedTotal, 'Ataques Bloqueados Total', 'bad'),
@@ -2096,12 +2120,13 @@ AV.radar = async function () {
 
   function updateKpis(s) {
     if (!s) return;
+    var parsed = parseStats(s);
     var bTags = kpiGrid.querySelectorAll('b');
     if (bTags.length >= 4) {
-      bTags[0].textContent = s.requestsInspected;
-      bTags[1].textContent = s.blockedTotal;
-      bTags[2].textContent = s.blockedToday;
-      bTags[3].textContent = s.jailedIps;
+      bTags[0].textContent = String(parsed.requestsInspected);
+      bTags[1].textContent = String(parsed.blockedTotal);
+      bTags[2].textContent = String(parsed.blockedToday);
+      bTags[3].textContent = String(parsed.jailedIps);
     }
   }
 
@@ -2128,6 +2153,7 @@ AV.radar = async function () {
             addEventToView(res.event);
             playSonarPing();
             toast('🛡️ [403 BLOCKED] ' + res.event.rule + ' neutralizado.');
+            await reloadWafData();
           }
         } catch (err) {
           toast(err.message);
@@ -2139,11 +2165,6 @@ AV.radar = async function () {
     simBar.appendChild(btn);
   });
   root.appendChild(simBar);
-
-  var audioEnabled = false;
-  var isLiveStream = true;
-  var threatMap = null;
-  var userLocText = 'Detectando...';
 
   // Contenedor principal del Mapa Mundi Táctico
   var mapBox = h('div', { class: 'threat-map-box' });
@@ -2573,11 +2594,14 @@ AV.radar = async function () {
   async function reloadWafData() {
     try {
       var resS = await api('GET', '/api/admin/waf/stats');
-      if (resS) { stats = resS; updateKpis(stats); }
+      if (resS) {
+        stats = parseStats(resS);
+        updateKpis(stats);
+      }
     } catch (e) {}
     try {
       var resJ = await api('GET', '/api/admin/waf/jail');
-      if (resJ && resJ.jailed) jailed = resJ.jailed;
+      if (resJ) jailed = resJ.jail || resJ.jailed || [];
     } catch (e) {}
     try {
       var resSent = await api('GET', '/api/admin/sentinel/status');
@@ -2590,8 +2614,9 @@ AV.radar = async function () {
         events = resE.events;
         if (events.length > prevLen && prevLen > 0) {
           playSonarPing();
-          addBlip(events[0]);
-          appendTerminalLine(events[0]);
+          var newEvent = events[0];
+          if (threatMap) threatMap.launchBeam(newEvent);
+          appendFlowCard(newEvent, true);
         }
       }
     } catch (e) {}
@@ -2605,7 +2630,7 @@ AV.radar = async function () {
 
   function onRouteLeave() {
     isDestroyed = true;
-    if (animFrameId) cancelAnimationFrame(animFrameId);
+    if (threatMap && typeof threatMap.destroy === 'function') threatMap.destroy();
     if (pollTimer) clearInterval(pollTimer);
     window.removeEventListener('hashchange', onRouteLeave);
   }
