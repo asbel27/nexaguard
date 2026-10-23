@@ -3,6 +3,6 @@
   "inc/firewall.php": "481f77a5accfe39ed46f82bc788cf5d7765459d14ccf769a759392112b44d3c5",
   "inc/scanner.php": "e91b4299f59790b3f566ce87f4057d145f203ce231dea3873493e3aa24ff1696",
   "inc/cleaner.php": "53f0c2312b547dbb1738e4017c4a51fab3db2d290d2dbde429a161b140dfae5d",
-  "inc/view-scanner.php": "cb89e6e517bd1d60196e154d6aa9d5dad896f65ae35c67e16361b3bee1da8991",
+  "inc/view-scanner.php": "b7668cb2009fa2d304d105dda017ad4ab24e712721e1cf42f639d961ce1a3689",
   "inc/view-modals.php": "32ac988ad415261e13148f02084037a0a43418f025201c925f119f0576e1dea0"
 }
