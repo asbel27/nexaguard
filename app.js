@@ -145,7 +145,11 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const p = PLANS[o.plan], t = T();
     let access = false, accessUntil = null, overdue = false;
     if (o.status === 'cancelled') return { access, accessUntil, overdue };
-    if (p.type === 'subscription') {
+    if (p && (p.type === 'free' || o.plan === 'free')) {
+      access = o.status === 'active';
+      accessUntil = t + 3650 * DAY;
+      overdue = false;
+    } else if (p && p.type === 'subscription') {
       if (o.status === 'active' && o.nextBilling) { accessUntil = o.nextBilling + 5 * DAY; access = t <= accessUntil; overdue = t > o.nextBilling; }
     } else {
       if (o.status === 'in_progress') access = true;
@@ -183,6 +187,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const exp = getLicenseExpiration(o);
     const maxSites = o.maxSites || (p && p.sites) || 1;
     const planDisplayName = (maxSites > 1 && p && p.id === 'agency') ? (p.name + ' (' + maxSites + ' Sitios)') : (p ? p.name : o.plan);
+    const domains = Array.isArray(o.activatedDomains) ? o.activatedDomains : (o.activatedDomain ? [o.activatedDomain] : []);
     return {
       id: o.id, plan: o.plan, planName: planDisplayName, type: p ? p.type : 'subscription', status: o.status, stage: o.stage || 0, amount: o.amount, currency: p ? p.currency : 'USD', period: p ? p.period : 'al mes',
       createdAt: iso(o.createdAt), paidAt: iso(o.paidAt), deliveredAt: iso(o.deliveredAt), nextBilling: iso(o.nextBilling), notes: o.notes || '',
@@ -207,7 +212,17 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const now = T();
     let expiresAt = null;
 
-    if (p.type === 'subscription') {
+    if (p && (p.type === 'free' || o.plan === 'free')) {
+      expiresAt = now + 3650 * DAY;
+      return {
+        expiresAt,
+        expiresFormatted: 'Gratis para siempre',
+        daysLeft: 99999,
+        isExpired: false,
+        isExpiringSoon: false,
+        licenseStatus: 'active'
+      };
+    } else if (p && p.type === 'subscription') {
       expiresAt = o.nextBilling || ((o.paidAt || o.createdAt) + 30 * DAY);
     } else if (o.plan === 'blindaje') {
       const start = o.paidAt || o.createdAt || now;
@@ -837,11 +852,29 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const pay = { id: id('pay'), userId: o.userId, orderId: o.id, amount: Math.round(amount * 100) / 100, currency: currency || p.currency, method: method || 'manual', reference: reference || '', at: T(), by: by || 'sistema' };
     db.payments.push(pay);
     if (!o.licenseKey) {
-      const pfx = (p && p.id === 'agency') || (o.maxSites && o.maxSites > 1) ? 'NXG-AGENCY' : ((p && p.type === 'subscription') ? 'NXG-PRO' : (p && p.id === 'blindaje' ? 'NXG-ANNUAL' : 'NXG-LIC'));
+      const pfx = (p && p.id === 'agency') || (o.maxSites && o.maxSites > 1)
+        ? 'NXG-AGENCY'
+        : ((p && p.type === 'subscription')
+          ? 'NXG-PRO'
+          : (p && p.id === 'blindaje'
+            ? 'NXG-ANNUAL'
+            : (p && (p.id === 'free' || p.type === 'free') ? 'NEXA-FREE' : 'NXG-LIC')));
       o.licenseKey = pfx + '-' + crypto.randomBytes(3).toString('hex').toUpperCase() + '-' + crypto.randomBytes(3).toString('hex').toUpperCase();
     }
-    if (o.status === 'pending_payment') { o.paidAt = T(); if (p.type === 'subscription') { o.status = 'active'; o.nextBilling = T() + 30 * DAY; } else o.status = 'in_progress'; }
-    else if (p.type === 'subscription' && o.status === 'active') o.nextBilling = Math.max(o.nextBilling || 0, T()) + 30 * DAY;
+    if (o.status === 'pending_payment') {
+      o.paidAt = T();
+      if (p && p.type === 'subscription') {
+        o.status = 'active';
+        o.nextBilling = T() + 30 * DAY;
+      } else if (p && (p.type === 'free' || p.id === 'free')) {
+        o.status = 'active';
+        o.nextBilling = T() + 3650 * DAY;
+      } else {
+        o.status = 'in_progress';
+      }
+    } else if (p && p.type === 'subscription' && o.status === 'active') {
+      o.nextBilling = Math.max(o.nextBilling || 0, T()) + 30 * DAY;
+    }
     return pay;
   }
 
@@ -1122,7 +1155,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     if (!domain) return fail(res, 400, 'Dominio web requerido para validar la licencia.');
 
     // 1.0 Si es una clave comunitaria gratuita (estilo Wordfence)
-    if (key.startsWith('NEXA-FREE-') || key.startsWith('FREE-')) {
+    if (key.startsWith('NEXA-FREE-') || key.startsWith('FREE-') || key.startsWith('NXG-FREE-')) {
       return send(res, 200, {
         valid: true,
         status: 'active',
@@ -1617,6 +1650,39 @@ function createApp({ store, scanner, waf, sentinel, config }) {
   });
 
   /* ---------- WAF Radar & Telemetría Perimetral Central ---------- */
+  route('GET', '/api/waf/public-stream', null, (ctx) => {
+    if (!waf) return send(ctx.res, 200, { ok: true, stats: {}, events: [] });
+    const stats = waf.getStats();
+    const rawEvents = waf.getEvents(30);
+    const events = rawEvents.map(e => ({
+      id: e.id,
+      at: e.at,
+      ip: String(e.ip || '').replace(/(\d+)\.(\d+)\.(\d+)\.(\d+)/, '$1.$2.***.***'),
+      country: e.country,
+      method: e.method,
+      url: e.url,
+      rule: e.rule,
+      severity: e.severity,
+      action: e.action
+    }));
+    const cfCountry = ctx.req.headers['cf-ipcountry'] || ctx.req.headers['x-country'] || null;
+    const clientIp = (ctx.req.headers['cf-connecting-ip'] || ctx.req.headers['x-forwarded-for'] || ctx.req.socket.remoteAddress || '').split(',')[0].trim();
+    send(ctx.res, 200, {
+      ok: true,
+      stats: {
+        inspected: stats.inspected || 0,
+        blocked: stats.blocked || 0,
+        todayBlocked: stats.todayBlocked || 0,
+        jailedCount: stats.jailedCount || 0
+      },
+      events,
+      clientMeta: {
+        countryCode: cfCountry,
+        ip: clientIp.replace(/(\d+)\.(\d+)\.(\d+)\.(\d+)/, '$1.$2.***.***')
+      }
+    });
+  });
+
   route('GET', '/api/admin/waf/stats', 'admin', (ctx) => {
     if (!waf) return send(ctx.res, 200, { ok: true, stats: {} });
     send(ctx.res, 200, { ok: true, stats: waf.getStats() });
@@ -1697,7 +1763,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const u = new URL(req.url, 'http://x'), pathname = u.pathname;
     if (!pathname.startsWith('/api/')) return false;
     try {
-      const isPublicExternalApi = pathname === '/api/license/validate' || pathname === '/api/license/deactivate' || pathname === '/api/license/free' || pathname === '/api/threat-intel';
+      const isPublicExternalApi = pathname === '/api/license/validate' || pathname === '/api/license/deactivate' || pathname === '/api/license/free' || pathname === '/api/threat-intel' || pathname === '/api/waf/public-stream';
       const origin = req.headers.origin;
       if (isPublicExternalApi) {
         res.setHeader('Access-Control-Allow-Origin', '*');

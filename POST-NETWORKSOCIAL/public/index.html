@@ -36,6 +36,13 @@
         <span class="status-dot yellow"></span>
         <span id="sessionText">Perfil Activo</span>
       </div>
+      <div class="status-badge gemini-status-badge" id="geminiBadge" onclick="openGeminiModal()" style="cursor:pointer" title="Configurar cuenta de Google Gemini">
+        <span class="status-dot red" id="geminiDot"></span>
+        <span id="geminiText">Gemini Desconectado</span>
+      </div>
+      <button class="btn btn-sm btn-gemini-connect" id="btnHeaderGemini" onclick="openGeminiModal()">
+        ♊ Conectar Google Gemini
+      </button>
       <button class="btn btn-outline btn-sm" onclick="openLoginWindow('facebook')">
         🔑 Sesión de Facebook
       </button>
@@ -69,13 +76,16 @@
         <div class="panel composer-left">
           <div class="panel-header">
             <h2>✍️ Redactor Inteligente (Copywriting &amp; IA)</h2>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <select id="frameworkSelect" onchange="applyCopywritingFramework()" style="max-width:230px;font-size:0.8rem">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button type="button" class="btn btn-xs btn-gemini-glow" onclick="promptGenerateWithGemini()" style="background:linear-gradient(135deg, #1a73e8, #8e24aa);color:#fff;border:none;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px" title="Generar copy persuasivo con Google Gemini">
+                <span>♊ Redactar con Gemini AI</span>
+              </button>
+              <select id="frameworkSelect" onchange="applyCopywritingFramework()" style="max-width:210px;font-size:0.8rem">
                 <option value="pas-dolor-urgencia">🔥 Fórmula PAS (Dolor y Urgencia)</option>
                 <option value="caso-estudio-educativo">🧠 Caso Técnico (0% Rechazo Admins)</option>
                 <option value="alerta-seguridad-comunidad">🚨 Alerta Preventiva (Alta Interacción)</option>
               </select>
-              <select id="templateSelect" onchange="applySelectedTemplate()" style="max-width:170px;font-size:0.8rem">
+              <select id="templateSelect" onchange="applySelectedTemplate()" style="max-width:160px;font-size:0.8rem">
                 <!-- Opciones dinámicas -->
               </select>
             </div>
@@ -125,24 +135,35 @@
           <!-- Adjuntar o Generar Imagen Creativa con IA -->
           <div class="form-group image-attach-box">
             <div class="label-row">
-              <label>🖼️ Imagen del Post (Generador IA o Subir de tu PC):</label>
-              <div style="display:flex;gap:6px">
+              <label>🖼️ Multimedia del Post (Generador IA Gemini & Motion):</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
                 <select id="bannerPresetSelect" style="width:auto;padding:3px 8px;font-size:0.75rem">
                   <option value="pantalla-roja">🛑 Pantalla Roja Google</option>
                   <option value="rescate-urgente" selected>⚠️ Rescate Forense Urgente</option>
                   <option value="japanese-seo">🚨 Japanese Keyword Hack</option>
                   <option value="escaner-radar">🛡️ Escáner Radar Gratuito</option>
                   <option value="woocommerce-safe">💳 WooCommerce Checkout</option>
+                  <option value="agencia-marketing">🚀 Agencia & Crecimiento</option>
+                  <option value="negocio-local">⭐ Negocio Local / Servicios</option>
                 </select>
-                <button type="button" class="btn btn-primary btn-xs" onclick="generateAiBanner()">
-                  ✨ Generar Banner IA
+                <button type="button" class="btn btn-primary btn-xs" onclick="generateAiBanner(event)">
+                  ✨ Generar Imagen con IA
+                </button>
+                <button type="button" class="btn btn-secondary btn-xs" style="background:#8b5cf6;border-color:#8b5cf6" onclick="generateAiVideo(event)">
+                  🎬 Generar Video con IA
                 </button>
               </div>
             </div>
-            <div class="image-uploader">
+
+            <!-- Entrada opcional de Prompt personalizado para Gemini -->
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input type="text" id="aiCustomPrompt" placeholder="💡 O escribe un tema / nicho personalizado (ej: Tienda de ropa, Odontología, Bienes Raíces, Cursos)..." style="font-size:0.78rem;padding:6px 10px;flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--line);border-radius:6px;color:#fff">
+            </div>
+
+            <div class="image-uploader" style="margin-top:10px">
               <input type="file" id="imageFileInput" accept="image/*,video/*" onchange="handleImageUpload(event)" style="display:none">
               <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('imageFileInput').click()">
-                📁 O Subir Imagen / Video Local
+                📁 O Subir Imagen / Video de tu PC
               </button>
               <span id="attachedImageName" class="attached-name">Ningún archivo multimedia</span>
               <div id="imagePreviewContainer" class="img-preview" style="display:none;width:120px;height:65px">
@@ -268,6 +289,34 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- SECCIÓN EN VIVO: LISTA CLICKEABLE DE POSTS CREADOS Y PUBLICADOS CON VISTA PREVIA Y ENLACES DIRECTOS A FACEBOOK -->
+      <div class="panel composer-live-feed-panel" style="margin-top:24px">
+        <div class="panel-header" style="flex-wrap:wrap;gap:12px">
+          <div>
+            <h2 style="display:flex;align-items:center;gap:8px">
+              <span>📋 Publicaciones Recientes &amp; Feed de Enlaces en Vivo</span>
+              <span class="badge-info" id="composerFeedCountBadge">0 publicaciones</span>
+            </h2>
+            <p class="subtitle" style="margin-top:4px">
+              Haz clic en cualquier publicación para ver su <strong>Vista Previa idéntica a Facebook</strong> o pulsa <strong>"🔗 Abrir en Facebook"</strong> para ir directamente al post publicado.
+            </p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div class="category-pills" id="composerFeedFilters" style="margin:0">
+              <button type="button" class="cat-pill active" onclick="filterComposerFeed('all', this)">Todas</button>
+              <button type="button" class="cat-pill" onclick="filterComposerFeed('published', this)">✓ Publicadas en FB</button>
+              <button type="button" class="cat-pill" onclick="filterComposerFeed('ready', this)">● Guardadas / Listas</button>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="loadComposerLiveFeed()">🔄 Actualizar Lista</button>
+          </div>
+        </div>
+
+        <!-- Lista Interactiva Clickeable -->
+        <div id="composerLiveFeedList" class="composer-live-feed-list">
+          <div style="text-align:center;padding:35px;color:var(--muted)">Cargando publicaciones...</div>
+        </div>
       </div>
     </section>
 
@@ -625,7 +674,34 @@
             </label>
           </div>
 
-          <button class="btn btn-primary" onclick="saveSettings()">💾 Guardar Configuración</button>
+          <!-- Integración Oficial con Google Gemini AI -->
+          <div class="gemini-settings-box" style="margin-top:20px;padding:18px;background:linear-gradient(135deg, rgba(66, 133, 244, 0.08) 0%, rgba(155, 114, 203, 0.08) 100%);border:1px solid rgba(155, 114, 203, 0.3);border-radius:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:1.4rem">♊</span>
+                <div>
+                  <strong style="font-size:1rem;color:#fff">Google Gemini AI (Generación de Contenido, Imágenes &amp; Video)</strong>
+                  <div style="font-size:0.8rem;color:var(--muted)">Conecta tu cuenta personal de Google Gemini para redactar posts virales y crear multimedia.</div>
+                </div>
+              </div>
+              <span class="badge-live" id="settingsGeminiStatusBadge" style="background:rgba(255,255,255,0.08);border:1px solid var(--line)">Desconectado</span>
+            </div>
+
+            <div class="form-group" style="margin-bottom:10px">
+              <label for="settingGeminiApiKey">Clave de API de Google Gemini (Google AI Studio):</label>
+              <div style="display:flex;gap:8px">
+                <input type="password" id="settingGeminiApiKey" placeholder="AIzaSy..." style="flex:1">
+                <button type="button" class="btn btn-outline btn-sm" onclick="togglePasswordVisibility('settingGeminiApiKey', this)">👁️</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="testGeminiApiKeyFromSettings()">🔍 Probar Conexión</button>
+              </div>
+              <small style="display:block;margin-top:5px;color:var(--muted)">
+                ¿No tienes una clave? Puedes obtenerla 100% gratis en <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--cyan);text-decoration:underline">Google AI Studio (aistudio.google.com)</a> iniciando sesión con tu cuenta de Google.
+              </small>
+            </div>
+            <div id="settingsGeminiTestFeedback" style="display:none;padding:10px;border-radius:6px;font-size:0.85rem;margin-top:8px"></div>
+          </div>
+
+          <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:16px">💾 Guardar Configuración</button>
         </div>
       </div>
     </section>
@@ -893,6 +969,85 @@
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="closeCreatePostModal()">Cancelar</button>
         <button class="btn btn-primary" onclick="saveNewCreatedPost()">💾 Guardar en Biblioteca</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Conectar Cuenta de Google Gemini -->
+  <div class="modal" id="geminiModal">
+    <div class="modal-card" style="max-width:580px">
+      <div class="modal-header" style="background:linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(155, 114, 203, 0.15))">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:1.5rem">♊</span>
+          <div>
+            <h3 style="margin:0;font-size:1.1rem;color:#fff">Conectar Cuenta de Google Gemini AI</h3>
+            <p style="margin:0;font-size:0.75rem;color:var(--muted)">Generación ilimitada de copys virales, banners y videos con IA</p>
+          </div>
+        </div>
+        <button class="btn-close" onclick="closeGeminiModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:16px">
+          <h4 style="margin:0 0 8px 0;font-size:0.88rem;color:var(--cyan);display:flex;align-items:center;gap:6px">
+            <span>🔑 ¿Cómo conectar tu cuenta de Google Gemini?</span>
+          </h4>
+          <ol style="margin:0;padding-left:18px;font-size:0.8rem;color:var(--text);line-height:1.6">
+            <li>Entra en <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#00f0ff;font-weight:600;text-decoration:underline">Google AI Studio (aistudio.google.com)</a> con tu cuenta de Google.</li>
+            <li>Haz clic en el botón <strong>"Create API key"</strong> (Crear clave de API).</li>
+            <li>Copia tu clave y pégala aquí abajo. ¡Es 100% gratuita y no requiere tarjeta de crédito!</li>
+          </ol>
+        </div>
+
+        <div class="form-group">
+          <label for="geminiModalApiKeyInput">Tu Clave de API de Google Gemini:</label>
+          <div style="display:flex;gap:8px">
+            <input type="password" id="geminiModalApiKeyInput" placeholder="Pega aquí tu clave AIzaSy..." style="flex:1">
+            <button type="button" class="btn btn-outline btn-sm" onclick="togglePasswordVisibility('geminiModalApiKeyInput', this)">👁️</button>
+          </div>
+        </div>
+
+        <div id="geminiModalFeedback" style="display:none;padding:12px;border-radius:8px;font-size:0.85rem;margin-top:10px;line-height:1.4"></div>
+
+        <!-- Módulo Rápido: Generador Directo con Gemini -->
+        <div class="gemini-generator-section" style="margin-top:18px;border-top:1px solid var(--line);padding-top:14px">
+          <h4 style="margin:0 0 10px 0;font-size:0.85rem;color:var(--purple);display:flex;align-items:center;gap:6px">
+            <span>⚡ Generador Instantáneo con Gemini</span>
+          </h4>
+          <div class="form-row">
+            <div class="form-group col-7">
+              <label style="font-size:0.75rem">Tema o Nicho del Negocio:</label>
+              <input type="text" id="geminiGenTopic" placeholder="Ej: Reparación de WordPress hackeado" style="font-size:0.8rem">
+            </div>
+            <div class="form-group col-5">
+              <label style="font-size:0.75rem">Nombre de Marca:</label>
+              <input type="text" id="geminiGenBrand" value="NexaGuard" style="font-size:0.8rem">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button type="button" class="btn btn-xs btn-primary" onclick="generatePostFromGeminiModal()" style="flex:1">
+              ✍️ Generar Copy con Spintax
+            </button>
+            <button type="button" class="btn btn-xs btn-secondary" onclick="generateBannerFromGeminiModal()" style="flex:1">
+              🖼️ Generar Banner IA
+            </button>
+            <button type="button" class="btn btn-xs" onclick="generateVideoFromGeminiModal()" style="flex:1;background:#8b5cf6;border-color:#8b5cf6;color:#fff">
+              🎬 Generar Video IA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center">
+        <button class="btn btn-outline btn-sm" onclick="testGeminiApiKeyFromModal()">
+          🔍 Probar Conexión
+        </button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="closeGeminiModal()">Cerrar</button>
+          <button class="btn btn-primary" onclick="saveGeminiApiKeyFromModal()">
+            💾 Conectar &amp; Guardar Clave
+          </button>
+        </div>
       </div>
     </div>
   </div>

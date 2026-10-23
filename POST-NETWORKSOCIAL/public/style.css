@@ -1679,3 +1679,236 @@ input:checked + .slider:before {
     transform: translateY(0) scale(1);
   }
 }
+
+/* ==========================================================================
+   GOOGLE GEMINI AI & HEADER STATUS
+   ========================================================================== */
+.gemini-status-badge {
+  transition: all 0.25s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gemini-status-badge:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(66, 133, 244, 0.5);
+}
+
+.btn-gemini-connect {
+  background: linear-gradient(135deg, #4285f4 0%, #9b72cb 50%, #d96570 100%);
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(66, 133, 244, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-gemini-connect:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(155, 114, 203, 0.45);
+}
+
+.btn-gemini-glow {
+  transition: all 0.25s ease;
+}
+
+.btn-gemini-glow:hover {
+  box-shadow: 0 0 12px rgba(142, 36, 170, 0.6);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   SECCIÓN DE FEED EN VIVO DEBAJO DEL COMPOSITOR (CLICKEABLE)
+   ========================================================================== */
+.composer-live-feed-panel {
+  border-top: 2px solid rgba(0, 240, 255, 0.2);
+  background: linear-gradient(180deg, rgba(8, 15, 44, 0.7) 0%, rgba(3, 7, 24, 0.95) 100%);
+}
+
+.composer-live-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.composer-feed-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(10, 18, 48, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 16px;
+  transition: all 0.22s ease-in-out;
+  position: relative;
+}
+
+.composer-feed-card:hover {
+  background: rgba(16, 28, 70, 0.85);
+  border-color: rgba(0, 240, 255, 0.35);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+.composer-feed-card.is-published {
+  border-left: 4px solid var(--green);
+}
+
+.composer-feed-card.is-ready {
+  border-left: 4px solid var(--cyan);
+}
+
+.feed-card-thumb {
+  width: 90px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #020614;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feed-card-thumb img,
+.feed-card-thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feed-thumb-placeholder {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.video-pill-badge {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  z-index: 2;
+}
+
+.feed-card-body {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feed-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.feed-card-title {
+  font-weight: 700;
+  font-size: 0.94rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 450px;
+}
+
+.feed-card-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-published {
+  background: rgba(61, 232, 164, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(61, 232, 164, 0.35);
+}
+
+.badge-ready {
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--cyan);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.feed-card-target {
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.feed-card-target strong {
+  color: #dbe4ff;
+}
+
+.feed-card-snippet {
+  font-size: 0.82rem;
+  color: #9cb1d8;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.feed-btn-fb {
+  background: #1877f2;
+  border-color: #1877f2;
+  font-weight: 600;
+}
+
+.feed-btn-fb:hover {
+  background: #1464cc;
+  border-color: #1464cc;
+}
+
+.feed-btn-load {
+  background: rgba(255, 207, 51, 0.15);
+  color: var(--yellow);
+  border: 1px solid rgba(255, 207, 51, 0.3);
+}
+
+.feed-btn-load:hover {
+  background: rgba(255, 207, 51, 0.3);
+  color: #fff;
+}
+
+.feed-btn-del:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+@media (max-width: 900px) {
+  .composer-feed-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .feed-card-actions {
+    width: 100%;
+    margin-top: 8px;
+    justify-content: flex-end;
+  }
+}

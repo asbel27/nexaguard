@@ -14,7 +14,8 @@ const { parseSpintax } = require('./spintax');
 const { COPYWRITING_FRAMEWORKS } = require('./ai-copywriter');
 const { postToFacebookGroup } = require('./facebook-poster');
 const { isWithinOptimalHours, OPTIMAL_HOURS } = require('./scheduler');
-const { generateMarketingBanner } = require('./image-generator');
+const { BANNER_PRESETS, generateMarketingBanner, generateMarketingVideo } = require('./image-generator');
+const { getGeminiApiKey, generateGeminiPost, generateGeminiCreativeConcept } = require('./gemini-client');
 const { scanAllActivePostsAndReply } = require('./comment-responder');
 
 function sleep(ms) {
@@ -216,68 +217,121 @@ class BotAutopilot {
     const group = activeGroups[this.nextGroupIndex % activeGroups.length];
     this.nextGroupIndex++;
 
-    // 5. Seleccionar la fórmula persuasiva (PAS, Caso de Estudio, Alerta o Nicho de URL escaneada)
+    // 5. Seleccionar la fórmula persuasiva (Gemini AI, Nicho o Fórmulas Nativas)
     let uniqueMessage = '';
     let frameworkName = '';
     let frameworkId = 'pas-dolor-urgencia';
-    let customBannerData = null;
+    let customCreativeData = null;
 
+    const geminiKey = getGeminiApiKey();
     const nicheProfile = settings.activeNicheProfile;
-    if (nicheProfile && Array.isArray(nicheProfile.generatedPosts) && nicheProfile.generatedPosts.length > 0) {
-      // Rotar entre los copys persuasivos generados para el nicho y marca activa
-      const nichePost = nicheProfile.generatedPosts[this.currentFrameworkIndex % nicheProfile.generatedPosts.length];
-      uniqueMessage = parseSpintax(nichePost.spintax || nichePost.message);
-      frameworkName = `${nicheProfile.brand} (${nichePost.title || nicheProfile.nicheName})`;
-      frameworkId = nichePost.framework || 'niche-custom';
 
-      // Banner publicitario contextual adaptado a la marca y nicho
-      customBannerData = {
-        title: (nichePost.title || nicheProfile.brand).toUpperCase(),
-        subtitle: `Soluciones profesionales en ${nicheProfile.nicheName}. Garantía y resultados reales.`,
-        badge: `⭐ ${nicheProfile.brand.toUpperCase()}`,
-        cta: `MÁS INFORMACIÓN · ${nicheProfile.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}`,
-        stats: ['✓ Calidad Premium', '✓ Soporte Inmediato', '✓ Resultados Comprobados']
-      };
-    } else {
-      // Fórmulas nativas de alto impacto (PAS, Casos de Estudio, Alertas de Seguridad)
-      const framework = COPYWRITING_FRAMEWORKS[this.currentFrameworkIndex % COPYWRITING_FRAMEWORKS.length];
-      uniqueMessage = parseSpintax(framework.spintax);
-      frameworkName = framework.name;
-      frameworkId = framework.id;
+    if (geminiKey) {
+      try {
+        this.log('♊ [GEMINI AI] Conectado: Redactando copy viral con Spintax y gancho persuasivo...');
+        const nicheTopic = (group.category && group.category !== 'General')
+          ? `Ciberseguridad, rescate web y protección en nicho ${group.category}`
+          : `Seguridad WordPress, pantalla roja de Google, eliminación de malware y escáner forense`;
+
+        const geminiCopy = await generateGeminiPost({
+          topic: nicheTopic,
+          brandName: 'NexaGuard',
+          targetUrl: 'https://nexaguards.com',
+          language: 'es'
+        });
+
+        if (geminiCopy && geminiCopy.length > 40) {
+          uniqueMessage = parseSpintax(geminiCopy);
+          frameworkName = `Google Gemini AI (${group.category || 'Ciberseguridad'})`;
+          frameworkId = 'gemini-viral';
+        }
+      } catch (eG) {
+        this.log(`ℹ️ [GEMINI AI] Fallback a plantillas nativas: ${eG.message}`);
+      }
+    }
+
+    if (!uniqueMessage) {
+      if (nicheProfile && Array.isArray(nicheProfile.generatedPosts) && nicheProfile.generatedPosts.length > 0) {
+        // Rotar entre los copys persuasivos generados para el nicho y marca activa
+        const nichePost = nicheProfile.generatedPosts[this.currentFrameworkIndex % nicheProfile.generatedPosts.length];
+        uniqueMessage = parseSpintax(nichePost.spintax || nichePost.message);
+        frameworkName = `${nicheProfile.brand} (${nichePost.title || nicheProfile.nicheName})`;
+        frameworkId = nichePost.framework || 'niche-custom';
+
+        customCreativeData = {
+          title: (nichePost.title || nicheProfile.brand).toUpperCase(),
+          subtitle: `Soluciones profesionales en ${nicheProfile.nicheName}. Garantía y resultados reales.`,
+          badge: `⭐ ${nicheProfile.brand.toUpperCase()}`,
+          cta: `MÁS INFORMACIÓN · ${nicheProfile.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}`,
+          stats: ['✓ Calidad Premium', '✓ Soporte Inmediato', '✓ Resultados Comprobados']
+        };
+      } else {
+        // Fórmulas nativas de alto impacto (PAS, Casos de Estudio, Alertas de Seguridad)
+        const framework = COPYWRITING_FRAMEWORKS[this.currentFrameworkIndex % COPYWRITING_FRAMEWORKS.length];
+        uniqueMessage = parseSpintax(framework.spintax);
+        frameworkName = framework.name;
+        frameworkId = framework.id;
+      }
     }
     this.currentFrameworkIndex++;
 
     this.state = 'POSTING';
     this.log(`✨ Ejecutando publicación autónoma [${this.postsTodayCount + 1}/${config.dailyQuota}]`, 'step');
     this.log(`   Grupo: "${group.name}"`);
-    this.log(`   Fórmula/Marca: "${frameworkName}"`);
+    this.log(`   Estrategia: "${frameworkName}"`);
 
-    // Generar banner creativo con IA automáticamente
-    let generatedImagePath = null;
+    // 6. Decisión Autónoma de Multimedia: Alterna entre Banner Gráfico y Video Animado con IA
+    const shouldMakeVideo = (this.postsTodayCount % 2 === 1);
+    let generatedMediaPath = null;
+    let mediaType = shouldMakeVideo ? 'video' : 'image';
+
     try {
-      this.log('🎨 Generando banner publicitario con IA para este post...');
       let presetId = 'rescate-urgente';
       if (frameworkId.includes('dolor') || frameworkId.includes('pantalla')) presetId = 'pantalla-roja';
       else if (frameworkId.includes('alerta') || frameworkId.includes('radar')) presetId = 'escaner-radar';
       else if (frameworkId.includes('caso') || frameworkId.includes('seo')) presetId = 'japanese-seo';
       else if (nicheProfile && nicheProfile.niche === 'ecommerce') presetId = 'woocommerce-safe';
 
-      const creative = await generateMarketingBanner({
-        presetId,
-        format: 'fb',
-        customData: customBannerData
-      });
-      generatedImagePath = creative.filePath;
-      this.log(`✓ Banner gráfico generado con éxito: ${path.basename(generatedImagePath)}`);
-    } catch (e) {
-      this.log(`⚠️ No se pudo generar imagen dinámica (${e.message}), publicando texto solo.`);
+      // Si Gemini está activo y no hay datos personalizados, generar concepto creativo con Gemini
+      if (geminiKey && !customCreativeData) {
+        try {
+          customCreativeData = await generateGeminiCreativeConcept({
+            topic: `Seguridad y protección web para comunidad ${group.name}`,
+            brandName: 'NexaGuard'
+          });
+        } catch (eC) {}
+      }
+
+      if (shouldMakeVideo) {
+        this.log('🎬 [BOT AUTÓNOMO] Decisión de IA: Renderizando VIDEO ANIMADO con efectos dinámicos de radar y ciberseguridad NexaGuard...');
+        const videoRes = await generateMarketingVideo({
+          presetId,
+          customData: customCreativeData,
+          durationSeconds: 5
+        });
+        generatedMediaPath = videoRes.filePath;
+        mediaType = 'video';
+        this.log(`✓ Clip de Video animado generado con éxito: ${path.basename(generatedMediaPath)}`);
+      } else {
+        this.log('🖼️ [BOT AUTÓNOMO] Decisión de IA: Diseñando BANNER GRÁFICO Ultra HD con branding oficial NexaGuard...');
+        const bannerRes = await generateMarketingBanner({
+          presetId,
+          format: 'fb',
+          customData: customCreativeData
+        });
+        generatedMediaPath = bannerRes.filePath;
+        mediaType = 'image';
+        this.log(`✓ Banner gráfico generado con éxito: ${path.basename(generatedMediaPath)}`);
+      }
+    } catch (eMedia) {
+      this.log(`⚠️ No se pudo sintetizar multimedia dinámica (${eMedia.message}), publicando texto solo.`);
     }
 
     try {
       const postResult = await postToFacebookGroup({
         groupUrl: group.url,
         message: uniqueMessage,
-        imagePath: generatedImagePath,
+        imagePath: generatedMediaPath,
         simulateTyping: true,
         frameworkId: frameworkId,
         autoTranslateByGroupLanguage: true,
@@ -297,7 +351,7 @@ class BotAutopilot {
 
       // Guardar en historial
       const postUrlFinal = postResult.postUrl || group.url;
-      const bannerRelUrl = generatedImagePath ? `/assets/generated/${path.basename(generatedImagePath)}` : null;
+      const mediaRelUrl = generatedMediaPath ? (generatedMediaPath.includes('public') ? generatedMediaPath.replace(/.*public/, '').replace(/\\/g, '/') : `/assets/generated/${path.basename(generatedMediaPath)}`) : null;
 
       history.unshift({
         id: `autopilot-${Date.now()}`,
@@ -309,10 +363,10 @@ class BotAutopilot {
         timestamp: new Date().toISOString(),
         message: uniqueMessage,
         messagePreview: uniqueMessage.slice(0, 140) + '...',
-        imageUrl: bannerRelUrl,
-        mediaType: 'image',
+        imageUrl: mediaRelUrl,
+        mediaType: mediaType,
         screenshot: postResult.screenshot,
-        details: `[Piloto Automático] ${postResult.message}`
+        details: `[Piloto Automático · ${mediaType === 'video' ? '🎬 Video' : '🖼️ Imagen'}] ${postResult.message}`
       });
       writeJson('history.json', history.slice(0, 250));
 
@@ -321,15 +375,15 @@ class BotAutopilot {
           const currentPosts = readJson('posts.json', []);
           currentPosts.unshift({
             id: `autopilot-post-${Date.now()}`,
-            title: `[Bot] ${framework.name}`,
+            title: `[Bot] ${frameworkName}`,
             message: uniqueMessage,
             category: group.category || 'General',
             status: 'published',
             groupName: group.name,
             targetGroupIds: [group.id],
             postUrl: postUrlFinal,
-            mediaUrl: bannerRelUrl,
-            mediaType: 'image',
+            mediaUrl: mediaRelUrl,
+            mediaType: mediaType,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });

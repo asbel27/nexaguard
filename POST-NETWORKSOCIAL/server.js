@@ -19,10 +19,17 @@ const { detectUserFacebookGroups } = require('./engine/group-detector');
 const { COPYWRITING_FRAMEWORKS, generatePersuasiveCopy } = require('./engine/ai-copywriter');
 const { isWithinOptimalHours, getSmartInterval, assessComplianceRisk, OPTIMAL_HOURS } = require('./engine/scheduler');
 const { autopilotInstance } = require('./engine/bot-autopilot');
-const { BANNER_PRESETS, generateMarketingBanner } = require('./engine/image-generator');
+const { BANNER_PRESETS, generateMarketingBanner, generateMarketingVideo } = require('./engine/image-generator');
 const { detectLanguage, getLanguageName } = require('./engine/language-detector');
 const { generateContextualReply, checkAndReplyToInstagramComments, scanAllActivePostsAndReply } = require('./engine/comment-responder');
 const { scanUrlNiche } = require('./engine/url-niche-scanner');
+const {
+  getGeminiApiKey,
+  testGeminiConnection,
+  generateWithGemini,
+  generateGeminiPost,
+  generateGeminiCreativeConcept
+} = require('./engine/gemini-client');
 
 const PORT = process.env.PORT || 4242;
 const app = express();
@@ -117,6 +124,28 @@ app.get('/api/status', async (req, res) => {
       nextPostInSeconds: activeCampaign.nextPostInSeconds
     }
   });
+});
+
+// 1.1 Configuración General Anti-Ban
+app.get('/api/settings', (req, res) => {
+  const settings = readJson('settings.json', {
+    minDelaySeconds: 45,
+    maxDelaySeconds: 120,
+    dailyLimit: 25,
+    simulateTyping: true,
+    headless: false,
+    takeScreenshots: true,
+    defaultTemplate: 'wp-hackeado',
+    chromePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+  });
+  res.json({ ok: true, settings });
+});
+
+app.post('/api/settings', (req, res) => {
+  const current = readJson('settings.json', {});
+  const updated = { ...current, ...req.body };
+  writeJson('settings.json', updated);
+  res.json({ ok: true, settings: updated });
 });
 
 // 2. Abrir Navegador Interactivo para Iniciar Sesión (FB / IG)
@@ -294,10 +323,97 @@ app.get('/api/creative/presets', (req, res) => {
 });
 
 app.post('/api/creative/generate', async (req, res) => {
-  const { presetId, format, customData } = req.body;
+  const { presetId, format, customData, customPrompt } = req.body;
   try {
-    const result = await generateMarketingBanner({ presetId, format, customData });
+    const result = await generateMarketingBanner({ presetId, format, customData, customPrompt });
     res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/creative/generate-video', async (req, res) => {
+  const { presetId, customData, durationSeconds } = req.body;
+  try {
+    const result = await generateMarketingVideo({ presetId, customData, durationSeconds: durationSeconds || 5 });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// 5.2 Google Gemini AI - Generación de Copys Persuasivos y Creativos
+app.get('/api/gemini/status', (req, res) => {
+  const key = getGeminiApiKey();
+  res.json({
+    ok: true,
+    connected: Boolean(key && key.length > 10),
+    maskedKey: key ? `${key.slice(0, 6)}...${key.slice(-4)}` : ''
+  });
+});
+
+app.post('/api/gemini/test', async (req, res) => {
+  try {
+    const { apiKey } = req.body;
+    const result = await testGeminiConnection(apiKey);
+    if (apiKey && apiKey.trim()) {
+      const current = readJson('settings.json', {});
+      current.geminiApiKey = apiKey.trim();
+      if (result.model) current.geminiModel = result.model;
+      if (result.apiVersion) current.geminiApiVersion = result.apiVersion;
+      writeJson('settings.json', current);
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/gemini/generate-post', async (req, res) => {
+  try {
+    const { topic, brandName, targetUrl, language } = req.body;
+    if (!topic || !topic.trim()) {
+      return res.status(400).json({ ok: false, error: 'Por favor indica el tema o nicho para generar el copy.' });
+    }
+    const copy = await generateGeminiPost({
+      topic: topic.trim(),
+      brandName: brandName || 'NexaGuard',
+      targetUrl: targetUrl || 'https://nexaguards.com',
+      language: language || 'es'
+    });
+    res.json({ ok: true, copy });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/gemini/generate-creative', async (req, res) => {
+  try {
+    const { topic, brandName, format, type, durationSeconds } = req.body;
+    if (!topic || !topic.trim()) {
+      return res.status(400).json({ ok: false, error: 'Por favor indica el tema o nicho para el diseño.' });
+    }
+    const concept = await generateGeminiCreativeConcept({
+      topic: topic.trim(),
+      brandName: brandName || 'NexaGuard'
+    });
+
+    let result;
+    if (type === 'video') {
+      result = await generateMarketingVideo({
+        presetId: 'custom',
+        customData: concept,
+        durationSeconds: durationSeconds || 5
+      });
+    } else {
+      result = await generateMarketingBanner({
+        presetId: 'custom',
+        format: format || 'facebook_feed',
+        customData: concept
+      });
+    }
+
+    res.json({ ok: true, concept, ...result });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }

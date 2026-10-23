@@ -3,6 +3,7 @@ node_modules/
 wordfence*.zip
 POST-NETWORKSOCIAL/node_modules/
 POST-NETWORKSOCIAL/user_data_fb/
+POST-NETWORKSOCIAL/user_data_renderer/
 POST-NETWORKSOCIAL/chrome_app_ui/
 POST-NETWORKSOCIAL/*.log
 POST-NETWORKSOCIAL/*.old

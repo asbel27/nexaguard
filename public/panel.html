@@ -230,6 +230,284 @@ dialog::backdrop{background:rgba(3,6,20,.75);backdrop-filter:blur(3px)}
 .waf-line .rule{color:var(--green)}
 .waf-line .act{color:#ff8ba0}
 .waf-sim-bar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;background:rgba(15,25,60,.4);border:1px solid rgba(107,140,255,.15);border-radius:12px;align-items:center;margin-bottom:16px}
+
+.threat-map-box {
+  background: #020617;
+  border: 1px solid rgba(107, 140, 255, 0.28);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 60px rgba(2, 10, 35, 0.8), 0 10px 40px rgba(0, 0, 0, 0.5);
+  margin-bottom: 20px;
+}
+.threat-map-hud-top {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  z-index: 10;
+  pointer-events: none;
+}
+.threat-map-hud-top > * { pointer-events: auto; }
+.threat-hud-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--fm);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  background: rgba(6, 12, 34, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(107, 140, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: var(--cyan);
+}
+.threat-hud-badge .live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green);
+  animation: dotBlink 1.4s infinite;
+}
+.threat-map-hud-bot {
+  position: absolute;
+  bottom: 14px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  z-index: 10;
+  pointer-events: none;
+}
+.threat-map-hud-bot > * { pointer-events: auto; }
+.threat-map-canvas-wrap {
+  width: 100%;
+  height: 480px;
+  position: relative;
+  background: #020617;
+}
+.threat-map-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+.threat-feed-box {
+  background: #030718;
+  border: 1px solid rgba(107, 140, 255, 0.22);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+.threat-feed-head {
+  background: rgba(15, 25, 60, 0.8);
+  border-bottom: 1px solid rgba(107, 140, 255, 0.2);
+  padding: 10px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.threat-feed-head h4 {
+  margin: 0;
+  font-family: var(--fm);
+  font-size: 0.82rem;
+  color: var(--cyan);
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.threat-feed-list {
+  padding: 12px 14px;
+  max-height: 440px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scroll-behavior: smooth;
+}
+.threat-flow-card {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(160px, 1.4fr) minmax(180px, 1.2fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(9, 18, 48, 0.55);
+  border: 1px solid rgba(107, 140, 255, 0.16);
+  border-radius: 10px;
+  font-family: var(--fm);
+  font-size: 0.76rem;
+  transition: transform 0.15s, border-color 0.2s, background 0.2s;
+  cursor: pointer;
+  animation: threatCardIn 0.35s ease-out;
+}
+.threat-flow-card:hover {
+  transform: translateX(4px);
+  border-color: rgba(255, 207, 51, 0.45);
+  background: rgba(14, 28, 72, 0.85);
+}
+@keyframes threatCardIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.t-col-origin {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.t-c-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.78rem;
+}
+.t-ip {
+  color: var(--yellow);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+.t-req {
+  color: #8ba5e3;
+  font-size: 0.7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+.t-req code {
+  color: var(--cyan);
+  background: rgba(63, 240, 255, 0.12);
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+.t-col-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+}
+.t-rule-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(255, 51, 102, 0.18);
+  border: 1px solid rgba(255, 51, 102, 0.5);
+  color: #ff6b8b;
+}
+.t-rule-pill.warn {
+  background: rgba(255, 207, 51, 0.15);
+  border-color: rgba(255, 207, 51, 0.45);
+  color: var(--yellow);
+}
+.threat-arrows-stream {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 0;
+}
+.threat-arrows-stream .arr {
+  font-family: monospace;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--cyan);
+  opacity: 0.2;
+  text-shadow: 0 0 6px currentColor;
+  transform: scale(0.85);
+  animation: cyberArrowPulse 1.25s infinite ease-in-out;
+}
+.threat-arrows-stream .arr.a1 { animation-delay: 0.0s; }
+.threat-arrows-stream .arr.a2 { animation-delay: 0.18s; }
+.threat-arrows-stream .arr.a3 { animation-delay: 0.36s; }
+.threat-arrows-stream .arr.a4 { animation-delay: 0.54s; }
+.threat-arrows-stream .arr.a5 { animation-delay: 0.72s; }
+@keyframes cyberArrowPulse {
+  0% { opacity: 0.2; color: #3ff0ff; transform: translateX(-3px) scale(0.85); text-shadow: 0 0 4px #3ff0ff; }
+  50% { opacity: 1; color: #ff3366; transform: translateX(0) scale(1.35); text-shadow: 0 0 14px #ff3366, 0 0 24px #ff0044; }
+  100% { opacity: 0.2; color: #3ff0ff; transform: translateX(3px) scale(0.85); text-shadow: 0 0 4px #3ff0ff; }
+}
+.t-flow-sub {
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.t-col-dest {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  text-align: right;
+}
+.t-node-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  color: var(--yellow);
+  font-size: 0.75rem;
+}
+.t-verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: rgba(61, 232, 164, 0.16);
+  border: 1px solid rgba(61, 232, 164, 0.45);
+  color: var(--green);
+}
+.t-verdict.jailed {
+  background: rgba(255, 51, 102, 0.2);
+  border-color: rgba(255, 51, 102, 0.6);
+  color: #ff6b8b;
+}
+.t-lat {
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+@media (max-width: 860px) {
+  .threat-flow-card {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .t-col-dest {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .threat-map-canvas-wrap {
+    height: 360px;
+  }
+}
+
 @media (max-width:980px){.radar-grid{grid-template-columns:1fr}}
 
 @media (max-width:980px){
@@ -312,6 +590,7 @@ dialog::backdrop{background:rgba(3,6,20,.75);backdrop-filter:blur(3px)}
 <div id="app"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="/threat-map.js"></script>
 <script>
 (function () {
 'use strict';
@@ -1673,220 +1952,247 @@ AV.radar = async function () {
   });
   root.appendChild(simBar);
 
-  var radarGrid = h('div', { class: 'radar-grid' });
-  var radarBox = h('div', { class: 'radar-box' });
-  var audioBtn = h('button', { class: 'btn btn-o sm', style: 'padding:2px 8px;font-size:.72rem', type: 'button', on: {
-    click: function () {
-      audioEnabled = !audioEnabled;
-      audioBtn.textContent = audioEnabled ? '🔊 Sonar: ON' : '🔈 Sonar: MUTE';
-      if (audioEnabled) playSonarPing();
-    }
-  } }, '🔈 Sonar: MUTE');
+  var audioEnabled = false;
+  var isLiveStream = true;
+  var threatMap = null;
+  var userLocText = 'Detectando...';
 
-  var radarHud = h('div', { class: 'radar-hud' },
-    h('span', null, h('span', { class: 'live-dot' }), 'DEFENSA PERIMETRAL VIVA'),
-    audioBtn
-  );
-  radarBox.appendChild(radarHud);
+  // Contenedor principal del Mapa Mundi Táctico
+  var mapBox = h('div', { class: 'threat-map-box' });
 
-  var canvas = h('canvas', { class: 'radar-canvas', width: 340, height: 340 });
-  radarBox.appendChild(canvas);
+  var nodeLocationBtn = h('button', {
+    class: 'btn btn-o sm',
+    style: 'padding:4px 10px;font-size:.72rem;background:rgba(6,12,34,.9);border-color:rgba(255,207,51,.4);color:var(--yellow)',
+    type: 'button',
+    title: 'Haz clic en cualquier punto del mapa para mover tu nodo'
+  }, '🎯 TU NODO: Detectando ubicación...');
 
-  var radarSub = h('div', { class: 'radar-sub' },
-    h('span', { style: 'color:var(--green)' }, '● 360° ACTIVO'),
-    h('span', null, 'LATENCIA: < 0.05ms'),
-    h('span', null, 'ESTADO: IMPENETRABLE')
-  );
-  radarBox.appendChild(radarSub);
-  radarGrid.appendChild(radarBox);
-
-  var termBox = h('div', { class: 'waf-term' });
-  var termHead = h('div', { class: 'waf-term-head' },
-    h('div', { class: 'waf-term-dots' },
-      h('span', { style: 'background:#ff5f56' }),
-      h('span', { style: 'background:#ffbd2e' }),
-      h('span', { style: 'background:#27c93f' })
-    ),
-    h('div', { style: 'font-weight:700' }, 'TELEMETRÍA SOC PERIMETRAL EN VIVO'),
-    h('button', { class: 'btn btn-o sm', style: 'padding:2px 8px;font-size:.7rem', type: 'button', on: {
-      click: async function () {
-        if (!confirm('¿Limpiar registro de eventos WAF?')) return;
-        try {
-          await api('POST', '/api/admin/waf/clear', {});
-          termBody.innerHTML = '';
-          events = [];
-          blips = [];
-          toast('Registro WAF limpiado.');
-        } catch (e) { toast(e.message); }
+  var streamToggleBtn = h('button', {
+    class: 'btn btn-o sm',
+    style: 'padding:4px 10px;font-size:.72rem;background:rgba(6,12,34,.9)',
+    type: 'button',
+    on: {
+      click: function () {
+        isLiveStream = !isLiveStream;
+        if (threatMap) threatMap.isLiveStream = isLiveStream;
+        streamToggleBtn.textContent = isLiveStream ? '⚡ Flujo en Vivo: ACTIVO' : '⏸️ Flujo en Vivo: PAUSADO';
+        streamToggleBtn.style.color = isLiveStream ? 'var(--cyan)' : 'var(--muted)';
       }
-    } }, 'Limpiar')
+    }
+  }, '⚡ Flujo en Vivo: ACTIVO');
+
+  var audioBtn = h('button', {
+    class: 'btn btn-o sm',
+    style: 'padding:4px 10px;font-size:.72rem;background:rgba(6,12,34,.9)',
+    type: 'button',
+    on: {
+      click: function () {
+        audioEnabled = !audioEnabled;
+        if (threatMap) threatMap.audioEnabled = audioEnabled;
+        audioBtn.textContent = audioEnabled ? '🔊 Sonar: ON' : '🔈 Sonar: MUTE';
+        audioBtn.style.color = audioEnabled ? 'var(--green)' : 'var(--muted)';
+        if (audioEnabled && window.NexaThreatMap) NexaThreatMap.playSonarPing();
+      }
+    }
+  }, '🔈 Sonar: MUTE');
+
+  var mapHudTop = h('div', { class: 'threat-map-hud-top' },
+    h('div', { class: 'threat-hud-badge' },
+      h('span', { class: 'live-dot' }),
+      h('span', { style: 'font-weight:700' }, 'DEFENSA PERIMETRAL VIVA'),
+      h('span', { style: 'color:var(--muted)' }, '· 360° ACTIVO'),
+      h('span', { style: 'color:var(--green)' }, '· LATENCIA: < 0.04ms')
+    ),
+    h('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' },
+      nodeLocationBtn,
+      streamToggleBtn,
+      audioBtn
+    )
   );
-  var termBody = h('div', { class: 'waf-term-body' });
-  termBox.appendChild(termHead);
-  termBox.appendChild(termBody);
-  radarGrid.appendChild(termBox);
+  mapBox.appendChild(mapHudTop);
 
-  root.appendChild(radarGrid);
+  var mapCanvasWrap = h('div', { class: 'threat-map-canvas-wrap' });
+  mapBox.appendChild(mapCanvasWrap);
 
-  var blips = [];
-  function addBlip(ev) {
-    var angle = Math.random() * Math.PI * 2;
-    var dist = 35 + Math.random() * 105;
-    blips.push({
-      angle: angle,
-      dist: dist,
-      ip: ev.ip,
-      country: ev.country || 'XX',
-      rule: ev.rule,
-      action: ev.action,
-      alpha: 1.0,
-      ringSize: 4,
-      born: Date.now()
-    });
-    if (blips.length > 25) blips.shift();
-  }
+  var interceptedCounter = h('span', { style: 'color:var(--green);font-weight:700' }, '0');
+  var mapHudBot = h('div', { class: 'threat-map-hud-bot' },
+    h('div', { class: 'threat-hud-badge', style: 'font-size:.68rem' },
+      h('span', { style: 'color:#ff3366' }, '🔴 Crítico (SQLi/RCE)'),
+      h('span', { style: 'color:#ffcf33;margin-left:8px' }, '🟡 Honeypot/Traversal'),
+      h('span', { style: 'color:#3ff0ff;margin-left:8px' }, '🔵 Bad Bot Scanner'),
+      h('span', { style: 'color:#ffcf33;margin-left:8px' }, '🎯 Tu Ubicación (Nodo Protegido)')
+    ),
+    h('div', { class: 'threat-hud-badge' },
+      h('span', null, 'ESCUDO ACTIVO · INTERCEPTADOS: '),
+      interceptedCounter
+    )
+  );
+  mapBox.appendChild(mapHudBot);
+  root.appendChild(mapBox);
 
-  function appendTerminalLine(ev) {
-    var d = new Date(ev.timestamp || Date.now());
+  // Contenedor de la Lista con Flujo Redireccionado y Flechas Animadas
+  var feedBox = h('div', { class: 'threat-feed-box' });
+  var feedHead = h('div', { class: 'threat-feed-head' },
+    h('h4', null,
+      ico('radar'),
+      'TELEMETRÍA SOC EN VIVO · FLUJO DE ATAQUES INTERCEPTADOS'
+    ),
+    h('div', { style: 'display:flex;gap:8px;align-items:center' },
+      h('button', {
+        class: 'btn btn-o sm',
+        style: 'padding:2px 8px;font-size:.7rem',
+        type: 'button',
+        on: {
+          click: async function () {
+            if (!confirm('¿Limpiar registro de eventos WAF?')) return;
+            try {
+              await api('POST', '/api/admin/waf/clear', {});
+              feedList.innerHTML = '';
+              events = [];
+              toast('Registro WAF limpiado.');
+            } catch (e) { toast(e.message); }
+          }
+        }
+      }, 'Limpiar')
+    )
+  );
+  feedBox.appendChild(feedHead);
+
+  var feedList = h('div', { class: 'threat-feed-list' });
+  feedBox.appendChild(feedList);
+  root.appendChild(feedBox);
+
+  var totalIntercepted = 0;
+
+  function appendFlowCard(ev, prepend) {
+    if (!ev) return;
+    totalIntercepted++;
+    interceptedCounter.textContent = String(totalIntercepted);
+
+    var d = new Date(ev.timestamp || ev.at || Date.now());
     var timeStr = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2);
-    var line = h('div', { class: 'waf-line' },
-      h('span', { class: 'ts' }, '[' + timeStr + ']'),
-      h('span', { class: 'blk' }, '🛡️ [' + (ev.action === 'BLOCKED_403' ? '403 BLOCKED' : ev.action) + '] '),
-      h('span', { class: 'ip' }, ev.ip + ' (' + (ev.country || '??') + ')'),
-      ' → ',
-      h('span', { class: 'url' }, ev.method + ' ' + (ev.url.length > 38 ? ev.url.substring(0, 38) + '…' : ev.url)),
-      ' — ',
-      h('span', { class: 'rule' }, ev.rule + (ev.strikes ? ' [Strike ' + ev.strikes + '/3]' : ''))
+
+    var cInfo = ev.country;
+    var cCode = 'XX', cName = 'Global', cFlag = '🌐';
+    if (cInfo) {
+      if (typeof cInfo === 'object') {
+        cCode = cInfo.code || 'XX';
+        cName = cInfo.name || 'Global';
+        cFlag = cInfo.flag || '🌐';
+      } else {
+        cCode = String(cInfo);
+        if (window.NexaThreatMap && NexaThreatMap.COUNTRY_DB[cCode]) {
+          cName = NexaThreatMap.COUNTRY_DB[cCode].name;
+          cFlag = NexaThreatMap.COUNTRY_DB[cCode].flag;
+        }
+      }
+    }
+
+    var ruleStr = ev.rule || 'ATAQUE_DETECTADO';
+    var isCrit = ruleStr.indexOf('SQL') !== -1 || ruleStr.indexOf('RCE') !== -1 || ev.severity === 'CRITICAL';
+    var isWarn = ruleStr.indexOf('HONEYPOT') !== -1 || ruleStr.indexOf('TRAVERSAL') !== -1;
+    var pillClass = isCrit ? 't-rule-pill' : (isWarn ? 't-rule-pill warn' : 't-rule-pill');
+
+    var card = h('div', {
+      class: 'threat-flow-card',
+      title: 'Haz clic para trazar el haz balístico desde ' + cName + ' en el mapa',
+      on: {
+        click: function () {
+          if (threatMap) threatMap.launchBeam(ev);
+          if (audioEnabled && window.NexaThreatMap) NexaThreatMap.playDefendSound();
+        }
+      }
+    },
+      // Col 1: Origen del Atacante
+      h('div', { class: 't-col-origin' },
+        h('div', { class: 't-c-badge' },
+          h('span', { style: 'font-size:1.15rem;line-height:1' }, cFlag),
+          h('b', null, cCode),
+          h('span', { style: 'color:var(--muted);font-weight:400;font-size:.72rem' }, cName)
+        ),
+        h('div', { class: 't-ip' }, ev.ip || '185.220.101.45'),
+        h('div', { class: 't-req' },
+          h('code', null, ev.method || 'GET'),
+          (ev.url && ev.url.length > 28 ? ev.url.substring(0, 28) + '…' : (ev.url || '/'))
+        )
+      ),
+      // Col 2: Flujo Balístico con Flechas Animadas
+      h('div', { class: 't-col-flow' },
+        h('span', { class: pillClass }, ruleStr.replace(/_/g, ' ')),
+        h('div', { class: 'threat-arrows-stream' },
+          h('span', { class: 'arr a1' }, '›'),
+          h('span', { class: 'arr a2' }, '›'),
+          h('span', { class: 'arr a3' }, '›'),
+          h('span', { class: 'arr a4' }, '›'),
+          h('span', { class: 'arr a5' }, '›')
+        ),
+        h('span', { class: 't-flow-sub' }, 'HAZ BALÍSTICO EN VIVO')
+      ),
+      // Col 3: Destino (Tu Nodo) & Escudo WAF
+      h('div', { class: 't-col-dest' },
+        h('div', { class: 't-node-badge' },
+          h('span', null, '🎯'),
+          h('b', null, 'TU NODO (' + userLocText + ')')
+        ),
+        h('div', { class: 't-verdict ' + (ev.action === 'JAILED_24H' ? 'jailed' : '') },
+          h('span', null, '🛡️'),
+          ev.action === 'JAILED_24H' ? '403 AUTO-JAILED 24H' : '403 FORBIDDEN'
+        ),
+        h('div', { class: 't-lat' }, '[' + timeStr + '] · < 0.04ms')
+      )
     );
-    termBody.appendChild(line);
-    termBody.scrollTop = termBody.scrollHeight;
+
+    if (prepend && feedList.firstChild) {
+      feedList.insertBefore(card, feedList.firstChild);
+    } else {
+      feedList.appendChild(card);
+    }
+
+    while (feedList.children.length > 30) {
+      feedList.removeChild(feedList.lastChild);
+    }
   }
 
   function addEventToView(ev) {
     events.unshift(ev);
     if (events.length > 100) events.pop();
-    appendTerminalLine(ev);
-    addBlip(ev);
+    if (threatMap) threatMap.launchBeam(ev);
+    appendFlowCard(ev, true);
     renderTables();
   }
 
+  // Inicializar Mapa Mundi Táctico
+  setTimeout(function () {
+    if (window.NexaThreatMap && mapCanvasWrap) {
+      threatMap = NexaThreatMap.createMap(mapCanvasWrap, {
+        autoDetectLocation: true,
+        audioEnabled: audioEnabled,
+        isLiveStream: isLiveStream,
+        onDeflected: function (beam) {
+          // Callback cuando el escudo deflacta el proyectil
+        },
+        onLocationChanged: function (loc) {
+          userLocText = (loc.city || 'Nodo') + ', ' + (loc.country || 'VE');
+          nodeLocationBtn.textContent = '🎯 TU NODO: ' + userLocText + ' (Fijado)';
+          nodeLocationBtn.title = 'Lat: ' + loc.lat + ' · Lon: ' + loc.lon + ' (Clic en mapa para mover)';
+        }
+      });
+
+      // Si el mapa genera ataques simulados en vivo, agregarlos al feed visual
+      var origSim = threatMap.generateSimulatedAttack.bind(threatMap);
+      threatMap.generateSimulatedAttack = function () {
+        var ev = origSim();
+        appendFlowCard(ev, true);
+        return ev;
+      };
+    }
+  }, 40);
+
   if (events.length) {
     events.slice().reverse().forEach(function (ev) {
-      appendTerminalLine(ev);
-      addBlip(ev);
+      appendFlowCard(ev, false);
     });
-  } else {
-    termBody.appendChild(h('div', { class: 'waf-line', style: 'color:var(--muted)' }, '[SOC INICIALIZADO] Escudo WAF activo en nexaguards.com. A la espera de eventos o pruebas...'));
   }
-
-  var ctx = canvas.getContext('2d');
-  var radarAngle = 0;
-  var animFrameId = null;
-  var isDestroyed = false;
-
-  function drawRadar() {
-    if (isDestroyed) return;
-    var w = canvas.width, h = canvas.height;
-    var cx = w / 2, cy = h / 2, r = 150;
-
-    ctx.clearRect(0, 0, w, h);
-
-    var bgGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, r);
-    bgGrad.addColorStop(0, 'rgba(6, 22, 60, 0.7)');
-    bgGrad.addColorStop(1, 'rgba(2, 6, 20, 0.95)');
-    ctx.fillStyle = bgGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.lineWidth = 1;
-    [0.25, 0.5, 0.75, 1.0].forEach(function (frac) {
-      ctx.strokeStyle = frac === 1.0 ? 'rgba(61, 232, 164, 0.45)' : 'rgba(61, 232, 164, 0.15)';
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * frac, 0, Math.PI * 2);
-      ctx.stroke();
-    });
-
-    ctx.strokeStyle = 'rgba(61, 232, 164, 0.2)';
-    ctx.beginPath();
-    ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy);
-    ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r);
-    ctx.stroke();
-
-    var diag = r * 0.7071;
-    ctx.strokeStyle = 'rgba(61, 232, 164, 0.08)';
-    ctx.beginPath();
-    ctx.moveTo(cx - diag, cy - diag); ctx.lineTo(cx + diag, cy + diag);
-    ctx.moveTo(cx - diag, cy + diag); ctx.lineTo(cx + diag, cy - diag);
-    ctx.stroke();
-
-    radarAngle = (radarAngle + 0.035) % (Math.PI * 2);
-    var sweepGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    sweepGrad.addColorStop(0, 'rgba(61, 232, 164, 0.35)');
-    sweepGrad.addColorStop(1, 'rgba(61, 232, 164, 0.0)');
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, radarAngle - 0.4, radarAngle);
-    ctx.closePath();
-    ctx.fillStyle = sweepGrad;
-    ctx.fill();
-
-    ctx.strokeStyle = 'rgba(107, 255, 180, 0.85)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + Math.cos(radarAngle) * r, cy + Math.sin(radarAngle) * r);
-    ctx.stroke();
-    ctx.restore();
-
-    var now = Date.now();
-    for (var i = blips.length - 1; i >= 0; i--) {
-      var b = blips[i];
-      var age = (now - b.born) / 1000;
-      b.alpha = Math.max(0, 1 - age / 18);
-      b.ringSize += 0.35;
-
-      var bx = cx + Math.cos(b.angle) * b.dist;
-      var by = cy + Math.sin(b.angle) * b.dist;
-
-      if (b.alpha > 0.02) {
-        ctx.fillStyle = 'rgba(255, 51, 102, ' + b.alpha + ')';
-        ctx.beginPath();
-        ctx.arc(bx, by, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        var ringAlpha = Math.max(0, b.alpha * (1 - (b.ringSize % 25) / 25));
-        ctx.strokeStyle = 'rgba(255, 75, 120, ' + ringAlpha + ')';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(bx, by, (b.ringSize % 25), 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.fillStyle = 'rgba(255, 207, 51, ' + (b.alpha * 0.9) + ')';
-        ctx.font = '9px monospace';
-        ctx.fillText(b.country + ' ' + b.ip, bx + 7, by - 5);
-      } else {
-        blips.splice(i, 1);
-      }
-    }
-
-    ctx.fillStyle = '#ffcf33';
-    ctx.beginPath();
-    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = 'rgba(200, 220, 255, 0.7)';
-    ctx.font = '8px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('NEXA-CORE', cx, cy + 14);
-    ctx.textAlign = 'left';
-
-    animFrameId = requestAnimationFrame(drawRadar);
-  }
-
-  animFrameId = requestAnimationFrame(drawRadar);
 
   var tablesContainer = h('div', { class: 'stack', style: 'margin-top:20px' });
   root.appendChild(tablesContainer);

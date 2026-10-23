@@ -1,7 +1,7 @@
 /**
- * Facebook Group Auto-Poster Engine (Con Auto-Join para Grupos No Vinculados)
+ * Facebook Group Auto-Poster Engine (Con Auto-Join y Detección Robusta)
  * Automatiza la publicación segura en grupos de Facebook simulando comportamiento humano.
- * Si no eres miembro del grupo, intenta unirse automáticamente antes de publicar.
+ * Soporta textos Spintax, imágenes y videos con comprobante fotográfico y captura de URL directa.
  */
 
 const fs = require('fs');
@@ -23,66 +23,61 @@ function randomDelay(minMs, maxMs) {
  * Intenta unirse a un grupo si aún no somos miembros
  */
 async function tryAutoJoinGroup(page, onLog) {
-  const joinResult = await page.evaluate(() => {
-    const btns = Array.from(document.querySelectorAll('div[role="button"], button'));
-    const joinBtn = btns.find(b => {
-      const t = (b.innerText || '').toLowerCase().trim();
-      const a = (b.getAttribute('aria-label') || '').toLowerCase().trim();
-      return (
-        t === 'unirte al grupo' ||
-        t === 'join group' ||
-        t === 'unirse al grupo' ||
-        a === 'unirte al grupo' ||
-        a === 'join group'
-      );
-    });
+  try {
+    const joinResult = await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('div[role="button"], button'));
+      const joinBtn = btns.find(b => {
+        const t = (b.innerText || '').toLowerCase().trim();
+        const a = (b.getAttribute('aria-label') || '').toLowerCase().trim();
+        return (
+          t === 'unirte al grupo' ||
+          t === 'join group' ||
+          t === 'unirse al grupo' ||
+          a === 'unirte al grupo' ||
+          a === 'join group'
+        );
+      });
 
-    if (joinBtn) {
-      joinBtn.click();
-      return { clicked: true };
-    }
-    return { clicked: false };
-  });
-
-  if (joinResult.clicked) {
-    onLog('🤝 [AUTO-JOIN] Detectado grupo no vinculado. Pulsando botón "Unirte al grupo"...');
-    await sleep(2500);
-
-    // Comprobar si apareció modal de preguntas o aceptación de normas
-    await page.evaluate(() => {
-      const dialog = document.querySelector('div[role="dialog"]');
-      if (dialog) {
-        // Marcar checkboxes de normas ("Acepto las normas")
-        const checkboxes = Array.from(dialog.querySelectorAll('input[type="checkbox"], div[role="checkbox"]'));
-        checkboxes.forEach(cb => {
-          if (cb.getAttribute('aria-checked') !== 'true') cb.click();
-        });
-
-        // Buscar botón de enviar respuestas
-        const submitBtn = Array.from(dialog.querySelectorAll('div[role="button"], button')).find(b => {
-          const t = (b.innerText || '').toLowerCase();
-          return t.includes('enviar') || t.includes('submit') || t.includes('listo') || t.includes('done');
-        });
-        if (submitBtn) submitBtn.click();
+      if (joinBtn) {
+        joinBtn.click();
+        return { clicked: true };
       }
+      return { clicked: false };
     });
 
-    await sleep(3000);
-    onLog('✓ [AUTO-JOIN] Solicitud de unión procesada.');
-    return true;
-  }
+    if (joinResult.clicked) {
+      onLog('🤝 [AUTO-JOIN] Detectado grupo no vinculado. Pulsando botón "Unirte al grupo"...');
+      await sleep(2500);
 
+      // Comprobar si apareció modal de preguntas o aceptación de normas
+      await page.evaluate(() => {
+        const dialog = document.querySelector('div[role="dialog"]');
+        if (dialog) {
+          const checkboxes = Array.from(dialog.querySelectorAll('input[type="checkbox"], div[role="checkbox"]'));
+          checkboxes.forEach(cb => {
+            if (cb.getAttribute('aria-checked') !== 'true') cb.click();
+          });
+
+          const submitBtn = Array.from(dialog.querySelectorAll('div[role="button"], button')).find(b => {
+            const t = (b.innerText || '').toLowerCase();
+            return t.includes('enviar') || t.includes('submit') || t.includes('listo') || t.includes('done');
+          });
+          if (submitBtn) submitBtn.click();
+        }
+      });
+
+      await sleep(3000);
+      onLog('✓ [AUTO-JOIN] Solicitud de unión procesada.');
+      return true;
+    }
+  } catch (err) {
+    // No-op
+  }
   return false;
 }
 
 /**
- * Publica un mensaje con posible imagen en un grupo de Facebook
- * @param {Object} options
- * @param {string} options.groupUrl - URL del grupo de Facebook
- * @param {string} options.message - Texto ya procesado (Spintax resuelto)
- * @param {string} [options.imagePath] - Ruta absoluta opcional a una imagen
- * @param {boolean} [options.simulateTyping=true] - Escribir carácter por carácter
- * @param {function} [options.onLog] - Callback para reportar progreso en vivo
+ * Publica un mensaje con posible imagen o video en un grupo de Facebook
  */
 async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTyping = true, frameworkId = null, autoTranslateByGroupLanguage = true, onLog = console.log }) {
   const browser = await getOrLaunchBrowser({ headless: false });
@@ -93,9 +88,14 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
   const context = browser.defaultBrowserContext();
   await context.overridePermissions('https://www.facebook.com', ['notifications']);
 
+  // Normalizar la URL del grupo a la raíz del feed de conversación
+  let cleanGroupUrl = (groupUrl || '').trim();
+  cleanGroupUrl = cleanGroupUrl.replace(/\/(media|photos|about|members|events|files|announcements)\/?$/i, '');
+  if (!cleanGroupUrl.endsWith('/')) cleanGroupUrl += '/';
+
   const result = {
     ok: false,
-    groupUrl,
+    groupUrl: cleanGroupUrl,
     detectedLang: 'es',
     timestamp: new Date().toISOString(),
     screenshot: null,
@@ -103,8 +103,8 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
   };
 
   try {
-    onLog(`🌐 Navegando al grupo: ${groupUrl}...`);
-    await page.goto(groupUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+    onLog(`🌐 Navegando al grupo: ${cleanGroupUrl}...`);
+    await page.goto(cleanGroupUrl, { waitUntil: 'networkidle2', timeout: 60000 });
     await sleep(randomDelay(2500, 4000));
 
     // Verificar si estamos logueados en Facebook
@@ -115,6 +115,17 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     if (!isLogged) {
       throw new Error('No has iniciado sesión en Facebook. Abre primero la ventana de inicio de sesión desde el panel.');
     }
+
+    // Asegurar que estamos en la pestaña de Conversación/Feed (y no en Archivos multimedia o Información)
+    await page.evaluate(() => {
+      const tabs = Array.from(document.querySelectorAll('a[role="tab"], div[role="tab"], a'));
+      const convTab = tabs.find(t => {
+        const text = (t.innerText || '').toLowerCase().trim();
+        return text === 'conversación' || text === 'conversation' || text === 'discussion' || text === 'debate';
+      });
+      if (convTab) convTab.click();
+    });
+    await sleep(2000);
 
     // Detección automática del idioma del grupo
     let finalMessage = message;
@@ -141,63 +152,97 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     // 1. Verificar si NO somos miembros e intentar Auto-Join
     const didJoin = await tryAutoJoinGroup(page, onLog);
     if (didJoin) {
-      await sleep(2000);
+      await sleep(2500);
     }
 
-    onLog('🔍 Buscando el cajón de publicación en el grupo...');
+    onLog('🔍 Buscando cajón de publicación en el feed...');
 
-    // Selectores comunes del disparador de publicación en grupos de Facebook
-    const triggerSelectors = [
-      'div[role="button"] span:has-text("Escribe algo")',
-      'div[role="button"] span:has-text("Write something")',
-      'div[role="button"] span:has-text("Crear publicación pública")',
-      'div[role="button"] span:has-text("Create a public post")',
-      'div[role="button"] span:has-text("¿Qué estás pensando")',
-      'div[role="button"] span:has-text("What\'s on your mind")',
-      'div[role="main"] div[role="button"]'
-    ];
-
-    let clickedTrigger = false;
-
-    // Búsqueda inteligente por texto en el DOM
-    const foundHandle = await page.evaluateHandle(() => {
-      const spans = Array.from(document.querySelectorAll('span, div'));
-      const trigger = spans.find(el => {
-        const t = (el.innerText || '').toLowerCase();
-        return (
+    // 2. Disparar apertura del modal de publicación mediante inspección profunda del DOM
+    let clickedTrigger = await page.evaluate(() => {
+      // 1) Buscar por texto en spans o botones de la zona del feed
+      const candidates = Array.from(document.querySelectorAll('div[role="button"], span, div[data-pagelet*="GroupInlineComposer"], div[data-pagelet*="Composer"]'));
+      
+      for (const el of candidates) {
+        const t = (el.innerText || '').toLowerCase().trim();
+        const a = (el.getAttribute('aria-label') || '').toLowerCase().trim();
+        if (
           t.includes('escribe algo') ||
           t.includes('write something') ||
           t.includes('crear publicación') ||
           t.includes('create a public post') ||
           t.includes('¿qué estás pensando') ||
-          t.includes('what\'s on your mind')
-        );
-      });
-      return trigger ? trigger.closest('div[role="button"]') || trigger : null;
+          t.includes("what's on your mind") ||
+          a.includes('escribe algo') ||
+          a.includes('write something') ||
+          a.includes('crear publicación') ||
+          a.includes('create a public post')
+        ) {
+          const btn = el.closest('div[role="button"]') || el;
+          btn.click();
+          return true;
+        }
+      }
+
+      // 2) Buscar botón flotante o botón con icono de lápiz/crear
+      const pencil = document.querySelector('div[aria-label*="publicación"], div[aria-label*="post"], div[aria-label*="Escribe"], div[aria-label*="Write"]');
+      if (pencil) {
+        pencil.click();
+        return true;
+      }
+
+      return false;
     });
 
-    if (foundHandle && foundHandle.asElement()) {
-      await foundHandle.asElement().click();
-      clickedTrigger = true;
-      onLog('✓ Cajón de publicación activado.');
+    if (clickedTrigger) {
+      onLog('✓ Cajón de publicación pulsado.');
     } else {
-      // Intento por selectores CSS
-      for (const sel of triggerSelectors) {
+      // Intento por scroll suave en caso de que esté más abajo
+      await page.evaluate(() => window.scrollBy(0, 300));
+      await sleep(1500);
+
+      clickedTrigger = await page.evaluate(() => {
+        const spans = Array.from(document.querySelectorAll('div[role="main"] span, div[role="feed"] span'));
+        const trigger = spans.find(s => {
+          const t = (s.innerText || '').toLowerCase();
+          return t.includes('escribe algo') || t.includes('write something') || t.includes('crear publicación');
+        });
+        if (trigger) {
+          const btn = trigger.closest('div[role="button"]') || trigger;
+          btn.click();
+          return true;
+        }
+        return false;
+      });
+    }
+
+    // 3. Esperar a que el modal o editor de texto editable esté listo
+    onLog('✍️ Localizando área de texto editable en el modal...');
+    const editorSelectors = [
+      'div[role="dialog"] div[contenteditable="true"]',
+      'div[role="dialog"] div[role="textbox"]',
+      'div[role="textbox"][contenteditable="true"]',
+      'div[contenteditable="true"][data-lexical-editor="true"]',
+      'div[contenteditable="true"]'
+    ];
+
+    let editorHandle = null;
+    const startTime = Date.now();
+    while (Date.now() - startTime < 16000) {
+      for (const sel of editorSelectors) {
         try {
           const el = await page.$(sel);
           if (el) {
-            await el.click();
-            clickedTrigger = true;
-            onLog(`✓ Activado mediante selector: ${sel}`);
+            editorHandle = el;
             break;
           }
         } catch (e) {}
       }
+      if (editorHandle) break;
+      await sleep(800);
     }
 
-    // Si aún no se puede abrir el cajón:
-    if (!clickedTrigger) {
-      // Comprobar si el grupo tiene membresía pendiente de aprobación
+    if (!editorHandle) {
+      // Comprobar si el grupo requiere aprobación previa de administradores
       const isPending = await page.evaluate(() => {
         const text = (document.body.innerText || '').toLowerCase();
         return text.includes('solicitud pendiente') || text.includes('pending request') || text.includes('pendiente de aprobación');
@@ -210,73 +255,76 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
         return result;
       }
 
-      throw new Error('No se pudo abrir el cajón de publicación. Es posible que el grupo sea cerrado o requiera aprobación previa de miembros.');
+      throw new Error('El cuadro de texto del post no respondió a tiempo. Es posible que el grupo sea cerrado o requiera membresía aprobada.');
     }
 
-    await sleep(randomDelay(2000, 3500));
-
-    // Esperar a que el modal o editor de texto editable esté listo
-    onLog('✍️ Localizando área de texto editable...');
-    const editorSelector = 'div[role="dialog"] div[contenteditable="true"], div[role="textbox"][contenteditable="true"]';
-    await page.waitForSelector(editorSelector, { timeout: 15000 });
-
-    const editor = await page.$(editorSelector);
-    if (!editor) {
-      throw new Error('El cuadro de texto del post no respondió a tiempo.');
-    }
-
-    await editor.click();
+    await editorHandle.click();
     await sleep(800);
 
-    // Escribir el mensaje
+    // 4. Escribir el mensaje
     onLog('📝 Escribiendo mensaje con simulación humana...');
     if (simulateTyping) {
       const paragraphs = finalMessage.split('\n');
       for (let i = 0; i < paragraphs.length; i++) {
         const p = paragraphs[i];
         if (p.length > 0) {
-          await page.keyboard.type(p, { delay: randomDelay(15, 45) });
+          await page.keyboard.type(p, { delay: randomDelay(12, 35) });
         }
         if (i < paragraphs.length - 1) {
           await page.keyboard.down('Shift');
           await page.keyboard.press('Enter');
           await page.keyboard.up('Shift');
-          await sleep(randomDelay(100, 300));
+          await sleep(randomDelay(80, 200));
         }
       }
     } else {
       await page.keyboard.type(finalMessage);
     }
 
-    await sleep(randomDelay(2000, 4000));
+    await sleep(randomDelay(2000, 3500));
 
-    // Adjuntar imagen o video si existe
+    // 5. Adjuntar imagen o video si existe
     if (imagePath && fs.existsSync(imagePath)) {
       const isVideo = /\.(mp4|mov|avi|webm)$/i.test(imagePath);
       onLog(`📁 Adjuntando ${isVideo ? 'video' : 'imagen'}: ${path.basename(imagePath)}...`);
+
       try {
+        // Primero intentar hacer clic en el icono "Foto/vídeo" del modal si no hay input visible
+        await page.evaluate(() => {
+          const dialog = document.querySelector('div[role="dialog"]');
+          if (dialog) {
+            const photoBtns = Array.from(dialog.querySelectorAll('div[role="button"], div[aria-label]'));
+            const pBtn = photoBtns.find(b => {
+              const a = (b.getAttribute('aria-label') || '').toLowerCase();
+              return a.includes('foto/vídeo') || a.includes('photo/video') || a.includes('foto') || a.includes('imagen');
+            });
+            if (pBtn) pBtn.click();
+          }
+        });
+        await sleep(1500);
+
         const fileInput = await page.$('input[type="file"][accept*="image"], input[type="file"][accept*="video"], input[type="file"]');
         if (fileInput) {
           await fileInput.uploadFile(imagePath);
-          onLog(`✓ ${isVideo ? 'Video' : 'Imagen'} cargado con éxito. Esperando procesamiento de Facebook...`);
-          await sleep(isVideo ? randomDelay(6000, 10000) : randomDelay(3000, 5000));
+          onLog(`✓ ${isVideo ? 'Video' : 'Imagen'} cargado con éxito. Procesando multimedia en Facebook...`);
+          await sleep(isVideo ? randomDelay(7000, 11000) : randomDelay(3500, 5500));
         } else {
-          onLog('⚠️ No se encontró input de archivo directo.');
+          onLog('⚠️ No se encontró input de archivo directo para la imagen.');
         }
       } catch (errImg) {
-        onLog(`⚠️ No se pudo adjuntar el archivo multimedia: ${errImg.message}`);
+        onLog(`⚠️ Error adjuntando archivo multimedia: ${errImg.message}`);
       }
     }
 
-    // Esperar a que Facebook procese el enlace o vista previa
+    // Esperar a que Facebook procese el contenido
     await sleep(randomDelay(2500, 4500));
 
-    // Buscar el botón de Publicar
+    // 6. Buscar y pulsar el botón de Publicar
     onLog('🚀 Buscando botón de "Publicar"...');
-    const postBtnHandle = await page.evaluateHandle(() => {
+    const clickedPost = await page.evaluate(() => {
       const dialog = document.querySelector('div[role="dialog"]') || document;
       const btns = Array.from(dialog.querySelectorAll('div[role="button"], button'));
-      return btns.find(b => {
+      const postBtn = btns.find(b => {
         const text = (b.innerText || '').toLowerCase().trim();
         const aria = (b.getAttribute('aria-label') || '').toLowerCase().trim();
         return (
@@ -284,41 +332,72 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
           b.getAttribute('aria-disabled') !== 'true'
         );
       });
+
+      if (postBtn) {
+        postBtn.click();
+        return true;
+      }
+      return false;
     });
 
-    if (!postBtnHandle || !postBtnHandle.asElement()) {
+    if (!clickedPost) {
       throw new Error('El botón de Publicar no está activo o no se encontró.');
     }
 
-    onLog('✨ Haciendo clic en "Publicar"...');
-    await postBtnHandle.asElement().click();
+    onLog('✨ Clic en "Publicar" ejecutado.');
+    onLog('⏳ Esperando confirmación de Facebook y renderizado en el feed...');
+    await sleep(randomDelay(6000, 9000));
 
-    // Esperar a que el modal desaparezca o se confirme
-    onLog('⏳ Esperando confirmación de Facebook...');
-    await sleep(randomDelay(5000, 8000));
+    // 7. Comprobar si el grupo requiere aprobación previa de administradores
+    const approvalStatus = await page.evaluate(() => {
+      const bodyText = (document.body.innerText || '').toLowerCase();
+      return (
+        bodyText.includes('aprobación') ||
+        bodyText.includes('enviado a los administradores') ||
+        bodyText.includes('pending approval') ||
+        bodyText.includes('submitted to admin')
+      );
+    });
 
-    // Intentar capturar la URL directa del post publicado
-    let postDirectUrl = groupUrl;
-    try {
-      const detected = await page.evaluate((fallbackUrl) => {
-        // Enlaces de timestamp o permalinks en el feed recién actualizado
-        const links = Array.from(document.querySelectorAll('a[href*="/posts/"], a[href*="/permalink/"]'));
-        for (const a of links) {
-          const href = a.href || '';
-          if (href && (href.includes('/posts/') || href.includes('/permalink/'))) {
-            return href;
+    let postDirectUrl = cleanGroupUrl;
+    let postMessageText = 'Publicado exitosamente en el grupo.';
+
+    if (approvalStatus) {
+      onLog('⏳ [MODERACIÓN] Este grupo tiene aprobación obligatoria activada. Tu post quedó enviado y está a la espera de que los administradores lo aprueben.');
+      postMessageText = 'Enviado a Facebook. Pendiente de aprobación por los administradores del grupo.';
+      result.pendingApproval = true;
+      postDirectUrl = cleanGroupUrl;
+    } else {
+      // Si se publica de inmediato, buscar el enlace directo del post nuevo
+      try {
+        const detected = await page.evaluate((fallbackUrl, msgSnippet) => {
+          const postsContainers = Array.from(document.querySelectorAll('div[role="feed"] > div, div[data-pagelet*="FeedUnit"], div[role="article"]'));
+          for (const box of postsContainers) {
+            const text = (box.innerText || '').toLowerCase();
+            if (msgSnippet && text.includes(msgSnippet.toLowerCase())) {
+              const link = box.querySelector('a[href*="/posts/"], a[href*="/permalink/"]');
+              if (link && link.href) return link.href.split('?')[0];
+            }
           }
-        }
-        return fallbackUrl;
-      }, groupUrl);
-      if (detected) postDirectUrl = detected;
-    } catch (eDet) {}
 
-    // Tomar captura de pantalla de comprobación
+          const links = Array.from(document.querySelectorAll('a[href*="/posts/"], a[href*="/permalink/"]'));
+          for (const a of links) {
+            const href = a.href || '';
+            if (href && (href.includes('/posts/') || href.includes('/permalink/'))) {
+              return href.split('?')[0];
+            }
+          }
+          return fallbackUrl;
+        }, cleanGroupUrl, (finalMessage || '').slice(0, 30));
+        if (detected) postDirectUrl = detected;
+      } catch (eDet) {}
+    }
+
+    // 8. Tomar captura de pantalla de comprobación
     const screenshotsDir = path.join(__dirname, '..', 'screenshots');
     if (!fs.existsSync(screenshotsDir)) fs.mkdirSync(screenshotsDir, { recursive: true });
 
-    const safeName = groupUrl.replace(/[^a-zA-Z0-9]/g, '_').slice(-25);
+    const safeName = cleanGroupUrl.replace(/[^a-zA-Z0-9]/g, '_').slice(-25);
     const shotFilename = `fb_${Date.now()}_${safeName}.png`;
     const shotPath = path.join(screenshotsDir, shotFilename);
 
@@ -328,15 +407,17 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     result.ok = true;
     result.postUrl = postDirectUrl;
     result.screenshot = `/screenshots/${shotFilename}`;
-    result.message = 'Publicado exitosamente en el grupo.';
-    onLog(`🎉 ¡Publicación completada con éxito! Enlace: ${postDirectUrl}`);
+    result.message = postMessageText;
+    onLog(`🎉 ¡Proceso completado! ${postMessageText} Enlace: ${postDirectUrl}`);
   } catch (error) {
     onLog(`❌ Error al publicar: ${error.message}`);
     result.ok = false;
     result.message = error.message;
 
     try {
-      const errShot = path.join(__dirname, '..', 'screenshots', `error_${Date.now()}.png`);
+      const screenshotsDir = path.join(__dirname, '..', 'screenshots');
+      if (!fs.existsSync(screenshotsDir)) fs.mkdirSync(screenshotsDir, { recursive: true });
+      const errShot = path.join(screenshotsDir, `error_${Date.now()}.png`);
       await page.screenshot({ path: errShot });
       result.screenshot = `/screenshots/${path.basename(errShot)}`;
     } catch (e) {}

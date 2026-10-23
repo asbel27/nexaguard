@@ -2,6 +2,45 @@
  * NexaGuard Social AutoPoster · Frontend State & Logic (Con Detección de Grupos & Selección Múltiple)
  */
 
+// ==========================================================================
+// 0. MOTOR SPINTAX & UTILIDADES BÁSICAS EN NAVEGADOR
+// ==========================================================================
+function parseSpintax(text) {
+  if (!text || typeof text !== 'string') return '';
+  const regex = /\{([^{}]+)\}/;
+  let matches;
+  while ((matches = regex.exec(text)) !== null) {
+    const choices = matches[1].split('|');
+    const randomChoice = choices[Math.floor(Math.random() * choices.length)];
+    text = text.replace(matches[0], randomChoice);
+  }
+  return text;
+}
+
+function countSpintaxVariations(text) {
+  if (!text) return 1;
+  const matches = text.match(/\{([^{}]+)\}/g);
+  if (!matches) return 1;
+  let total = 1;
+  for (const m of matches) {
+    const opts = m.slice(1, -1).split('|').length;
+    total *= opts;
+  }
+  return total;
+}
+
+function togglePasswordVisibility(inputId, btn) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  if (el.type === 'password') {
+    el.type = 'text';
+    if (btn) btn.textContent = '🔒';
+  } else {
+    el.type = 'password';
+    if (btn) btn.textContent = '👁️';
+  }
+}
+
 let state = {
   groups: [],
   templates: [],
@@ -22,6 +61,8 @@ let state = {
 
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
+  loadSettings();
+  checkGeminiStatus();
   loadStatus();
   loadComplianceStatus();
   loadAutopilotStatus();
@@ -29,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTemplates();
   loadGroups();
   loadCreatedPosts();
+  loadComposerLiveFeed();
   loadHistory();
   initSpintaxEvents();
   initLogStream();
@@ -52,6 +94,7 @@ function initTabs() {
       if (tabId === 'tab-created-posts') loadCreatedPosts();
       if (tabId === 'tab-groups') renderGroupsTable();
       if (tabId === 'tab-history') loadHistory();
+      if (tabId === 'tab-settings') loadSettings();
     });
   });
 }
@@ -117,6 +160,420 @@ function showToast(message, type = 'info', duration = 6000) {
     toast.style.transform = 'translateY(-15px) scale(0.95)';
     setTimeout(() => toast.remove(), 300);
   }, duration);
+}
+
+// ==========================================================================
+// 2.1 GESTIÓN DE CONFIGURACIÓN & GEMINI AI
+// ==========================================================================
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    const data = await res.json();
+    if (data.ok && data.settings) {
+      const s = data.settings;
+      if (document.getElementById('settingMinDelay')) document.getElementById('settingMinDelay').value = s.minDelaySeconds || 45;
+      if (document.getElementById('settingMaxDelay')) document.getElementById('settingMaxDelay').value = s.maxDelaySeconds || 120;
+      if (document.getElementById('settingDailyLimit')) document.getElementById('settingDailyLimit').value = s.dailyLimit || 25;
+      if (document.getElementById('settingChromePath')) document.getElementById('settingChromePath').value = s.chromePath || '';
+      if (document.getElementById('settingSimulateTyping')) document.getElementById('settingSimulateTyping').checked = s.simulateTyping !== false;
+      if (document.getElementById('settingScreenshots')) document.getElementById('settingScreenshots').checked = s.takeScreenshots !== false;
+      if (document.getElementById('settingGeminiApiKey') && s.geminiApiKey) {
+        document.getElementById('settingGeminiApiKey').value = s.geminiApiKey;
+      }
+      if (document.getElementById('geminiModalApiKeyInput') && s.geminiApiKey) {
+        document.getElementById('geminiModalApiKeyInput').value = s.geminiApiKey;
+      }
+      if (s.geminiApiKey) {
+        updateGeminiUIStatus(true, s.geminiApiKey);
+      }
+    }
+  } catch (e) {
+    console.error('Error cargando configuración:', e);
+  }
+}
+
+async function saveSettings() {
+  try {
+    const settings = {
+      minDelaySeconds: parseInt(document.getElementById('settingMinDelay')?.value, 10) || 45,
+      maxDelaySeconds: parseInt(document.getElementById('settingMaxDelay')?.value, 10) || 120,
+      dailyLimit: parseInt(document.getElementById('settingDailyLimit')?.value, 10) || 25,
+      chromePath: (document.getElementById('settingChromePath')?.value || '').trim(),
+      simulateTyping: document.getElementById('settingSimulateTyping')?.checked !== false,
+      takeScreenshots: document.getElementById('settingScreenshots')?.checked !== false
+    };
+
+    const geminiInput = document.getElementById('settingGeminiApiKey');
+    if (geminiInput) {
+      settings.geminiApiKey = geminiInput.value.trim();
+    }
+
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('✅ Configuración guardada correctamente.', 'success');
+      appendTerminalLog('success', '[SISTEMA] Configuración actualizada y guardada con éxito.');
+      if (settings.geminiApiKey) {
+        checkGeminiStatus();
+      }
+    } else {
+      showToast('❌ Error al guardar configuración: ' + (data.error || 'Desconocido'), 'error');
+    }
+  } catch (e) {
+    showToast('❌ Error al guardar: ' + e.message, 'error');
+  }
+}
+
+// ==========================================================================
+// 2.2 GOOGLE GEMINI AI - CONEXIÓN, ESTADO & MODAL
+// ==========================================================================
+async function checkGeminiStatus() {
+  try {
+    const res = await fetch('/api/gemini/status');
+    const data = await res.json();
+    updateGeminiUIStatus(data.connected, data.maskedKey);
+  } catch (e) {
+    updateGeminiUIStatus(false);
+  }
+}
+
+function updateGeminiUIStatus(connected, maskedKey = '') {
+  const badge = document.getElementById('geminiBadge');
+  const dot = document.getElementById('geminiDot');
+  const text = document.getElementById('geminiText');
+  const btn = document.getElementById('btnHeaderGemini');
+  const settingsBadge = document.getElementById('settingsGeminiStatusBadge');
+
+  if (connected) {
+    if (dot) { dot.className = 'status-dot green'; }
+    if (text) { text.textContent = 'Gemini AI Conectado'; }
+    if (badge) {
+      badge.title = `Google Gemini Conectado (${maskedKey || 'Activo'})`;
+      badge.style.borderColor = 'rgba(61, 232, 164, 0.4)';
+    }
+    if (btn) {
+      btn.textContent = '♊ Gemini Conectado ✓';
+      btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+    }
+    if (settingsBadge) {
+      settingsBadge.textContent = '🟢 Conectado con Google';
+      settingsBadge.style.color = '#3de8a4';
+      settingsBadge.style.borderColor = 'rgba(61, 232, 164, 0.4)';
+    }
+  } else {
+    if (dot) { dot.className = 'status-dot red'; }
+    if (text) { text.textContent = 'Gemini Desconectado'; }
+    if (badge) {
+      badge.title = 'Haz clic para conectar tu cuenta de Google Gemini';
+      badge.style.borderColor = 'rgba(255, 69, 96, 0.4)';
+    }
+    if (btn) {
+      btn.textContent = '♊ Conectar Gemini';
+      btn.style.background = 'linear-gradient(135deg, #4285f4 0%, #9b72cb 50%, #d96570 100%)';
+    }
+    if (settingsBadge) {
+      settingsBadge.textContent = '🔴 Desconectado';
+      settingsBadge.style.color = '#ff4560';
+      settingsBadge.style.borderColor = 'rgba(255, 69, 96, 0.4)';
+    }
+  }
+}
+
+function openGeminiModal() {
+  const modal = document.getElementById('geminiModal');
+  if (modal) modal.classList.add('active');
+  const modalInput = document.getElementById('geminiModalApiKeyInput');
+  const settingInput = document.getElementById('settingGeminiApiKey');
+  if (modalInput && settingInput && settingInput.value && !modalInput.value) {
+    modalInput.value = settingInput.value;
+  }
+  const feedback = document.getElementById('geminiModalFeedback');
+  if (feedback) feedback.style.display = 'none';
+}
+
+function closeGeminiModal() {
+  const modal = document.getElementById('geminiModal');
+  if (modal) modal.classList.remove('active');
+}
+
+async function testGeminiApiKeyFromModal() {
+  const input = document.getElementById('geminiModalApiKeyInput');
+  const key = input ? input.value.trim() : '';
+  const feedback = document.getElementById('geminiModalFeedback');
+
+  if (!key) {
+    if (feedback) {
+      feedback.style.display = 'block';
+      feedback.style.background = 'rgba(255, 69, 96, 0.15)';
+      feedback.style.color = '#ff4560';
+      feedback.style.border = '1px solid #ff4560';
+      feedback.innerHTML = '⚠️ Por favor pega tu clave de API de Google Gemini antes de probar.';
+    }
+    return;
+  }
+
+  if (feedback) {
+    feedback.style.display = 'block';
+    feedback.style.background = 'rgba(0, 240, 255, 0.15)';
+    feedback.style.color = '#00f0ff';
+    feedback.style.border = '1px solid #00f0ff';
+    feedback.innerHTML = '⏳ Conectando con los servidores oficiales de Google Gemini AI...';
+  }
+
+  try {
+    const res = await fetch('/api/gemini/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: key })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      if (feedback) {
+        feedback.style.background = 'rgba(61, 232, 164, 0.15)';
+        feedback.style.color = '#3de8a4';
+        feedback.style.border = '1px solid #3de8a4';
+        feedback.innerHTML = `✅ <strong>${data.message || '¡Conexión Exitosa!'}</strong><br><small>Modelo verificado: ${data.model} | Respuesta de prueba: "${data.reply}"</small>`;
+      }
+      updateGeminiUIStatus(true, key);
+      const settingInput = document.getElementById('settingGeminiApiKey');
+      if (settingInput) settingInput.value = key;
+      showToast('✅ ¡Cuenta de Google Gemini conectada con éxito!', 'success');
+    } else {
+      if (feedback) {
+        feedback.style.background = 'rgba(255, 69, 96, 0.15)';
+        feedback.style.color = '#ff4560';
+        feedback.style.border = '1px solid #ff4560';
+        feedback.innerHTML = `❌ Error de Google: <strong>${data.error}</strong>`;
+      }
+    }
+  } catch (err) {
+    if (feedback) {
+      feedback.style.background = 'rgba(255, 69, 96, 0.15)';
+      feedback.style.color = '#ff4560';
+      feedback.style.border = '1px solid #ff4560';
+      feedback.innerHTML = `❌ Error de conexión: ${err.message}`;
+    }
+  }
+}
+
+async function saveGeminiApiKeyFromModal() {
+  const input = document.getElementById('geminiModalApiKeyInput');
+  const key = input ? input.value.trim() : '';
+  if (!key) {
+    alert('Ingresa una clave de API válida para guardar.');
+    return;
+  }
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ geminiApiKey: key })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const settingInput = document.getElementById('settingGeminiApiKey');
+      if (settingInput) settingInput.value = key;
+      updateGeminiUIStatus(true, key);
+      showToast('✅ Clave de Google Gemini guardada exitosamente.', 'success');
+      appendTerminalLog('success', '[GEMINI AI] Clave de API de Google Gemini vinculada y lista.');
+      closeGeminiModal();
+    }
+  } catch (e) {
+    alert('Error al guardar clave: ' + e.message);
+  }
+}
+
+async function testGeminiApiKeyFromSettings() {
+  const input = document.getElementById('settingGeminiApiKey');
+  const key = input ? input.value.trim() : '';
+  const feedback = document.getElementById('settingsGeminiTestFeedback');
+  if (!key) {
+    alert('Ingresa tu clave de API de Gemini.');
+    return;
+  }
+  if (feedback) {
+    feedback.style.display = 'block';
+    feedback.style.background = 'rgba(0, 240, 255, 0.15)';
+    feedback.style.color = '#00f0ff';
+    feedback.innerHTML = '⏳ Verificando clave con Google Gemini...';
+  }
+  try {
+    const res = await fetch('/api/gemini/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: key })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      if (feedback) {
+        feedback.style.background = 'rgba(61, 232, 164, 0.15)';
+        feedback.style.color = '#3de8a4';
+        feedback.innerHTML = `✅ Conexión exitosa con Google Gemini (${data.model}).`;
+      }
+      updateGeminiUIStatus(true, key);
+      showToast('✅ Google Gemini verificado con éxito.', 'success');
+    } else {
+      if (feedback) {
+        feedback.style.background = 'rgba(255, 69, 96, 0.15)';
+        feedback.style.color = '#ff4560';
+        feedback.innerHTML = `❌ Error: ${data.error}`;
+      }
+    }
+  } catch (err) {
+    if (feedback) {
+      feedback.style.display = 'block';
+      feedback.style.color = '#ff4560';
+      feedback.innerHTML = `❌ Error de red: ${err.message}`;
+    }
+  }
+}
+
+// Redacción rápida con Gemini desde el Compositor
+async function promptGenerateWithGemini() {
+  const currentPrompt = (document.getElementById('aiCustomPrompt')?.value || '').trim();
+  const defaultTopic = currentPrompt || 'Reparación y desinfección de WordPress con pantalla roja Google';
+  const topic = prompt('Ingresa el tema o nicho para que Google Gemini redacte tu post viral con Spintax:', defaultTopic);
+  if (!topic) return;
+
+  const brand = prompt('Nombre de la marca o proyecto:', 'NexaGuard');
+  if (!brand) return;
+
+  const targetUrl = prompt('Enlace de destino (CTA):', 'https://nexaguards.com');
+
+  appendTerminalLog('step', `[GEMINI AI] Redactando publicación de alto impacto sobre: "${topic}"...`);
+  showToast('⏳ Google Gemini AI está redactando tu post viral...', 'info', 5000);
+
+  try {
+    const res = await fetch('/api/gemini/generate-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, brandName: brand, targetUrl, language: 'es' })
+    });
+    const data = await res.json();
+    if (data.ok && data.copy) {
+      const spintaxInput = document.getElementById('postSpintax');
+      if (spintaxInput) {
+        spintaxInput.value = data.copy;
+        updateSpintaxPreview();
+      }
+      appendTerminalLog('success', `[GEMINI AI] ¡Publicación con Spintax generada con éxito por Google Gemini!`);
+      showToast('✅ ¡Post viral generado por Google Gemini con Spintax anti-baneo!', 'success');
+    } else {
+      alert('Error de Google Gemini: ' + (data.error || 'No se pudo generar el texto.'));
+    }
+  } catch (err) {
+    alert('Error al conectar con Gemini: ' + err.message);
+  }
+}
+
+async function generatePostFromGeminiModal() {
+  const topic = document.getElementById('geminiGenTopic')?.value?.trim();
+  const brand = document.getElementById('geminiGenBrand')?.value?.trim() || 'NexaGuard';
+  if (!topic) {
+    alert('Ingresa el tema o nicho.');
+    return;
+  }
+  showToast('⏳ Redactando publicación con Gemini...', 'info');
+  try {
+    const res = await fetch('/api/gemini/generate-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, brandName: brand, language: 'es' })
+    });
+    const data = await res.json();
+    if (data.ok && data.copy) {
+      document.getElementById('postSpintax').value = data.copy;
+      updateSpintaxPreview();
+      closeGeminiModal();
+      showToast('✅ ¡Copy cargado en el redactor!', 'success');
+    } else {
+      alert('Error: ' + data.error);
+    }
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function generateBannerFromGeminiModal() {
+  const topic = document.getElementById('geminiGenTopic')?.value?.trim();
+  const brand = document.getElementById('geminiGenBrand')?.value?.trim() || 'NexaGuard';
+  if (!topic) {
+    alert('Ingresa el tema o nicho.');
+    return;
+  }
+  showToast('⏳ Diseñando banner con Gemini...', 'info');
+  try {
+    const res = await fetch('/api/gemini/generate-creative', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, brandName: brand, type: 'image' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      state.attachedImagePath = data.filePath;
+      const title = data.concept?.title || 'Banner Gemini';
+      document.getElementById('attachedImageName').textContent = `📸 Banner Gemini: ${title.slice(0, 24)}...`;
+      const imgEl = document.getElementById('imagePreviewImg');
+      const vidEl = document.getElementById('imagePreviewVideo');
+      const container = document.getElementById('imagePreviewContainer');
+      if (vidEl) vidEl.style.display = 'none';
+      if (imgEl) {
+        imgEl.src = data.publicUrl;
+        imgEl.style.display = 'block';
+      }
+      if (container) container.style.display = 'block';
+      closeGeminiModal();
+      showToast('✅ ¡Banner generado y adjuntado al post!', 'success');
+    } else {
+      alert('Error: ' + data.error);
+    }
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function generateVideoFromGeminiModal() {
+  const topic = document.getElementById('geminiGenTopic')?.value?.trim();
+  const brand = document.getElementById('geminiGenBrand')?.value?.trim() || 'NexaGuard';
+  if (!topic) {
+    alert('Ingresa el tema o nicho.');
+    return;
+  }
+  showToast('🎬 Renderizando video animado con Gemini...', 'info', 8000);
+  try {
+    const res = await fetch('/api/gemini/generate-creative', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, brandName: brand, type: 'video', durationSeconds: 5 })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      state.attachedImagePath = data.filePath;
+      const title = data.concept?.title || 'Video Gemini';
+      document.getElementById('attachedImageName').textContent = `🎬 Video Gemini: ${title.slice(0, 24)}...`;
+      const imgEl = document.getElementById('imagePreviewImg');
+      const vidEl = document.getElementById('imagePreviewVideo');
+      const container = document.getElementById('imagePreviewContainer');
+      if (imgEl) imgEl.style.display = 'none';
+      if (vidEl) {
+        vidEl.src = data.publicUrl;
+        vidEl.style.display = 'block';
+        vidEl.load();
+        vidEl.play().catch(() => {});
+      }
+      if (container) container.style.display = 'block';
+      closeGeminiModal();
+      showToast('🎬 ¡Video animado generado y adjuntado al post!', 'success');
+    } else {
+      alert('Error: ' + data.error);
+    }
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
 }
 
 // 3. Abrir Ventana de Inicio de Sesión
@@ -585,29 +1042,105 @@ function removeAttachedImage() {
   document.getElementById('imagePreviewContainer').style.display = 'none';
 }
 
-async function generateAiBanner() {
+async function generateAiBanner(e) {
+  if (e && e.preventDefault) e.preventDefault();
   const presetSelect = document.getElementById('bannerPresetSelect');
   const presetId = presetSelect ? presetSelect.value : 'rescate-urgente';
-  appendTerminalLog('step', `[IA CREATIVA] Sintetizando banner publicitario con temática "${presetId}"...`);
+  const customPrompt = (document.getElementById('aiCustomPrompt')?.value || '').trim();
+
+  appendTerminalLog('step', `[IA CREATIVA] Sintetizando banner publicitario (${customPrompt ? `Prompt: "${customPrompt}"` : `Preset: ${presetId}`})...`);
+  showToast('⏳ Generando banner de marketing con IA en alta resolución...', 'info');
 
   try {
-    const res = await fetch('/api/creative/generate', {
+    let endpoint = '/api/creative/generate';
+    let payload = { presetId, format: 'fb', customPrompt };
+
+    if (customPrompt) {
+      endpoint = '/api/gemini/generate-creative';
+      payload = { topic: customPrompt, format: 'facebook_feed', type: 'image' };
+    }
+
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ presetId, format: 'fb' })
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (data.ok) {
       state.attachedImagePath = data.filePath;
-      document.getElementById('attachedImageName').textContent = `Banner IA: ${data.preset.title.slice(0, 26)}...`;
-      document.getElementById('imagePreviewImg').src = data.publicUrl;
-      document.getElementById('imagePreviewContainer').style.display = 'block';
+      const title = data.concept?.title || data.preset?.title || 'Banner IA';
+      document.getElementById('attachedImageName').textContent = `📸 Banner IA: ${title.slice(0, 26)}...`;
+
+      const imgEl = document.getElementById('imagePreviewImg');
+      const vidEl = document.getElementById('imagePreviewVideo');
+      const container = document.getElementById('imagePreviewContainer');
+
+      if (vidEl) vidEl.style.display = 'none';
+      if (imgEl) {
+        imgEl.src = data.publicUrl;
+        imgEl.style.display = 'block';
+      }
+      if (container) container.style.display = 'block';
+
       appendTerminalLog('success', `[IA CREATIVA] Banner generado exitosamente (1200x630 px) y adjuntado al post.`);
+      showToast('✅ Banner publicitario generado y adjuntado.', 'success');
     } else {
       alert('Error al generar banner: ' + data.error);
     }
   } catch (err) {
     alert('Error al generar imagen con IA: ' + err.message);
+  }
+}
+
+async function generateAiVideo(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const presetSelect = document.getElementById('bannerPresetSelect');
+  const presetId = presetSelect ? presetSelect.value : 'rescate-urgente';
+  const customPrompt = (document.getElementById('aiCustomPrompt')?.value || '').trim();
+
+  appendTerminalLog('step', `[IA VIDEO] Sintetizando video animado con efectos visuales dinámicos (${customPrompt ? `Prompt: "${customPrompt}"` : `Preset: ${presetId}`})...`);
+  showToast('🎬 Sintetizando clip de video animado con IA (5s WebM)... Esto toma unos segundos.', 'info', 7000);
+
+  try {
+    let endpoint = '/api/creative/generate-video';
+    let payload = { presetId, durationSeconds: 5 };
+
+    if (customPrompt) {
+      endpoint = '/api/gemini/generate-creative';
+      payload = { topic: customPrompt, type: 'video', durationSeconds: 5 };
+    }
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      state.attachedImagePath = data.filePath;
+      const title = data.concept?.title || data.preset?.title || 'Video IA';
+      document.getElementById('attachedImageName').textContent = `🎬 Video IA: ${title.slice(0, 24)}...`;
+
+      const imgEl = document.getElementById('imagePreviewImg');
+      const vidEl = document.getElementById('imagePreviewVideo');
+      const container = document.getElementById('imagePreviewContainer');
+
+      if (imgEl) imgEl.style.display = 'none';
+      if (vidEl) {
+        vidEl.src = data.publicUrl;
+        vidEl.style.display = 'block';
+        vidEl.load();
+        vidEl.play().catch(() => {});
+      }
+      if (container) container.style.display = 'block';
+
+      appendTerminalLog('success', `[IA VIDEO] Video renderizado exitosamente (1200x630 WebM 60fps) y adjuntado al post.`);
+      showToast('🎬 ¡Video animado generado con éxito y adjuntado a la publicación!', 'success');
+    } else {
+      alert('Error al generar video: ' + data.error);
+    }
+  } catch (err) {
+    alert('Error al generar video con IA: ' + err.message);
   }
 }
 
@@ -1137,9 +1670,207 @@ async function loadCreatedPosts() {
       const catAllBadge = document.getElementById('catCountAll');
       if (catAllBadge) catAllBadge.textContent = state.createdPosts.length;
       renderCreatedPosts();
+      renderComposerLiveFeed();
     }
   } catch (e) {
     console.error('Error cargando posts creados:', e);
+  }
+}
+
+// ==========================================================================
+// 11.0 FEED EN VIVO DEBAJO DEL COMPOSITOR (CLICKEABLE, VISTA PREVIA & FACEBOOK)
+// ==========================================================================
+let composerFeedFilter = 'all';
+
+function filterComposerFeed(filter, btn) {
+  composerFeedFilter = filter;
+  if (btn && btn.parentElement) {
+    btn.parentElement.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  renderComposerLiveFeed();
+}
+
+async function loadComposerLiveFeed() {
+  await loadCreatedPosts();
+}
+
+function renderComposerLiveFeed() {
+  const container = document.getElementById('composerLiveFeedList');
+  if (!container) return;
+
+  let posts = [...(state.createdPosts || [])];
+
+  if (composerFeedFilter === 'published') {
+    posts = posts.filter(p => p.status === 'published' || (p.postUrl && p.postUrl.includes('/posts/')));
+  } else if (composerFeedFilter === 'ready') {
+    posts = posts.filter(p => p.status !== 'published' && (!p.postUrl || !p.postUrl.includes('/posts/')));
+  }
+
+  const countBadge = document.getElementById('composerFeedCountBadge');
+  if (countBadge) {
+    countBadge.textContent = `${posts.length} de ${(state.createdPosts || []).length} publicaciones`;
+  }
+
+  if (posts.length === 0) {
+    container.innerHTML = `
+      <div style="padding:32px 20px;text-align:center;color:var(--muted);background:rgba(255,255,255,0.02);border:1px dashed var(--line);border-radius:10px">
+        <div style="font-size:1.8rem;margin-bottom:8px">📋</div>
+        <div style="font-weight:600;color:#fff;margin-bottom:4px">No hay publicaciones con el filtro seleccionado</div>
+        <small style="color:var(--muted)">Redacta un texto arriba y pulsa "💾 GUARDAR EN MIS POSTS" o inicia una campaña para ver tus publicaciones aquí.</small>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  posts.forEach(post => {
+    const isPublished = post.status === 'published' || (post.postUrl && post.postUrl.includes('/posts/'));
+    const isVideo = post.mediaType === 'video' || (post.mediaUrl && /\.(mp4|webm|mov)$/i.test(post.mediaUrl));
+
+    const card = document.createElement('div');
+    card.className = `composer-feed-card ${isPublished ? 'is-published' : 'is-ready'}`;
+
+    let mediaThumbHtml = '';
+    if (post.mediaUrl) {
+      if (isVideo) {
+        mediaThumbHtml = `
+          <div class="feed-card-thumb">
+            <span class="video-pill-badge">🎬 Video</span>
+            <video src="${escapeHtml(post.mediaUrl)}" muted preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>
+          </div>`;
+      } else {
+        mediaThumbHtml = `
+          <div class="feed-card-thumb">
+            <img src="${escapeHtml(post.mediaUrl)}" alt="Miniatura" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'feed-thumb-placeholder\\'><span>🖼️</span></div>'">
+          </div>`;
+      }
+    } else {
+      mediaThumbHtml = `
+        <div class="feed-card-thumb feed-thumb-placeholder">
+          <span>📝 Texto</span>
+        </div>`;
+    }
+
+    const rawMsg = post.message || '';
+    const cleanSnippet = rawMsg.replace(/\{([^{}]+)\}/g, (m, c) => c.split('|')[0]);
+    const previewSnippet = escapeHtml(cleanSnippet.slice(0, 150)) + (cleanSnippet.length > 150 ? '...' : '');
+
+    card.innerHTML = `
+      ${mediaThumbHtml}
+      <div class="feed-card-body" onclick="openFacebookPreviewModalById('${post.id}')" title="Haz clic para ver la vista previa idéntica a Facebook e Instagram">
+        <div class="feed-card-header">
+          <span class="feed-card-title">${escapeHtml(post.title || 'Publicación')}</span>
+          <span class="feed-card-badge ${isPublished ? 'badge-published' : 'badge-ready'}">
+            ${isPublished ? '✓ Publicado en FB' : '● Listo para Publicar'}
+          </span>
+        </div>
+        <div class="feed-card-target">
+          <span class="feed-icon">👥</span>
+          <span>${escapeHtml(post.groupName || 'Grupo de Facebook')}</span>
+          <span class="feed-dot">·</span>
+          <span class="feed-time">${post.createdAt ? new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Reciente'}</span>
+        </div>
+        <div class="feed-card-snippet">${previewSnippet}</div>
+      </div>
+      <div class="feed-card-actions">
+        <button type="button" class="btn btn-xs btn-outline feed-btn-preview" onclick="openFacebookPreviewModalById('${post.id}')" title="Ver cómo se ve en Facebook e Instagram">
+          👁️ Vista Previa
+        </button>
+        <button type="button" class="btn btn-xs btn-primary feed-btn-fb" onclick="openPostDirectlyInFacebook('${post.id}')" title="Ir a la publicación directamente en Facebook">
+          🔗 Abrir en Facebook
+        </button>
+        <button type="button" class="btn btn-xs btn-secondary feed-btn-load" onclick="loadPostIntoComposer('${post.id}')" title="Cargar este post al editor arriba para republicar o modificar">
+          ✍️ Cargar al Editor
+        </button>
+        <button type="button" class="btn btn-xs btn-outline feed-btn-del" onclick="deleteComposerFeedPost('${post.id}')" title="Eliminar de la biblioteca">
+          🗑️
+        </button>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function openPostDirectlyInFacebook(postId) {
+  const post = (state.createdPosts || []).find(p => p.id === postId) || (state.historyItems || []).find(h => h.id === postId);
+  if (!post) {
+    window.open('https://www.facebook.com/groups', '_blank');
+    return;
+  }
+  let url = post.postUrl || post.groupUrl;
+  if (!url && post.targetGroupIds && post.targetGroupIds.length > 0) {
+    const grp = state.groups.find(g => g.id === post.targetGroupIds[0]);
+    if (grp) url = grp.url;
+  }
+  if (!url || !url.startsWith('http')) {
+    url = 'https://www.facebook.com/groups';
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function loadPostIntoComposer(postId) {
+  const post = (state.createdPosts || []).find(p => p.id === postId);
+  if (!post) return;
+
+  const spintaxInput = document.getElementById('postSpintax');
+  if (spintaxInput) {
+    spintaxInput.value = post.message || '';
+    updateSpintaxPreview();
+  }
+
+  if (post.mediaUrl) {
+    state.attachedImagePath = post.mediaUrl;
+    const isVideo = post.mediaType === 'video' || /\.(mp4|webm|mov)$/i.test(post.mediaUrl);
+    const attachedNameEl = document.getElementById('attachedImageName');
+    if (attachedNameEl) {
+      attachedNameEl.textContent = `${isVideo ? '🎬 Video' : '📸 Imagen'} cargada: ${post.title || 'Post'}`;
+    }
+    const container = document.getElementById('imagePreviewContainer');
+    const imgEl = document.getElementById('imagePreviewImg');
+    const vidEl = document.getElementById('imagePreviewVideo');
+    if (container) container.style.display = 'block';
+    if (isVideo) {
+      if (imgEl) imgEl.style.display = 'none';
+      if (vidEl) {
+        vidEl.src = post.mediaUrl;
+        vidEl.style.display = 'block';
+        vidEl.load();
+      }
+    } else {
+      if (vidEl) vidEl.style.display = 'none';
+      if (imgEl) {
+        imgEl.src = post.mediaUrl;
+        imgEl.style.display = 'block';
+      }
+    }
+  }
+
+  if (post.targetGroupIds && Array.isArray(post.targetGroupIds)) {
+    state.selectedGroupIds = new Set(post.targetGroupIds);
+    renderComposerChecklist();
+    updateSelectedSummary();
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast(`✅ Post "${post.title || ''}" cargado con éxito en el redactor.`, 'success');
+}
+
+async function deleteComposerFeedPost(postId) {
+  if (!confirm('¿Seguro que deseas eliminar esta publicación de la lista?')) return;
+  try {
+    const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      state.createdPosts = state.createdPosts.filter(p => p.id !== postId);
+      renderComposerLiveFeed();
+      renderCreatedPosts();
+      showToast('Publicación eliminada correctamente.', 'info');
+    } else {
+      alert('Error al eliminar: ' + data.error);
+    }
+  } catch (e) {
+    alert('Error al eliminar: ' + e.message);
   }
 }
 
