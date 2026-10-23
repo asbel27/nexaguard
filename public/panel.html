@@ -1522,8 +1522,7 @@ CV.resumen = async function () {
 
 CV.licencias = async function () {
   var d = await loadDash(), root = h('div', null);
-  root.appendChild(head('Mis Licencias Oficiales', 'Gestiona las licencias adquiridas para tus sitios WordPress y descarga el plugin oficial.',
-    h('a', { class: 'btn btn-y', href: '/downloads/nexaguard-malware-scanner.zip', download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
+  root.appendChild(head('Mis Licencias Oficiales', 'Gestiona las licencias adquiridas para tus sitios WordPress y descarga el plugin oficial.'));
 
   var licOrders = d.orders.filter(function (o) { return o.licenseKey; });
 
@@ -1537,7 +1536,7 @@ CV.licencias = async function () {
     return root;
   }
 
-  // Guía rápida de activación
+  // Guía rápida de activación (único botón oficial de descarga del plugin)
   var guideCard = h('div', { class: 'card', style: 'border:1.5px solid var(--yellow);background:rgba(255,207,51,.04);margin-bottom:20px' },
     h('div', { style: 'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px' },
       h('div', null,
@@ -1569,42 +1568,29 @@ CV.licencias = async function () {
           : h('span', { class: 'pill ok' }, 'Activa · ' + o.daysLeft + ' días restantes'));
 
     var card = h('div', { class: 'card', style: 'margin-bottom:18px;border:1px solid rgba(255,207,51,.35);background:rgba(255,207,51,.03)' },
-      h('div', { style: 'display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:12px' },
+      h('div', { style: 'margin-bottom:14px' },
+        h('div', { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px' },
+          expBadge,
+          domainText,
+          maxS > 1 ? h('span', { class: 'pill info' }, 'Multisitio') : null),
+        h('h3', { style: 'color:#fff;margin:0 0 4px;font-size:1.15rem' }, o.planName),
+        h('p', { class: 'hint', style: 'margin:0;font-size:.85rem' },
+          (isFree ? 'Activada el ' : 'Comprada el ') + fmtDate(o.paidAt || o.createdAt) +
+          (isFree ? ' · Vigencia: Gratis para siempre' : (o.expiresFormatted ? ' · Vence: ' + o.expiresFormatted : '')))),
+      h('div', { style: 'background:rgba(0,0,0,.3);border:1px solid rgba(255,207,51,.25);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px' },
         h('div', null,
-          h('div', { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px' },
-            expBadge,
-            domainText,
-            maxS > 1 ? h('span', { class: 'pill info' }, 'Multisitio') : null),
-          h('h3', { style: 'color:#fff;margin:0 0 4px;font-size:1.15rem' }, o.planName),
-          h('p', { class: 'hint', style: 'margin:0;font-size:.85rem' },
-            (isFree ? 'Activada el ' : 'Comprada el ') + fmtDate(o.paidAt || o.createdAt) +
-            (isFree ? ' · Vigencia: Gratis para siempre' : (o.expiresFormatted ? ' · Vence: ' + o.expiresFormatted : '')))),
-        h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
-          h('button', {
-            class: 'btn btn-y sm',
-            type: 'button',
-            style: 'font-weight:700',
-            on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada al portapapeles: ' + o.licenseKey); } }
-          }, '📋 Copiar Licencia'),
-          h('a', {
-            class: 'btn btn-o sm',
-            href: '/downloads/nexaguard-malware-scanner.zip',
-            download: 'nexaguard-malware-scanner.zip'
-          }, ico('shield'), 'Descargar Plugin'))),
-      h('div', { style: 'background:rgba(0,0,0,.3);border:1px solid rgba(255,207,51,.25);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px' },
-        h('div', null,
-          h('span', { class: 'hint', style: 'display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:2px' }, 'Tu Clave de Licencia Oficial:'),
+          h('span', { class: 'hint', style: 'display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px' }, 'Tu Clave de Licencia Oficial:'),
           h('code', {
             style: 'font-family:var(--fm);font-size:1.05rem;font-weight:700;color:var(--yellow);letter-spacing:1px;cursor:pointer',
             title: 'Clic para copiar clave',
             on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } }
           }, o.licenseKey)),
         h('button', {
-          class: 'btn btn-o sm',
+          class: 'btn btn-y sm',
           type: 'button',
-          style: 'padding:4px 10px;font-size:.8rem',
-          on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } }
-        }, 'Copiar'))
+          style: 'font-weight:700;display:inline-flex;align-items:center;gap:6px',
+          on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada al portapapeles: ' + o.licenseKey); } }
+        }, '📋 Copiar Licencia'))
     );
     root.appendChild(card);
   });
