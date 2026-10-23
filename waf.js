@@ -52,6 +52,12 @@ function createWaf({ store = { db: {} }, config = {} } = {}) {
     db.wafStats = { inspected: 0, blocked: 0, todayBlocked: 0, lastDay: new Date().toDateString() };
   }
 
+  const listeners = new Set();
+  function onBlock(fn) {
+    if (typeof fn === 'function') listeners.add(fn);
+    return () => listeners.delete(fn);
+  }
+
   const strikes = new Map(); // ip -> [timestamps]
 
   // Limpieza periódica de strikes antiguos e IPs expiradas de la cárcel
@@ -164,6 +170,11 @@ function createWaf({ store = { db: {} }, config = {} } = {}) {
     db.wafEvents.unshift(event);
     if (db.wafEvents.length > 600) db.wafEvents.splice(600);
     store.save();
+
+    listeners.forEach(fn => {
+      try { fn(event); } catch (e) {}
+    });
+
     return event;
   }
 
@@ -425,7 +436,8 @@ function createWaf({ store = { db: {} }, config = {} } = {}) {
     jailIp,
     unjailIp,
     simulateAttack,
-    clearLogs
+    clearLogs,
+    onBlock
   };
 }
 

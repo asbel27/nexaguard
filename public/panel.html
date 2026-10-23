@@ -2066,9 +2066,13 @@ AV.radar = async function () {
     var resStats = await api('GET', '/api/admin/waf/stats');
     if (resStats) stats = parseStats(resStats);
   } catch (e) {}
+  var lastSeenEventId = null;
   try {
     var resEv = await api('GET', '/api/admin/waf/events');
-    if (resEv && resEv.events) events = resEv.events;
+    if (resEv && resEv.events) {
+      events = resEv.events;
+      if (events.length && events[0]) lastSeenEventId = events[0].id;
+    }
   } catch (e) {}
   try {
     var resJail = await api('GET', '/api/admin/waf/jail');
@@ -2081,7 +2085,7 @@ AV.radar = async function () {
   } catch (e) {}
 
   var audioEnabled = false;
-  var isLiveStream = true;
+  var isLiveStream = false; // SILENTE POR DEFECTO: Solo anima ante ataques reales
   var isDestroyed = false;
   var threatMap = null;
   var userLocText = 'Detectando...';
@@ -2178,17 +2182,32 @@ AV.radar = async function () {
 
   var streamToggleBtn = h('button', {
     class: 'btn btn-o sm',
-    style: 'padding:4px 10px;font-size:.72rem;background:rgba(6,12,34,.9)',
+    style: 'padding:4px 10px;font-size:.72rem;background:rgba(6,12,34,.9);color:var(--green);border-color:rgba(61,232,164,.4)',
     type: 'button',
-    on: {
-      click: function () {
-        isLiveStream = !isLiveStream;
-        if (threatMap) threatMap.isLiveStream = isLiveStream;
-        streamToggleBtn.textContent = isLiveStream ? '⚡ Flujo en Vivo: ACTIVO' : '⏸️ Flujo en Vivo: PAUSADO';
-        streamToggleBtn.style.color = isLiveStream ? 'var(--cyan)' : 'var(--muted)';
-      }
+    title: 'Radar en Modo Real: Silente y a la escucha. Solo emite animaciones balísticas cuando un atacante real golpea el servidor. Haz clic si deseas encender la simulación demostrativa.'
+  }, '🛡️ Modo: Solo Ataques Reales');
+
+  streamToggleBtn.addEventListener('click', function () {
+    isLiveStream = !isLiveStream;
+    if (threatMap) threatMap.isLiveStream = isLiveStream;
+    if (isLiveStream) {
+      streamToggleBtn.textContent = '⚡ Simulación Continua: ON';
+      streamToggleBtn.style.color = 'var(--yellow)';
+      streamToggleBtn.style.borderColor = 'rgba(255,207,51,.4)';
+      hudStatusTitle.textContent = 'MODO DEMOSTRACIÓN: SIMULACIÓN ACTIVA';
+      hudStatusTitle.style.color = 'var(--yellow)';
+      hudStatusSub.textContent = '· Generando proyectiles sintéticos de prueba';
+      toast('Modo demostración activado para pruebas.');
+    } else {
+      streamToggleBtn.textContent = '🛡️ Modo: Solo Ataques Reales';
+      streamToggleBtn.style.color = 'var(--green)';
+      streamToggleBtn.style.borderColor = 'rgba(61,232,164,.4)';
+      hudStatusTitle.textContent = 'CENTINELA WAF: EN ESPERA SILENTE';
+      hudStatusTitle.style.color = 'var(--green)';
+      hudStatusSub.textContent = '· ANIMACIÓN SOLO ANTE AMENAZAS EN VIVO';
+      toast('Modo estricto activado: radar silente a la escucha de tráfico real.');
     }
-  }, '⚡ Flujo en Vivo: ACTIVO');
+  });
 
   var audioBtn = h('button', {
     class: 'btn btn-o sm',
@@ -2205,12 +2224,29 @@ AV.radar = async function () {
     }
   }, '🔈 Sonar: MUTE');
 
+  var hudStatusDot = h('span', { class: 'live-dot' });
+  var hudStatusTitle = h('span', { style: 'font-weight:700;color:var(--green)' }, 'CENTINELA WAF: EN ESPERA SILENTE');
+  var hudStatusSub = h('span', { style: 'color:var(--muted)' }, '· ANIMACIÓN SOLO ANTE AMENAZAS EN VIVO');
+
+  function flashHudAlert(ev) {
+    hudStatusTitle.textContent = '🚨 ¡ATAQUE REAL INTERCEPTADO!';
+    hudStatusTitle.style.color = 'var(--red)';
+    hudStatusSub.textContent = '· ' + (ev.rule || 'WAF_HIT') + ' neutralizado (' + (ev.ip || '') + ')';
+    setTimeout(function () {
+      if (!isLiveStream) {
+        hudStatusTitle.textContent = 'CENTINELA WAF: EN ESPERA SILENTE';
+        hudStatusTitle.style.color = 'var(--green)';
+        hudStatusSub.textContent = '· ANIMACIÓN SOLO ANTE AMENAZAS EN VIVO';
+      }
+    }, 7000);
+  }
+
   var mapHudTop = h('div', { class: 'threat-map-hud-top' },
     h('div', { class: 'threat-hud-badge' },
-      h('span', { class: 'live-dot' }),
-      h('span', { style: 'font-weight:700' }, 'DEFENSA PERIMETRAL VIVA'),
-      h('span', { style: 'color:var(--muted)' }, '· 360° ACTIVO'),
-      h('span', { style: 'color:var(--green)' }, '· LATENCIA: < 0.04ms')
+      hudStatusDot,
+      hudStatusTitle,
+      hudStatusSub,
+      h('span', { style: 'color:var(--cyan)' }, '· TELEMETRÍA 100% VIVA')
     ),
     h('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' },
       nodeLocationBtn,
@@ -2387,11 +2423,12 @@ AV.radar = async function () {
         }
       });
 
-      // Si el mapa genera ataques simulados en vivo, agregarlos al feed visual
+      // Solo si el administrador activa explícitamente el modo demostración
       var origSim = threatMap.generateSimulatedAttack.bind(threatMap);
       threatMap.generateSimulatedAttack = function () {
+        if (!isLiveStream) return null;
         var ev = origSim();
-        appendFlowCard(ev, true);
+        if (ev) appendFlowCard(ev, true);
         return ev;
       };
     }
@@ -2591,6 +2628,34 @@ AV.radar = async function () {
 
   renderTables();
 
+  function handleRealEvent(ev) {
+    if (!ev || !ev.id) return;
+    if (ev.id === lastSeenEventId) return;
+    lastSeenEventId = ev.id;
+    addEventToView(ev);
+    flashHudAlert(ev);
+    playSonarPing();
+  }
+
+  // Conexión en vivo en tiempo real vía Server-Sent Events (SSE) al núcleo del WAF
+  var evtSource = null;
+  try {
+    if (window.EventSource) {
+      evtSource = new EventSource('/api/admin/waf/live-stream');
+      evtSource.onmessage = function (e) {
+        if (!e.data || e.data.startsWith(':')) return;
+        try {
+          var ev = JSON.parse(e.data);
+          if (ev && ev.id) {
+            handleRealEvent(ev);
+            toast('🚨 [WAF REAL] ' + (ev.rule || 'Ataque') + ' bloqueado desde ' + (ev.country && ev.country.name ? ev.country.name : 'IP hostil'));
+            reloadWafData();
+          }
+        } catch (err) {}
+      };
+    }
+  } catch (err) {}
+
   async function reloadWafData() {
     try {
       var resS = await api('GET', '/api/admin/waf/stats');
@@ -2609,15 +2674,22 @@ AV.radar = async function () {
     } catch (e) {}
     try {
       var resE = await api('GET', '/api/admin/waf/events');
-      if (resE && resE.events) {
-        var prevLen = events.length;
-        events = resE.events;
-        if (events.length > prevLen && prevLen > 0) {
-          playSonarPing();
-          var newEvent = events[0];
-          if (threatMap) threatMap.launchBeam(newEvent);
-          appendFlowCard(newEvent, true);
+      if (resE && resE.events && resE.events.length) {
+        var incoming = resE.events;
+        if (lastSeenEventId) {
+          var newBatch = [];
+          for (var i = 0; i < incoming.length; i++) {
+            if (incoming[i].id === lastSeenEventId) break;
+            newBatch.push(incoming[i]);
+          }
+          if (newBatch.length) {
+            newBatch.reverse().forEach(function (e) {
+              handleRealEvent(e);
+            });
+          }
         }
+        events = incoming;
+        if (incoming[0]) lastSeenEventId = incoming[0].id;
       }
     } catch (e) {}
     renderTables();
@@ -2626,10 +2698,14 @@ AV.radar = async function () {
   var pollTimer = setInterval(function () {
     if (isDestroyed) return;
     reloadWafData();
-  }, 3500);
+  }, 4000);
 
   function onRouteLeave() {
     isDestroyed = true;
+    if (evtSource) {
+      evtSource.close();
+      evtSource = null;
+    }
     if (threatMap && typeof threatMap.destroy === 'function') threatMap.destroy();
     if (pollTimer) clearInterval(pollTimer);
     window.removeEventListener('hashchange', onRouteLeave);

@@ -1705,6 +1705,32 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     send(ctx.res, 200, Object.assign({ ok: true, stats: s }, s));
   });
 
+  route('GET', '/api/admin/waf/live-stream', 'admin', (ctx) => {
+    if (!waf) return fail(ctx.res, 500, 'WAF no inicializado.');
+    ctx.res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+    ctx.res.write(': connected\n\n');
+
+    const unsubscribe = typeof waf.onBlock === 'function' ? waf.onBlock((ev) => {
+      try {
+        ctx.res.write('data: ' + JSON.stringify(ev) + '\n\n');
+      } catch (e) {}
+    }) : () => {};
+
+    const pingTimer = setInterval(() => {
+      try { ctx.res.write(': ping\n\n'); } catch (e) {}
+    }, 15000);
+
+    ctx.req.on('close', () => {
+      clearInterval(pingTimer);
+      unsubscribe();
+    });
+  });
+
   route('GET', '/api/admin/waf/events', 'admin', (ctx) => {
     if (!waf) return send(ctx.res, 200, { ok: true, events: [] });
     const limit = parseInt(ctx.query.get('limit') || '100', 10);
