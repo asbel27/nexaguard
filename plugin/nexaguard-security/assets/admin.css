@@ -2461,6 +2461,24 @@
     pointer-events: auto;
 }
 
+.ng-tooltip-popover.align-right {
+    left: auto;
+    right: 0;
+    transform: translateY(6px);
+}
+
+.ng-tooltip-btn:hover .ng-tooltip-popover.align-right,
+.ng-tooltip-btn:focus .ng-tooltip-popover.align-right,
+.ng-tooltip-btn:focus-within .ng-tooltip-popover.align-right {
+    transform: translateY(0);
+}
+
+.ng-tooltip-popover.align-right::after {
+    left: auto;
+    right: 14px;
+    transform: none;
+}
+
 .ng-tooltip-title {
     display: flex;
     align-items: center;

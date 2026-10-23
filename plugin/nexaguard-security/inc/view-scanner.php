@@ -274,9 +274,19 @@ $rollback_count = count($backup_history);
                             🔄 Limpiar Vista / Resetear
                         </button>
                         <?php if ($is_pro): ?>
-                            <button type="button" class="btn-ng btn-trigger-vital-rebuild" style="background:rgba(61,232,164,0.12); color:#3de8a4; border:1px solid rgba(61,232,164,0.35); font-weight:700; cursor:pointer;" title="Reconstruir archivos vitales del núcleo con copias oficiales de WordPress.org">
-                                🛠️ Reconstruir Archivos Vitales
-                            </button>
+                            <div style="display:inline-flex; align-items:center; gap:5px;">
+                                <button type="button" class="btn-ng btn-trigger-vital-rebuild" style="background:rgba(61,232,164,0.12); color:#3de8a4; border:1px solid rgba(61,232,164,0.35); font-weight:700; cursor:pointer;" title="Reconstruir archivos vitales del núcleo con copias oficiales de WordPress.org">
+                                    🛠️ Reconstruir Archivos Vitales
+                                </button>
+                                <span class="ng-tooltip-btn" tabindex="0" title="Ver explicación detallada">
+                                    <span class="ng-tooltip-icon">ℹ️</span>
+                                    <span class="ng-tooltip-popover">
+                                        <strong class="ng-tooltip-title">🛠️ Reconstrucción Oficial de Archivos Vitales</strong>
+                                        <span class="ng-tooltip-desc">Descarga copias oficiales de WordPress.org y restaura archivos del sistema dañados o modificados sin alterar tu web.</span>
+                                        <span class="ng-tooltip-rec">💡 100% Seguro: Respaldo previo en cuarentena.</span>
+                                    </span>
+                                </span>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1139,9 +1149,19 @@ $rollback_count = count($backup_history);
                         <span>⚡</span> Inspección Forzada Inmediata
                     </button>
                     <?php if ($is_pro): ?>
-                        <button type="button" class="btn-ng btn-trigger-vital-rebuild" style="font-weight:800; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#ffffff; border:1px solid #34d399; box-shadow:0 0 14px rgba(16,185,129,0.35); cursor:pointer;">
-                            <span>🛠️</span> Reconstruir Archivos Vitales
-                        </button>
+                        <div style="display:inline-flex; align-items:center; gap:5px;">
+                            <button type="button" class="btn-ng btn-trigger-vital-rebuild" style="font-weight:800; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#ffffff; border:1px solid #34d399; box-shadow:0 0 14px rgba(16,185,129,0.35); cursor:pointer;" title="Descargar y reconstruir archivos del núcleo con copias oficiales inmaculadas de WordPress.org">
+                                <span>🛠️</span> Reconstruir Archivos Vitales
+                            </button>
+                            <span class="ng-tooltip-btn" tabindex="0" title="Ver explicación detallada">
+                                <span class="ng-tooltip-icon">ℹ️</span>
+                                <span class="ng-tooltip-popover align-right">
+                                    <strong class="ng-tooltip-title">🛠️ Reconstrucción de Archivos Vitales</strong>
+                                    <span class="ng-tooltip-desc">Descarga copias oficiales y limpias de WordPress.org para sustituir archivos del sistema infectados por malware.</span>
+                                    <span class="ng-tooltip-rec">💡 100% Seguro: No altera base de datos, temas ni wp-config.php.</span>
+                                </span>
+                            </span>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -1270,13 +1290,33 @@ $rollback_count = count($backup_history);
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
                     <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;">🛡️ Bóveda Vital de Archivos del Núcleo</h3>
                     <?php if ($is_pro): ?>
-                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                            <button type="button" id="btn-sentinel-rebuild-all-vital" class="btn-ng btn-ng-primary btn-trigger-vital-rebuild" style="font-size:0.78rem;padding:5px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 12px rgba(16,185,129,0.35);" title="Descargar y reconstruir todos los archivos vitales de WordPress con copias oficiales inmaculadas de WordPress.org">
-                                🛠️ Reconstruir Archivos Vitales
-                            </button>
-                            <button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.78rem;padding:5px 12px;border-color:rgba(255,207,51,0.4);color:#ffd859;font-weight:700;cursor:pointer;background:rgba(255,207,51,0.08);border-radius:6px;" title="Endurecer permisos de wp-config.php a solo-lectura (0440)">
-                                🔒 Endurecer Permisos
-                            </button>
+                        <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+                            <div style="display:inline-flex; align-items:center; gap:5px;">
+                                <button type="button" id="btn-sentinel-rebuild-all-vital" class="btn-ng btn-ng-primary btn-trigger-vital-rebuild" style="font-size:0.78rem;padding:5px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 12px rgba(16,185,129,0.35);" title="Descargar y reconstruir todos los archivos vitales de WordPress con copias oficiales inmaculadas de WordPress.org">
+                                    🛠️ Reconstruir Archivos Vitales
+                                </button>
+                                <span class="ng-tooltip-btn" tabindex="0" title="Ver explicación detallada">
+                                    <span class="ng-tooltip-icon">ℹ️</span>
+                                    <span class="ng-tooltip-popover align-right">
+                                        <strong class="ng-tooltip-title">🛠️ Reconstrucción de Archivos Vitales</strong>
+                                        <span class="ng-tooltip-desc">Descarga copias limpias e inmaculadas directamente de los servidores de WordPress.org y restaura los archivos esenciales del sistema (index.php, wp-load.php, wp-blog-header.php, wp-settings.php, version.php) erradicando cualquier malware o backdoor.</span>
+                                        <span class="ng-tooltip-rec">💡 100% Seguro: No toca tu base de datos, temas, plugins ni wp-config.php. Crea respaldo previo automático.</span>
+                                    </span>
+                                </span>
+                            </div>
+                            <div style="display:inline-flex; align-items:center; gap:5px;">
+                                <button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline btn-sentinel-harden" style="font-size:0.78rem;padding:5px 12px;border-color:rgba(255,207,51,0.4);color:#ffd859;font-weight:700;cursor:pointer;background:rgba(255,207,51,0.08);border-radius:6px;" title="Endurecer permisos de wp-config.php a solo-lectura (0440)">
+                                    🔒 Endurecer Permisos
+                                </button>
+                                <span class="ng-tooltip-btn" tabindex="0" title="Ver explicación detallada">
+                                    <span class="ng-tooltip-icon">ℹ️</span>
+                                    <span class="ng-tooltip-popover align-right">
+                                        <strong class="ng-tooltip-title">🔒 Endurecimiento de Permisos (Hardening)</strong>
+                                        <span class="ng-tooltip-desc">Sella los permisos del archivo wp-config.php a modo estricto de solo-lectura (chmod 0440 o 0640). Bloquea cualquier intento de atacantes o troyanos de modificar tus credenciales o inyectar código.</span>
+                                        <span class="ng-tooltip-rec">💡 Recomendado: Máxima protección contra manipulación de credenciales.</span>
+                                    </span>
+                                </span>
+                            </div>
                         </div>
                     <?php else: ?>
                         <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ Monitoreo Activo</span>

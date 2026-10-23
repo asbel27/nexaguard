@@ -2652,7 +2652,7 @@ jQuery(document).ready(function ($) {
     });
 
     // Endurecer Permisos de wp-config.php (Hardening 1-Clic)
-    $(document).on('click', '#btn-sentinel-harden-now', function (e) {
+    $(document).on('click', '#btn-sentinel-harden-now, .btn-sentinel-harden', function (e) {
         e.preventDefault();
         var $btn = $(this);
         var ngData = window.nexaguardData || window.nexaguard_data || {};
