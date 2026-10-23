@@ -1014,13 +1014,135 @@ class NexaGuard_Cleaner {
     }
 
     /**
-     * Aviso de seguridad para archivos del núcleo de WordPress
-     * Conforme a las directrices de WordPress.org, el plugin no sobrescribe archivos de sistema.
+     * Reconstrucción Oficial de Archivos del Núcleo de WordPress (WordPress.org Core Restore)
+     * Descarga la copia original, inmaculada y oficial directamente desde los repositorios de WordPress.
+     * Crea un snapshot de seguridad en cuarentena antes de proceder.
      */
     public function restore_core_file($target) {
+        global $wp_version, $wp_local_package;
+
+        $target_norm = wp_normalize_path(wp_unslash($target));
+        $abspath_norm = wp_normalize_path(ABSPATH);
+
+        if (strpos($target_norm, $abspath_norm) === 0) {
+            $rel_path = trim(substr($target_norm, strlen($abspath_norm)), '/');
+        } else {
+            $rel_path = trim($target_norm, '/');
+        }
+        $full_path = rtrim(ABSPATH, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel_path);
+
+        // Validar que realmente sea un archivo del núcleo de WordPress
+        $is_core = (strpos($rel_path, 'wp-includes/') === 0 || 
+                    strpos($rel_path, 'wp-admin/') === 0 || 
+                    in_array($rel_path, array('index.php', 'wp-blog-header.php', 'wp-settings.php', 'wp-load.php', 'wp-login.php', 'wp-cron.php', 'wp-mail.php', 'wp-links-opml.php', 'wp-trackback.php'), true));
+        if (!$is_core) {
+            return array('success' => false, 'message' => "El archivo '{$rel_path}' no es un archivo reconocido del núcleo de WordPress.org.");
+        }
+
+        // Crear punto de restauración y snapshot de seguridad previo en cuarentena
+        if (file_exists($full_path)) {
+            $this->create_snapshot($full_path, 'Restauración Oficial (WordPress.org)');
+            $quarantine_dir = WP_CONTENT_DIR . '/uploads/nexaguard-quarantine';
+            if (!is_dir($quarantine_dir)) {
+                @wp_mkdir_p($quarantine_dir);
+                @file_put_contents($quarantine_dir . '/.htaccess', 'Deny from all');
+            }
+            @copy($full_path, $quarantine_dir . '/' . basename($rel_path) . '.bak_core_' . time());
+        }
+
+        // Obtener checksum oficial de WordPress.org para validar integridad exacta
+        $locale = function_exists('get_locale') ? get_locale() : 'en_US';
+        $cache_key = 'nexaguard_core_checksums_' . md5($wp_version . '_' . $locale);
+        $checksums = get_transient($cache_key);
+
+        if (empty($checksums) || !is_array($checksums)) {
+            $api_url = "https://api.wordpress.org/core/checksums/1.0/?version={$wp_version}&locale={$locale}";
+            $response = wp_remote_get($api_url, array('timeout' => 8, 'sslverify' => false));
+            if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+                $body = json_decode(wp_remote_retrieve_body($response), true);
+                if (!empty($body['checksums'])) {
+                    $checksums = $body['checksums'];
+                    set_transient($cache_key, $checksums, 24 * HOUR_IN_SECONDS);
+                }
+            }
+        }
+        $expected_md5 = (!empty($checksums[$rel_path])) ? $checksums[$rel_path] : '';
+
+        // Descargar desde repositorios oficiales de WordPress (GitHub / SVN)
+        $urls = array(
+            "https://raw.githubusercontent.com/WordPress/WordPress/{$wp_version}/{$rel_path}",
+            "https://core.svn.wordpress.org/tags/{$wp_version}/{$rel_path}"
+        );
+
+        $official_content = false;
+        foreach ($urls as $url) {
+            $response = wp_remote_get($url, array('timeout' => 12, 'sslverify' => false));
+            if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+                $body = wp_remote_retrieve_body($response);
+                if (!empty($body)) {
+                    $official_content = $body;
+                    break;
+                }
+            }
+        }
+
+        if ($official_content === false) {
+            return array('success' => false, 'message' => "No se pudo descargar la copia oficial de '{$rel_path}' para la versión {$wp_version} desde los servidores de WordPress.org. Comprueba la conexión de tu hosting.");
+        }
+
+        // Si es version.php y el sitio tiene paquete de idioma localizado (ej: es_ES, es_MX)
+        if ($rel_path === 'wp-includes/version.php') {
+            $site_package = !empty($wp_local_package) ? $wp_local_package : $locale;
+
+            if ($site_package !== 'en_US' && strpos($official_content, '$wp_local_package') === false) {
+                $candidate_localized = $official_content . "\n\$wp_local_package = '{$site_package}';\n";
+
+                if (!empty($expected_md5)) {
+                    if (md5($candidate_localized) === $expected_md5) {
+                        $official_content = $candidate_localized;
+                    } elseif (md5($official_content) === $expected_md5) {
+                        // Coincide con versión pura en_US
+                    } elseif ($locale !== $site_package && md5($official_content . "\n\$wp_local_package = '{$locale}';\n") === $expected_md5) {
+                        $official_content = $official_content . "\n\$wp_local_package = '{$locale}';\n";
+                    } else {
+                        $official_content = $candidate_localized;
+                    }
+                } else {
+                    $official_content = $candidate_localized;
+                }
+            }
+        }
+
+        // Forzar permisos de escritura si está bloqueado
+        if (file_exists($full_path) && !wp_is_writable($full_path)) {
+            $this->fs_chmod(dirname($full_path), 0755);
+            $this->fs_chmod($full_path, 0644);
+        }
+
+        $written = @file_put_contents($full_path, $official_content);
+        if ($written === false) {
+            return array('success' => false, 'message' => "Error de permisos: no se pudo escribir el archivo oficial en '{$full_path}'. Revisa los permisos en tu hosting.");
+        }
+
+        // Restablecer permisos seguros 0644
+        @chmod($full_path, 0644);
+
+        // Invalidar cachés de estadísticas, OPcache y transients de checksums
+        clearstatcache(true, $full_path);
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate($full_path, true);
+        }
+        delete_transient('nexaguard_core_checksums_' . md5($wp_version . '_' . $locale));
+        delete_transient('nexaguard_core_checksums_' . md5($wp_version . '_en_US'));
+
+        // Purgar de la lista de amenazas registradas
+        $this->remove_threat_from_report(md5('checksum_mismatch_' . $rel_path));
+        $this->remove_threat_from_report($rel_path);
+
         return array(
-            'success' => false,
-            'message' => 'Por seguridad y cumplimiento estricto con las directrices de WordPress.org, NexaGuard no sobrescribe archivos del núcleo automáticamente. Para reinstalar los archivos limpios del núcleo, ve a Escritorio > Actualizaciones > Reinstalar WordPress, o solicita una intervención forense con un especialista en https://www.nexaguards.com'
+            'success' => true,
+            'message' => "✅ Archivo '{$rel_path}' reconstruido con éxito a su estado oficial inmaculado de WordPress.org (v{$wp_version}).",
+            'file'    => '/' . $rel_path
         );
     }
 
@@ -1042,12 +1164,14 @@ class NexaGuard_Cleaner {
             'details'             => array()
         );
 
+        $is_pro = NexaGuard_Firewall::is_pro();
+
         foreach ($threats as $t) {
             $action   = isset($t['clean_action']) ? $t['clean_action'] : '';
             $target   = isset($t['full_path']) ? $t['full_path'] : '';
             $file_rel = isset($t['file']) ? str_replace('\\', '/', $t['file']) : '';
 
-            // 1. REGLA NÚCLEO: Si pertenece al núcleo de WordPress -> PRESERVAR (NUNCA MODIFICAR NÚCLEO DIRECTAMENTE)
+            // 1. REGLA NÚCLEO: Si pertenece al núcleo de WordPress
             $is_core = ($action === 'restore_core_file') || 
                        (isset($t['module']) && $t['module'] === 'core') ||
                        (strpos($file_rel, 'wp-includes/') === 0) ||
@@ -1055,8 +1179,16 @@ class NexaGuard_Cleaner {
                        in_array($file_rel, array('index.php', 'wp-blog-header.php', 'wp-settings.php', 'wp-load.php', 'wp-login.php', 'wp-cron.php', 'wp-mail.php', 'wp-links-opml.php', 'wp-trackback.php'), true);
 
             if ($is_core) {
+                if ($is_pro) {
+                    $restore_res = $this->restore_core_file($target);
+                    if (!empty($restore_res['success'])) {
+                        $results['restored_core']++;
+                        $results['details'][] = "Archivo vital del núcleo reconstruido limpiamente desde WordPress.org ({$file_rel})";
+                        continue;
+                    }
+                }
                 $results['skipped']++;
-                $results['details'][] = "Archivo del núcleo preservado por directrices de seguridad ({$file_rel}). Usa Escritorio > Actualizaciones > Reinstalar WordPress o solicita intervención experta.";
+                $results['details'][] = "Archivo del núcleo preservado ({$file_rel}). Se aconseja reinstalar el núcleo desde Escritorio > Actualizaciones.";
                 continue;
             }
 

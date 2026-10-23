@@ -1259,7 +1259,13 @@ $rollback_count = count($backup_history);
             <div class="ng-card" style="background:#0e163e;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                     <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;">🛡️ Bóveda Vital de Archivos del Núcleo</h3>
-                    <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ Monitoreo Activo</span>
+                    <?php if ($is_pro): ?>
+                        <button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem;padding:4px 12px;border-color:rgba(61,232,164,0.4);color:#3de8a4;font-weight:700;cursor:pointer;background:rgba(61,232,164,0.08);border-radius:6px;" title="Endurecer permisos de wp-config.php a solo-lectura (0440)">
+                            🔒 Endurecer Permisos
+                        </button>
+                    <?php else: ?>
+                        <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ Monitoreo Activo</span>
+                    <?php endif; ?>
                 </div>
                 <div style="max-height:240px;overflow-y:auto;">
                     <table class="ng-table" style="font-size:0.8rem;margin:0;">

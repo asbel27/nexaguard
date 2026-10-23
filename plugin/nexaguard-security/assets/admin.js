@@ -2525,9 +2525,16 @@ jQuery(document).ready(function ($) {
                     // 1. Mostrar u ocultar Tarjeta y Tabla de Archivos Vitales Alterados (con Consejo de Reconstrucción)
                     if (d.has_anomalies && d.anomalies && d.anomalies.length > 0) {
                         var anomHtml = '';
+                        var isPro = (ngData.is_pro === true || ngData.is_pro === '1' || ngData.is_pro === 1);
                         d.anomalies.forEach(function (anom) {
-                            var actionBtn = '<a href="https://www.nexaguards.com/#contacto" target="_blank" class="btn-ng btn-ng-primary" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">🩺 Solicitar Intervención</a>' +
-                                '<a href="' + (d.reinstall_url || 'update-core.php') + '" class="btn-ng btn-ng-link" style="color:#ffcf33; font-weight:700; font-size:0.78rem; text-decoration:none; margin-left:6px;">🔄 Reinstalar WP</a>';
+                            var actionBtn = '';
+                            if (isPro && anom.can_rebuild) {
+                                actionBtn = '<button type="button" class="btn-ng btn-ng-primary btn-sentinel-rebuild" data-file="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; border:none; border-radius:6px; cursor:pointer;" title="Descargar y restaurar la copia oficial limpia de WordPress.org">🛠️ Reconstruir Archivo Oficial</button>';
+                            } else if (isPro && anom.can_harden) {
+                                actionBtn = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;">🔒 Endurecer Permisos</button>';
+                            } else {
+                                actionBtn = '<a href="' + (d.reinstall_url || 'update-core.php') + '" class="btn-ng btn-ng-link" style="color:#ffcf33; font-weight:700; font-size:0.78rem; text-decoration:none;">🔄 Reinstalar WP</a>';
+                            }
 
                             anomHtml += '<tr style="border-bottom:1px solid rgba(255,69,96,0.15);">' +
                                 '<td style="padding:10px 14px;"><code style="color:#ff8ba0; font-weight:700; font-size:0.85rem;">' + anom.path + '</code></td>' +
@@ -2629,6 +2636,79 @@ jQuery(document).ready(function ($) {
 
     $(document).on('click', '#btn-sentinel-clear-terminal', function () {
         $('#sentinel-terminal-stream').html('<div style="color:#ffcf33;">[SISTEMA] Consola reiniciada. Monitoreo Sentinel activo.</div>');
+    });
+
+    // Endurecer Permisos de wp-config.php (Hardening 1-Clic)
+    $(document).on('click', '#btn-sentinel-harden-now', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var ngData = window.nexaguardData || window.nexaguard_data || {};
+        $btn.prop('disabled', true).text('Endureciendo...');
+
+        $.ajax({
+            url: ngData.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'nexaguard_sentinel_harden',
+                nonce: ngData.nonce
+            },
+            success: function (res) {
+                if (res.success && res.data) {
+                    showToast(res.data.message || 'Permisos de wp-config.php endurecidos a 0440.', 'success', 'Bóveda Núcleo');
+                    runBackendSentinelScan(true);
+                } else {
+                    showAlert((res && res.data && res.data.message) ? res.data.message : 'No se pudieron modificar los permisos.', 'warning', 'Permisos');
+                }
+            },
+            error: function () {
+                showAlert('Error al contactar con el servidor.', 'error', 'Error');
+            },
+            complete: function () {
+                $btn.prop('disabled', false).text('🔒 Endurecer Permisos');
+            }
+        });
+    });
+
+    // Reconstruir archivo vital con copia oficial de WordPress.org (Reconstrucción 1-Clic)
+    $(document).on('click', '.btn-sentinel-rebuild', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var file = $btn.data('file');
+        var ngData = window.nexaguardData || window.nexaguard_data || {};
+
+        showConfirm(
+            '¿Deseas reconstruir el archivo /' + file + ' restaurando la copia oficial limpia original de WordPress.org? Se creará una copia de respaldo en cuarentena por seguridad.',
+            function () {
+                $btn.prop('disabled', true).text('Reconstruyendo...');
+                $.ajax({
+                    url: ngData.ajax_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'nexaguard_sentinel_restore_file',
+                        file: file,
+                        nonce: ngData.nonce
+                    },
+                    success: function (res) {
+                        if (res.success && res.data) {
+                            showToast(res.data.message || 'Archivo reconstruido exitosamente.', 'success', 'Reconstrucción de Núcleo');
+                            runBackendSentinelScan(true);
+                        } else {
+                            var msg = (res && res.data && res.data.message) ? res.data.message : 'Error al reconstruir archivo.';
+                            showAlert(msg, 'warning', 'Aviso de Reconstrucción');
+                            $btn.prop('disabled', false).text('🛠️ Reconstruir Archivo Oficial');
+                        }
+                    },
+                    error: function () {
+                        showAlert('Error de conexión al intentar reconstruir el archivo.', 'danger', 'Error');
+                        $btn.prop('disabled', false).text('🛠️ Reconstruir Archivo Oficial');
+                    }
+                });
+            },
+            null,
+            { title: 'Reconstruir Archivo Vital', icon: '🛠️', btnOkText: 'Reconstruir Ahora' }
+        );
     });
 
     // Redimensionar canvas al cambiar tamaño de ventana

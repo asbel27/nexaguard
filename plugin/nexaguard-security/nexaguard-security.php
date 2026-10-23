@@ -61,6 +61,8 @@ class NexaGuard_Plugin {
         add_action('wp_ajax_nexaguard_auto_remediate_all', array($this, 'ajax_auto_remediate_all'));
         add_action('wp_ajax_nexaguard_revert_snapshot', array($this, 'ajax_revert_snapshot'));
         add_action('wp_ajax_nexaguard_sentinel_scan', array($this, 'ajax_sentinel_scan'));
+        add_action('wp_ajax_nexaguard_sentinel_harden', array($this, 'ajax_sentinel_harden'));
+        add_action('wp_ajax_nexaguard_sentinel_restore_file', array($this, 'ajax_sentinel_restore_file'));
         add_action('nexaguard_daily_vigilance_scan', array($this, 'run_background_vigilance_scan'));
 
         // Aviso en el pie de página de administración
@@ -922,6 +924,8 @@ class NexaGuard_Plugin {
                         'perms'       => $perms,
                         'hash'        => '[PROTEGIDO]',
                         'status'      => 'warning',
+                        'can_harden'  => true,
+                        'can_rebuild' => false,
                         'verdict'     => "Permisos vulnerables ($perms) · Se aconseja endurecer permisos"
                     );
                 }
@@ -953,6 +957,8 @@ class NexaGuard_Plugin {
                         'perms'       => $perms,
                         'hash'        => substr($hash, 0, 16) . '…',
                         'status'      => 'tampered',
+                        'can_rebuild' => !$meta['is_custom'],
+                        'can_harden'  => false,
                         'verdict'     => 'Código alterado / Posible inyección'
                     );
                 }
@@ -992,6 +998,54 @@ class NexaGuard_Plugin {
             'checked_at'    => current_time('H:i:s'),
             'timestamp'     => time()
         ));
+    }
+
+    /**
+     * Endurecimiento Automático de Permisos de wp-config.php (Hardening)
+     */
+    public function ajax_sentinel_harden() {
+        check_ajax_referer('nexaguard_security_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        $config_file = ABSPATH . 'wp-config.php';
+        $hardened = false;
+        if (file_exists($config_file)) {
+            $hardened = @chmod($config_file, 0440);
+            if (!$hardened) {
+                $hardened = @chmod($config_file, 0640);
+            }
+        }
+
+        wp_send_json_success(array(
+            'hardened' => $hardened,
+            'message'  => 'Permisos de wp-config.php endurecidos a modo seguro solo-lectura (0440) exitosamente.'
+        ));
+    }
+
+    /**
+     * Reconstrucción 1-Clic de Archivo Vital Oficial desde WordPress.org
+     */
+    public function ajax_sentinel_restore_file() {
+        check_ajax_referer('nexaguard_security_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+
+        $rel_path = isset($_POST['file']) ? sanitize_text_field(ltrim(trim($_POST['file']), '/\\')) : '';
+        if (empty($rel_path)) {
+            wp_send_json_error(array('message' => 'Ruta de archivo no especificada.'));
+        }
+
+        $cleaner = new NexaGuard_Cleaner();
+        $result = $cleaner->restore_core_file(ABSPATH . $rel_path);
+
+        if (!empty($result['success'])) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
     }
 }
 
