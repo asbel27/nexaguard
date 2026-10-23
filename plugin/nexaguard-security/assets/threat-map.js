@@ -185,8 +185,9 @@
   CyberThreatMap.prototype.resizeCanvas = function () {
     if (!this.canvas) return;
     var rect = this.container.getBoundingClientRect();
-    var width = rect.width || 800;
-    var height = Math.min(520, Math.max(380, width * 0.46));
+    var width = Math.floor(rect.width) || 800;
+    var autoHeight = Math.min(520, Math.max(240, Math.floor(width * 0.52)));
+    var height = (rect.height && rect.height > 100) ? Math.floor(rect.height) : autoHeight;
     var dpr = window.devicePixelRatio || 1;
 
     this.width = width;

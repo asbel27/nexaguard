@@ -3268,3 +3268,182 @@
   font-size: 0.68rem;
   color: #8fa0cf;
 }
+
+@media (max-width: 860px) {
+  .threat-map-box {
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+  }
+  .threat-map-hud-top,
+  .threat-map-hud-bot {
+    position: static;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    padding: 10px 12px;
+    background: rgba(6, 12, 34, 0.95);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .threat-map-hud-top {
+    border-bottom: 1px solid rgba(107, 140, 255, 0.22);
+  }
+  .threat-map-hud-bot {
+    border-top: 1px solid rgba(107, 140, 255, 0.22);
+  }
+  .threat-map-hud-top .threat-hud-badge,
+  .threat-map-hud-bot .threat-hud-badge {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    text-align: center;
+    flex-wrap: wrap;
+    font-size: 0.7rem;
+    padding: 6px 8px;
+    gap: 6px;
+  }
+  .threat-map-hud-bot .threat-hud-badge span {
+    margin-left: 0 !important;
+  }
+  .threat-map-hud-top > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+  }
+  .threat-map-hud-top > div:last-child #pluginNodeLocBtn,
+  .threat-map-hud-top > div:last-child #pubNodeLocBtn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+  .threat-map-hud-top > div:last-child #pluginStreamToggleBtn,
+  .threat-map-hud-top > div:last-child #pluginAudioBtn,
+  .threat-map-hud-top > div:last-child #pubStreamToggleBtn,
+  .threat-map-hud-top > div:last-child #pubAudioBtn {
+    flex: 1 1 calc(50% - 4px);
+    justify-content: center;
+    text-align: center;
+    min-width: 120px;
+  }
+  .threat-map-canvas-wrap {
+    height: 280px;
+    width: 100%;
+  }
+  .threat-sim-bar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+  .threat-sim-bar > span {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 0.72rem;
+    margin-bottom: 2px;
+  }
+  .threat-sim-bar > button {
+    width: 100%;
+    font-size: 0.72rem;
+    padding: 6px 8px;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .threat-feed-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 12px;
+  }
+  .threat-feed-head h4 {
+    font-size: 0.76rem;
+  }
+  .threat-flow-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .t-col-origin {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+  }
+  .t-c-badge {
+    flex: 1 1 auto;
+    font-size: 0.74rem;
+  }
+  .t-ip {
+    font-size: 0.72rem;
+  }
+  .t-req {
+    width: 100%;
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-all;
+    margin-top: 2px;
+    font-size: 0.68rem;
+  }
+  .t-col-flow {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-top: 1px dashed rgba(107, 140, 255, 0.15);
+    border-bottom: 1px dashed rgba(107, 140, 255, 0.15);
+  }
+  .threat-arrows-stream {
+    padding: 0;
+  }
+  .threat-arrows-stream .arr {
+    font-size: 0.95rem;
+  }
+  .t-flow-sub {
+    display: none;
+  }
+  .t-col-dest {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    gap: 6px;
+  }
+  .t-node-badge {
+    font-size: 0.72rem;
+  }
+  .t-verdict {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+  .t-lat {
+    font-size: 0.65rem;
+    width: 100%;
+    text-align: right;
+  }
+}
+
+@media (max-width: 480px) {
+  .threat-map-canvas-wrap {
+    height: 240px;
+  }
+  .threat-sim-bar {
+    grid-template-columns: 1fr;
+  }
+}
