@@ -1010,20 +1010,28 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const userEmail = (user && user.email) || clean(body.email, 254).toLowerCase() || '';
     const userName = (user && user.name) || clean(body.name, 80) || 'Cliente';
 
-    // Crear orden interna en estado pendiente
-    const order = {
-      id: id('ord'),
-      userId: user ? user.id : null,
-      pendingEmail: userEmail,
-      pendingName: userName,
-      plan: planId,
-      maxSites,
-      status: 'pending_payment',
-      stage: 0,
-      amount: price,
-      createdAt: T()
-    };
-    db.orders.push(order);
+    // Reutilizar orden pendiente existente del usuario o crear una nueva
+    let order = (user && db.orders.find(o => o.userId === user.id && o.plan === planId && o.status === 'pending_payment')) || null;
+    if (!order) {
+      order = {
+        id: id('ord'),
+        userId: user ? user.id : null,
+        pendingEmail: userEmail,
+        pendingName: userName,
+        plan: planId,
+        maxSites,
+        status: 'pending_payment',
+        stage: 0,
+        amount: price,
+        createdAt: T()
+      };
+      db.orders.push(order);
+    } else {
+      order.maxSites = maxSites;
+      order.amount = price;
+      order.pendingEmail = userEmail;
+      order.pendingName = userName;
+    }
     save();
 
     const desc = (planId === 'agency' ? (plan.name + ' (' + maxSites + ' Sitios)') : plan.name) + ' · NexaGuard';

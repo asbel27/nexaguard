@@ -207,7 +207,9 @@ dialog::backdrop{background:rgba(3,6,20,.75);backdrop-filter:blur(3px)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);background:var(--text);color:#0a1030;padding:.75em 1.2em;border-radius:12px;font-weight:600;font-size:.92rem;opacity:0;pointer-events:none;transition:.3s;z-index:90;max-width:92vw;text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .pp-wrap{margin:6px 0}
-.pp-box{min-height:44px;max-width:340px}
+.pp-box{min-height:44px;width:100%}
+.btn-crypto-pay{transition:all .2s ease}
+.btn-crypto-pay:hover{filter:brightness(1.08);transform:translateY(-1px)}
 .tempbox{font-family:var(--fm);font-size:1.15rem;background:#050a20;border:1px dashed var(--yellow);border-radius:10px;padding:14px;text-align:center;letter-spacing:.06em;user-select:all;margin:12px 0}
 
 .radar-grid{display:grid;grid-template-columns:380px 1fr;gap:20px;margin-bottom:20px}
@@ -715,12 +717,19 @@ function modal(title, content) {
   return { el: dlg, close: function () { dlg.close(); } };
 }
 
-var S = { user: null, dash: null, plans: [], prefill: null, paypal: null };
+var S = { user: null, dash: null, plans: [], prefill: null, paypal: null, nowpayments: null };
 
-/* ---------- Pago con PayPal desde el panel (para un plan ya pendiente de pago) ---------- */
+/* ---------- Pago seguro con PayPal & Cripto (Binance Pay) desde el panel ---------- */
 var ppSdkPromise = null;
-function ensurePpSdk() {
-  if (!S.paypal) return Promise.reject(new Error('PayPal no está configurado.'));
+async function ensurePpSdk() {
+  if (!S.paypal) {
+    try {
+      var pcfg = await api('GET', '/api/payment/config');
+      S.paypal = pcfg.paypal;
+      S.nowpayments = pcfg.nowpayments;
+    } catch (e) {}
+  }
+  if (!S.paypal || !S.paypal.clientId) throw new Error('PayPal no está configurado.');
   if (ppSdkPromise) return ppSdkPromise;
   ppSdkPromise = new Promise(function (resolve, reject) {
     if (window.paypal) return resolve(window.paypal);
@@ -733,47 +742,225 @@ function ensurePpSdk() {
   });
   return ppSdkPromise;
 }
-/* Dibuja el botón de PayPal para pagar `planId` desde el panel del cliente ya identificado. */
-function payWithPayPal(container, planId, msgEl) {
-  ensurePpSdk().then(function (sdk) {
-    if (msgEl) msgEl.remove();
-    sdk.Buttons({
-      style: { layout: 'horizontal', color: 'gold', shape: 'pill', label: 'paypal', height: 40 },
-      createOrder: function () {
-        return api('POST', '/api/checkout/paypal/orders', { plan: planId }).then(function (r) { return r.id; })
-          .catch(function (e) { toast(e.message); throw e; });
-      },
-      onApprove: function (data) {
-        return api('POST', '/api/checkout/paypal/orders/' + data.orderID + '/capture', {}).then(function () {
-          toast('¡Pago recibido! Tu licencia ya está activa.'); go('licencias');
-        }).catch(function (e) { toast(e.message); });
-      },
-      onError: function () { toast('Hubo un problema con PayPal. Puedes reintentar.'); }
-    }).render(container);
-  }).catch(function (e) { if (msgEl) msgEl.textContent = e.message + ' Usa el botón de abajo para coordinar el pago por otra vía.'; });
-}
-function payPalBlock(planId) {
-  var pl = S.plans && S.plans.find(function (x) { return x.id === planId; });
-  if (pl && pl.price <= 0) {
-    return h('div', { style: 'margin:12px 0' },
-      h('button', { class: 'btn btn-y', type: 'button', style: 'padding:10px 18px;font-weight:700', on: { click: async function () {
-        var btn = this; btn.disabled = true; btn.textContent = 'Activando tu licencia...';
+
+function openCheckoutModal(planId, order, preselectedSites) {
+  var pl = (S.plans && S.plans.find(function (x) { return x.id === planId; })) || {
+    id: planId,
+    name: (order && order.planName) || (planId === 'security_pro' ? 'Plan NexaGuard Security Pro' : (planId === 'rescate' ? 'Plan Rescate + Blindaje' : (planId === 'agency' ? 'Plan Agencia / Freelancer' : 'Plan Gratuito (Community)'))),
+    price: (order && typeof order.amount === 'number' && order.amount > 0) ? order.amount : (planId === 'free' ? 0 : (planId === 'rescate' ? 49.99 : 9.99)),
+    currency: 'USD',
+    period: planId === 'rescate' ? 'pago único' : 'al mes',
+    sites: (order && order.maxSites) || 1,
+    features: [
+      'Licencia NexaGuard Security PRO oficial',
+      'Vigilancia 24 Horas continua y firewall WAF perimetral',
+      'Escaneo forense e inteligencia contra malware en tiempo real',
+      'Desinfección quirúrgica y blindaje de WordPress'
+    ]
+  };
+
+  var chosenSites = (order && order.maxSites) || Number(preselectedSites) || pl.sites || 1;
+  var isAgency = planId === 'agency';
+
+  function calcAgencyPrice(s) {
+    if (s <= 5) return 29.99;
+    if (s <= 10) return 49.99;
+    if (s <= 25) return 99.99;
+    return 179.99;
+  }
+
+  var curPrice = (order && typeof order.amount === 'number' && order.amount > 0)
+    ? order.amount
+    : (isAgency ? calcAgencyPrice(chosenSites) : pl.price);
+
+  var isFree = curPrice <= 0 || planId === 'free';
+
+  var content = h('div', { class: 'stack', style: 'gap:14px' });
+  var errBox = h('p', { class: 'err', role: 'alert', style: 'margin:4px 0' });
+
+  // Resumen del Plan
+  var summaryBox = h('div', {
+    style: 'border:1.5px solid rgba(255,207,51,.35);background:rgba(255,207,51,.06);border-radius:12px;padding:14px 16px;margin-bottom:4px'
+  });
+
+  function renderSummary() {
+    summaryBox.innerHTML = '';
+    var priceDisplay = isFree ? 'Gratis ($0)' : (money(curPrice, pl.currency) + (pl.period ? ' · ' + pl.period : ''));
+    var titleDisplay = (order && order.planName) ? order.planName : (pl.name + (isAgency ? ' (' + chosenSites + ' Sitios)' : ''));
+
+    summaryBox.appendChild(h('div', { style: 'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px' },
+      h('strong', { style: 'color:#fff;font-size:1.05rem' }, titleDisplay),
+      h('span', { style: 'color:var(--yellow);font-weight:800;font-size:1.1rem;font-family:var(--fm)' }, priceDisplay)
+    ));
+
+    var featList = (pl.features && pl.features.length) ? pl.features.slice(0, 4) : [
+      'Licencia NexaGuard Security PRO oficial',
+      'Vigilancia 24 Horas y Firewall WAF en tiempo real',
+      'Radar de ataques perimetrales y bloqueo IP',
+      'Soporte técnico prioritario y actualizaciones'
+    ];
+    summaryBox.appendChild(h('ul', { style: 'list-style:none;margin:6px 0 0;padding:0;display:grid;gap:5px;font-size:.85rem;color:#cdd6f5' },
+      featList.map(function (f) {
+        return h('li', { style: 'display:flex;align-items:center;gap:6px' },
+          h('span', { style: 'color:var(--green);font-weight:800' }, '✓'),
+          h('span', null, f)
+        );
+      })
+    ));
+  }
+  renderSummary();
+  content.appendChild(summaryBox);
+
+  // Selector de sitios si es plan Agency y no hay orden fija
+  if (isAgency && !order) {
+    var agencyWrap = h('div', { style: 'background:rgba(0,240,255,.05);border:1px solid rgba(0,240,255,.25);border-radius:10px;padding:12px;text-align:center' },
+      h('label', { style: 'display:block;font-size:.8rem;font-weight:700;color:#00f0ff;text-transform:uppercase;margin-bottom:8px' }, '🛡️ Cantidad de sitios web para tu clave maestra:'),
+      h('div', { style: 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap' },
+        [5, 10, 25, 50].map(function (num) {
+          return h('button', {
+            type: 'button',
+            class: 'btn ' + (num === chosenSites ? 'btn-y' : 'btn-o') + ' sm',
+            style: 'min-width:65px;font-weight:700',
+            on: { click: function () {
+              m.close();
+              openCheckoutModal(planId, null, num);
+            } }
+          }, num + ' Sitios');
+        })
+      )
+    );
+    content.appendChild(agencyWrap);
+  }
+
+  var m = modal(isFree ? 'Activar Plan Gratuito' : ('Pagar ' + (pl.name || 'Plan')), content);
+
+  if (isFree) {
+    var btnFree = h('button', {
+      class: 'btn btn-y',
+      type: 'button',
+      style: 'width:100%;font-size:1rem;padding:12px;font-weight:700;margin-top:8px',
+      on: { click: async function () {
+        btnFree.disabled = true; btnFree.textContent = 'Activando tu licencia...'; errBox.textContent = '';
         try {
-          await api('POST', '/api/checkout/free', { plan: planId });
-          toast('¡Plan activado con éxito! Tu licencia ya está disponible.');
+          await api('POST', '/api/checkout/free', { plan: planId, maxSites: (isAgency ? chosenSites : 1) });
+          m.close();
+          toast('🎉 ¡Plan activado con éxito! Tu licencia ya está disponible.');
           go('licencias');
         } catch (e) {
-          btn.disabled = false; btn.textContent = 'Activar plan ($0)';
-          toast(e.message);
+          btnFree.disabled = false; btnFree.textContent = 'Activar Licencia Gratis ($0)';
+          errBox.textContent = e.message;
         }
-      } } }, ico('shield'), 'Activar plan gratis ($0)'));
+      } }
+    }, ico('shield'), 'Activar Licencia Gratis Ahora ($0)');
+    content.appendChild(btnFree);
+    content.appendChild(errBox);
+    return m;
   }
-  if (!S.paypal) return null;
-  var msg = h('p', { class: 'hint', style: 'margin:10px 0' }, 'Cargando el botón de pago…');
-  var box = h('div', { class: 'pp-box' });
-  var wrap = h('div', { class: 'pp-wrap' }, msg, box);
-  setTimeout(function () { payWithPayPal(box, planId, msg); }, 0);
-  return wrap;
+
+  // --- SECCIÓN PAYPAL ---
+  var ppContainer = h('div', { style: 'margin-top:6px' });
+  var ppMsg = h('p', { class: 'hint', style: 'text-align:center;margin:8px 0;font-size:.85rem' }, 'Cargando pasarela de pago segura con PayPal…');
+  var ppBox = h('div', { class: 'pp-box', style: 'min-height:45px' });
+  ppContainer.appendChild(ppMsg);
+  ppContainer.appendChild(ppBox);
+  content.appendChild(ppContainer);
+
+  ensurePpSdk().then(function (sdk) {
+    ppMsg.remove();
+    try {
+      sdk.Buttons({
+        style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 42 },
+        createOrder: function () {
+          errBox.textContent = '';
+          return api('POST', '/api/checkout/paypal/orders', {
+            plan: planId,
+            maxSites: (isAgency ? chosenSites : 1)
+          }).then(function (r) { return r.id; })
+            .catch(function (e) { errBox.textContent = e.message; throw e; });
+        },
+        onApprove: function (data) {
+          return api('POST', '/api/checkout/paypal/orders/' + data.orderID + '/capture', {})
+            .then(function () {
+              m.close();
+              toast('🎉 ¡Pago recibido con éxito! Tu licencia ya está activa.');
+              go('licencias');
+            }).catch(function (e) {
+              errBox.textContent = e.message || 'Error al procesar el pago.';
+            });
+        },
+        onError: function () {
+          errBox.textContent = 'Hubo un problema con PayPal. Puedes reintentar o usar Binance Pay / Cripto.';
+        }
+      }).render(ppBox);
+    } catch (e) {
+      ppMsg.textContent = 'No se pudo mostrar el botón de PayPal.';
+      ppMsg.style.display = '';
+    }
+  }).catch(function (e) {
+    ppMsg.textContent = 'No se pudo cargar PayPal. Puedes pagar con Binance Pay / Cripto abajo.';
+  });
+
+  // --- SECCIÓN CRIPTO / BINANCE PAY ---
+  var cryptoWrap = h('div', { class: 'crypto-wrap', style: 'margin-top:10px' });
+  var cryptoDivider = h('div', { style: 'display:flex;align-items:center;gap:10px;margin:12px 0 10px' },
+    h('div', { style: 'flex:1;height:1px;background:rgba(255,255,255,0.12)' }),
+    h('span', { style: 'font-size:.76rem;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px' }, 'o paga con Criptomonedas'),
+    h('div', { style: 'flex:1;height:1px;background:rgba(255,255,255,0.12)' })
+  );
+  cryptoWrap.appendChild(cryptoDivider);
+
+  var btnCrypto = h('button', {
+    type: 'button',
+    class: 'btn-crypto-pay',
+    style: 'width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#f3ba2f;color:#0b0e11;font-weight:800;font-size:.95rem;padding:12px 20px;border-radius:26px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(243,186,47,0.28);',
+    on: {
+      click: async function () {
+        btnCrypto.disabled = true;
+        btnCrypto.innerHTML = '<span>⏳</span> Conectando con Binance Pay / Cripto…';
+        errBox.textContent = '';
+        try {
+          var r = await api('POST', '/api/checkout/nowpayments/invoice', {
+            plan: planId,
+            maxSites: (isAgency ? chosenSites : 1),
+            email: (S.user && S.user.email) || ''
+          });
+          if (r && r.invoice_url) {
+            window.location.href = r.invoice_url;
+          } else {
+            throw new Error('No se recibió la URL de cobro cripto.');
+          }
+        } catch (x) {
+          btnCrypto.disabled = false;
+          btnCrypto.innerHTML = '<span style="font-size:1.15rem">🟡</span> <span>Pagar con Binance Pay / Cripto (USDT)</span>';
+          errBox.textContent = x.message || 'Error al conectar con la pasarela Cripto.';
+        }
+      }
+    }
+  },
+    h('span', { style: 'font-size:1.15rem' }, '🟡'),
+    h('span', null, 'Pagar con Binance Pay / Cripto (USDT)')
+  );
+  cryptoWrap.appendChild(btnCrypto);
+  cryptoWrap.appendChild(h('p', { class: 'hint', style: 'margin:8px 0 0;font-size:.76rem;color:#8fa0cf;text-align:center' }, '⚡ USDT (TRC-20, BSC) · BTC · ETH · App Binance'));
+  content.appendChild(cryptoWrap);
+
+  // Soporte / Transferencia
+  var altWrap = h('div', { style: 'margin-top:14px;text-align:center;border-top:1px solid rgba(255,255,255,0.08);padding-top:12px' },
+    h('button', {
+      type: 'button',
+      class: 'btn btn-o sm',
+      style: 'font-size:.82rem',
+      on: { click: function () {
+        m.close();
+        S.prefill = { subject: 'Quiero pagar mi plan ' + pl.name, text: 'Hola, quiero activar mi plan ' + pl.name + '. ¿Cómo realizo el pago por transferencia u otra vía?' };
+        go('soporte');
+      } }
+    }, '¿Prefieres coordinar el pago por transferencia? Escríbenos a Soporte')
+  );
+  content.appendChild(altWrap);
+  content.appendChild(errBox);
+
+  return m;
 }
 
 /* ================= Acceso ================= */
@@ -903,7 +1090,14 @@ function head(title, sub, right) { return h('div', { class: 'top' }, h('div', nu
 
 async function boot() {
   try { S.plans = (await api('GET', '/api/plans')).plans; } catch (e) {}
-  try { S.paypal = (await api('GET', '/api/payment/config')).paypal; } catch (e) { S.paypal = null; }
+  try {
+    var pcfg = await api('GET', '/api/payment/config');
+    S.paypal = pcfg.paypal;
+    S.nowpayments = pcfg.nowpayments;
+  } catch (e) {
+    S.paypal = null;
+    S.nowpayments = null;
+  }
   if (!S.user) { var m = await api('GET', '/api/me'); S.user = m.user; }
   if (!S.user) return showAuth();
   shell(); await render();
@@ -1313,10 +1507,12 @@ CV.resumen = async function () {
       cur.overdue ? h('div', { class: 'banner warn', style: 'margin:14px 0 0' }, ico('alert'), h('div', null, 'Tu pago de la suscripción está vencido. Escríbenos para regularizarlo y no perder el monitoreo.')) : null),
     h('div', { class: 'card' }, h('h3', null, 'Qué incluye tu plan'), h('ul', { class: 'list' }, p.features.map(function (f) { return h('li', null, ico('check'), f); })))));
   if (d.level === 'pending' && !hasActiveRescue) root.appendChild(h('div', { class: 'card', style: 'margin-top:16px' }, h('h3', null, 'Activa tu plan'),
-    S.paypal ? h('div', null, h('p', { style: 'margin-bottom:6px' }, 'Paga ahora con PayPal y tu plan queda activo al instante:'), payPalBlock(cur.plan),
-      h('p', { class: 'hint', style: 'margin:12px 0 6px' }, '¿Prefieres otra forma de pago?')) : null,
-    h('p', { style: 'margin-bottom:12px;white-space:pre-line' }, d.paymentText),
-    h('button', { class: 'btn ' + (S.paypal ? 'btn-o' : 'btn-y'), type: 'button', on: { click: function () { S.prefill = { subject: 'Quiero pagar mi plan ' + p.name, text: 'Hola, quiero activar mi plan ' + p.name + '. ¿Cómo realizo el pago?' }; go('soporte'); } } }, 'Preguntar por el pago')));
+    h('p', { style: 'margin-bottom:12px' }, 'Tu plan está pendiente de activación. Paga de forma segura con PayPal o Binance Pay / Cripto para desbloquear la vigilancia continua y tu licencia oficial:'),
+    h('div', { style: 'display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px' },
+      h('button', { class: 'btn btn-y', type: 'button', on: { click: function () { openCheckoutModal(cur.plan, cur); } } }, ico('card'), 'Pagar y Activar ' + (cur.planName || 'Plan')),
+      h('button', { class: 'btn btn-o', type: 'button', on: { click: function () { S.prefill = { subject: 'Quiero pagar mi plan ' + p.name, text: 'Hola, quiero activar mi plan ' + p.name + '. ¿Cómo realizo el pago?' }; go('soporte'); } } }, 'Preguntar por el pago')
+    )
+  ));
   var rowsS = d.sites.map(function (s) { return { cells: [s.host, s.lastScan ? pill(VERDICT[s.lastScan.verdict]) : pill(null, 'Sin analizar'), s.lastScan ? fmtDT(s.lastScan.at) : '—'] }; });
   root.appendChild(h('div', { class: 'grid g2', style: 'margin-top:16px' },
     h('div', { class: 'card' }, h('h3', null, 'Tus sitios', h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { go('sitios'); } } }, 'Administrar')), rowsS.length ? table(['Sitio', 'Estado', 'Último análisis'], rowsS) : h('div', { class: 'empty' }, 'Agrega tu sitio para poder analizarlo.')),
@@ -1513,9 +1709,7 @@ CV.pagos = async function () {
     if (o.plan === 'free' || o.type === 'free' || o.amount === 0) return 'Gratis de por vida';
     if (o.status === 'pending_payment' && (!o.stage || o.stage < 1)) {
       return h('button', { class: 'btn btn-y sm', type: 'button', on: { click: function () {
-        var el = document.getElementById('pay-' + o.id);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        else { S.prefill = { subject: 'Quiero pagar mi plan ' + o.planName, text: 'Hola, quiero activar mi plan ' + o.planName + '. ¿Cómo realizo el pago?' }; go('soporte'); }
+        openCheckoutModal(o.plan, o);
       } } }, 'Pagar');
     }
     return o.type === 'subscription' ? (o.nextBilling ? 'Próximo cobro: ' + fmtDate(o.nextBilling) : '—') : (o.accessUntil ? 'Acceso hasta: ' + fmtDate(o.accessUntil) : (o.stage >= 4 || o.status === 'delivered') ? 'Servicio completado' : 'En proceso');
@@ -1543,17 +1737,14 @@ CV.pagos = async function () {
           h('a', { class: 'btn btn-y sm', href: '/downloads/nexaguard-malware-scanner.zip', download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar Plugin (.zip)'))));
     });
   }
-  var pendientes = d.orders.filter(function (o) { return o.status === 'pending_payment' && (!o.stage || o.stage < 1); });
-  pendientes.forEach(function (o) {
-    var card = h('div', { id: 'pay-' + o.id, class: 'card', style: 'margin-top:12px' }, h('h3', null, 'Pagar ' + o.planName));
-    if (S.paypal) card.appendChild(payPalBlock(o.plan));
-    else card.appendChild(h('p', { class: 'hint' }, d.paymentText));
-    root.appendChild(card);
-  });
   root.appendChild(h('h3', { style: 'margin:22px 0 12px;font-size:1rem' }, 'Pagos registrados'));
   root.appendChild(d.payments.length ? table(['Fecha', 'Monto', 'Método', 'Referencia'], d.payments.map(function (p) { return { cells: [fmtDate(p.at), money(p.amount, p.currency), p.method, p.reference || '—'] }; })) : h('div', { class: 'empty' }, 'Todavía no hay pagos registrados.'));
   root.appendChild(h('h3', { style: 'margin:22px 0 12px;font-size:1rem' }, 'Cambiar o renovar plan'));
-  root.appendChild(h('div', { class: 'grid g3' }, S.plans.map(function (p) { return planCard(p, d.current && d.current.plan === p.id && d.level === 'active', async function (pl) { try { await api('POST', '/api/orders', { plan: pl.id }); toast('Solicitud enviada. Te contactaremos para el pago.'); render(); } catch (e) { toast(e.message); } }, 'Solicitar este plan'); })));
+  root.appendChild(h('div', { class: 'grid g3' }, S.plans.map(function (p) {
+    return planCard(p, d.current && d.current.plan === p.id && d.level === 'active', function (pl) {
+      openCheckoutModal(pl.id);
+    }, 'Adquirir este plan');
+  })));
   return root;
 };
 CV.cuenta = async function () { var r = h('div', null); r.appendChild(head('Mi cuenta', 'Tus datos y tu contraseña.')); r.appendChild(accountView()); return r; };
