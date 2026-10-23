@@ -273,10 +273,15 @@ class NexaGuard_Plugin {
         if (!empty($license['plan_type']) && $license['plan_type'] === 'free') {
             return false;
         }
-        if (!empty($license['plan']) && stripos($license['plan'], 'gratuita') !== false) {
+        if (!empty($license['plan']) && (
+            stripos($license['plan'], 'gratuit') !== false ||
+            stripos($license['plan'], 'community') !== false ||
+            stripos($license['plan'], 'comunitaria') !== false ||
+            stripos($license['plan'], 'free') !== false
+        )) {
             return false;
         }
-        if (strpos($license['key'], 'NEXA-FREE-') === 0 || strpos($license['key'], 'FREE-') === 0) {
+        if (strpos($license['key'], 'NEXA-FREE-') === 0 || strpos($license['key'], 'NXG-FREE-') === 0 || strpos($license['key'], 'FREE-') === 0) {
             return false;
         }
         $days_left = isset($license['days_left']) ? intval($license['days_left']) : 0;
@@ -575,12 +580,12 @@ class NexaGuard_Plugin {
         }
         $site_domain = strtolower(preg_replace('/^www\./i', '', trim(explode(':', (string)$raw_host)[0])));
 
-        if (strpos($license_key, 'NEXA-FREE-') === 0 || strpos($license_key, 'FREE-') === 0) {
+        if (strpos($license_key, 'NEXA-FREE-') === 0 || strpos($license_key, 'NXG-FREE-') === 0 || strpos($license_key, 'FREE-') === 0) {
             $data = array(
                 'valid'             => true,
                 'status'            => 'active',
                 'plan_type'         => 'free',
-                'plan'              => 'Edición Comunitaria Gratuita',
+                'plan'              => 'Plan Gratuito (Community)',
                 'key'               => $license_key,
                 'domain'            => $site_domain,
                 'expires_at'        => null,
@@ -657,13 +662,29 @@ class NexaGuard_Plugin {
             $data = json_decode($body, true);
 
             if ($code === 200 && $data && (!empty($data['valid']) || (isset($data['status']) && $data['status'] === 'expired'))) {
+                $is_free = (!empty($data['plan_type']) && $data['plan_type'] === 'free') ||
+                           (!empty($data['plan']) && (
+                               stripos($data['plan'], 'gratuit') !== false ||
+                               stripos($data['plan'], 'community') !== false ||
+                               stripos($data['plan'], 'comunitaria') !== false ||
+                               stripos($data['plan'], 'free') !== false
+                           )) ||
+                           strpos($license_key, 'NEXA-FREE-') === 0 ||
+                           strpos($license_key, 'NXG-FREE-') === 0 ||
+                           strpos($license_key, 'FREE-') === 0;
+
+                if ($is_free) {
+                    $data['plan_type'] = 'free';
+                    $data['expires_formatted'] = 'Sin Vencimiento (Comunidad)';
+                }
+
                 $data['key'] = $license_key;
                 update_option('nexaguard_license_data', $data);
                 delete_transient('nexaguard_license_sync_lock');
                 delete_transient('nexaguard_license_revoked_notice');
 
-                // Si la licencia es válida y activa, activar automáticamente todas las funciones avanzadas del WAF
-                if (!empty($data['valid']) && (!isset($data['status']) || $data['status'] === 'active' || $data['status'] === 'expiring_soon')) {
+                // Si la licencia es PRO (no gratuita) y activa, activar funciones avanzadas del WAF
+                if (!$is_free && !empty($data['valid']) && (!isset($data['status']) || $data['status'] === 'active' || $data['status'] === 'expiring_soon')) {
                     $pro_settings = wp_parse_args(get_option('nexaguard_settings', array()), array());
                     $pro_settings['waf_enabled']            = true;
                     $pro_settings['anti_clearfake']         = true;

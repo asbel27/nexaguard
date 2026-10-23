@@ -9,6 +9,20 @@ class NexaGuard_Firewall {
         if (empty($license) || empty($license['valid']) || empty($license['key'])) {
             return false;
         }
+        if (!empty($license['plan_type']) && $license['plan_type'] === 'free') {
+            return false;
+        }
+        if (!empty($license['plan']) && (
+            stripos($license['plan'], 'gratuit') !== false ||
+            stripos($license['plan'], 'community') !== false ||
+            stripos($license['plan'], 'comunitaria') !== false ||
+            stripos($license['plan'], 'free') !== false
+        )) {
+            return false;
+        }
+        if (strpos($license['key'], 'NEXA-FREE-') === 0 || strpos($license['key'], 'NXG-FREE-') === 0 || strpos($license['key'], 'FREE-') === 0) {
+            return false;
+        }
         $days_left = isset($license['days_left']) ? intval($license['days_left']) : 0;
         if ((isset($license['status']) && $license['status'] === 'expired') || $days_left <= 0) {
             return false;

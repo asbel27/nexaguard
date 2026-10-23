@@ -11,7 +11,20 @@ $cloud_ver = ($cloud_cache && !empty($cloud_cache['feed_version'])) ? $cloud_cac
 
 $license_data = get_option('nexaguard_license_data', null);
 $has_license = !empty($license_data) && !empty($license_data['key']);
-$is_free_license = $has_license && (!empty($license_data['plan_type']) && $license_data['plan_type'] === 'free' || (!empty($license_data['plan']) && stripos($license_data['plan'], 'gratuita') !== false) || (isset($license_data['key']) && strpos($license_data['key'], 'NEXA-FREE-') === 0));
+$is_free_license = $has_license && (
+    (!empty($license_data['plan_type']) && $license_data['plan_type'] === 'free') ||
+    (!empty($license_data['plan']) && (
+        stripos($license_data['plan'], 'gratuit') !== false ||
+        stripos($license_data['plan'], 'community') !== false ||
+        stripos($license_data['plan'], 'comunitaria') !== false ||
+        stripos($license_data['plan'], 'free') !== false
+    )) ||
+    (!empty($license_data['key']) && (
+        strpos($license_data['key'], 'NEXA-FREE-') === 0 ||
+        strpos($license_data['key'], 'NXG-FREE-') === 0 ||
+        strpos($license_data['key'], 'FREE-') === 0
+    ))
+);
 
 $days_left = ($has_license && !$is_free_license && isset($license_data['days_left'])) ? intval($license_data['days_left']) : 0;
 $is_expired = $has_license && !$is_free_license && (($license_data['status'] === 'expired') || $days_left <= 0);

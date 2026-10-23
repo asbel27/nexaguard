@@ -852,13 +852,15 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const pay = { id: id('pay'), userId: o.userId, orderId: o.id, amount: Math.round(amount * 100) / 100, currency: currency || p.currency, method: method || 'manual', reference: reference || '', at: T(), by: by || 'sistema' };
     db.payments.push(pay);
     if (!o.licenseKey) {
-      const pfx = (p && p.id === 'agency') || (o.maxSites && o.maxSites > 1)
-        ? 'NXG-AGENCY'
-        : ((p && p.type === 'subscription')
-          ? 'NXG-PRO'
-          : (p && p.id === 'blindaje'
-            ? 'NXG-ANNUAL'
-            : (p && (p.id === 'free' || p.type === 'free') ? 'NEXA-FREE' : 'NXG-LIC')));
+      const pfx = (p && (p.id === 'free' || p.type === 'free' || o.plan === 'free'))
+        ? 'NXG-FREE'
+        : ((p && p.id === 'agency') || (o.maxSites && o.maxSites > 1)
+          ? 'NXG-AGENCY'
+          : ((p && p.type === 'subscription')
+            ? 'NXG-PRO'
+            : (p && p.id === 'blindaje'
+              ? 'NXG-ANNUAL'
+              : 'NXG-LIC')));
       o.licenseKey = pfx + '-' + crypto.randomBytes(3).toString('hex').toUpperCase() + '-' + crypto.randomBytes(3).toString('hex').toUpperCase();
     }
     if (o.status === 'pending_payment') {
@@ -1284,34 +1286,40 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const isExpired = exp.isExpired;
     const isExpiringSoon = exp.isExpiringSoon;
     const status = exp.licenseStatus;
+    const isFree = (order.plan === 'free') || (planObj && (planObj.id === 'free' || planObj.type === 'free')) || key.includes('FREE');
     const planName = planObj ? planObj.name : (isAnnual ? 'Licencia Anual (1 Año) · NexaGuard Pro' : 'Plan NexaGuard Security Pro (Mensual)');
 
     // Firma criptográfica HMAC-SHA256 contra manipulación de respuesta en Burp Suite
     const hmacSecret = cfg.adminPassword || 'nexaguard-vault-integrity-key-2026';
-    const sigPayload = `${key}:${domain}:${status}:${expiresAt}`;
+    const sigPayload = `${key}:${domain}:${isFree ? 'active' : status}:${isFree ? 'lifetime' : expiresAt}`;
     const signature = crypto.createHmac('sha256', hmacSecret).update(sigPayload).digest('hex');
 
     send(res, 200, {
       valid: !isExpired,
-      status,
+      status: isFree ? 'active' : status,
+      plan_type: isFree ? 'free' : 'pro',
       plan: planName,
-      period: isAnnual ? 'annual' : 'monthly',
-      expires_at: expiresAt,
-      expires_formatted: new Date(expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-      days_left: daysLeft,
+      period: isFree ? 'lifetime' : (isAnnual ? 'annual' : 'monthly'),
+      expires_at: isFree ? null : expiresAt,
+      expires_formatted: isFree ? 'Sin Vencimiento (Comunidad)' : new Date(expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      days_left: isFree ? 99999 : daysLeft,
       domain: domain,
       signature: signature,
-      notice: isExpired
-        ? 'Tu suscripción a NexaGuard Security Pro ha vencido. Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
-        : isExpiringSoon
-          ? 'Atención: Tu suscripción a NexaGuard Security Pro vencerá en ' + daysLeft + ' días. Renueva a tiempo en nexaguards.com para mantener el escudo activo.'
-          : 'Licencia activa y sincronizada con NexaGuard Threat Cloud en ' + domain + '.',
-      message: isExpired
-        ? 'Tu suscripción a NexaGuard Security Pro ha vencido. Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
-        : 'Licencia activa y sincronizada con NexaGuard Threat Cloud en ' + domain + '.',
+      notice: isFree
+        ? 'Licencia Comunitaria Gratuita activa en ' + domain + '.'
+        : (isExpired
+          ? 'Tu suscripción a NexaGuard Security Pro ha vencido. Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
+          : isExpiringSoon
+            ? 'Atención: Tu suscripción a NexaGuard Security Pro vencerá en ' + daysLeft + ' días. Renueva a tiempo en nexaguards.com para mantener el escudo activo.'
+            : 'Licencia PRO activa y sincronizada con NexaGuard Threat Cloud en ' + domain + '.'),
+      message: isFree
+        ? 'Licencia Comunitaria Gratuita activa en ' + domain + '.'
+        : (isExpired
+          ? 'Tu suscripción a NexaGuard Security Pro ha vencido. Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
+          : 'Licencia PRO activa y sincronizada con NexaGuard Threat Cloud en ' + domain + '.'),
       renew_url: 'https://www.nexaguards.com/#planes',
       features: {
-        vigilance_24h: !isExpired,
+        vigilance_24h: !isFree && !isExpired,
         deep_clean: true,
         cloud_intel: !isExpired
       }

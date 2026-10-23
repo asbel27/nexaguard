@@ -223,7 +223,7 @@ jQuery(document).ready(function ($) {
             if (typeof fetchAndRenderRealThreatLogs === 'function') {
                 fetchAndRenderRealThreatLogs();
             }
-            if (typeof startRadarTerminalStream === 'function' && $('#vigilance-radar-box').hasClass('radar-scanning')) {
+            if (nexaguardData && nexaguardData.is_pro && typeof startRadarTerminalStream === 'function' && $('#vigilance-radar-box').hasClass('radar-scanning')) {
                 startRadarTerminalStream();
             }
         }
@@ -1058,11 +1058,11 @@ jQuery(document).ready(function ($) {
             if (nexaguardData.is_pro) {
                 $('#radar-status-text').html('🟢 Vigilancia perimetral 24/7 con NexaGuard Cloud Radar activada.');
                 $('#radar-status-sub').text('NexaGuard Cloud Radar supervisa continuamente inyecciones PHP, cambios en archivos y peticiones maliciosas.');
+                startRadarTerminalStream();
             } else {
                 $('#radar-status-text').html('🟢 Vigilancia automática activa en tu servidor (auditoría programada diaria).');
                 $('#radar-status-sub').text('Tu sitio ejecuta auditorías automáticas de integridad vía WP-Cron.');
             }
-            startRadarTerminalStream();
         } else {
             $btn.removeClass('is-active').attr('data-active', '0');
             $('#v-toggle-label').text('ACTIVAR VIGILANCIA');
@@ -1775,8 +1775,8 @@ jQuery(document).ready(function ($) {
     // Inicializar estado del control de volumen al cargar
     updateRadarVolumeUI();
 
-    // Auto-iniciar telemetría si el radar ya está activo al cargar
-    if ($('#vigilance-radar-box').hasClass('radar-scanning')) {
+    // Auto-iniciar telemetría si el radar ya está activo al cargar (sólo en modo PRO)
+    if (nexaguardData && nexaguardData.is_pro && $('#vigilance-radar-box').hasClass('radar-scanning')) {
         startRadarTerminalStream();
     } else {
         fetchAndRenderRealThreatLogs();
