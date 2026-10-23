@@ -1760,8 +1760,8 @@ function renderComposerLiveFeed() {
       <div class="feed-card-body" onclick="openFacebookPreviewModalById('${post.id}')" title="Haz clic para ver la vista previa idéntica a Facebook e Instagram">
         <div class="feed-card-header">
           <span class="feed-card-title">${escapeHtml(post.title || 'Publicación')}</span>
-          <span class="feed-card-badge ${isPublished ? 'badge-published' : 'badge-ready'}">
-            ${isPublished ? '✓ Publicado en FB' : '● Listo para Publicar'}
+          <span class="feed-card-badge ${post.status === 'pending_approval' ? 'badge-pending' : (isPublished ? 'badge-published' : 'badge-ready')}" style="${post.status === 'pending_approval' ? 'background:rgba(255,207,51,.2);color:#ffcf33;border:1px solid rgba(255,207,51,.4)' : ''}">
+            ${post.status === 'pending_approval' ? '⏳ En Revisión (Admin FB)' : (isPublished ? '✓ Publicado en FB' : '● Listo para Publicar')}
           </span>
         </div>
         <div class="feed-card-target">
@@ -1911,9 +1911,12 @@ function renderCreatedPosts() {
     card.className = 'created-post-card';
 
     const isPublished = post.status === 'published';
-    const statusTag = isPublished 
-      ? '<span class="tag-badge tag-published">✓ Publicado en FB</span>' 
-      : '<span class="tag-badge tag-ready">● Listo</span>';
+    const isPending = post.status === 'pending_approval';
+    const statusTag = isPending
+      ? '<span class="tag-badge tag-warn" style="background:rgba(255,207,51,.2);color:#ffcf33;border:1px solid rgba(255,207,51,.4)">⏳ En Revisión (Admin FB)</span>'
+      : (isPublished 
+          ? '<span class="tag-badge tag-published">✓ Publicado en FB</span>' 
+          : '<span class="tag-badge tag-ready">● Listo</span>');
     
     const catTag = `<span class="tag-badge tag-category">${escapeHtml(post.category || 'General')}</span>`;
     const targetGroup = escapeHtml(post.groupName || 'Grupo de Facebook');

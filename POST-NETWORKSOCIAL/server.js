@@ -574,7 +574,7 @@ app.post('/api/posts/:id/publish', async (req, res) => {
     });
 
     const finalPostUrl = postResult.postUrl || groupUrl;
-    post.status = postResult.ok ? 'published' : 'failed';
+    post.status = postResult.ok ? (postResult.pendingApproval ? 'pending_approval' : 'published') : 'failed';
     post.postUrl = finalPostUrl;
     post.updatedAt = new Date().toISOString();
     writeJson('posts.json', posts);

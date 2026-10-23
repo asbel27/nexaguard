@@ -345,51 +345,84 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     }
 
     onLog('✨ Clic en "Publicar" ejecutado.');
-    onLog('⏳ Esperando confirmación de Facebook y renderizado en el feed...');
-    await sleep(randomDelay(6000, 9000));
+    onLog('⏳ Esperando confirmación de Facebook...');
 
-    // 7. Comprobar si el grupo requiere aprobación previa de administradores
-    const approvalStatus = await page.evaluate(() => {
-      const bodyText = (document.body.innerText || '').toLowerCase();
-      return (
-        bodyText.includes('aprobación') ||
-        bodyText.includes('enviado a los administradores') ||
-        bodyText.includes('pending approval') ||
-        bodyText.includes('submitted to admin')
-      );
-    });
-
+    // 7. Monitorear de inmediato las alertas y toasts de confirmación / moderación
+    let approvalStatus = false;
     let postDirectUrl = cleanGroupUrl;
     let postMessageText = 'Publicado exitosamente en el grupo.';
 
-    if (approvalStatus) {
-      onLog('⏳ [MODERACIÓN] Este grupo tiene aprobación obligatoria activada. Tu post quedó enviado y está a la espera de que los administradores lo aprueben.');
-      postMessageText = 'Enviado a Facebook. Pendiente de aprobación por los administradores del grupo.';
-      result.pendingApproval = true;
-      postDirectUrl = cleanGroupUrl;
-    } else {
-      // Si se publica de inmediato, buscar el enlace directo del post nuevo
-      try {
-        const detected = await page.evaluate((fallbackUrl, msgSnippet) => {
+    const snippet = (finalMessage || '').slice(0, 35).toLowerCase().trim();
+
+    // Polling durante los primeros 8 segundos para detectar el toast de aprobación antes de que desaparezca
+    for (let step = 0; step < 8; step++) {
+      const check = await page.evaluate((snip) => {
+        const bodyText = (document.body ? (document.body.innerText || '') + ' ' + (document.body.textContent || '') : '').toLowerCase();
+        const norm = bodyText.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        const isApproval = (
+          norm.includes('aprobacion') ||
+          norm.includes('enviado a los administradores') ||
+          norm.includes('administrador del grupo') ||
+          norm.includes('administradores del grupo') ||
+          norm.includes('pending approval') ||
+          norm.includes('submitted to admin') ||
+          norm.includes('publicacion pendiente') ||
+          norm.includes('tu publicacion se ha enviado')
+        );
+
+        // Buscar si el post ya aparece en el feed con nuestro texto exacto
+        let foundUrl = null;
+        if (snip) {
           const postsContainers = Array.from(document.querySelectorAll('div[role="feed"] > div, div[data-pagelet*="FeedUnit"], div[role="article"]'));
           for (const box of postsContainers) {
             const text = (box.innerText || '').toLowerCase();
-            if (msgSnippet && text.includes(msgSnippet.toLowerCase())) {
+            if (text.includes(snip)) {
+              const link = box.querySelector('a[href*="/posts/"], a[href*="/permalink/"]');
+              if (link && link.href) {
+                foundUrl = link.href.split('?')[0];
+                break;
+              }
+            }
+          }
+        }
+
+        return { isApproval, foundUrl };
+      }, snippet);
+
+      if (check.isApproval) {
+        approvalStatus = true;
+        break;
+      }
+      if (check.foundUrl) {
+        postDirectUrl = check.foundUrl;
+        break;
+      }
+      await sleep(1000);
+    }
+
+    if (approvalStatus) {
+      onLog('⏳ [MODERACIÓN DETECTADA] Este grupo requiere aprobación de administradores. Tu post quedó enviado y está en la cola de revisión.');
+      postMessageText = 'Enviado a Facebook. Pendiente de aprobación por los administradores del grupo.';
+      result.pendingApproval = true;
+      postDirectUrl = cleanGroupUrl.replace(/\/+$/, '') + '/pending_posts';
+    } else if (postDirectUrl === cleanGroupUrl) {
+      // Si no detectó aprobación ni encontró el post específico, intentar una última vez buscar el contenedor con nuestro texto
+      try {
+        const detected = await page.evaluate((fallbackUrl, snip) => {
+          if (!snip) return fallbackUrl;
+          const articles = Array.from(document.querySelectorAll('div[role="feed"] > div, div[role="article"]'));
+          for (const box of articles) {
+            const text = (box.innerText || '').toLowerCase();
+            if (text.includes(snip)) {
               const link = box.querySelector('a[href*="/posts/"], a[href*="/permalink/"]');
               if (link && link.href) return link.href.split('?')[0];
             }
           }
-
-          const links = Array.from(document.querySelectorAll('a[href*="/posts/"], a[href*="/permalink/"]'));
-          for (const a of links) {
-            const href = a.href || '';
-            if (href && (href.includes('/posts/') || href.includes('/permalink/'))) {
-              return href.split('?')[0];
-            }
-          }
+          // NUNCA devolver un link aleatorio de otro usuario
           return fallbackUrl;
-        }, cleanGroupUrl, (finalMessage || '').slice(0, 30));
-        if (detected) postDirectUrl = detected;
+        }, cleanGroupUrl, snippet);
+        postDirectUrl = detected;
       } catch (eDet) {}
     }
 
