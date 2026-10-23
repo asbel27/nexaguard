@@ -1357,17 +1357,20 @@ CV.licencias = async function () {
 
   // Tarjetas de Licencias
   licOrders.forEach(function (o) {
+    var isFree = o.plan === 'free' || o.type === 'free' || o.amount === 0 || (o.licenseKey && o.licenseKey.indexOf('FREE') !== -1);
     var cDoms = (o.activatedDomains && o.activatedDomains.length) ? o.activatedDomains : (o.activatedDomain ? [o.activatedDomain] : []);
     var maxS = o.maxSites || 1;
     var domainText = cDoms.length
       ? h('span', { class: 'pill ok', style: 'font-size:.8rem' }, '🌐 Activa en: ' + cDoms.join(', ') + ' (' + cDoms.length + '/' + maxS + ' sitios)')
       : h('span', { class: 'pill info', style: 'font-size:.8rem' }, '🌐 Disponible para vincular (0/' + maxS + ' sitios)');
 
-    var expBadge = o.isExpired
-      ? h('span', { class: 'pill crit' }, 'Vencida (' + o.expiresFormatted + ')')
-      : o.isExpiringSoon
-        ? h('span', { class: 'pill warn' }, '⚠️ Vence en ' + o.daysLeft + ' día(s)')
-        : h('span', { class: 'pill ok' }, 'Activa · ' + o.daysLeft + ' días restantes');
+    var expBadge = isFree
+      ? h('span', { class: 'pill ok' }, '🌱 Plan Gratuito (Comunidad) · Sin vencimiento')
+      : (o.isExpired
+        ? h('span', { class: 'pill crit' }, 'Vencida (' + o.expiresFormatted + ')')
+        : o.isExpiringSoon
+          ? h('span', { class: 'pill warn' }, '⚠️ Vence en ' + o.daysLeft + ' día(s)')
+          : h('span', { class: 'pill ok' }, 'Activa · ' + o.daysLeft + ' días restantes'));
 
     var card = h('div', { class: 'card', style: 'margin-bottom:18px;border:1px solid rgba(255,207,51,.35);background:rgba(255,207,51,.03)' },
       h('div', { style: 'display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:12px' },
@@ -1378,8 +1381,8 @@ CV.licencias = async function () {
             maxS > 1 ? h('span', { class: 'pill info' }, 'Multisitio') : null),
           h('h3', { style: 'color:#fff;margin:0 0 4px;font-size:1.15rem' }, o.planName),
           h('p', { class: 'hint', style: 'margin:0;font-size:.85rem' },
-            'Comprada el ' + fmtDate(o.paidAt || o.createdAt) +
-            (o.expiresFormatted ? ' · Vence: ' + o.expiresFormatted : ''))),
+            (isFree ? 'Activada el ' : 'Comprada el ') + fmtDate(o.paidAt || o.createdAt) +
+            (isFree ? ' · Vigencia: Gratis para siempre' : (o.expiresFormatted ? ' · Vence: ' + o.expiresFormatted : '')))),
         h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
           h('button', {
             class: 'btn btn-y sm',
@@ -1507,6 +1510,7 @@ CV.pagos = async function () {
   root.appendChild(head('Plan y pagos', 'Tus pedidos, pagos registrados y opciones de plan.'));
   root.appendChild(h('h3', { style: 'margin-bottom:12px;font-size:1rem' }, 'Pedidos'));
   var detailCell = function (o) {
+    if (o.plan === 'free' || o.type === 'free' || o.amount === 0) return 'Gratis de por vida';
     if (o.status === 'pending_payment' && (!o.stage || o.stage < 1)) {
       return h('button', { class: 'btn btn-y sm', type: 'button', on: { click: function () {
         var el = document.getElementById('pay-' + o.id);
@@ -1520,12 +1524,19 @@ CV.pagos = async function () {
   var licOrders = d.orders.filter(function (o) { return o.licenseKey; });
   if (licOrders.length) {
     licOrders.forEach(function (o) {
+      var isFree = o.plan === 'free' || o.type === 'free' || o.amount === 0 || (o.licenseKey && o.licenseKey.indexOf('FREE') !== -1);
+      var badgeText = isFree ? '🌱 Licencia Comunitaria Asignada' : '⭐ Licencia PRO Asignada';
+      var badgeClass = isFree ? 'pill info' : 'pill ok';
+      var hintText = isFree
+        ? 'Usa esta clave en tu WordPress dentro de NexaGuard Security para activar el escáner forense y el firewall WAF básico:'
+        : 'Usa esta clave en tu WordPress dentro de NexaGuard Security para desbloquear la Vigilancia 24 Horas:';
+
       root.appendChild(h('div', { class: 'card', style: 'border:1px solid rgba(255,207,51,.35);background:rgba(255,207,51,.04);margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px' },
         h('div', null,
           h('div', { style: 'display:flex;align-items:center;gap:8px;margin-bottom:4px' },
-            h('span', { class: 'pill ok' }, '🔑 Licencia PRO Asignada'),
+            h('span', { class: badgeClass }, badgeText),
             h('b', { style: 'color:#fff' }, o.planName)),
-          h('p', { class: 'hint', style: 'margin:2px 0 6px;font-size:.85rem' }, 'Usa esta clave en tu WordPress dentro de NexaGuard Security para desbloquear la Vigilancia 24 Horas:'),
+          h('p', { class: 'hint', style: 'margin:2px 0 6px;font-size:.85rem' }, hintText),
           h('code', { style: 'font-family:var(--fm);color:var(--yellow);background:rgba(255,207,51,.12);padding:4px 10px;border-radius:6px;font-size:.95rem;border:1px solid rgba(255,207,51,.25);cursor:pointer', title: 'Clic para copiar clave', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada: ' + o.licenseKey); } } }, o.licenseKey)),
         h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
           h('button', { class: 'btn btn-o sm', type: 'button', on: { click: function () { copy(o.licenseKey, this); toast('Clave copiada al portapapeles'); } } }, 'Copiar Clave'),
