@@ -10,7 +10,7 @@ const express = require('express');
 const multer = require('multer');
 const { exec } = require('child_process');
 
-const { findChromePath, openInteractiveSession, checkLoginStatus } = require('./engine/browser');
+const { findChromePath, openInteractiveSession, checkLoginStatus, closeInteractiveWindow } = require('./engine/browser');
 const { parseSpintax, countSpintaxVariations } = require('./engine/spintax');
 const { TEMPLATES } = require('./engine/templates');
 const { postToFacebookGroup } = require('./engine/facebook-poster');
@@ -123,6 +123,11 @@ app.get('/api/status', async (req, res) => {
     chromeFound: !!chromePath,
     chromePath: chromePath || 'No detectado',
     profileExists: loginInfo.profileExists,
+    facebookLoggedIn: !!loginInfo.facebookLoggedIn,
+    facebookUserId: loginInfo.facebookUserId || null,
+    instagramLoggedIn: !!loginInfo.instagramLoggedIn,
+    activeWindow: !!loginInfo.activeWindow,
+    statusText: loginInfo.statusText,
     userDataDir: loginInfo.userDataDir,
     activeCampaign: {
       running: activeCampaign.running,
@@ -133,7 +138,27 @@ app.get('/api/status', async (req, res) => {
   });
 });
 
-// 1.1 Configuración General Anti-Ban
+// 1.1 Verificación precisa de sesión y estado en vivo
+app.get('/api/session/verify', async (req, res) => {
+  try {
+    const status = await checkLoginStatus();
+    res.json({ ok: true, ...status });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// 1.2 Cerrar ventana de inicio de sesión
+app.post('/api/session/window/close', async (req, res) => {
+  try {
+    const result = await closeInteractiveWindow();
+    res.json({ ok: true, ...result });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// 1.3 Configuración General Anti-Ban
 app.get('/api/settings', (req, res) => {
   const settings = readJson('settings.json', {
     minDelaySeconds: 45,
@@ -157,10 +182,17 @@ app.post('/api/settings', (req, res) => {
 
 // 2. Abrir Navegador Interactivo para Iniciar Sesión (FB / IG)
 app.post('/api/browser/open', async (req, res) => {
-  const target = req.body.platform === 'instagram' ? 'https://www.instagram.com/' : 'https://www.facebook.com/';
+  const platform = req.body.platform || 'facebook';
+  const target = platform === 'instagram' ? 'https://www.instagram.com/accounts/login/' : 'https://www.facebook.com/login.php';
   try {
-    await openInteractiveSession(target);
-    res.json({ ok: true, message: `Navegador abierto en ${target}. Inicia sesión con tus credenciales y cierra la ventana cuando termines.` });
+    const result = await openInteractiveSession(target, platform);
+    res.json({
+      ok: true,
+      platform,
+      url: target,
+      message: `Ventana de ${platform.toUpperCase()} abierta en tu pantalla. Ingresa tus credenciales para vincular la cuenta automáticamente.`,
+      ...result
+    });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }

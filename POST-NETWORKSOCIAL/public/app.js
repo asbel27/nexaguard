@@ -117,12 +117,19 @@ async function loadStatus() {
 
       const sessionBadge = document.getElementById('sessionBadge');
       const sessionText = document.getElementById('sessionText');
-      if (data.profileExists) {
-        sessionBadge.querySelector('.status-dot').className = 'status-dot green';
-        sessionText.textContent = 'Perfil Sesión Activo';
-      } else {
-        sessionBadge.querySelector('.status-dot').className = 'status-dot yellow';
-        sessionText.textContent = 'Requiere Login Inicial';
+      const sessionDot = document.getElementById('sessionDot') || sessionBadge?.querySelector('.status-dot');
+      if (sessionBadge && sessionText) {
+        if (data.facebookLoggedIn) {
+          if (sessionDot) sessionDot.className = 'status-dot green';
+          sessionText.textContent = data.facebookUserId ? `FB: Conectado (${data.facebookUserId})` : 'FB: Conectado';
+          sessionBadge.title = 'Cuenta de Facebook vinculada y lista para publicar (Clic para ver detalles)';
+          sessionBadge.style.borderColor = 'rgba(0, 255, 170, 0.4)';
+        } else {
+          if (sessionDot) sessionDot.className = 'status-dot red';
+          sessionText.textContent = 'FB: No Vinculado';
+          sessionBadge.title = 'Haz clic para abrir la ventana de Facebook e iniciar sesión';
+          sessionBadge.style.borderColor = 'rgba(255, 75, 75, 0.4)';
+        }
       }
 
       if (data.activeCampaign && data.activeCampaign.running) {
@@ -580,12 +587,18 @@ async function generateVideoFromGeminiModal() {
   }
 }
 
-// 3. Abrir Ventana de Inicio de Sesión
-async function openLoginWindow(platform) {
-  try {
-    appendTerminalLog('info', `[SISTEMA] Abriendo navegador para iniciar sesión en ${platform.toUpperCase()}...`);
-    showToast(`Abriendo Google Chrome en ${platform.toUpperCase()}... Por favor espera un instante.`, 'info', 4000);
+// 3. Abrir Ventana de Inicio de Sesión y Vinculación
+let fbSyncInterval = null;
 
+async function openLoginWindow(platform = 'facebook') {
+  if (platform === 'facebook') {
+    openFbLinkModal();
+  } else {
+    showToast(`Abriendo ventana de ${platform.toUpperCase()}...`, 'info', 3000);
+  }
+
+  try {
+    appendTerminalLog('info', `[SISTEMA] Abriendo ventana oficial de ${platform.toUpperCase()} para autenticación...`);
     const res = await fetch('/api/browser/open', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -593,16 +606,121 @@ async function openLoginWindow(platform) {
     });
     const data = await res.json();
     if (data.ok) {
-      appendTerminalLog('success', `[SISTEMA] ¡Ventana de Google Chrome abierta para ${platform.toUpperCase()}!`);
-      appendTerminalLog('step', `[INSTRUCCIÓN] Ingresa tus datos en la ventana de Chrome que apareció en pantalla. Al iniciar sesión, tus cookies y perfil quedan guardados permanentemente.`);
-      showToast(`¡Ventana de Google Chrome abierta! Ingresa tus credenciales en ${platform.toUpperCase()} y al iniciar sesión tus credenciales quedarán guardadas automáticamente.`, 'success', 9000);
+      appendTerminalLog('success', `[SISTEMA] ¡Ventana de ${platform.toUpperCase()} abierta en tu escritorio!`);
+      showToast(`¡Ventana de ${platform.toUpperCase()} abierta! Ingresa tus credenciales en la ventana para vincular tu cuenta.`, 'success', 7000);
+      if (platform === 'facebook') {
+        startFbSessionPolling();
+      }
       loadStatus();
     } else {
-      showToast('Error al abrir navegador: ' + data.error, 'error', 6000);
+      showToast('Error al abrir ventana: ' + data.error, 'error', 6000);
     }
   } catch (e) {
-    showToast('No se pudo abrir el navegador: ' + e.message, 'error', 6000);
+    showToast('No se pudo abrir la ventana: ' + e.message, 'error', 6000);
   }
+}
+
+function openFbLinkModal() {
+  const modal = document.getElementById('fbLinkModal');
+  if (modal) modal.classList.add('active');
+  checkFbSessionNow();
+}
+
+function closeFbLinkModal() {
+  const modal = document.getElementById('fbLinkModal');
+  if (modal) modal.classList.remove('active');
+  if (fbSyncInterval) {
+    clearInterval(fbSyncInterval);
+    fbSyncInterval = null;
+  }
+}
+
+async function reopenFbWindow() {
+  showToast('Enfocando ventana de Facebook...', 'info', 2000);
+  try {
+    await fetch('/api/browser/open', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform: 'facebook' })
+    });
+    startFbSessionPolling();
+  } catch (e) {}
+}
+
+async function checkFbSessionNow() {
+  const syncText = document.getElementById('fbSyncStatusText');
+  if (syncText) syncText.textContent = 'Verificando sesión en Facebook...';
+  try {
+    const res = await fetch('/api/session/verify');
+    const data = await res.json();
+    if (data.ok) {
+      updateFbLinkModalState(data);
+      loadStatus();
+    }
+  } catch (e) {}
+}
+
+function startFbSessionPolling() {
+  if (fbSyncInterval) clearInterval(fbSyncInterval);
+  fbSyncInterval = setInterval(async () => {
+    try {
+      const res = await fetch('/api/session/verify');
+      const data = await res.json();
+      if (data.ok) {
+        updateFbLinkModalState(data);
+        if (data.facebookLoggedIn) {
+          clearInterval(fbSyncInterval);
+          fbSyncInterval = null;
+          loadStatus();
+          showToast('🎉 ¡Cuenta de Facebook vinculada con éxito!', 'success', 5000);
+        }
+      }
+    } catch (e) {}
+  }, 2500);
+}
+
+function updateFbLinkModalState(data) {
+  const waitingSec = document.getElementById('fbLinkWaitingSection');
+  const successSec = document.getElementById('fbLinkSuccessSection');
+  const badge = document.getElementById('fbModalStatusBadge');
+  const syncText = document.getElementById('fbSyncStatusText');
+  const userDisplay = document.getElementById('fbUserIdDisplay');
+
+  if (data.facebookLoggedIn) {
+    if (waitingSec) waitingSec.style.display = 'none';
+    if (successSec) successSec.style.display = 'block';
+    if (badge) {
+      badge.textContent = 'Vinculado';
+      badge.style.background = 'rgba(0, 255, 170, 0.2)';
+      badge.style.color = '#00ffaa';
+      badge.style.borderColor = '#00ffaa';
+    }
+    if (userDisplay) {
+      userDisplay.textContent = data.facebookUserId ? `ID: ${data.facebookUserId} (Sesión Activa)` : 'Sesión Activa & Verificada';
+    }
+  } else {
+    if (waitingSec) waitingSec.style.display = 'block';
+    if (successSec) successSec.style.display = 'none';
+    if (badge) {
+      badge.textContent = 'Esperando Sesión';
+      badge.style.background = 'rgba(255, 184, 0, 0.2)';
+      badge.style.color = '#ffb800';
+      badge.style.borderColor = '#ffb800';
+    }
+    if (syncText) {
+      syncText.textContent = data.activeWindow
+        ? 'Ventana abierta. Esperando que inicies sesión en Facebook...'
+        : 'Haz clic en "Enfocar / Reabrir Ventana" para iniciar sesión';
+    }
+  }
+}
+
+async function closeFbWindowFromModal() {
+  try {
+    await fetch('/api/session/window/close', { method: 'POST' });
+    showToast('Ventana de Facebook cerrada. Tu sesión permanece vinculada.', 'info', 3000);
+    closeFbLinkModal();
+  } catch (e) {}
 }
 
 // 4. Detección Automática de Grupos Vinculados
@@ -624,7 +742,12 @@ async function triggerDetectGroups() {
       renderGroupsTable();
       renderComposerChecklist();
     } else {
-      alert('Error al detectar grupos: ' + data.error);
+      if (data.error && data.error.includes('No has iniciado sesión')) {
+        showToast('⚠️ Primero debes iniciar sesión en Facebook.', 'warning', 5000);
+        openLoginWindow('facebook');
+      } else {
+        alert('Error al detectar grupos: ' + data.error);
+      }
     }
   } catch (err) {
     alert('Error al conectar con el detector: ' + err.message);
