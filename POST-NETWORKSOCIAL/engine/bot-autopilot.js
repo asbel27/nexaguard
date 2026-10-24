@@ -17,6 +17,7 @@ const { isWithinOptimalHours, OPTIMAL_HOURS } = require('./scheduler');
 const { BANNER_PRESETS, generateMarketingBanner, generateMarketingVideo } = require('./image-generator');
 const { getGeminiApiKey, generateGeminiPost, generateGeminiCreativeConcept } = require('./gemini-client');
 const { scanAllActivePostsAndReply } = require('./comment-responder');
+const { auditAllRecentPosts } = require('./group-moderator');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -42,6 +43,7 @@ class BotAutopilot {
     this.enabled = false;
     this.timer = null;
     this.commentTimer = null;
+    this.moderationTimer = null;
     this.state = 'STOPPED'; // STOPPED, WAITING_HOURS, WAITING_INTERVAL, POSTING, QUOTA_REACHED
     this.nextRunTimestamp = null;
     this.nextGroupIndex = 0;
@@ -78,6 +80,21 @@ class BotAutopilot {
         }
       } catch (e) {}
     }, 15 * 60 * 1000);
+  }
+
+  startModerationMonitor() {
+    if (this.moderationTimer) clearInterval(this.moderationTimer);
+    // Cada 20 minutos audita publicaciones recientes para limpiar grupos que hayan rechazado/suprimido
+    this.moderationTimer = setInterval(async () => {
+      if (!this.enabled) return;
+      try {
+        const settings = readJson('settings.json', {});
+        if (settings.autoLeaveOnRejection !== false) {
+          this.log('🛡️ [AUDITOR DE MODERACIÓN] Verificando estado de publicaciones en grupos para depuración...', 'info');
+          await auditAllRecentPosts({ onLog: (msg) => this.log(msg) });
+        }
+      } catch (e) {}
+    }, 20 * 60 * 1000);
   }
 
   getStatus() {
@@ -134,6 +151,7 @@ class BotAutopilot {
     writeJson('settings.json', settings);
 
     this.startCommentMonitor();
+    this.startModerationMonitor();
     this.scheduleNextAction(15000); // Primera comprobación en 15 segundos
   }
 
@@ -147,6 +165,10 @@ class BotAutopilot {
     if (this.commentTimer) {
       clearInterval(this.commentTimer);
       this.commentTimer = null;
+    }
+    if (this.moderationTimer) {
+      clearInterval(this.moderationTimer);
+      this.moderationTimer = null;
     }
     this.nextRunTimestamp = null;
     this.log('🛑 Piloto Automático DETENIDO.', 'warn');
@@ -202,9 +224,16 @@ class BotAutopilot {
       return;
     }
 
-    // 3. Obtener grupos activos
+    // 3. Obtener grupos activos (excluyendo terminantemente grupos en Lista Negra)
     const allGroups = readJson('groups.json', []);
-    const activeGroups = allGroups.filter(g => g.enabled);
+    const activeGroups = allGroups.filter(g => g.enabled && !g.blacklisted);
+
+    // Priorizar grupos verificados en Lista Blanca (administradores amigables)
+    activeGroups.sort((a, b) => {
+      if (a.whitelisted && !b.whitelisted) return -1;
+      if (!a.whitelisted && b.whitelisted) return 1;
+      return 0;
+    });
 
     if (activeGroups.length === 0) {
       this.state = 'NO_GROUPS';

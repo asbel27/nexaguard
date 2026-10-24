@@ -177,6 +177,8 @@ async function loadSettings() {
       if (document.getElementById('settingChromePath')) document.getElementById('settingChromePath').value = s.chromePath || '';
       if (document.getElementById('settingSimulateTyping')) document.getElementById('settingSimulateTyping').checked = s.simulateTyping !== false;
       if (document.getElementById('settingScreenshots')) document.getElementById('settingScreenshots').checked = s.takeScreenshots !== false;
+      if (document.getElementById('settingAutoLeaveOnRejection')) document.getElementById('settingAutoLeaveOnRejection').checked = s.autoLeaveOnRejection !== false;
+      if (document.getElementById('settingAutoLeaveOnPendingApproval')) document.getElementById('settingAutoLeaveOnPendingApproval').checked = !!s.autoLeaveOnPendingApproval;
       if (document.getElementById('settingGeminiApiKey') && s.geminiApiKey) {
         document.getElementById('settingGeminiApiKey').value = s.geminiApiKey;
       }
@@ -200,7 +202,9 @@ async function saveSettings() {
       dailyLimit: parseInt(document.getElementById('settingDailyLimit')?.value, 10) || 25,
       chromePath: (document.getElementById('settingChromePath')?.value || '').trim(),
       simulateTyping: document.getElementById('settingSimulateTyping')?.checked !== false,
-      takeScreenshots: document.getElementById('settingScreenshots')?.checked !== false
+      takeScreenshots: document.getElementById('settingScreenshots')?.checked !== false,
+      autoLeaveOnRejection: document.getElementById('settingAutoLeaveOnRejection')?.checked !== false,
+      autoLeaveOnPendingApproval: !!document.getElementById('settingAutoLeaveOnPendingApproval')?.checked
     };
 
     const geminiInput = document.getElementById('settingGeminiApiKey');
@@ -653,6 +657,7 @@ function renderComposerChecklist() {
   container.innerHTML = '';
 
   const filtered = state.groups.filter(g => {
+    if (g.blacklisted) return false; // Excluir permanentemente grupos en Lista Negra
     const matchesCat = state.activeCategoryFilter === 'all' || g.category === state.activeCategoryFilter;
     const matchesQuery = !state.composerSearchQuery || g.name.toLowerCase().includes(state.composerSearchQuery.toLowerCase());
     return matchesCat && matchesQuery;
@@ -673,7 +678,7 @@ function renderComposerChecklist() {
     item.innerHTML = `
       <label>
         <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleComposerGroupSelect('${g.id}', this.checked)">
-        <span>${escapeHtml(g.name)}</span>
+        <span>${g.whitelisted ? '<b style="color:#3de8a4" title="Grupo en Lista Blanca (Aprobado)">⭐</b> ' : ''}${escapeHtml(g.name)}</span>
       </label>
       <div style="display:flex;gap:6px;align-items:center">
         <span class="badge-info" style="font-size:0.68rem">${escapeHtml(g.category || 'General')}</span>
@@ -697,6 +702,7 @@ function toggleComposerGroupSelect(id, checked) {
 
 function batchSelectGroups(selectAll) {
   const filtered = state.groups.filter(g => {
+    if (g.blacklisted) return false; // Excluir permanentemente grupos en Lista Negra
     const matchesCat = state.activeCategoryFilter === 'all' || g.category === state.activeCategoryFilter;
     const matchesQuery = !state.composerSearchQuery || g.name.toLowerCase().includes(state.composerSearchQuery.toLowerCase());
     return matchesCat && matchesQuery;
@@ -736,36 +742,195 @@ function renderGroupsTable() {
   const tbody = document.getElementById('groupsTableBody');
   tbody.innerHTML = '';
 
-  document.getElementById('groupsCountBadge').textContent = state.groups.length;
+  const total = state.groups.length;
+  const whitelisted = state.groups.filter(g => g.whitelisted).length;
+  const blacklisted = state.groups.filter(g => g.blacklisted).length;
+  const active = state.groups.filter(g => g.enabled && !g.blacklisted).length;
+
+  if (document.getElementById('groupsCountBadge')) document.getElementById('groupsCountBadge').textContent = total;
+  if (document.getElementById('modKpiTotal')) document.getElementById('modKpiTotal').textContent = total;
+  if (document.getElementById('modKpiWhitelist')) document.getElementById('modKpiWhitelist').textContent = whitelisted;
+  if (document.getElementById('modKpiBlacklist')) document.getElementById('modKpiBlacklist').textContent = blacklisted;
+  if (document.getElementById('modKpiActive')) document.getElementById('modKpiActive').textContent = active;
+
+  const currentFilter = state.groupModerationFilter || 'all';
 
   const filtered = state.groups.filter(g => {
+    // 1. Filtro por estado de moderación
+    if (currentFilter === 'whitelisted' && !g.whitelisted) return false;
+    if (currentFilter === 'blacklisted' && !g.blacklisted) return false;
+    if (currentFilter === 'active' && (!g.enabled || g.blacklisted)) return false;
+
+    // 2. Filtro de búsqueda por texto
     if (!state.tableSearchQuery) return true;
-    return g.name.toLowerCase().includes(state.tableSearchQuery.toLowerCase()) || (g.category || '').toLowerCase().includes(state.tableSearchQuery.toLowerCase());
+    const q = state.tableSearchQuery.toLowerCase();
+    return g.name.toLowerCase().includes(q) || (g.category || '').toLowerCase().includes(q) || (g.url || '').toLowerCase().includes(q);
   });
 
   filtered.forEach(g => {
     const tr = document.createElement('tr');
+    if (g.blacklisted) tr.style.background = 'rgba(255, 51, 102, 0.05)';
+    else if (g.whitelisted) tr.style.background = 'rgba(61, 232, 164, 0.04)';
+
     const isMember = g.isMember !== false;
+
+    // Badge de moderación / calidad
+    let modBadge = '<span class="tag-badge" style="background:rgba(255,255,255,0.06);color:var(--muted);font-size:0.75rem">⚪ Neutro</span>';
+    if (g.blacklisted) {
+      modBadge = `<span class="tag-badge" style="background:rgba(255,51,102,0.22);color:#ff6b8b;border:1px solid rgba(255,51,102,0.45);font-size:0.75rem;cursor:help" title="${escapeHtml(g.blacklistReason || 'Rechaza publicaciones')}">🚫 LISTA NEGRA</span>`;
+    } else if (g.whitelisted) {
+      modBadge = '<span class="tag-badge" style="background:rgba(61,232,164,0.22);color:#3de8a4;border:1px solid rgba(61,232,164,0.45);font-size:0.75rem">⭐ LISTA BLANCA</span>';
+    }
+
+    // Botones de acción dinámica según estado
+    let actionButtons = '';
+    if (g.blacklisted) {
+      actionButtons = `
+        <button class="btn btn-outline btn-xs" onclick="whitelistGroupApi('${g.id}')" title="Restaurar y marcar como Lista Blanca">⭐ Reactivar</button>
+        <button class="btn btn-outline btn-xs" onclick="deleteGroup('${g.id}')" title="Eliminar de la base de datos">🗑️</button>
+      `;
+    } else if (g.whitelisted) {
+      actionButtons = `
+        <button class="btn btn-danger btn-xs" onclick="blacklistGroupApi('${g.id}')" title="Mover a Lista Negra y retirar cuenta">🚫 Bloquear</button>
+        <button class="btn btn-outline btn-xs" onclick="leaveGroupApi('${g.id}')" title="Retirar tu cuenta de este grupo en FB">🚪 Salir</button>
+        <button class="btn btn-outline btn-xs" onclick="deleteGroup('${g.id}')" title="Eliminar">🗑️</button>
+      `;
+    } else {
+      actionButtons = `
+        <button class="btn btn-success btn-xs" onclick="whitelistGroupApi('${g.id}')" title="Marcar como grupo verificado en Lista Blanca">⭐</button>
+        <button class="btn btn-danger btn-xs" onclick="blacklistGroupApi('${g.id}')" title="Mover a Lista Negra y salir">🚫</button>
+        <button class="btn btn-outline btn-xs" onclick="leaveGroupApi('${g.id}')" title="Abandonar grupo en Facebook">🚪 Salir</button>
+        <button class="btn btn-outline btn-xs" onclick="deleteGroup('${g.id}')" title="Eliminar">🗑️</button>
+      `;
+    }
 
     tr.innerHTML = `
       <td>
         <label class="switch">
-          <input type="checkbox" ${g.enabled ? 'checked' : ''} onchange="toggleGroupStatus('${g.id}', this.checked)">
+          <input type="checkbox" ${g.enabled && !g.blacklisted ? 'checked' : ''} ${g.blacklisted ? 'disabled' : ''} onchange="toggleGroupStatus('${g.id}', this.checked)">
           <span class="slider"></span>
         </label>
       </td>
-      <td><strong>${escapeHtml(g.name)}</strong></td>
+      <td>
+        <strong>${escapeHtml(g.name)}</strong>
+        ${g.blacklisted && g.blacklistReason ? `<div style="font-size:0.72rem;color:#ff8ba0;margin-top:2px">⚠️ ${escapeHtml(g.blacklistReason)}</div>` : ''}
+      </td>
       <td><a href="${escapeHtml(g.url)}" target="_blank" style="color:var(--cyan);text-decoration:none">${escapeHtml(g.url)}</a></td>
       <td><span class="badge-info">${escapeHtml(g.category || 'General')}</span></td>
-      <td>${isMember ? '<span class="tag-member">✓ Vinculado</span>' : '<span class="tag-autojoin">➕ Auto-Join al Publicar</span>'}</td>
+      <td>${modBadge}</td>
+      <td>${isMember ? '<span class="tag-member">✓ Miembro</span>' : '<span class="tag-autojoin">🚪 No vinculado</span>'}</td>
       <td><strong>${g.postCount || 0}</strong></td>
       <td><small style="color:var(--muted)">${g.lastPosted ? new Date(g.lastPosted).toLocaleString() : 'Nunca'}</small></td>
       <td>
-        <button class="btn btn-danger btn-xs" onclick="deleteGroup('${g.id}')">Eliminar</button>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${actionButtons}
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
   });
+}
+
+function filterGroupModeration(filterType, btn) {
+  state.groupModerationFilter = filterType;
+  const parent = btn.parentElement;
+  if (parent) {
+    parent.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  renderGroupsTable();
+}
+
+async function triggerAuditModeration() {
+  if (!confirm('¿Deseas iniciar una auditoría de moderación en tiempo real?\n\nEl bot inspeccionará las publicaciones recientes en los grupos de Facebook. Si detecta grupos donde los administradores hayan rechazado o suprimido tus posts, abandonará el grupo y lo moverá a la Lista Negra automáticamente.')) return;
+
+  try {
+    showToast('🔍 Iniciando auditoría de moderación...', 'info');
+    appendTerminalLog('step', '[AUDITORÍA] Iniciando inspección de moderación en grupos recientes...');
+    
+    const res = await fetch('/api/moderation/audit', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      state.groups = data.groups;
+      renderGroupsTable();
+      renderComposerChecklist();
+      showToast(`✅ Auditoría completada: +${data.result.whitelisted} en Lista Blanca, +${data.result.blacklisted} en Lista Negra (abandonados).`, 'success');
+    } else {
+      showToast('❌ Error en auditoría: ' + (data.error || 'Desconocido'), 'error');
+    }
+  } catch (err) {
+    showToast('❌ Error al conectar: ' + err.message, 'error');
+  }
+}
+
+async function blacklistGroupApi(id) {
+  const g = state.groups.find(x => x.id === id);
+  const name = g ? g.name : 'este grupo';
+  if (!confirm(`¿Mover "${name}" a la LISTA NEGRA y retirar tu cuenta de Facebook de este grupo?\n\nEl bot abandonará el grupo y nunca más volverá a publicar en él.`)) return;
+
+  try {
+    showToast(`🚫 Retirando cuenta y bloqueando grupo...`, 'info');
+    appendTerminalLog('warn', `[LISTA NEGRA] Pasando "${name}" a lista negra y abandonando grupo...`);
+    const res = await fetch(`/api/groups/${id}/blacklist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: 'Rechazado manualmente / hostil', leaveFacebook: true })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      state.groups = data.groups;
+      renderGroupsTable();
+      renderComposerChecklist();
+      showToast(`✅ Grupo añadido a Lista Negra y cuenta retirada con éxito.`, 'success');
+    } else {
+      showToast('❌ Error: ' + data.error, 'error');
+    }
+  } catch (err) {
+    showToast('❌ Error: ' + err.message, 'error');
+  }
+}
+
+async function whitelistGroupApi(id) {
+  const g = state.groups.find(x => x.id === id);
+  const name = g ? g.name : 'este grupo';
+
+  try {
+    showToast(`⭐ Verificando "${name}" en Lista Blanca...`, 'info');
+    const res = await fetch(`/api/groups/${id}/whitelist`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      state.groups = data.groups;
+      renderGroupsTable();
+      renderComposerChecklist();
+      showToast(`⭐ Grupo "${name}" marcado en LISTA BLANCA con alta prioridad.`, 'success');
+    } else {
+      showToast('❌ Error: ' + data.error, 'error');
+    }
+  } catch (err) {
+    showToast('❌ Error: ' + err.message, 'error');
+  }
+}
+
+async function leaveGroupApi(id) {
+  const g = state.groups.find(x => x.id === id);
+  const name = g ? g.name : 'este grupo';
+  if (!confirm(`¿Confirmas que deseas retirar tu cuenta de Facebook del grupo "${name}" ahora mismo?`)) return;
+
+  try {
+    showToast(`🚪 Retirando cuenta de "${name}"...`, 'info');
+    appendTerminalLog('step', `[ABANDONO] Retirando cuenta de "${name}"...`);
+    const res = await fetch(`/api/groups/${id}/leave`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      if (g) g.isMember = false;
+      renderGroupsTable();
+      showToast(`✅ Has abandonado "${name}" con éxito en Facebook.`, 'success');
+    } else {
+      showToast('⚠️ No se pudo completar el abandono: ' + (data.error || 'Verifica en Facebook'), 'error');
+    }
+  } catch (err) {
+    showToast('❌ Error: ' + err.message, 'error');
+  }
 }
 
 function filterTableGroups(val) {

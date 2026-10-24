@@ -565,21 +565,50 @@
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h2>👥 Grupos de Facebook Registrados</h2>
-            <p class="subtitle">Gestiona, detecta y organiza grupos vinculados y grupos públicos para Auto-Join.</p>
+            <h2>👥 Gestor de Grupos &amp; Moderación Inteligente</h2>
+            <p class="subtitle">Control de calidad de grupos, auditoría de administradores y auto-depuración de grupos hostiles.</p>
           </div>
-          <div style="display:flex;gap:10px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-warning" onclick="triggerAuditModeration()" title="Escanea publicaciones recientes, detecta grupos hostiles, retira tu cuenta de Facebook y los manda a la lista negra">🛡️ Auditar Moderación &amp; Depurar</button>
             <button class="btn btn-outline" onclick="triggerDetectGroups()">🔄 Detectar Mis Grupos FB</button>
             <button class="btn btn-primary" onclick="openAddGroupModal()">+ Agregar Grupo Manual</button>
           </div>
+        </div>
+
+        <!-- Resumen de Moderación y Calidad de Grupos -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0">
+          <div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px">
+            <span style="font-size:0.78rem;color:var(--muted)">Total Registrados</span>
+            <div style="font-size:1.3rem;font-weight:700" id="modKpiTotal">0</div>
+          </div>
+          <div style="padding:12px;background:rgba(61,232,164,0.08);border:1px solid rgba(61,232,164,0.3);border-radius:10px">
+            <span style="font-size:0.78rem;color:#3de8a4">⭐ Lista Blanca (Aprobados)</span>
+            <div style="font-size:1.3rem;font-weight:700;color:#3de8a4" id="modKpiWhitelist">0</div>
+          </div>
+          <div style="padding:12px;background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.3);border-radius:10px">
+            <span style="font-size:0.78rem;color:#ff6b8b">🚫 Lista Negra (Rechazados / Salidos)</span>
+            <div style="font-size:1.3rem;font-weight:700;color:#ff6b8b" id="modKpiBlacklist">0</div>
+          </div>
+          <div style="padding:12px;background:rgba(63,240,255,0.08);border:1px solid rgba(63,240,255,0.3);border-radius:10px">
+            <span style="font-size:0.78rem;color:var(--cyan)">👥 Activos para Publicar</span>
+            <div style="font-size:1.3rem;font-weight:700;color:var(--cyan)" id="modKpiActive">0</div>
+          </div>
+        </div>
+
+        <!-- Filtros de calidad de grupos -->
+        <div class="category-pills" style="margin-bottom:12px">
+          <button type="button" class="cat-pill active" onclick="filterGroupModeration('all', this)">Todos los Grupos</button>
+          <button type="button" class="cat-pill" onclick="filterGroupModeration('whitelisted', this)">⭐ Lista Blanca (Aprobados)</button>
+          <button type="button" class="cat-pill" onclick="filterGroupModeration('blacklisted', this)">🚫 Lista Negra (Rechazados / Salidos)</button>
+          <button type="button" class="cat-pill" onclick="filterGroupModeration('active', this)">👥 Solo Activos</button>
         </div>
 
         <!-- Barra de herramientas y filtros en la tabla -->
         <div class="table-toolbar">
           <input type="text" class="search-input" id="searchTableGroups" placeholder="🔍 Filtrar por nombre de grupo..." oninput="filterTableGroups(this.value)">
           <div class="toolbar-actions">
-            <button class="btn btn-xs btn-outline" onclick="batchToggleGroupsApi(true)">Activar Todos</button>
-            <button class="btn btn-xs btn-outline" onclick="batchToggleGroupsApi(false)">Desactivar Todos</button>
+            <button class="btn btn-xs btn-outline" onclick="batchToggleGroupsApi(true)">Activar Visibles</button>
+            <button class="btn btn-xs btn-outline" onclick="batchToggleGroupsApi(false)">Desactivar Visibles</button>
           </div>
         </div>
 
@@ -591,10 +620,11 @@
                 <th>Nombre del Grupo</th>
                 <th>URL / Identificador</th>
                 <th>Categoría</th>
-                <th>Estado de Membresía</th>
+                <th>Reputación / Moderación</th>
+                <th>Membresía</th>
                 <th>Posts</th>
                 <th>Último Post</th>
-                <th width="90">Acciones</th>
+                <th width="150">Acciones</th>
               </tr>
             </thead>
             <tbody id="groupsTableBody">
@@ -672,6 +702,31 @@
               <input type="checkbox" id="settingScreenshots" checked>
               <span>Tomar captura de pantalla automática como comprobante tras cada publicación</span>
             </label>
+          </div>
+
+          <!-- Reglas de Depuración Automática de Grupos Hostiles -->
+          <div class="moderation-settings-box" style="margin-top:16px;padding:16px;background:linear-gradient(135deg, rgba(255, 51, 102, 0.08) 0%, rgba(255, 207, 51, 0.06) 100%);border:1px solid rgba(255, 51, 102, 0.35);border-radius:10px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <span style="font-size:1.4rem">🛡️</span>
+              <div>
+                <strong style="font-size:0.95rem;color:#ff8ba0">Depuración Automática de Grupos Hostiles &amp; Lista Negra</strong>
+                <div style="font-size:0.78rem;color:var(--muted)">Toma medidas automáticas contra grupos que no aportan valor o cuyos administradores bloquean publicaciones.</div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:8px">
+              <label class="checkbox-label">
+                <input type="checkbox" id="settingAutoLeaveOnRejection" checked>
+                <span><strong>Abandonar y Poner en Lista Negra automáticamente</strong> si un administrador o Admin Assist rechaza, declina o suprime la publicación.</span>
+              </label>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0">
+              <label class="checkbox-label">
+                <input type="checkbox" id="settingAutoLeaveOnPendingApproval">
+                <span><strong>Abandonar de inmediato</strong> si el grupo exige moderación previa (evitar grupos que retengan publicaciones en espera).</span>
+              </label>
+            </div>
           </div>
 
           <!-- Integración Oficial con Google Gemini AI -->

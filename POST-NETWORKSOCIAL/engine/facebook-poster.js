@@ -10,6 +10,7 @@ const { getOrLaunchBrowser } = require('./browser');
 const { detectLanguage, getLanguageName } = require('./language-detector');
 const { generatePersuasiveCopy } = require('./ai-copywriter');
 const { parseSpintax } = require('./spintax');
+const { blacklistGroup, whitelistGroup, leaveFacebookGroup } = require('./group-moderator');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -347,18 +348,38 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
     onLog('✨ Clic en "Publicar" ejecutado.');
     onLog('⏳ Esperando confirmación de Facebook...');
 
-    // 7. Monitorear de inmediato las alertas y toasts de confirmación / moderación
+    // 7. Monitorear de inmediato las alertas, confirmaciones o rechazos de administradores
     let approvalStatus = false;
+    let rejectionStatus = false;
     let postDirectUrl = cleanGroupUrl;
     let postMessageText = 'Publicado exitosamente en el grupo.';
 
+    let settings = {};
+    try {
+      const sPath = path.join(__dirname, '..', 'data', 'settings.json');
+      if (fs.existsSync(sPath)) settings = JSON.parse(fs.readFileSync(sPath, 'utf8'));
+    } catch (e) {}
+
     const snippet = (finalMessage || '').slice(0, 35).toLowerCase().trim();
 
-    // Polling durante los primeros 8 segundos para detectar el toast de aprobación antes de que desaparezca
+    // Polling durante los primeros 8 segundos para detectar el toast o alerta antes de que desaparezca
     for (let step = 0; step < 8; step++) {
       const check = await page.evaluate((snip) => {
         const bodyText = (document.body ? (document.body.innerText || '') + ' ' + (document.body.textContent || '') : '').toLowerCase();
         const norm = bodyText.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        const isRejection = (
+          norm.includes('rechazo tu publicacion') ||
+          norm.includes('rechazada por el administrador') ||
+          norm.includes('asistente del administrador rechazo') ||
+          norm.includes('el asistente del administrador ha rechazado') ||
+          norm.includes('tu publicacion infringe las normas') ||
+          norm.includes('se rechazo tu publicacion') ||
+          norm.includes('tu contenido fue eliminado') ||
+          norm.includes('declined your post') ||
+          norm.includes('post was rejected') ||
+          norm.includes('no se aprobo tu publicacion')
+        );
 
         const isApproval = (
           norm.includes('aprobacion') ||
@@ -387,9 +408,13 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
           }
         }
 
-        return { isApproval, foundUrl };
+        return { isRejection, isApproval, foundUrl };
       }, snippet);
 
+      if (check.isRejection) {
+        rejectionStatus = true;
+        break;
+      }
       if (check.isApproval) {
         approvalStatus = true;
         break;
@@ -401,12 +426,46 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
       await sleep(1000);
     }
 
-    if (approvalStatus) {
-      onLog('⏳ [MODERACIÓN DETECTADA] Este grupo requiere aprobación de administradores. Tu post quedó enviado y está en la cola de revisión.');
+    if (rejectionStatus) {
+      onLog('🚫 [SUPRESIÓN / RECHAZO DETECTADO] Los administradores o Admin Assist de este grupo rechazaron la publicación.');
+      postMessageText = 'Rechazado o suprimido por la administración del grupo.';
+      result.ok = false;
+      result.rejected = true;
+      result.message = postMessageText;
+
+      // Abandonar el grupo y colocarlo en lista negra automáticamente
+      if (settings.autoLeaveOnRejection !== false) {
+        onLog('🚪 Tomando medidas inmediatas: Abandonando el grupo y retirando tu cuenta de Facebook...');
+        await blacklistGroup({
+          groupUrl: cleanGroupUrl,
+          reason: 'Administrador o Admin Assist suprimió/rechazó la publicación en tiempo real',
+          leaveFacebook: true,
+          onLog,
+          existingPage: page
+        });
+      }
+    } else if (approvalStatus) {
+      onLog('⏳ [MODERACIÓN PREVIA] Este grupo tiene aprobación obligatoria activada. Tu post quedó enviado y está a la espera de que los administradores lo aprueben.');
       postMessageText = 'Enviado a Facebook. Pendiente de aprobación por los administradores del grupo.';
       result.pendingApproval = true;
       postDirectUrl = cleanGroupUrl.replace(/\/+$/, '') + '/pending_posts';
-    } else if (postDirectUrl === cleanGroupUrl) {
+
+      // Si el usuario configuró auto-abandono ante grupos que exigen moderación previa
+      if (settings.autoLeaveOnPendingApproval === true) {
+        onLog('🚪 [POLÍTICA ACTIVA] Has configurado abandonar grupos que exigen aprobación previa. Retirando cuenta...');
+        await blacklistGroup({
+          groupUrl: cleanGroupUrl,
+          reason: 'Grupo con moderación previa obligatoria (auto-abandono activado)',
+          leaveFacebook: true,
+          onLog,
+          existingPage: page
+        });
+      }
+    } else if (postDirectUrl !== cleanGroupUrl) {
+      // El post fue aceptado y está inmediatamente visible en el feed
+      onLog(`⭐ [GRUPO RECOMENDADO] ¡Publicación aprobada y visible de inmediato! Añadiendo a LISTA BLANCA.`);
+      await whitelistGroup({ groupUrl: cleanGroupUrl, onLog });
+    } else {
       // Si no detectó aprobación ni encontró el post específico, intentar una última vez buscar el contenedor con nuestro texto
       try {
         const detected = await page.evaluate((fallbackUrl, snip) => {
@@ -422,7 +481,12 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
           // NUNCA devolver un link aleatorio de otro usuario
           return fallbackUrl;
         }, cleanGroupUrl, snippet);
-        postDirectUrl = detected;
+
+        if (detected !== cleanGroupUrl) {
+          postDirectUrl = detected;
+          onLog(`⭐ [GRUPO RECOMENDADO] Post confirmado visible en el feed. Añadiendo a LISTA BLANCA.`);
+          await whitelistGroup({ groupUrl: cleanGroupUrl, onLog });
+        }
       } catch (eDet) {}
     }
 

@@ -24,6 +24,13 @@ const { detectLanguage, getLanguageName } = require('./engine/language-detector'
 const { generateContextualReply, checkAndReplyToInstagramComments, scanAllActivePostsAndReply } = require('./engine/comment-responder');
 const { scanUrlNiche } = require('./engine/url-niche-scanner');
 const {
+  leaveFacebookGroup,
+  blacklistGroup,
+  whitelistGroup,
+  auditGroupPostStatus,
+  auditAllRecentPosts
+} = require('./engine/group-moderator');
+const {
   getGeminiApiKey,
   testGeminiConnection,
   generateWithGemini,
@@ -247,6 +254,99 @@ app.post('/api/groups/batch-toggle', (req, res) => {
   });
   writeJson('groups.json', groups);
   res.json({ ok: true, groups });
+});
+
+// 3.3 Auditoría de Moderación, Lista Blanca y Lista Negra
+app.get('/api/moderation/summary', (req, res) => {
+  const groups = readJson('groups.json', []);
+  const total = groups.length;
+  const whitelisted = groups.filter(g => g.whitelisted).length;
+  const blacklisted = groups.filter(g => g.blacklisted).length;
+  const active = groups.filter(g => g.enabled && !g.blacklisted).length;
+  res.json({ ok: true, summary: { total, whitelisted, blacklisted, active } });
+});
+
+app.post('/api/moderation/audit', async (req, res) => {
+  try {
+    broadcastLog({ type: 'step', msg: '🛡️ [AUDITORÍA] Iniciando inspección de moderación en publicaciones recientes...' });
+    const result = await auditAllRecentPosts({ onLog: (msg) => broadcastLog({ type: 'log', msg }) });
+    broadcastLog({ type: 'done', msg: `🎉 Auditoría completada. Grupos en lista blanca: +${result.whitelisted} | Grupos en lista negra (abandonados): +${result.blacklisted}` });
+    const groups = readJson('groups.json', []);
+    res.json({ ok: true, result, groups });
+  } catch (err) {
+    broadcastLog({ type: 'error', msg: `❌ Error en auditoría de moderación: ${err.message}` });
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/groups/:id/blacklist', async (req, res) => {
+  try {
+    const groups = readJson('groups.json', []);
+    const group = groups.find(g => g.id === req.params.id);
+    if (!group) return res.status(404).json({ ok: false, error: 'Grupo no encontrado.' });
+
+    const { reason, leaveFacebook = true } = req.body;
+    broadcastLog({ type: 'step', msg: `🚫 [LISTA NEGRA] Pasando grupo "${group.name}" a lista negra...` });
+    
+    const updated = await blacklistGroup({
+      groupId: group.id,
+      groupUrl: group.url,
+      groupName: group.name,
+      reason: reason || 'Acción manual desde el panel de control',
+      leaveFacebook: !!leaveFacebook,
+      onLog: (msg) => broadcastLog({ type: 'log', msg })
+    });
+
+    const refreshed = readJson('groups.json', []);
+    res.json({ ok: true, group: updated, groups: refreshed });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/groups/:id/whitelist', async (req, res) => {
+  try {
+    const groups = readJson('groups.json', []);
+    const group = groups.find(g => g.id === req.params.id);
+    if (!group) return res.status(404).json({ ok: false, error: 'Grupo no encontrado.' });
+
+    broadcastLog({ type: 'step', msg: `⭐ [LISTA BLANCA] Verificando grupo "${group.name}" en lista blanca...` });
+    const updated = await whitelistGroup({
+      groupId: group.id,
+      groupUrl: group.url,
+      groupName: group.name,
+      onLog: (msg) => broadcastLog({ type: 'log', msg })
+    });
+
+    const refreshed = readJson('groups.json', []);
+    res.json({ ok: true, group: updated, groups: refreshed });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/groups/:id/leave', async (req, res) => {
+  try {
+    const groups = readJson('groups.json', []);
+    const group = groups.find(g => g.id === req.params.id);
+    if (!group) return res.status(404).json({ ok: false, error: 'Grupo no encontrado.' });
+
+    broadcastLog({ type: 'step', msg: `🚪 [ABANDONO MANUAL] Retirando tu cuenta de Facebook del grupo "${group.name}"...` });
+    const ok = await leaveFacebookGroup({
+      groupUrl: group.url,
+      onLog: (msg) => broadcastLog({ type: 'log', msg })
+    });
+
+    if (ok) {
+      group.isMember = false;
+      group.enabled = false;
+      writeJson('groups.json', groups);
+    }
+
+    res.json({ ok, group });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 // 4. Plantillas y Spintax
