@@ -1131,16 +1131,16 @@
       <div class="modal-body">
         <!-- Estado Dinámico: Opciones de Vinculación -->
         <div id="fbLinkWaitingSection">
-          <!-- Botón de Redirección Directa al Navegador -->
+          <!-- Opción 1: Abrir Facebook en tu Navegador (Enlace Directo 100% Nativo) -->
           <div style="background:rgba(24,119,242,0.1);border:1px solid rgba(24,119,242,0.4);border-radius:10px;padding:16px;margin-bottom:16px;text-align:center">
             <h4 style="margin:0 0 6px 0;font-size:1.05rem;color:#4da3ff">Opción 1: Abrir Facebook en tu Navegador</h4>
             <p style="margin:0 0 12px 0;font-size:0.82rem;color:var(--text);line-height:1.4">
-              Haz clic en el botón azul para abrir Facebook en una nueva pestaña o ventana de tu navegador e iniciar sesión:
+              Haz clic en el enlace oficial de abajo para abrir Facebook directamente en una nueva pestaña e iniciar sesión:
             </p>
             <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-              <button class="btn btn-primary" onclick="openDirectBrowserTab()" style="font-weight:700;padding:10px 20px;font-size:0.95rem">
-                🌐 Abrir Facebook en el Navegador
-              </button>
+              <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-weight:700;padding:10px 20px;font-size:0.95rem;text-decoration:none;display:inline-flex;align-items:center;gap:8px" onclick="startFbSessionPolling()">
+                🌐 Abrir Facebook en Nueva Pestaña
+              </a>
               <button class="btn btn-outline" onclick="openBotFolder()" title="Abre la carpeta del programa y resalta ABRIR-SESION-FACEBOOK.bat">
                 📂 Abrir Archivo .bat en Windows
               </button>
@@ -1184,6 +1184,40 @@
               </button>
               <button class="btn btn-outline" onclick="checkFbSessionNow()">
                 ⚡ Comprobar Estado
+              </button>
+            </div>
+          </div>
+
+          <!-- Opción 3: Importar Cookies Directas (100% Infalible sin Bloqueos de Meta) -->
+          <div style="background:rgba(255,255,255,0.02);border:1px dashed rgba(0,255,170,0.3);border-radius:10px;padding:14px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleCookieImportSection()">
+              <h4 style="margin:0;font-size:0.88rem;color:#00ffaa;display:flex;align-items:center;gap:6px">
+                <span>🍪 Opción 3: Conectar mediante Cookies (c_user y xs)</span>
+              </h4>
+              <span id="cookieToggleIcon" style="font-size:0.8rem;color:var(--muted)">▼ Desplegar</span>
+            </div>
+            
+            <div id="cookieImportSection" style="display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:10px">
+              <p style="margin:0 0 10px 0;font-size:0.76rem;color:var(--muted)">
+                Si ya tienes tu Facebook abierto en este navegador, puedes vincular tu cuenta pegando tus cookies de sesión:
+              </p>
+              <div class="form-row">
+                <div class="form-group col-6">
+                  <label style="font-size:0.75rem">Cookie c_user (ID de usuario):</label>
+                  <input type="text" id="fbImportCUser" placeholder="Ej: 100088912345678" style="font-size:0.8rem">
+                </div>
+                <div class="form-group col-6">
+                  <label style="font-size:0.75rem">Cookie xs (Token de sesión):</label>
+                  <input type="password" id="fbImportXs" placeholder="Ej: 25%3Aabc...xyz" style="font-size:0.8rem">
+                </div>
+              </div>
+              <div class="form-group" style="margin-top:6px">
+                <label style="font-size:0.75rem">O pega la cadena completa de Cookies de Facebook:</label>
+                <input type="text" id="fbImportFullString" placeholder="c_user=1000...; xs=25%3A...;" style="font-size:0.75rem">
+              </div>
+              <div id="fbCookieFeedback" style="display:none;padding:8px;border-radius:6px;font-size:0.8rem;margin-top:8px"></div>
+              <button class="btn btn-sm btn-outline" onclick="submitImportCookies()" style="margin-top:8px;width:100%;border-color:#00ffaa;color:#00ffaa">
+                💾 Guardar Cookies y Vincular al Instante
               </button>
             </div>
           </div>

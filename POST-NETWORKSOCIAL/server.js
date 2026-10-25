@@ -30,7 +30,7 @@ const {
   auditGroupPostStatus,
   auditAllRecentPosts
 } = require('./engine/group-moderator');
-const { loginToFacebookWithCredentials } = require('./engine/facebook-auth');
+const { loginToFacebookWithCredentials, importFacebookCookies } = require('./engine/facebook-auth');
 const {
   getGeminiApiKey,
   testGeminiConnection,
@@ -184,6 +184,19 @@ app.post('/api/session/facebook/login', async (req, res) => {
     res.json(result);
   } catch (err) {
     broadcastLog({ type: 'error', msg: `❌ [AUTENTICACIÓN] Error: ${err.message}` });
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// 1.2.3 Importación directa de cookies (c_user y xs)
+app.post('/api/session/facebook/import-cookies', async (req, res) => {
+  const { cUser, xs, cookieString } = req.body;
+  try {
+    broadcastLog({ type: 'step', msg: '🍪 [COOKIES] Importando cookies de sesión de Facebook...' });
+    const result = await importFacebookCookies({ cUser, xs, cookieString });
+    res.json(result);
+  } catch (err) {
+    broadcastLog({ type: 'error', msg: `❌ [COOKIES] Error: ${err.message}` });
     res.status(400).json({ ok: false, error: err.message });
   }
 });

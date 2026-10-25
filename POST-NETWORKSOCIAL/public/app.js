@@ -732,10 +732,64 @@ async function openBotFolder() {
   }
 }
 
-function openDirectBrowserTab() {
-  window.open('https://www.facebook.com/login.php', '_blank');
-  showToast('Abriendo Facebook en una nueva pestaña...', 'info', 4000);
-  startFbSessionPolling();
+function toggleCookieImportSection() {
+  const sec = document.getElementById('cookieImportSection');
+  const icon = document.getElementById('cookieToggleIcon');
+  if (sec) {
+    const isHidden = sec.style.display === 'none';
+    sec.style.display = isHidden ? 'block' : 'none';
+    if (icon) icon.textContent = isHidden ? '▲ Ocultar' : '▼ Desplegar';
+  }
+}
+
+async function submitImportCookies() {
+  const cUser = document.getElementById('fbImportCUser')?.value?.trim();
+  const xs = document.getElementById('fbImportXs')?.value?.trim();
+  const cookieString = document.getElementById('fbImportFullString')?.value?.trim();
+  const feedback = document.getElementById('fbCookieFeedback');
+
+  if (!cookieString && (!cUser || !xs)) {
+    alert('Por favor ingresa al menos c_user y xs o pega la cadena completa de cookies.');
+    return;
+  }
+
+  if (feedback) {
+    feedback.style.display = 'block';
+    feedback.style.background = 'rgba(0, 240, 255, 0.1)';
+    feedback.style.color = '#00f0ff';
+    feedback.innerHTML = '⏳ Guardando e inyectando cookies en el perfil...';
+  }
+
+  try {
+    const res = await fetch('/api/session/facebook/import-cookies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cUser, xs, cookieString })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      if (feedback) {
+        feedback.style.background = 'rgba(0, 255, 170, 0.15)';
+        feedback.style.color = '#00ffaa';
+        feedback.innerHTML = `✅ ${data.message || '¡Cookies vinculadas exitosamente!'}`;
+      }
+      showToast('🎉 ¡Cuenta de Facebook vinculada con éxito!', 'success', 5000);
+      loadStatus();
+      checkFbSessionNow();
+    } else {
+      if (feedback) {
+        feedback.style.background = 'rgba(255, 75, 75, 0.15)';
+        feedback.style.color = '#ff4b4b';
+        feedback.innerHTML = `❌ Error: ${data.error || 'No se pudieron validar las cookies.'}`;
+      }
+    }
+  } catch (err) {
+    if (feedback) {
+      feedback.style.background = 'rgba(255, 75, 75, 0.15)';
+      feedback.style.color = '#ff4b4b';
+      feedback.innerHTML = `❌ Error: ${err.message}`;
+    }
+  }
 }
 
 async function submitFbCredentials() {
