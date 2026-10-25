@@ -723,6 +723,21 @@ async function closeFbWindowFromModal() {
   } catch (e) {}
 }
 
+async function openBotFolder() {
+  try {
+    showToast('Abriendo carpeta del programa en el Explorador...', 'info', 3000);
+    await fetch('/api/system/open-folder', { method: 'POST' });
+  } catch (e) {
+    showToast('No se pudo abrir el explorador.', 'error');
+  }
+}
+
+function openDirectBrowserTab() {
+  window.open('https://www.facebook.com/login.php', '_blank', 'width=1000,height=750,left=150,top=100');
+  showToast('Ventana emergente abierta en tu navegador.', 'info', 3000);
+  startFbSessionPolling();
+}
+
 // 4. Detección Automática de Grupos Vinculados
 async function triggerDetectGroups() {
   const btn = event ? event.target : null;

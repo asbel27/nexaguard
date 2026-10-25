@@ -210,7 +210,7 @@ async function checkAndReplyToPostComments({ postUrl, onLog = console.log, simul
   }
 
   onLog(`🔍 [BOT COMENTARIOS] Revisando comentarios en: ${postUrl}...`);
-  const browser = await getOrLaunchBrowser({ headless: true });
+  const browser = await getOrLaunchBrowser({ headless: false });
   const page = await browser.newPage();
 
   const repliesDone = [];

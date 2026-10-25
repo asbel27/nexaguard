@@ -158,6 +158,17 @@ app.post('/api/session/window/close', async (req, res) => {
   }
 });
 
+// 1.2.1 Abrir carpeta del bot en el Explorador de Windows
+app.post('/api/system/open-folder', (req, res) => {
+  try {
+    const fileToSelect = path.join(__dirname, 'ABRIR-SESION-FACEBOOK.bat');
+    exec(`explorer.exe /select,"${fileToSelect}"`);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // 1.3 Configuración General Anti-Ban
 app.get('/api/settings', (req, res) => {
   const settings = readJson('settings.json', {

@@ -1157,11 +1157,23 @@
 
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn btn-primary btn-sm" onclick="reopenFbWindow()" style="flex:1">
-              🔄 Enfocar / Reabrir Ventana de Facebook
+              🔄 Abrir / Enfocar Ventana de Facebook
             </button>
             <button class="btn btn-outline btn-sm" onclick="checkFbSessionNow()" style="flex:1">
               ⚡ Comprobar Vinculación Ahora
             </button>
+          </div>
+
+          <div style="margin-top:12px;background:rgba(255,255,255,0.02);border:1px dashed var(--line);border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <span style="font-size:0.75rem;color:var(--muted)">¿Windows no te mostró la ventana emergente?</span>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-xs btn-outline" onclick="openBotFolder()" title="Abre la carpeta del programa y resalta ABRIR-SESION-FACEBOOK.bat">
+                📂 Abrir Carpeta con Archivo .bat
+              </button>
+              <button class="btn btn-xs btn-outline" onclick="openDirectBrowserTab()" title="Abre una ventana emergente directa en tu navegador actual">
+                🌐 Abrir en Pestaña
+              </button>
+            </div>
           </div>
         </div>
 

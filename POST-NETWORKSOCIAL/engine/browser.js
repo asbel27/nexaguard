@@ -153,60 +153,44 @@ async function getOrLaunchBrowser(options = {}) {
  * Se ejecuta en modo App nativo (--app=URL) garantizando que se abra en el escritorio
  * visible de Windows con foco inmediato (exactamente como ventana de autorización).
  */
+/**
+ * Abre la ventana visual interactiva de inicio de sesión (Facebook / Instagram)
+ * Se ejecuta lanzando el script .bat nativo desacoplado para garantizar que Windows
+ * dibuje la ventana en el monitor interactivo visible del usuario.
+ */
 async function openInteractiveSession(targetUrl = 'https://www.facebook.com/login', platform = 'facebook') {
   // 1. Desconectar Puppeteer si estaba conectado
   await closeBrowser();
 
-  const chromePath = findChromePath();
-  if (!chromePath) {
-    throw new Error('Google Chrome no fue encontrado en tu sistema Windows.');
-  }
+  // 2. Limpiar procesos huérfanos de Chrome con user_data_fb
+  await killOrphanUserDataChrome();
 
   const userDataDir = getUserDataDir();
   cleanStaleLocks(userDataDir);
 
-  // Asegurar URL correcta para login
-  let url = targetUrl;
-  if (platform === 'facebook' && (!url || url === 'https://www.facebook.com/')) {
-    url = 'https://www.facebook.com/login.php';
-  } else if (platform === 'instagram' && (!url || url === 'https://www.instagram.com/')) {
-    url = 'https://www.instagram.com/accounts/login/';
-  }
+  const batPath = platform === 'instagram'
+    ? path.join(__dirname, '..', 'ABRIR-SESION-INSTAGRAM.bat')
+    : path.join(__dirname, '..', 'ABRIR-SESION-FACEBOOK.bat');
 
-  // 2. Si ya hay una ventana con ese puerto activa, enfocarla o relanzar
-  const isPortActive = await isDebugPortActive(DEBUG_PORT);
-  if (isPortActive) {
-    try {
-      const browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${DEBUG_PORT}` });
-      const pages = await browser.pages();
-      const page = pages.length > 0 ? pages[0] : await browser.newPage();
-      await page.bringToFront().catch(() => {});
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
-      browser.disconnect();
-      return { ok: true, launched: true, url, reused: true };
-    } catch (e) {
-      cleanStaleLocks(userDataDir);
+  // 3. Lanzar mediante cmd.exe /c start
+  exec(`cmd.exe /c start "" "${batPath}"`, (err) => {
+    if (err) {
+      const chromePath = findChromePath();
+      if (chromePath) {
+        const startArgs = [
+          `--remote-debugging-port=${DEBUG_PORT}`,
+          `--user-data-dir=\`"${userDataDir}\`"`,
+          '--window-size=1080,780',
+          '--no-first-run',
+          '--no-default-browser-check',
+          `--app=\`"${targetUrl}\`"`
+        ].join(' ');
+        exec(`powershell -NoProfile -Command "Start-Process -FilePath '${chromePath}' -ArgumentList '${startArgs}' -WindowStyle Normal"`);
+      }
     }
-  }
-
-  // 3. Ejecutar Chrome desacoplado (detached) en modo App nativo de autorización
-  const args = [
-    `--remote-debugging-port=${DEBUG_PORT}`,
-    `--user-data-dir=${userDataDir}`,
-    '--window-size=1080,780',
-    '--no-first-run',
-    '--no-default-browser-check',
-    `--app=${url}`
-  ];
-
-  const child = spawn(chromePath, args, {
-    detached: true,
-    stdio: 'ignore',
-    windowsHide: false
   });
-  child.unref();
 
-  return { ok: true, launched: true, url, platform, pid: child.pid };
+  return { ok: true, launched: true, url: targetUrl, platform, batPath };
 }
 
 /**
