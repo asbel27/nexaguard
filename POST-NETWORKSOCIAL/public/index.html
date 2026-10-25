@@ -1129,50 +1129,70 @@
       </div>
 
       <div class="modal-body">
-        <!-- Estado Dinámico: Esperando login -->
+        <!-- Estado Dinámico: Opciones de Vinculación -->
         <div id="fbLinkWaitingSection">
-          <div style="background:rgba(24,119,242,0.06);border:1px solid rgba(24,119,242,0.3);border-radius:10px;padding:16px;margin-bottom:16px">
-            <div style="display:flex;align-items:flex-start;gap:14px">
-              <div style="font-size:2rem;line-height:1">🪟</div>
-              <div>
-                <h4 style="margin:0 0 6px 0;font-size:0.95rem;color:#4da3ff">Ventana de Facebook abierta en tu pantalla</h4>
-                <p style="margin:0;font-size:0.83rem;color:var(--text);line-height:1.5">
-                  Se ha abierto una ventana de <strong>Facebook</strong> en tu escritorio.
-                  Ingresa tu correo y contraseña allí (o autoriza el acceso si ya tienes cuenta guardada).
-                </p>
+          <!-- Botón de Redirección Directa al Navegador -->
+          <div style="background:rgba(24,119,242,0.1);border:1px solid rgba(24,119,242,0.4);border-radius:10px;padding:16px;margin-bottom:16px;text-align:center">
+            <h4 style="margin:0 0 6px 0;font-size:1.05rem;color:#4da3ff">Opción 1: Abrir Facebook en tu Navegador</h4>
+            <p style="margin:0 0 12px 0;font-size:0.82rem;color:var(--text);line-height:1.4">
+              Haz clic en el botón azul para abrir Facebook en una nueva pestaña o ventana de tu navegador e iniciar sesión:
+            </p>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="openDirectBrowserTab()" style="font-weight:700;padding:10px 20px;font-size:0.95rem">
+                🌐 Abrir Facebook en el Navegador
+              </button>
+              <button class="btn btn-outline" onclick="openBotFolder()" title="Abre la carpeta del programa y resalta ABRIR-SESION-FACEBOOK.bat">
+                📂 Abrir Archivo .bat en Windows
+              </button>
+            </div>
+          </div>
+
+          <!-- Opción 2: Formulario Directo de Credenciales -->
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px">
+            <h4 style="margin:0 0 10px 0;font-size:0.92rem;color:var(--cyan);display:flex;align-items:center;gap:6px">
+              <span>🔐 Opción 2: Vinculación Rápida con Credenciales</span>
+            </h4>
+            <p style="margin:0 0 12px 0;font-size:0.78rem;color:var(--muted)">
+              El bot iniciará sesión directamente por ti y guardará las cookies de forma permanente y segura en tu equipo:
+            </p>
+
+            <div class="form-group" style="margin-bottom:10px">
+              <label style="font-size:0.8rem">Correo o Teléfono de Facebook:</label>
+              <input type="text" id="fbLoginEmail" placeholder="ejemplo@correo.com o número de teléfono" style="font-size:0.85rem">
+            </div>
+
+            <div class="form-group" style="margin-bottom:12px">
+              <label style="font-size:0.8rem">Contraseña de Facebook:</label>
+              <div style="display:flex;gap:8px">
+                <input type="password" id="fbLoginPass" placeholder="Tu contraseña de Facebook" style="flex:1;font-size:0.85rem">
+                <button type="button" class="btn btn-outline btn-sm" onclick="togglePasswordVisibility('fbLoginPass', this)">👁️</button>
               </div>
+            </div>
+
+            <!-- Campo 2FA opcional si Facebook lo solicita -->
+            <div class="form-group" id="fb2faContainer" style="display:none;margin-bottom:12px;background:rgba(255,184,0,0.08);border:1px solid #ffb800;border-radius:8px;padding:10px">
+              <label style="font-size:0.8rem;color:#ffb800;font-weight:700">Código de Verificación 2FA (6 dígitos):</label>
+              <input type="text" id="fbLogin2FA" placeholder="Ej: 123456" style="font-size:0.9rem;letter-spacing:2px;font-weight:700">
+              <small style="color:var(--muted);display:block;margin-top:4px">Ingresa el código generado por tu app de autenticación o enviado por SMS.</small>
+            </div>
+
+            <div id="fbLoginFeedback" style="display:none;padding:10px;border-radius:8px;font-size:0.82rem;margin-bottom:12px;line-height:1.4"></div>
+
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-primary" id="btnSubmitFbCredentials" onclick="submitFbCredentials()" style="flex:1">
+                🚀 Iniciar Sesión y Vincular
+              </button>
+              <button class="btn btn-outline" onclick="checkFbSessionNow()">
+                ⚡ Comprobar Estado
+              </button>
             </div>
           </div>
 
           <!-- Radar en vivo de vinculación -->
-          <div style="background:rgba(0,0,0,0.25);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center;margin-bottom:16px">
-            <div style="display:inline-flex;align-items:center;gap:10px;font-size:0.88rem;color:var(--cyan);font-weight:600">
+          <div style="background:rgba(0,0,0,0.25);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center">
+            <div style="display:inline-flex;align-items:center;gap:10px;font-size:0.84rem;color:var(--cyan);font-weight:600">
               <span class="status-dot green" style="animation:pulse 1.2s infinite"></span>
-              <span id="fbSyncStatusText">Escaneando autenticación en tiempo real...</span>
-            </div>
-            <p style="margin:6px 0 0 0;font-size:0.76rem;color:var(--muted)">
-              El sistema detectará el inicio de sesión automáticamente. Al iniciar sesión tus credenciales quedarán vinculadas para siempre.
-            </p>
-          </div>
-
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn btn-primary btn-sm" onclick="reopenFbWindow()" style="flex:1">
-              🔄 Abrir / Enfocar Ventana de Facebook
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="checkFbSessionNow()" style="flex:1">
-              ⚡ Comprobar Vinculación Ahora
-            </button>
-          </div>
-
-          <div style="margin-top:12px;background:rgba(255,255,255,0.02);border:1px dashed var(--line);border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-            <span style="font-size:0.75rem;color:var(--muted)">¿Windows no te mostró la ventana emergente?</span>
-            <div style="display:flex;gap:6px">
-              <button class="btn btn-xs btn-outline" onclick="openBotFolder()" title="Abre la carpeta del programa y resalta ABRIR-SESION-FACEBOOK.bat">
-                📂 Abrir Carpeta con Archivo .bat
-              </button>
-              <button class="btn btn-xs btn-outline" onclick="openDirectBrowserTab()" title="Abre una ventana emergente directa en tu navegador actual">
-                🌐 Abrir en Pestaña
-              </button>
+              <span id="fbSyncStatusText">Escaneando estado de la sesión en Facebook...</span>
             </div>
           </div>
         </div>

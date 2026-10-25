@@ -30,6 +30,7 @@ const {
   auditGroupPostStatus,
   auditAllRecentPosts
 } = require('./engine/group-moderator');
+const { loginToFacebookWithCredentials } = require('./engine/facebook-auth');
 const {
   getGeminiApiKey,
   testGeminiConnection,
@@ -166,6 +167,24 @@ app.post('/api/system/open-folder', (req, res) => {
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// 1.2.2 Inicio de sesión directo en Facebook con credenciales
+app.post('/api/session/facebook/login', async (req, res) => {
+  const { email, password, twoFactorCode } = req.body;
+  try {
+    broadcastLog({ type: 'step', msg: '🔐 [AUTENTICACIÓN] Conectando cuenta con Facebook...' });
+    const result = await loginToFacebookWithCredentials({
+      email,
+      password,
+      twoFactorCode,
+      onLog: (msg) => broadcastLog({ type: 'log', msg })
+    });
+    res.json(result);
+  } catch (err) {
+    broadcastLog({ type: 'error', msg: `❌ [AUTENTICACIÓN] Error: ${err.message}` });
+    res.status(400).json({ ok: false, error: err.message });
   }
 });
 

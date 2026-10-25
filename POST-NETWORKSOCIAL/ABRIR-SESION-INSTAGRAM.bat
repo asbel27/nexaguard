@@ -19,3 +19,4 @@ start "" "%CHROME_PATH%" --remote-debugging-port=9222 --user-data-dir="%~dp0user
 
 timeout /t 3 /nobreak >nul
 exit
+

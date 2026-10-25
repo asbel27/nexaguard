@@ -733,9 +733,78 @@ async function openBotFolder() {
 }
 
 function openDirectBrowserTab() {
-  window.open('https://www.facebook.com/login.php', '_blank', 'width=1000,height=750,left=150,top=100');
-  showToast('Ventana emergente abierta en tu navegador.', 'info', 3000);
+  window.open('https://www.facebook.com/login.php', '_blank');
+  showToast('Abriendo Facebook en una nueva pestaña...', 'info', 4000);
   startFbSessionPolling();
+}
+
+async function submitFbCredentials() {
+  const email = document.getElementById('fbLoginEmail')?.value?.trim();
+  const password = document.getElementById('fbLoginPass')?.value;
+  const twoFactorCode = document.getElementById('fbLogin2FA')?.value?.trim() || null;
+  const feedback = document.getElementById('fbLoginFeedback');
+  const btn = document.getElementById('btnSubmitFbCredentials');
+  const twoFaContainer = document.getElementById('fb2faContainer');
+
+  if (!email || !password) {
+    alert('Por favor ingresa tu correo y tu contraseña de Facebook.');
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  if (feedback) {
+    feedback.style.display = 'block';
+    feedback.style.background = 'rgba(0, 240, 255, 0.1)';
+    feedback.style.border = '1px solid #00f0ff';
+    feedback.style.color = '#00f0ff';
+    feedback.innerHTML = '⏳ Conectando con Facebook de forma segura... Por favor espera unos segundos.';
+  }
+
+  try {
+    const res = await fetch('/api/session/facebook/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, twoFactorCode })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      if (feedback) {
+        feedback.style.background = 'rgba(0, 255, 170, 0.15)';
+        feedback.style.border = '1px solid #00ffaa';
+        feedback.style.color = '#00ffaa';
+        feedback.innerHTML = `✅ ${data.message || '¡Sesión iniciada con éxito!'}`;
+      }
+      showToast('🎉 ¡Cuenta de Facebook vinculada con éxito!', 'success', 6000);
+      loadStatus();
+      checkFbSessionNow();
+    } else if (data.requires2FA) {
+      if (twoFaContainer) twoFaContainer.style.display = 'block';
+      if (feedback) {
+        feedback.style.background = 'rgba(255, 184, 0, 0.15)';
+        feedback.style.border = '1px solid #ffb800';
+        feedback.style.color = '#ffb800';
+        feedback.innerHTML = `⚠️ ${data.message}`;
+      }
+      document.getElementById('fbLogin2FA')?.focus();
+    } else {
+      if (feedback) {
+        feedback.style.background = 'rgba(255, 75, 75, 0.15)';
+        feedback.style.border = '1px solid #ff4b4b';
+        feedback.style.color = '#ff4b4b';
+        feedback.innerHTML = `❌ Error: ${data.error || data.message || 'No se pudo iniciar sesión.'}`;
+      }
+    }
+  } catch (err) {
+    if (feedback) {
+      feedback.style.background = 'rgba(255, 75, 75, 0.15)';
+      feedback.style.border = '1px solid #ff4b4b';
+      feedback.style.color = '#ff4b4b';
+      feedback.innerHTML = `❌ Error de conexión: ${err.message}`;
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 // 4. Detección Automática de Grupos Vinculados
