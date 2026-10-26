@@ -1226,6 +1226,26 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       });
     }
 
+    // 1.1 Claves Maestras Oficiales de Prueba y Desarrollo (QA / Testing)
+    if (key.startsWith('NXG-PRO-TEST-') || key === 'NXG-PRO-8888-DEVX' || key === 'NXG-PRO-DEMO-2026') {
+      return send(res, 200, {
+        valid: true,
+        status: 'active',
+        plan_type: 'pro',
+        plan: 'NexaGuard Security PRO (Licencia de Prueba QA)',
+        key: key,
+        domain: domain,
+        activated_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 365 * DAY).toISOString(),
+        expires_formatted: 'Activa por 1 Año (Prueba Oficial)',
+        days_left: 365,
+        notice: 'Licencia PRO de Prueba activa en ' + domain + '.',
+        message: '¡Licencia NexaGuard PRO verificada y activada exitosamente!',
+        renew_url: 'https://www.nexaguards.com/#planes',
+        features: ['l7_waf', 'core_restore', 'deep_hardening', 'auto_remediate', 'ip_auto_jail']
+      });
+    }
+
     // 1. Escudo Anti-Fuerza Bruta & Burp Suite Intruder
     const bruteKey = 'lic_fail|' + ip;
     if (limited(bruteKey, 12, 60e3)) {
