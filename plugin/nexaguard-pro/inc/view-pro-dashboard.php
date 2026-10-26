@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
         <div class="nxg-pro-brand">
             <div class="nxg-pro-logo">⚡</div>
             <div>
-                <h1>NexaGuard PRO <span class="nxg-badge-enterprise">Enterprise Suite v<?php echo esc_html(NEXAGUARD_PRO_VERSION); ?></span></h1>
+                <h1>NexaGuard Security <span class="nxg-badge-enterprise">PRO v<?php echo esc_html(NEXAGUARD_PRO_VERSION); ?></span></h1>
                 <p>Defensa Perimetral Activa · Reconstrucción de Núcleo Oficial · Endurecimiento Profundo · Capa 7 WAF</p>
             </div>
         </div>
@@ -258,3 +258,4 @@ if (!defined('ABSPATH')) {
         </div>
     </div>
 </div>
+

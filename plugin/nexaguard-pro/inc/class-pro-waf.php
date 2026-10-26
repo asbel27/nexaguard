@@ -277,3 +277,4 @@ class NexaGuard_Pro_WAF {
         self::drop_request("Tu dirección IP ({$ip}) ha sido confinada preventivamente en la Cárcel 24H de NexaGuard PRO debido a actividades sospechosas reiteradas.", 403);
     }
 }
+

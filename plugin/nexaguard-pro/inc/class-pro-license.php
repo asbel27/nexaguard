@@ -135,3 +135,4 @@ class NexaGuard_Pro_License {
         self::activate_license($data['key']);
     }
 }
+

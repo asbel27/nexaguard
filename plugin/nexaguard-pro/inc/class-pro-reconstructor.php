@@ -239,3 +239,4 @@ class NexaGuard_Pro_Reconstructor {
         update_option('nexaguard_pro_reconstruction_log', $history);
     }
 }
+

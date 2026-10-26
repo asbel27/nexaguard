@@ -111,3 +111,4 @@ class NexaGuard_Pro_Remediation {
         return false;
     }
 }
+

@@ -67,7 +67,9 @@ function checkFile(filePath) {
 
 const dirs = [
   path.join(__dirname, '..', 'plugin', 'nexaguard-pro'),
-  path.join(__dirname, '..', 'plugin', 'nexaguard-pro', 'inc')
+  path.join(__dirname, '..', 'plugin', 'nexaguard-pro', 'inc'),
+  path.join(__dirname, '..', 'plugin', 'nexaguard-security'),
+  path.join(__dirname, '..', 'plugin', 'nexaguard-security', 'inc')
 ];
 
 let allOk = true;
@@ -91,3 +93,4 @@ dirs.forEach(d => {
 if (allOk) {
   console.log('🎉 All PRO PHP files passed structure verification!');
 }
+

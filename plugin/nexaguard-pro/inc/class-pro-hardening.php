@@ -280,3 +280,4 @@ class NexaGuard_Pro_Hardening {
         @copy($config_file, $backup_dir . 'wp-config.php.hardening_' . time() . '.bak');
     }
 }
+

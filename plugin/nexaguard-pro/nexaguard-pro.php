@@ -1,12 +1,12 @@
 <?php
 /**
- * Plugin Name: NexaGuard PRO – Enterprise Security & Core Reconstruction
+ * Plugin Name: NexaGuard – Malware Scanner & Web Security PRO
  * Plugin URI: https://www.nexaguards.com
- * Description: Suite empresarial avanzada para NexaGuard Security. Reconstrucción oficial de archivos vitales de WordPress con 1 clic, endurecimiento profundo de sistema y servidor, cortafuegos Layer 7 con Auto-Cárcel 24H y erradicación automatizada de malware.
+ * Description: Complemento profesional avanzado de NexaGuard Security: Reconstrucción oficial de archivos vitales del núcleo con 1 clic, endurecimiento profundo de sistema y servidor, cortafuegos Layer 7 con Auto-Cárcel 24H y erradicación automatizada de malware.
  * Version: 2.0.0
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://www.nexaguards.com
- * Text Domain: nexaguard-pro
+ * Text Domain: nexaguard-malware-scanner-pro
  * Domain Path: /languages
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -264,3 +264,4 @@ class NexaGuard_Pro {
 
 // Iniciar NexaGuard PRO Suite
 NexaGuard_Pro::get_instance();
+
