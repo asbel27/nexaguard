@@ -4827,18 +4827,24 @@ document.addEventListener('keydown', function (e) {
     .then(function (r) { return r.json(); })
     .then(function (data) {
       if (data && data.sales && data.sales.length) {
-        var realFormatted = data.sales.map(function (s, idx) {
-          var flags = ['🇪🇸', '🇲🇽', '🇺🇸', '🇨🇴', '🇨🇱', '🇦🇷', '🇵🇪'];
-          var countries = ['España', 'México', 'Estados Unidos', 'Colombia', 'Chile', 'Argentina', 'Perú'];
-          var cIdx = idx % flags.length;
-          return {
-            name: s.name,
-            country: countries[cIdx],
-            flag: flags[cIdx],
-            plan: s.plan,
-            timeAgo: s.timeAgo || 'hace unos minutos'
-          };
-        });
+        var realFormatted = data.sales
+          .filter(function (s) {
+            if (!s || !s.name) return false;
+            var low = String(s.name).toLowerCase();
+            return !low.includes('admin') && !low.includes('soporte') && !low.includes('test') && !low.includes('prueba');
+          })
+          .map(function (s, idx) {
+            var flags = ['🇪🇸', '🇲🇽', '🇺🇸', '🇨🇴', '🇨🇱', '🇦🇷', '🇵🇪'];
+            var countries = ['España', 'México', 'Estados Unidos', 'Colombia', 'Chile', 'Argentina', 'Perú'];
+            var cIdx = idx % flags.length;
+            return {
+              name: s.name,
+              country: countries[cIdx],
+              flag: flags[cIdx],
+              plan: s.plan,
+              timeAgo: s.timeAgo || 'hace unos minutos'
+            };
+          });
         salesList = realFormatted.concat(FALLBACK_POOL);
       }
     })

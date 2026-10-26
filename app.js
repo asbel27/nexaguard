@@ -526,13 +526,22 @@ function createApp({ store, scanner, waf, sentinel, config }) {
   route('GET', '/api/public/recent-sales', null, (ctx) => {
     const paidOrders = db.orders
       .filter(o => o.licenseKey && (o.paidAt || o.status === 'active' || o.status === 'delivered'))
-      .slice(-12)
+      .slice(-25)
       .reverse();
 
-    const realSales = paidOrders.map(o => {
+    const realSales = [];
+    for (const o of paidOrders) {
       const u = db.users.find(x => x.id === o.userId) || {};
+      // Excluir órdenes de administradores y cuentas de prueba interna
+      if (u.role === 'admin' || u.role === 'administrator') continue;
+
+      const rawName = (u.name || '').trim();
+      const lower = rawName.toLowerCase();
+      if (!rawName || lower.includes('admin') || lower.includes('soporte') || lower.includes('test') || lower.includes('prueba')) {
+        continue;
+      }
+
       const p = PLANS[o.plan] || {};
-      const rawName = (u.name || 'Cliente').trim();
       const parts = rawName.split(/\s+/);
       const safeName = parts.length > 1 ? (parts[0] + ' ' + parts[1][0] + '.') : parts[0];
       const diffMs = Math.max(60000, T() - (o.paidAt || o.createdAt || T()));
@@ -541,13 +550,14 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       const days = Math.floor(hours / 24);
       let timeAgo = mins < 60 ? `hace ${mins} min` : (hours < 24 ? `hace ${hours} h` : `hace ${days} d`);
 
-      return {
+      realSales.push({
         name: safeName,
         plan: p.name || 'Plan NexaGuard Security Pro',
         timeAgo: timeAgo,
         isReal: true
-      };
-    });
+      });
+      if (realSales.length >= 10) break;
+    }
 
     send(ctx.res, 200, { sales: realSales });
   });
