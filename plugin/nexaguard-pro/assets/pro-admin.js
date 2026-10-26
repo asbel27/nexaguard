@@ -40,8 +40,8 @@
                 },
                 success: function (res) {
                     if (res.success && res.data) {
-                        alert(res.data.message || '¡Licencia activada con éxito!');
-                        window.location.reload();
+                        alert('¡Licencia verificada con éxito!\n\nVe al plugin para que veas las funciones avanzadas que se activaron...\n\nGracias por confiar en NexaGuard Security PRO');
+                        window.location.href = 'admin.php?page=nexaguard-security';
                     } else {
                         alert((res.data && res.data.message) ? res.data.message : 'Error al validar la licencia.');
                         $btn.prop('disabled', false).text('⚡ Validar & Activar Licencia');

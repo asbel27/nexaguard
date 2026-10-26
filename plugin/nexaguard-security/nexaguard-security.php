@@ -288,7 +288,13 @@ class NexaGuard_Plugin {
     }
 
     public function is_pro_active() {
+        if (defined('NEXAGUARD_PRO_ACTIVE') && class_exists('NexaGuard_Pro_License') && NexaGuard_Pro_License::is_active()) {
+            return true;
+        }
         $license = get_option('nexaguard_license_data', null);
+        if (!$license) {
+            $license = get_option('nexaguard_pro_license_data', null);
+        }
         if (empty($license) || empty($license['valid']) || empty($license['key'])) {
             return false;
         }

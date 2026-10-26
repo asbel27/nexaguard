@@ -26,6 +26,19 @@ if (!defined('ABSPATH')) {
         </div>
     </div>
 
+    <?php if ($is_active): ?>
+        <div style="background: linear-gradient(135deg, #09261a 0%, #064e3b 100%); border: 1.5px solid #10b981; border-radius: 12px; padding: 18px 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 8px 24px rgba(16,185,129,0.15);">
+            <div>
+                <div style="color: #3de8a4; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">✓ LICENCIA PRO ACTIVA Y VINCULADA</div>
+                <h3 style="color: #ffffff; margin: 4px 0; font-size: 1.15rem;">Todas las funciones avanzadas están desbloqueadas en NexaGuard Security</h3>
+                <p style="color: #a7f3d0; margin: 0; font-size: 0.88rem;">Escudo Balístico, Vigilancia 24H, Cortafuegos WAF, Auto-Cárcel y Reconstrucción Oficial de Archivos Vitales listos.</p>
+            </div>
+            <a href="admin.php?page=nexaguard-security" class="nxg-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 800; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 0.95rem; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">
+                ⚡ Ir a NexaGuard Security (Ver Todo Activado) →
+            </a>
+        </div>
+    <?php endif; ?>
+
     <!-- Navegación por pestañas -->
     <div class="nxg-pro-tabs">
         <button class="nxg-tab-btn active" data-tab="tab-license">🔑 Clave & Licencia</button>
