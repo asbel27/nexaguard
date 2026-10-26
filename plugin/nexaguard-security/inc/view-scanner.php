@@ -41,23 +41,23 @@ $settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
     'disallow_file_edit'    => true,
     'block_user_enumeration'=> true,
     // Módulos Avanzados (activos únicamente con licencia PRO)
-    'disable_xmlrpc'        => $is_pro,
-    'hide_wp_version'       => $is_pro,
-    'waf_enabled'           => $is_pro,
-    'anti_clearfake'        => $is_pro,
+    'disable_xmlrpc'        => false,
+    'hide_wp_version'       => false,
+    'waf_enabled'           => false,
+    'anti_clearfake'        => false,
     'emergency_lockdown'    => false,
-    'brute_force_protection'=> $is_pro,
+    'brute_force_protection'=> false,
     'bf_max_retries'        => 5,
     'bf_lockout_time'       => 20,
     'hide_backend'          => false,
     'login_slug'            => 'acceso-seguro',
-    'generic_login_errors'  => $is_pro,
-    'protect_system_files'  => $is_pro,
-    'admin_login_alerts'    => $is_pro,
+    'generic_login_errors'  => false,
+    'protect_system_files'  => false,
+    'admin_login_alerts'    => false,
     'threat_email_alerts'   => false,
     'alert_email'           => '',
-    'waf_auto_jail'         => $is_pro,
-    'tripwire_enabled'      => $is_pro,
+    'waf_auto_jail'         => false,
+    'tripwire_enabled'      => false,
     'threat_webhook_url'    => '',
     'login_custom_design'   => false,
     'login_bg_image'        => '',
@@ -388,15 +388,9 @@ $rollback_count = count($backup_history);
 
                                 <?php if (empty($t['is_db'])): ?>
                                     <?php if ($t['clean_action'] === 'restore_core_file'): ?>
-                                        <?php if ($is_pro): ?>
-                                            <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Descargar y restaurar el archivo original limpio desde WordPress.org">
-                                                🔄 Restaurar Archivo Original (WordPress.org)
-                                            </button>
-                                        <?php else: ?>
-                                            <a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline" style="border-color:#3de8a4; color:#3de8a4; text-decoration:none;" title="Reinstalar el núcleo limpio desde el actualizador de WordPress">
-                                                🔄 Reinstalar Núcleo Oficial de WordPress
-                                            </a>
-                                        <?php endif; ?>
+                                        <a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-primary" style="background:#10b981; color:#ffffff; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px;" target="_blank" title="Reinstalar el núcleo limpio desde el actualizador nativo de WordPress">
+                                            🔄 Reinstalar Núcleo Oficial en WordPress ↗
+                                        </a>
                                     <?php elseif ($t['clean_action'] === 'sanitize_injection'): ?>
                                         <button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="<?php echo esc_attr($t['full_path']); ?>" data-id="<?php echo esc_attr($t['id']); ?>" title="Extirpar código malicioso inyectado preservando el archivo original">
                                             🧹 Desinfectar Código (Extirpar Inyección)
@@ -774,8 +768,7 @@ $rollback_count = count($backup_history);
                 </label>
             </div>
 
-            <?php if ($is_pro): ?>
-                <!-- ================= SECCIÓN AVANZADA (USUARIOS CON LICENCIA VÁLIDA) ================= -->
+            <!-- ================= SECCIÓN DE CORTAFUEGOS Y DEFENSA ACTIVA ================= -->
                 <div class="waf-rules-group-title" style="margin: 32px 0 14px; padding: 18px 22px; background: rgba(61,232,164,0.06); border-left: 4px solid #3de8a4; border-radius: 12px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
                         <div>
@@ -786,7 +779,7 @@ $rollback_count = count($backup_history);
                                 Módulos perimetrales de filtrado en tiempo real, bloqueo de inyecciones y defensa activa operando bajo tu suscripción.
                             </p>
                         </div>
-                        <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ Licencia Activa</span>
+                        <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ 100% Operativo</span>
                     </div>
                 </div>
 
@@ -1021,7 +1014,6 @@ $rollback_count = count($backup_history);
                         <input type="checkbox" name="cloud_threat_intel" value="1" <?php checked(!empty($settings['cloud_threat_intel'])); ?> class="ng-toggle">
                     </label>
                 </div>
-            <?php endif; ?>
 
             <div class="form-actions" style="margin-top:24px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;">
                 <button type="submit" class="btn-ng btn-ng-primary">Guardar y Aplicar Blindaje</button>
@@ -1334,9 +1326,7 @@ $rollback_count = count($backup_history);
                                 <th>Archivo</th>
                                 <th>Permisos</th>
                                 <th>Estado</th>
-                                <?php if ($is_pro): ?>
-                                    <th style="text-align:right;">Acción (WordPress.org)</th>
-                                <?php endif; ?>
+                                <th style="text-align:right;">Acción Oficial (WordPress.org)</th>
                             </tr>
                         </thead>
                         <tbody id="sentinel-vital-files-tbody">
@@ -1344,41 +1334,31 @@ $rollback_count = count($backup_history);
                                 <td><code>/wp-config.php</code></td>
                                 <td><span class="badge-status-pill ok">0440</span></td>
                                 <td><span style="color:#3de8a4;font-weight:700;">✓ Protegido</span></td>
-                                <?php if ($is_pro): ?>
-                                    <td style="text-align:right;"><button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline btn-sm" style="font-size:0.72rem; padding:2px 8px; border-color:rgba(255,207,51,0.4); color:#ffd859; cursor:pointer;">🔒 Endurecer</button></td>
-                                <?php endif; ?>
+                                <td style="text-align:right;"><span style="color:#3de8a4; font-size:0.75rem;">Protegido por WAF</span></td>
                             </tr>
                             <tr>
                                 <td><code>/.htaccess</code></td>
                                 <td><span class="badge-status-pill ok">0644</span></td>
                                 <td><span style="color:#3de8a4;font-weight:700;">✓ WAF Activo</span></td>
-                                <?php if ($is_pro): ?>
-                                    <td style="text-align:right;"><span style="color:#8fa0cf; font-size:0.75rem;">Reglas Activas</span></td>
-                                <?php endif; ?>
+                                <td style="text-align:right;"><span style="color:#3de8a4; font-size:0.75rem;">Reglas Activas</span></td>
                             </tr>
                             <tr>
                                 <td><code>/index.php</code></td>
                                 <td><span class="badge-status-pill ok">0644</span></td>
                                 <td><span style="color:#3de8a4;font-weight:700;">✓ Firma Oficial</span></td>
-                                <?php if ($is_pro): ?>
-                                    <td style="text-align:right;"><button type="button" class="btn-ng btn-ng-primary btn-sm btn-sentinel-rebuild" data-file="index.php" style="font-size:0.72rem; padding:2px 8px; background:#10b981; color:#fff; border:none; border-radius:4px; font-weight:700; cursor:pointer;">🛠️ Reconstruir</button></td>
-                                <?php endif; ?>
+                                <td style="text-align:right;"><a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline btn-sm" style="text-decoration:none; font-size:0.72rem; padding:3px 8px;" target="_blank">Reinstalar Oficial ↗</a></td>
                             </tr>
                             <tr>
                                 <td><code>/wp-load.php</code></td>
                                 <td><span class="badge-status-pill ok">0644</span></td>
                                 <td><span style="color:#3de8a4;font-weight:700;">✓ Firma Oficial</span></td>
-                                <?php if ($is_pro): ?>
-                                    <td style="text-align:right;"><button type="button" class="btn-ng btn-ng-primary btn-sm btn-sentinel-rebuild" data-file="wp-load.php" style="font-size:0.72rem; padding:2px 8px; background:#10b981; color:#fff; border:none; border-radius:4px; font-weight:700; cursor:pointer;">🛠️ Reconstruir</button></td>
-                                <?php endif; ?>
+                                <td style="text-align:right;"><a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline btn-sm" style="text-decoration:none; font-size:0.72rem; padding:3px 8px;" target="_blank">Reinstalar Oficial ↗</a></td>
                             </tr>
                             <tr>
                                 <td><code>/wp-includes/version.php</code></td>
                                 <td><span class="badge-status-pill ok">0644</span></td>
                                 <td><span style="color:#3de8a4;font-weight:700;">✓ Intacto</span></td>
-                                <?php if ($is_pro): ?>
-                                    <td style="text-align:right;"><button type="button" class="btn-ng btn-ng-primary btn-sm btn-sentinel-rebuild" data-file="wp-includes/version.php" style="font-size:0.72rem; padding:2px 8px; background:#10b981; color:#fff; border:none; border-radius:4px; font-weight:700; cursor:pointer;">🛠️ Reconstruir</button></td>
-                                <?php endif; ?>
+                                <td style="text-align:right;"><a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline btn-sm" style="text-decoration:none; font-size:0.72rem; padding:3px 8px;" target="_blank">Reinstalar Oficial ↗</a></td>
                             </tr>
                         </tbody>
                     </table>

@@ -1164,6 +1164,35 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     send(res, 200, { ok: true, status: paymentStatus });
   });
 
+  /* ---------- Información y Estado de API de Licencias (WordPress.org Check & Telemetría) ---------- */
+  route('GET', '/api/license', null, (ctx) => {
+    send(ctx.res, 200, {
+      service: 'NexaGuard License & Cloud Threat Intelligence API',
+      status: 'active',
+      version: '2.1.3',
+      endpoints: {
+        validate: 'https://www.nexaguards.com/api/license/validate',
+        threat_intel: 'https://www.nexaguards.com/api/threat-intel'
+      },
+      terms: 'https://www.nexaguards.com/terminos',
+      privacy: 'https://www.nexaguards.com/privacidad'
+    });
+  });
+
+  route('GET', '/api/license/', null, (ctx) => {
+    send(ctx.res, 200, {
+      service: 'NexaGuard License & Cloud Threat Intelligence API',
+      status: 'active',
+      version: '2.1.3',
+      endpoints: {
+        validate: 'https://www.nexaguards.com/api/license/validate',
+        threat_intel: 'https://www.nexaguards.com/api/threat-intel'
+      },
+      terms: 'https://www.nexaguards.com/terminos',
+      privacy: 'https://www.nexaguards.com/privacidad'
+    });
+  });
+
   /* ---------- Validación de Licencias para el Plugin WordPress (Blindaje Antifraude & Anti-Burp) ---------- */
   route('POST', '/api/license/validate', null, (ctx) => {
     const { req, res, body } = ctx, ip = clientIp(req);
@@ -1817,7 +1846,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const u = new URL(req.url, 'http://x'), pathname = u.pathname;
     if (!pathname.startsWith('/api/')) return false;
     try {
-      const isPublicExternalApi = pathname === '/api/license/validate' || pathname === '/api/license/deactivate' || pathname === '/api/license/free' || pathname === '/api/threat-intel' || pathname === '/api/waf/public-stream';
+      const isPublicExternalApi = pathname.startsWith('/api/license') || pathname === '/api/threat-intel' || pathname === '/api/waf/public-stream';
       const origin = req.headers.origin;
       if (isPublicExternalApi) {
         res.setHeader('Access-Control-Allow-Origin', '*');

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Política de Privacidad | NexaGuard Security</title>
+<meta name="description" content="Política de privacidad y tratamiento de datos del ecosistema de ciberseguridad NexaGuard.">
+<link rel="icon" href="/brand/icon-512.png" type="image/png">
+<style>
+  :root {
+    --bg-deep: #070a12;
+    --bg-card: rgba(14, 22, 41, 0.85);
+    --border: rgba(56, 189, 248, 0.2);
+    --cyan: #38bdf8;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7;
+    padding: 2.5rem 1rem;
+  }
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+  header { margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+  .logo { display: inline-flex; align-items: center; gap: 0.75rem; text-decoration: none; color: #fff; font-weight: 700; font-size: 1.35rem; margin-bottom: 1rem; }
+  .logo img { width: 36px; height: 36px; border-radius: 8px; }
+  h1 { font-size: 2rem; color: #fff; margin-bottom: 0.5rem; }
+  .date { color: var(--cyan); font-size: 0.9rem; font-weight: 600; }
+  h2 { font-size: 1.35rem; color: var(--cyan); margin: 2rem 0 0.75rem; }
+  p, ul { color: var(--text-muted); margin-bottom: 1.25rem; font-size: 1rem; }
+  ul { padding-left: 1.5rem; }
+  li { margin-bottom: 0.5rem; }
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <a href="/" class="logo">
+      <img src="/brand/icon-512.png" alt="NexaGuard">
+      <span>NexaGuard Security</span>
+    </a>
+    <h1>Política de Privacidad</h1>
+    <div class="date">Última actualización: 26 de Octubre de 2026</div>
+  </header>
+
+  <section>
+    <h2>1. Compromiso con la Privacidad por Diseño</h2>
+    <p>En NexaGuard diseñamos nuestra tecnología bajo el principio de minimización de datos. Creemos firmemente que la seguridad no debe comprometer la privacidad ni la soberanía de sus datos.</p>
+
+    <h2>2. Datos que Procesa el Plugin Local en WordPress</h2>
+    <p>El plugin NexaGuard opera de manera autónoma en su propio servidor web. Los análisis forenses, la detección heurística, la cuarentena de archivos infectados y el registro de eventos del cortafuegos (WAF) se almacenan localmente en la base de datos y sistema de archivos de su instalación de WordPress. NexaGuard <strong>no transmite contraseñas, contenido de páginas, datos de usuarios ni credenciales administrativas a servidores externos</strong>.</p>
+
+    <h2>3. Conexiones a Servicios Externos Opcionales</h2>
+    <p>El plugin solo establece comunicaciones externas en los siguientes casos expresamente documentados:</p>
+    <ul>
+      <li><strong>API Oficial de Checksums de WordPress.org:</strong> Para verificar la integridad de los archivos del núcleo de WordPress (se envían únicamente la versión de WordPress y el idioma de instalación; sin datos personales).</li>
+      <li><strong>Red de Inteligencia de Amenazas NexaGuard (Opt-in):</strong> Si el usuario activa voluntariamente las firmas en la nube, se verifica periódicamente si existen nuevas firmas heurísticas. Se transmite el nombre de dominio y la versión del plugin para entregar la base de datos de firmas adecuada.</li>
+      <li><strong>API de Validación de Licencia NexaGuard:</strong> Al ingresar una clave PRO o activar una membresía, se valida la autenticidad del token y se asocia al dominio autorizado.</li>
+    </ul>
+
+    <h2>4. Datos Recopilados en nexaguards.com</h2>
+    <p>En nuestra plataforma web recopilamos la información indispensable para la facturación y entrega del servicio (nombre, correo electrónico y detalles de la transacción procesados de forma segura a través de pasarelas certificadas como PayPal o Stripe). Nunca almacenamos números completos de tarjetas de crédito en nuestros servidores.</p>
+
+    <h2>5. Derechos del Usuario (RGPD / CCPA)</h2>
+    <p>Usted tiene derecho a acceder, rectificar o solicitar la eliminación total de sus datos de cuenta en nexaguards.com en cualquier momento enviando una solicitud a <a href="mailto:contacto@nexaguards.com">contacto@nexaguards.com</a>.</p>
+  </section>
+
+  <footer>
+    <p>&copy; 2026 NexaGuard Security. Todos los derechos reservados. · <a href="/">Inicio</a> · <a href="/terminos">Términos de Servicio</a></p>
+  </footer>
+</div>
+</body>
+</html>

@@ -449,11 +449,7 @@ jQuery(document).ready(function ($) {
 
             if (!t.is_db) {
                 if (t.clean_action === 'restore_core_file') {
-                    if (nexaguardData && nexaguardData.is_pro) {
-                        actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="restore_core_file" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Descargar y restaurar el archivo original limpio desde WordPress.org">🔄 Restaurar Archivo Original (WordPress.org)</button>';
-                    } else {
-                        actBtn = '<a href="update-core.php" class="btn-ng btn-ng-outline" style="border-color:#3de8a4; color:#3de8a4; font-weight:700; text-decoration:none;" title="Reinstalar núcleo oficial de WordPress">🔄 Reinstalar Núcleo Oficial de WordPress</a>';
-                    }
+                    actBtn = '<a href="update-core.php" class="btn-ng btn-ng-primary" style="border-color:#3de8a4; background:#10b981; color:#ffffff; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px;" target="_blank" title="Reinstalar núcleo oficial de WordPress">🔄 Reinstalar Núcleo Oficial en WordPress ↗</a>';
                 } else if (t.clean_action === 'sanitize_injection') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-action btn-clean-threat" data-type="clearfake" data-target="' + t.full_path + '" data-id="' + t.id + '" title="Extirpar código malicioso inyectado preservando el archivo original">🧹 Desinfectar Código (Extirpar Inyección)</button>';
                 } else if (t.clean_action === 'clean_dropin') {
@@ -463,7 +459,7 @@ jQuery(document).ready(function ($) {
                 } else if (t.clean_action === 'protect_uploads_directory') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="protect_uploads_directory" data-target="' + t.full_path + '" data-id="' + t.id + '">🛡️ Bloquear Ejecución PHP en Uploads</button>';
                 } else if (t.clean_action === 'apply_disallow_file_edit') {
-                    actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="apply_disallow_file_edit" data-target="' + t.full_path + '" data-id="' + t.id + '">🛡️ Bloquear Editor de Archivos (wp-config)</button>';
+                    actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="apply_disallow_file_edit" data-target="' + t.full_path + '" data-id="' + t.id + '">🛡️ Bloquear Editor de Archivos (Hardening)</button>';
                 } else if (t.clean_action === 'apply_htaccess_no_indexes') {
                     actBtn = '<button type="button" class="btn-ng btn-ng-primary btn-clean-threat" data-type="apply_htaccess_no_indexes" data-target="' + t.full_path + '" data-id="' + t.id + '">🛡️ Bloquear Listado de Carpetas (.htaccess)</button>';
                 } else if (t.clean_action === 'regenerate_wp_salts') {

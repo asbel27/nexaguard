@@ -6,7 +6,8 @@
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: NexaGuard Cybersecurity Team
- * Author URI: https://nexaguards.com
+ * Author URI: https://www.nexaguards.com
+ * Plugin URI: https://www.nexaguards.com
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: nexaguard-malware-scanner
@@ -403,31 +404,31 @@ class NexaGuard_Plugin {
         $is_pro = NexaGuard_Firewall::is_pro();
 
         $settings = array(
-            // Reglas Básicas (100% operativas en Edición Estándar)
+            // Reglas de Endurecimiento y Blindaje
             'block_php_uploads'     => !empty($_POST['block_php_uploads']),
             'disable_dir_browsing'  => !empty($_POST['disable_dir_browsing']),
             'disallow_file_edit'    => !empty($_POST['disallow_file_edit']),
             'block_user_enumeration'=> !empty($_POST['block_user_enumeration']),
-            // Módulos Avanzados PRO (disponibles exclusivamente con licencia activa)
-            'disable_xmlrpc'        => $is_pro ? !empty($_POST['disable_xmlrpc']) : false,
-            'hide_wp_version'       => $is_pro ? !empty($_POST['hide_wp_version']) : false,
-            'waf_enabled'           => $is_pro ? !empty($_POST['waf_enabled']) : false,
-            'anti_clearfake'        => $is_pro ? !empty($_POST['anti_clearfake']) : false,
-            'emergency_lockdown'    => $is_pro ? !empty($_POST['emergency_lockdown']) : false,
-            'brute_force_protection'=> $is_pro ? !empty($_POST['brute_force_protection']) : false,
+            // Módulos de Cortafuegos y Defensa Activa (100% operativos)
+            'disable_xmlrpc'        => !empty($_POST['disable_xmlrpc']),
+            'hide_wp_version'       => !empty($_POST['hide_wp_version']),
+            'waf_enabled'           => !empty($_POST['waf_enabled']),
+            'anti_clearfake'        => !empty($_POST['anti_clearfake']),
+            'emergency_lockdown'    => !empty($_POST['emergency_lockdown']),
+            'brute_force_protection'=> !empty($_POST['brute_force_protection']),
             'bf_max_retries'        => isset($_POST['bf_max_retries']) ? max(3, min(20, intval($_POST['bf_max_retries']))) : 5,
             'bf_lockout_time'       => isset($_POST['bf_lockout_time']) ? max(5, min(1440, intval($_POST['bf_lockout_time']))) : 20,
-            'hide_backend'          => $is_pro ? !empty($_POST['hide_backend']) : false,
+            'hide_backend'          => !empty($_POST['hide_backend']),
             'login_slug'            => !empty($_POST['login_slug']) ? sanitize_title(trim($_POST['login_slug'])) : 'acceso-seguro',
-            'generic_login_errors'  => $is_pro ? !empty($_POST['generic_login_errors']) : false,
-            'protect_system_files'  => $is_pro ? !empty($_POST['protect_system_files']) : false,
-            'admin_login_alerts'    => $is_pro ? !empty($_POST['admin_login_alerts']) : false,
-            'threat_email_alerts'   => $is_pro ? !empty($_POST['threat_email_alerts']) : false,
+            'generic_login_errors'  => !empty($_POST['generic_login_errors']),
+            'protect_system_files'  => !empty($_POST['protect_system_files']),
+            'admin_login_alerts'    => !empty($_POST['admin_login_alerts']),
+            'threat_email_alerts'   => !empty($_POST['threat_email_alerts']),
             'alert_email'           => !empty($_POST['alert_email']) ? sanitize_email($_POST['alert_email']) : '',
-            'waf_auto_jail'         => $is_pro ? !empty($_POST['waf_auto_jail']) : false,
-            'tripwire_enabled'      => $is_pro ? !empty($_POST['tripwire_enabled']) : false,
+            'waf_auto_jail'         => !empty($_POST['waf_auto_jail']),
+            'tripwire_enabled'      => !empty($_POST['tripwire_enabled']),
             'threat_webhook_url'    => !empty($_POST['threat_webhook_url']) ? esc_url_raw(trim($_POST['threat_webhook_url'])) : '',
-            'login_custom_design'   => $is_pro ? !empty($_POST['login_custom_design']) : false,
+            'login_custom_design'   => !empty($_POST['login_custom_design']),
             'login_bg_image'        => isset($_POST['login_bg_image']) ? esc_url_raw(trim($_POST['login_bg_image'])) : '',
             'login_bg_preset'       => isset($_POST['login_bg_preset']) ? sanitize_key($_POST['login_bg_preset']) : 'deep-navy',
             'login_logo_image'      => isset($_POST['login_logo_image']) ? esc_url_raw(trim($_POST['login_logo_image'])) : '',

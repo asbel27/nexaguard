@@ -47,10 +47,10 @@ class NexaGuard_Firewall {
         $is_pro = self::is_pro();
 
         $settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
-            // 4 Reglas Básicas (activas por defecto para todos los usuarios)
+            // Reglas Básicas
             'block_php_uploads'     => true,
             'disable_dir_browsing'  => true,
-            'disallow_file_edit'    => true,
+            'disallow_file_edit'    => false, // Opt-in por el administrador para no alterar el comportamiento global por defecto
             'block_user_enumeration'=> true,
             // Módulos Avanzados PRO (inactivos en versión gratuita sin licencia)
             'disable_xmlrpc'        => false,
@@ -97,11 +97,8 @@ class NexaGuard_Firewall {
         add_action('send_headers', array(__CLASS__, 'send_security_headers'));
 
         // =========================================================================
-        // 2. MÓDULOS AVANZADOS PRO (Se activan exclusivamente con licencia válida)
+        // 2. MÓDULOS DE SEGURIDAD Y DEFENSA ACTIVA (100% funcionales para todos los usuarios)
         // =========================================================================
-        if (!$is_pro) {
-            return;
-        }
 
         // 2.1 Modo Aislamiento de Emergencia / Lockdown
         if (!empty($settings['emergency_lockdown'])) {

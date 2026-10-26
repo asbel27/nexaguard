@@ -262,23 +262,9 @@
   };
 
   CyberThreatMap.prototype.fetchIpLocation = function () {
-    var self = this;
-    fetch('https://ipapi.co/json/')
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        if (data && data.latitude && data.longitude) {
-          self.userLocation.lat = data.latitude;
-          self.userLocation.lon = data.longitude;
-          self.userLocation.city = data.city || 'Nodo Detectado';
-          self.userLocation.country = data.country_code || 'XX';
-          var match = COUNTRY_DB[data.country_code];
-          self.userLocation.flag = match ? match.flag : '🎯';
-          if (typeof self.opts.onLocationChanged === 'function') {
-            self.opts.onLocationChanged(self.userLocation);
-          }
-        }
-      })
-      .catch(function () {});
+    if (typeof this.opts.onLocationChanged === 'function') {
+      this.opts.onLocationChanged(this.userLocation);
+    }
   };
 
   // Lanzar un haz balístico desde el país atacante hacia la ubicación del usuario

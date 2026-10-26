@@ -1,6 +1,6 @@
 === NexaGuard – Malware Scanner & Web Security ===
 Contributors: asbel27
-Donate link: https://www.nexaguards.com
+Donate link: https://www.nexaguards.com/
 Tags: security, malware scanner, malware cleaner, anti malware, firewall
 Requires at least: 5.8
 Tested up to: 7.1
