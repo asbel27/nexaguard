@@ -1527,7 +1527,7 @@ a[data-go],a[data-act]{cursor:pointer}
   <div class="nav-r">
     <button type="button" class="btn btn-o sm" id="navOpenMail" title="Escríbenos directamente" aria-label="Enviar correo"><svg class="ic" style="width:14px;height:14px;margin-right:4px;vertical-align:-2px"><use href="#i-mail"/></svg><span class="nav-btn-txt">Enviar correo</span></button>
     <button type="button" class="btn btn-o sm" id="navPanel">Ingresar</button>
-    <a class="btn btn-y sm" href="#contacto">Pedir ayuda</a>
+    <button type="button" class="btn btn-y sm" id="navHelpBtn" aria-label="Pedir ayuda inmediata">Pedir ayuda</button>
     <button type="button" class="btn btn-o sm nav-burger" id="navBurger" aria-label="Abrir menú" aria-expanded="false" title="Menú">
       <svg class="ic-burger" viewBox="0 0 24 24" aria-hidden="true">
         <line class="b-line b-top" x1="4" y1="6" x2="20" y2="6"/>
@@ -1551,7 +1551,7 @@ a[data-go],a[data-act]{cursor:pointer}
   </div>
   <div class="drawer-foot">
     <button type="button" class="btn btn-o d-btn" id="drawerPanel"><svg class="ic"><use href="#i-lock"/></svg><span id="drawerPanelTxt">Ingresar al panel</span></button>
-    <a href="#contacto" class="btn btn-y d-btn" id="drawerHelp">Pedir ayuda inmediata</a>
+    <button type="button" class="btn btn-y d-btn" id="drawerHelp">Pedir ayuda inmediata</button>
   </div>
 </nav>
 
@@ -3775,6 +3775,17 @@ async function acFetch(url, opts) {
       if (!ACCOUNTS.ok) goTo('contacto');
     });
   }
+  var drawerHelp = $('#drawerHelp');
+  if (drawerHelp) {
+    drawerHelp.addEventListener('click', function () {
+      toggleDrawer(false);
+      if (typeof openContactDialog === 'function') {
+        openContactDialog({ asunto: 'Ayuda Urgente: Problema en mi WordPress' });
+      } else {
+        goTo('contacto');
+      }
+    });
+  }
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && drawer.classList.contains('open')) toggleDrawer(false);
   });
@@ -4436,6 +4447,20 @@ if (contactDlg) {
 
 // Botones directos para abrir contacto
 var navOpenMail = $('#navOpenMail');
+var navHelpBtn = $('#navHelpBtn');
+if (navHelpBtn) {
+  navHelpBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    openContactDialog({ asunto: 'Ayuda Urgente: Problema en mi WordPress' });
+  });
+}
+var drawerHelpGlobal = $('#drawerHelp');
+if (drawerHelpGlobal) {
+  drawerHelpGlobal.addEventListener('click', function (e) {
+    e.preventDefault();
+    openContactDialog({ asunto: 'Ayuda Urgente: Problema en mi WordPress' });
+  });
+}
 if (navOpenMail) navOpenMail.addEventListener('click', function () { openContactDialog(); });
 var btnContactDirectMail = $('#btnContactDirectMail');
 if (btnContactDirectMail) btnContactDirectMail.addEventListener('click', function () { openContactDialog(); });
@@ -4763,8 +4788,16 @@ var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: red
 function goTo(id) {
   var el = document.getElementById(id);
   if (!el) return false;
-  var ty = id === 'inicio' ? 0 : pageTop(el);
-  window.scrollTo({ top: Math.max(0, Math.round(ty)), behavior: reduceMotion ? 'auto' : 'smooth' });
+  if (id === 'inicio') {
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+    return true;
+  }
+  try {
+    el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  } catch (err) {
+    var ty = pageTop(el);
+    window.scrollTo({ top: Math.max(0, Math.round(ty)), behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
   return true;
 }
 /* Los enlaces #sección pasan a ser "botones-enlace" sin href: así el navegador
