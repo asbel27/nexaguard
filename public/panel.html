@@ -1543,11 +1543,13 @@ CV.licencias = async function () {
         h('span', { class: 'pill ok', style: 'margin-bottom:6px;display:inline-block' }, '🚀 Activación en 3 Pasos'),
         h('h3', { style: 'margin:4px 0 6px;color:#fff;font-size:1.15rem' }, '¿Cómo activar tu licencia en WordPress?'),
         h('ol', { style: 'margin:8px 0 0 18px;font-size:.88rem;color:var(--muted);line-height:1.6' },
-          h('li', null, 'Descarga el paquete oficial ', h('b', { style: 'color:#fff' }, 'nexaguard-malware-scanner.zip'), ' con el botón amarillo.'),
-          h('li', null, 'En tu panel de WordPress ve a ', h('b', { style: 'color:#fff' }, 'Plugins → Añadir nuevo → Subir plugin'), ' y actívalo.'),
-          h('li', null, 'Entra en el menú ', h('b', { style: 'color:var(--yellow)' }, 'NexaGuard Security'), ', pega tu clave de licencia y haz clic en ', h('b', { style: 'color:#fff' }, 'Activar Licencia'), '.'),
-          h('li', null, '¡Listo! Tu sitio quedará blindado con Vigilancia 24 Horas y sincronizado con NexaGuard Threat Cloud.'))),
-      h('a', { class: 'btn btn-y', href: '/downloads/nexaguard-malware-scanner.zip', download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar Plugin (.zip)')));
+          h('li', null, 'Descarga el paquete oficial ', h('b', { style: 'color:#fff' }, 'nexaguard-malware-scanner.zip'), ' y el add-on ', h('b', { style: 'color:var(--yellow)' }, 'nexaguard-pro.zip'), '.'),
+          h('li', null, 'En tu panel de WordPress ve a ', h('b', { style: 'color:#fff' }, 'Plugins → Añadir nuevo → Subir plugin'), ' y actívalos.'),
+          h('li', null, 'Entra en el menú ', h('b', { style: 'color:var(--yellow)' }, 'NexaGuard PRO / NexaGuard Security'), ', pega tu clave de licencia y haz clic en ', h('b', { style: 'color:#fff' }, 'Activar Licencia'), '.'),
+          h('li', null, '¡Listo! Tu sitio quedará blindado con Vigilancia 24 Horas, Reconstrucción de Núcleo y WAF Capa 7 activo.'))),
+      h('div', { style: 'display:flex;gap:10px;flex-wrap:wrap' },
+        h('a', { class: 'btn btn-y', href: '/downloads/nexaguard-pro.zip', download: 'nexaguard-pro.zip', style: 'background:linear-gradient(135deg, #f59e0b, #d97706);color:#000;font-weight:700' }, ico('shield'), '⚡ Descargar NexaGuard PRO (.zip)'),
+        h('a', { class: 'btn btn-o', href: '/downloads/nexaguard-malware-scanner.zip', download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar Free (.zip)'))));
   root.appendChild(guideCard);
 
   // Tarjetas de Licencias
@@ -1915,10 +1917,12 @@ AV.licencias = async function () {
   var dlCard = h('div', { class: 'card', style: 'border:1.5px solid var(--yellow);background:rgba(255,207,51,.04);margin-bottom:20px' },
     h('div', { style: 'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px' },
       h('div', null,
-        h('span', { class: 'pill ok', style: 'margin-bottom:6px;display:inline-block' }, '🛡️ Edición Estándar para WordPress'),
-        h('h3', { style: 'margin:4px 0 6px;color:#fff;font-size:1.15rem' }, 'Plugin Oficial NexaGuard Security v1.2.2'),
-        h('p', { class: 'hint', style: 'max-width:65ch;margin:0' }, 'Paquete .zip limpio y estándar. Al instalarlo en WordPress viene en Modo Estándar con escáner local. El Radar y la Vigilancia 24H se desbloquean al activar una licencia PRO.')),
-      h('a', { class: 'btn btn-y', href: data.downloadUrl, download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar NexaGuard (.zip)')));
+        h('span', { class: 'pill ok', style: 'margin-bottom:6px;display:inline-block' }, '🛡️ Software Oficial NexaGuard Security'),
+        h('h3', { style: 'margin:4px 0 6px;color:#fff;font-size:1.15rem' }, 'Descarga Oficial de Plugins WordPress'),
+        h('p', { class: 'hint', style: 'max-width:65ch;margin:0' }, 'Descarga la edición gratuita comunitaria para escanear y auditar tu WordPress, o descarga el Add-on NexaGuard PRO Suite para activar reconstrucción de archivos vitales, WAF Capa 7 y erradicación con 1-clic.')),
+      h('div', { style: 'display:flex;gap:10px;flex-wrap:wrap' },
+        h('a', { class: 'btn btn-y', href: '/downloads/nexaguard-pro.zip', download: 'nexaguard-pro.zip', style: 'background:linear-gradient(135deg, #f59e0b, #d97706);color:#000;font-weight:700' }, ico('shield'), '⚡ Descargar NexaGuard PRO (.zip)'),
+        h('a', { class: 'btn btn-o', href: '/downloads/nexaguard-malware-scanner.zip', download: 'nexaguard-malware-scanner.zip' }, ico('shield'), 'Descargar Free (.zip)'))));
   root.appendChild(dlCard);
 
   // Tabla de licencias generadas para clientes

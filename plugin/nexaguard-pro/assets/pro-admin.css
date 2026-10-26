@@ -1,0 +1,431 @@
+/**
+ * NexaGuard PRO - Estilos del Panel Empresarial
+ */
+
+.nexaguard-pro-wrap {
+    margin: 20px 20px 0 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    color: #e2e8f0;
+}
+
+.nxg-pro-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 24px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    margin-bottom: 24px;
+}
+
+.nxg-pro-brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.nxg-pro-logo {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+.nxg-pro-header h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin: 0;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nxg-badge-enterprise {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.nxg-pro-header p {
+    margin: 4px 0 0;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.nxg-pro-status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.nxg-pro-status-pill.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.nxg-pro-status-pill.inactive {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.nxg-pro-status-pill .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+}
+
+/* Tabs */
+.nxg-pro-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 8px;
+}
+
+.nxg-tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #94a3b8;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nxg-tab-btn:hover {
+    color: #ffffff;
+    background: #1e293b;
+}
+
+.nxg-tab-btn.active {
+    color: #f59e0b;
+    background: #1e293b;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* Panes */
+.nxg-tab-pane {
+    display: none;
+}
+
+.nxg-tab-pane.active {
+    display: block;
+}
+
+/* Cards */
+.nxg-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 28px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    margin-bottom: 24px;
+}
+
+.nxg-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 6px;
+}
+
+.nxg-card h4 {
+    font-size: 1.05rem;
+    color: #cbd5e1;
+    margin: 20px 0 12px;
+}
+
+.nxg-muted {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.nxg-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1e293b;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+
+/* Inputs & Buttons */
+.nxg-license-box {
+    max-width: 600px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 24px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+}
+
+.nxg-input-group label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+}
+
+.nxg-input {
+    width: 100%;
+    background: #0f172a !important;
+    border: 1px solid #475569 !important;
+    color: #ffffff !important;
+    padding: 10px 14px !important;
+    border-radius: 6px !important;
+    font-family: monospace;
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+
+.nxg-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+}
+
+.nxg-btn {
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nxg-btn-gold {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000000;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+
+.nxg-btn-gold:hover {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
+}
+
+.nxg-btn-gold.lg {
+    font-size: 1.1rem;
+    padding: 14px 28px;
+}
+
+.nxg-btn-outline {
+    background: transparent;
+    border: 1px solid #475569;
+    color: #cbd5e1;
+}
+
+.nxg-btn-outline:hover {
+    background: #334155;
+    color: #ffffff;
+}
+
+.nxg-btn-sm {
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    background: #334155;
+    color: #ffffff;
+    border-radius: 4px;
+}
+
+.nxg-btn-sm:hover {
+    background: #475569;
+}
+
+/* Details */
+.nxg-license-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.nxg-stat-item {
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 16px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nxg-stat-item .label {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.nxg-stat-item .val {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.nxg-stat-item .val.gold {
+    color: #f59e0b;
+}
+
+/* Tables */
+.nxg-table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #334155;
+}
+
+.nxg-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1e293b;
+    font-size: 0.88rem;
+}
+
+.nxg-table th {
+    background: #0f172a;
+    color: #94a3b8;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid #334155;
+}
+
+.nxg-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #334155;
+    color: #cbd5e1;
+}
+
+.nxg-table tr:last-child td {
+    border-bottom: none;
+}
+
+.nxg-code-sample {
+    font-family: monospace;
+    font-size: 0.82rem;
+    color: #fca5a5;
+    background: #0f172a;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+/* Tags */
+.nxg-tag {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.nxg-tag.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.nxg-tag.danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.nxg-tag.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+/* Grid */
+.nxg-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.nxg-feature-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.nxg-feature-card .feature-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.nxg-feature-card h4 {
+    margin: 0 0 8px;
+    color: #ffffff;
+    font-size: 0.98rem;
+}
+
+.nxg-feature-card p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+/* Hero Eradication */
+.nxg-eradication-hero {
+    text-align: center;
+    max-width: 650px;
+    margin: 40px auto;
+}
+
+.nxg-eradication-hero .hero-icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+}
+
+.nxg-eradication-hero h3 {
+    font-size: 1.6rem;
+    margin-bottom: 12px;
+}
+
+.nxg-eradication-hero p {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 28px;
+}
+
+.nxg-empty {
+    color: #94a3b8;
+    font-style: italic;
+    padding: 12px 0;
+}

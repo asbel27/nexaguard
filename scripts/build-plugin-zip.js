@@ -212,6 +212,7 @@ function generateUpdateInfo(sourceDir, downloadsDir) {
 
 const rootDir = path.resolve(__dirname, '..');
 const pluginSourceDir = path.join(rootDir, 'plugin', 'nexaguard-security');
+const proPluginSourceDir = path.join(rootDir, 'plugin', 'nexaguard-pro');
 const downloadsDir = path.join(rootDir, 'public', 'downloads');
 
 // Generar manifiesto de integridad antes de comprimir
@@ -229,6 +230,17 @@ createZip(
 const legacyZipPath = path.join(downloadsDir, 'nexaguard-security.zip');
 fs.copyFileSync(officialZipPath, legacyZipPath);
 console.log(`🔗 Archivo espejo sincronizado idénticamente: ${legacyZipPath} (100% idéntico a nexaguard-malware-scanner.zip)`);
+
+// 3. Generar zip comercial para NexaGuard PRO Suite (nexaguard-pro.zip)
+if (fs.existsSync(proPluginSourceDir)) {
+  const proZipPath = path.join(downloadsDir, 'nexaguard-pro.zip');
+  createZip(
+    proPluginSourceDir,
+    proZipPath,
+    'nexaguard-pro'
+  );
+  console.log(`⚡ Paquete comercial NexaGuard PRO Suite generado con éxito en: ${proZipPath}`);
+}
 
 // Generar info.json para el auto-updater nativo de WordPress
 generateUpdateInfo(pluginSourceDir, downloadsDir);
