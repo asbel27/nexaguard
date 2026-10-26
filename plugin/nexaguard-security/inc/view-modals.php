@@ -9,10 +9,10 @@ $has_license = !empty($license) && !empty($license['valid']) && !empty($license[
 <!-- Modal de Cambio / Ingreso de Licencia -->
 <div id="license-modal" class="ng-modal" style="display:none;">
     <div class="ng-modal-box">
-        <h3>🔑 Activar Licencia NexaGuard</h3>
-        <p>Introduce tu clave de licencia oficial o activa tu Licencia Comunitaria Gratuita:</p>
+        <h3>🔑 Conectar con NexaGuard Threat Cloud</h3>
+        <p>Introduce tu clave de API oficial para sincronizar firmas de amenazas en tiempo real y soporte forense:</p>
         <div class="ng-modal-fld">
-            <input type="text" id="input-license-key" class="in-ng" placeholder="Ej: NXG-PRO-XXXX-XXXX" value="<?php echo esc_attr($has_license ? $license['key'] : ''); ?>">
+            <input type="text" id="input-license-key" class="in-ng" placeholder="Ej: NXG-CLOUD-XXXX-XXXX" value="<?php echo esc_attr($has_license ? $license['key'] : ''); ?>">
         </div>
         <p id="license-modal-msg" class="modal-msg"></p>
         <div class="ng-modal-acts" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:gap; gap:8px;">
