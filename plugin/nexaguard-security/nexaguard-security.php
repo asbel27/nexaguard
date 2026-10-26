@@ -7,7 +7,6 @@
  * Requires PHP: 7.4
  * Author: NexaGuard Cybersecurity Team
  * Author URI: https://www.nexaguards.com
- * Plugin URI: https://www.nexaguards.com
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: nexaguard-malware-scanner
