@@ -100,7 +100,26 @@ function createServer(opts = {}) {
     if (!staticDir || !fs.existsSync(staticDir)) return sendJson(res, 404, { error: 'No encontrado' });
     let p;
     try { p = decodeURIComponent(req.url.split('?')[0]); } catch { return sendJson(res, 400, { error: 'Petición no válida' }); }
+
+    // Redirección canónica 301 para SEO: remover /index.html explícito
+    if (p === '/index.html') {
+      res.writeHead(301, { 'Location': '/', 'Cache-Control': 'public, max-age=86400' });
+      return res.end();
+    }
+    if (p.endsWith('/index.html') && p.length > 11) {
+      res.writeHead(301, { 'Location': p.slice(0, -10), 'Cache-Control': 'public, max-age=86400' });
+      return res.end();
+    }
+
     if (p === '/panel' || p === '/panel/') p = '/panel.html';
+
+    // Si la ruta solicitada es un directorio existente sin barra final, redirigir con 301 para consistencia canónica
+    const candidatePath = path.normalize(path.join(staticDir, p));
+    if (!p.endsWith('/') && fs.existsSync(candidatePath) && fs.statSync(candidatePath).isDirectory()) {
+      res.writeHead(301, { 'Location': p + '/', 'Cache-Control': 'public, max-age=86400' });
+      return res.end();
+    }
+
     if (p.endsWith('/')) p += 'index.html';
     let file = path.normalize(path.join(staticDir, p));
     if (!file.startsWith(path.normalize(staticDir))) return sendJson(res, 403, { error: 'Prohibido' });
@@ -115,7 +134,14 @@ function createServer(opts = {}) {
     }
 
     fs.readFile(file, (err, data) => {
-      if (err) return sendJson(res, 404, { error: 'No encontrado' });
+      if (err) {
+        const notFoundPage = path.join(staticDir, '404.html');
+        if (fs.existsSync(notFoundPage) && (req.headers.accept || '').includes('text/html')) {
+          res.writeHead(404, Object.assign({ 'Content-Type': 'text/html; charset=utf-8' }, SEC));
+          return res.end(fs.readFileSync(notFoundPage));
+        }
+        return sendJson(res, 404, { error: 'No encontrado' });
+      }
       const h = Object.assign({ 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' }, SEC);
       if (path.extname(file) === '.html') h['Cache-Control'] = 'no-cache, must-revalidate';
       if (path.basename(file) === 'panel.html') { h['Content-Security-Policy'] = PANEL_CSP; h['Cache-Control'] = 'no-store'; }
