@@ -1037,8 +1037,6 @@ class NexaGuard_Cleaner {
             'details'             => array()
         );
 
-        $is_pro = NexaGuard_Firewall::is_pro();
-
         foreach ($threats as $t) {
             $action   = isset($t['clean_action']) ? $t['clean_action'] : '';
             $target   = isset($t['full_path']) ? $t['full_path'] : '';
@@ -1052,16 +1050,8 @@ class NexaGuard_Cleaner {
                        in_array($file_rel, array('index.php', 'wp-blog-header.php', 'wp-settings.php', 'wp-load.php', 'wp-login.php', 'wp-cron.php', 'wp-mail.php', 'wp-links-opml.php', 'wp-trackback.php'), true);
 
             if ($is_core) {
-                if ($is_pro) {
-                    $restore_res = $this->restore_core_file($target);
-                    if (!empty($restore_res['success'])) {
-                        $results['restored_core']++;
-                        $results['details'][] = "Archivo vital del núcleo reconstruido limpiamente desde WordPress.org ({$file_rel})";
-                        continue;
-                    }
-                }
                 $results['skipped']++;
-                $results['details'][] = "Archivo del núcleo preservado ({$file_rel}). Se aconseja reinstalar el núcleo desde Escritorio > Actualizaciones.";
+                $results['details'][] = "Archivo del núcleo preservado ({$file_rel}). Conforme a las normas de seguridad de WordPress.org, los archivos del núcleo deben reinstalarse oficialmente desde Escritorio > Actualizaciones.";
                 continue;
             }
 

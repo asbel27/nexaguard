@@ -2527,16 +2527,9 @@ jQuery(document).ready(function ($) {
                     // 1. Mostrar u ocultar Tarjeta y Tabla de Archivos Vitales Alterados (con Consejo de Reconstrucción)
                     if (d.has_anomalies && d.anomalies && d.anomalies.length > 0) {
                         var anomHtml = '';
-                        var isPro = (ngData.is_pro === true || ngData.is_pro === '1' || ngData.is_pro === 1);
+                        var reinstallUrl = d.reinstall_url || 'update-core.php';
                         d.anomalies.forEach(function (anom) {
-                            var actionBtn = '';
-                            if (isPro && anom.can_rebuild) {
-                                actionBtn = '<button type="button" class="btn-ng btn-ng-primary btn-sentinel-rebuild" data-file="' + anom.rel_path + '" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#3de8a4; color:#061426; border:none; border-radius:6px; cursor:pointer;" title="Descargar y restaurar la copia oficial limpia de WordPress.org">🛠️ Reconstruir Archivo Oficial</button>';
-                            } else if (isPro && anom.can_harden) {
-                                actionBtn = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline" style="font-size:0.75rem; padding:5px 12px; font-weight:700; border-color:#ffcf33; color:#ffcf33; border-radius:6px; cursor:pointer;">🔒 Endurecer Permisos</button>';
-                            } else {
-                                actionBtn = '<a href="' + (d.reinstall_url || 'update-core.php') + '" class="btn-ng btn-ng-link" style="color:#ffcf33; font-weight:700; font-size:0.78rem; text-decoration:none;">🔄 Reinstalar WP</a>';
-                            }
+                            var actionBtn = '<a href="' + reinstallUrl + '" class="btn-ng btn-ng-primary btn-sm" style="background:#10b981; color:#fff; font-weight:700; font-size:0.75rem; text-decoration:none; padding:4px 10px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;" target="_blank">Reinstalar Oficial ↗</a>';
 
                             anomHtml += '<tr style="border-bottom:1px solid rgba(255,69,96,0.15);">' +
                                 '<td style="padding:10px 14px;"><code style="color:#ff8ba0; font-weight:700; font-size:0.85rem;">' + anom.path + '</code></td>' +
