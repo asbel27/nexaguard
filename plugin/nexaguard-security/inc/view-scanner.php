@@ -278,9 +278,21 @@ $rollback_count = count($backup_history);
                         <button type="button" id="btn-reset-scan" class="btn-ng btn-ng-outline" title="Borrar historial anterior e iniciar vista limpia">
                             🔄 Limpiar Vista / Resetear
                         </button>
-                        <a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline" style="border-color:rgba(61,232,164,0.4);color:#3de8a4;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:6px;" target="_blank">
-                        <span>🔄</span> Reinstalar Núcleo Oficial en WordPress ↗
-                    </a>
+                        <?php if ($is_pro): ?>
+                            <div style="display:inline-flex; align-items:center; gap:5px;">
+                                <button type="button" class="btn-ng btn-trigger-vital-rebuild" style="background:rgba(61,232,164,0.12); color:#3de8a4; border:1px solid rgba(61,232,164,0.35); font-weight:700; cursor:pointer;" title="Reconstruir archivos vitales del núcleo con copias oficiales de WordPress.org">
+                                    🛠️ Reconstruir Archivos Vitales
+                                </button>
+                                <span class="ng-tooltip-btn" tabindex="0" title="Ver explicación detallada">
+                                    <span class="ng-tooltip-icon">ℹ️</span>
+                                    <span class="ng-tooltip-popover">
+                                        <strong class="ng-tooltip-title">🛠️ Reconstrucción Oficial de Archivos Vitales</strong>
+                                        <span class="ng-tooltip-desc">Descarga copias oficiales de WordPress.org y restaura archivos del sistema dañados o modificados sin alterar tu web.</span>
+                                        <span class="ng-tooltip-rec">💡 100% Seguro: Respaldo previo en cuarentena.</span>
+                                    </span>
+                                </span>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -637,18 +649,33 @@ $rollback_count = count($backup_history);
     <div class="ng-tab-panel" id="tab-waf">
 
         <!-- Estado del Cortafuegos Local -->
-        <div class="waf-info-card" style="background:#0e163e; border:1px solid rgba(61,232,164,0.3); border-radius:14px; padding:18px 24px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-            <div style="flex:1; min-width:280px;">
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#3de8a4; box-shadow:0 0 10px #3de8a4;"></span>
-                    <strong style="color:#ffffff; font-size:1.05rem; font-weight:800;">Cortafuegos WAF y Blindaje de Servidor Activo</strong>
+        <?php if ($is_pro): ?>
+            <div class="waf-info-card" style="background:#0e163e; border:1px solid rgba(61,232,164,0.3); border-radius:14px; padding:18px 24px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+                <div style="flex:1; min-width:280px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#3de8a4; box-shadow:0 0 10px #3de8a4;"></span>
+                        <strong style="color:#ffffff; font-size:1.05rem; font-weight:800;">Cortafuegos WAF Capa 7 Activo en el Servidor</strong>
+                    </div>
+                    <p style="color:#8fa0cf; font-size:0.9rem; margin:0; line-height:1.5;">Protección perimetral avanzada y reglas de servidor operativas bajo tu suscripción. Inspección L7 contra inyecciones SQL, XSS, scripts Web3 y bloqueo de escáneres hostiles.</p>
                 </div>
-                <p style="color:#8fa0cf; font-size:0.9rem; margin:0; line-height:1.5;">Protección perimetral directa a nivel de servidor web y PHP para mitigar inyecciones, proteger directorios sensibles, bloquear ataques de fuerza bruta y prevenir intrusiones.</p>
+                <div>
+                    <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-weight:800; padding:6px 14px; border-radius:999px; border:1px solid rgba(61,232,164,0.4);">✓ WAF Inteligente Activo</span>
+                </div>
             </div>
-            <div>
-                <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-weight:800; padding:6px 14px; border-radius:999px; border:1px solid rgba(61,232,164,0.4);">✓ Protección Activa</span>
+        <?php else: ?>
+            <div class="waf-info-card" style="background:#0e163e; border:1px solid rgba(61,232,164,0.3); border-radius:14px; padding:18px 24px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+                <div style="flex:1; min-width:280px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#3de8a4; box-shadow:0 0 10px #3de8a4;"></span>
+                        <strong style="color:#ffffff; font-size:1.05rem; font-weight:800;">Reglas de Blindaje de Servidor (.htaccess y PHP)</strong>
+                    </div>
+                    <p style="color:#8fa0cf; font-size:0.9rem; margin:0; line-height:1.5;">Protección perimetral directa a nivel de servidor web para prevenir la ejecución de scripts no autorizados, proteger directorios y bloquear escaneos de usuarios.</p>
+                </div>
+                <div>
+                    <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ 4 Reglas Activas</span>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
 
         <form id="form-waf-settings" class="ng-card" style="margin-top:18px;">
             <div class="card-title-bar">
@@ -1259,9 +1286,473 @@ $rollback_count = count($backup_history);
             <div class="ng-card" style="background:#0e163e;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
                     <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;">🛡️ Bóveda Vital de Archivos del Núcleo</h3>
-                    <a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline btn-sm" style="border-color:rgba(61,232,164,0.4);color:#3de8a4;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:6px;font-size:0.78rem;padding:5px 12px;" target="_blank">
-                        <span>🔄</span> Reinstalar Núcleo Oficial en WordPress ↗
-                    </a>
+                    <?php if ($is_pro): ?>
+                        <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+                            <div style="display:inline-flex; align-items:center; gap:5px;">
+                                <button type="button" id="btn-sentinel-rebuild-all-vital" class="btn-ng btn-ng-primary btn-trigger-vital-rebuild" style="font-size:0.78rem;padding:5px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 12px rgba(16,185,129,0.35);" title="Descargar y reconstruir todos los archivos vitales de WordPress con copias oficiales inmaculadas de WordPress.org">
+                                    🛠️ Reconstruir Archivos Vitales
+                                </button>
+                                <span class="ng-tooltip-btn" tabindex="0" title="Ver explicación detallada">
+                                    <span class="ng-tooltip-icon">ℹ️</span>
+                                    <span class="ng-tooltip-popover align-right">
+                                        <strong class="ng-tooltip-title">🛠️ Reconstrucción de Archivos Vitales</strong>
+                                        <span class="ng-tooltip-desc">Descarga copias limpias e inmaculadas directamente de los servidores de WordPress.org y restaura los archivos esenciales del sistema (index.php, wp-load.php, wp-blog-header.php, wp-settings.php, version.php) erradicando cualquier malware o backdoor.</span>
+                                        <span class="ng-tooltip-rec">💡 100% Seguro: No toca tu base de datos, temas, plugins ni wp-config.php. Crea respaldo previo automático.</span>
+                                    </span>
+                                </span>
+                            </div>
+                            <div style="display:inline-flex; align-items:center; gap:5px;">
+                                <button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline btn-sentinel-harden" style="font-size:0.78rem;padding:5px 12px;border-color:rgba(255,207,51,0.4);color:#ffd859;font-weight:700;cursor:pointer;background:rgba(255,207,51,0.08);border-radius:6px;" title="Endurecer permisos de wp-config.php a solo-lectura (0440)">
+                                    🔒 Endurecer Permisos
+                                </button>
+                                <span class="ng-tooltip-btn" tabindex="0" title="Ver explicación detallada">
+                                    <span class="ng-tooltip-icon">ℹ️</span>
+                                    <span class="ng-tooltip-popover align-right">
+                                        <strong class="ng-tooltip-title">🔒 Endurecimiento de Permisos (Hardening)</strong>
+                                        <span class="ng-tooltip-desc">Sella los permisos del archivo wp-config.php a modo estricto de solo-lectura (chmod 0440 o 0640). Bloquea cualquier intento de atacantes o troyanos de modificar tus credenciales o inyectar código.</span>
+                                        <span class="ng-tooltip-rec">💡 Recomendado: Máxima protección contra manipulación de credenciales.</span>
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <span class="badge-v" style="background:rgba(61,232,164,0.15); color:#3de8a4; font-size:0.75rem;">✓ Monitoreo Activo</span>
+                    <?php endif; ?>
+                </div>
+                <div style="max-height:240px;overflow-y:auto;">
+                    <table class="ng-table" style="font-size:0.8rem;margin:0;">
+                        <thead>
+                            <tr>
+                                <th>Archivo</th>
+                                <th>Permisos</th>
+                                <th>Estado</th>
+                                <th style="text-align:right;">Acción Oficial (WordPress.org)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sentinel-vital-files-tbody">
+                            <tr>
+                                <td><code>/wp-config.php</code></td>
+                                <td><span class="badge-status-pill ok">0440</span></td>
+                                <td><span style="color:#3de8a4;font-weight:700;">✓ Protegido</span></td>
+                                <td style="text-align:right;"><span style="color:#3de8a4; font-size:0.75rem;">Protegido por WAF</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>/.htaccess</code></td>
+                                <td><span class="badge-status-pill ok">0644</span></td>
+                                <td><span style="color:#3de8a4;font-weight:700;">✓ WAF Activo</span></td>
+                                <td style="text-align:right;"><span style="color:#3de8a4; font-size:0.75rem;">Reglas Activas</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>/index.php</code></td>
+                                <td><span class="badge-status-pill ok">0644</span></td>
+                                <td><span style="color:#3de8a4;font-weight:700;">✓ Firma Oficial</span></td>
+                                <td style="text-align:right;"><a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline btn-sm" style="text-decoration:none; font-size:0.72rem; padding:3px 8px;" target="_blank">Reinstalar Oficial ↗</a></td>
+                            </tr>
+                            <tr>
+                                <td><code>/wp-load.php</code></td>
+                                <td><span class="badge-status-pill ok">0644</span></td>
+                                <td><span style="color:#3de8a4;font-weight:700;">✓ Firma Oficial</span></td>
+                                <td style="text-align:right;"><a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline btn-sm" style="text-decoration:none; font-size:0.72rem; padding:3px 8px;" target="_blank">Reinstalar Oficial ↗</a></td>
+                            </tr>
+                            <tr>
+                                <td><code>/wp-includes/version.php</code></td>
+                                <td><span class="badge-status-pill ok">0644</span></td>
+                                <td><span style="color:#3de8a4;font-weight:700;">✓ Intacto</span></td>
+                                <td style="text-align:right;"><a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline btn-sm" style="text-decoration:none; font-size:0.72rem; padding:3px 8px;" target="_blank">Reinstalar Oficial ↗</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div><!-- /tab-sentinel -->
+
+    <!-- ====================================================================== -->
+    <!-- TAB: ESCUDO BALÍSTICO (RADAR MUNDIAL & HAZ BALÍSTICO EN VIVO)          -->
+    <!-- ====================================================================== -->
+    <div class="ng-tab-panel" id="tab-ballistic">
+        <div class="ng-card" style="padding: 24px 28px; background:#0c1338; border:1px solid rgba(107,140,255,0.28); border-radius:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:14px;">
+                <div>
+                    <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 14px; border-radius:999px; background:rgba(255,69,96,0.12); border:1px solid rgba(255,69,96,0.35); color:#ff8ba0; font-size:0.78rem; font-weight:700; margin-bottom:8px;">
+                        <span class="live-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ff4560; box-shadow:0 0 8px #ff4560;"></span> TELEMETRÍA GLOBAL EN TIEMPO REAL · SOC NEXAGUARD
+                    </div>
+                    <h2 style="font-size:1.6rem; color:#ffffff; margin:0 0 6px; font-weight:800; display:flex; align-items:center; gap:10px;">
+                        🎯 Radar Mundial de Amenazas & Escudo Balístico Activo
+                    </h2>
+                    <p style="color:#b6c4eb; font-size:0.92rem; line-height:1.55; margin:0; max-width:850px;">
+                        Observa en vivo los intentos de intrusión perpetrados contra servidores WordPress en todo el planeta. <strong>Tu servidor se sitúa en tiempo real como nodo protegido</strong>, recibiendo y neutralizando cada haz balístico mediante el blindaje perimetral WAF de NexaGuard.
+                    </p>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span class="ng-badge-pill" style="background:rgba(61,232,164,0.15); color:#3de8a4; border:1px solid rgba(61,232,164,0.4); font-weight:800; padding:6px 14px; border-radius:8px; font-size:0.8rem;">
+                        ✓ ESCUDO ACTIVO (360°)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Barra de Simulación Interactiva -->
+            <div class="threat-sim-bar">
+                <div style="font-weight:700; font-size:0.84rem; color:#ffcf33; display:flex; align-items:center; gap:6px;">
+                    🛡️ Probar Escudo Balístico (Simulación):
+                </div>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="sqli" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(255,51,102,0.4); color:#ff6b8b;" title="Simular inyección SQL a base de datos">💉 SQL Injection</button>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="rce" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(255,51,102,0.4); color:#ff6b8b;" title="Simular ejecución remota de comandos">⚡ RCE Exploit</button>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="honeypot" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(255,207,51,0.4); color:#ffd859;" title="Simular trampa Honeypot en archivo sensible">🍯 Honeypot Trap</button>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="traversal" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(255,207,51,0.4); color:#ffd859;" title="Simular lectura arbitraria de archivos">📂 Path Traversal</button>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="bot" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(63,240,255,0.4); color:#3ff0ff;" title="Simular escáner masivo de bots">🤖 Bad Bot Scanner</button>
+                <button type="button" class="btn-ng btn-ng-outline sm" data-sim="xss" style="padding:4px 10px; font-size:0.75rem; border-color:rgba(63,240,255,0.4); color:#3ff0ff;" title="Simular inyección de script malicioso">☣️ Vector XSS</button>
+            </div>
+
+            <!-- Contenedor del Mapa Mundi -->
+            <div class="threat-map-box">
+                <div class="threat-map-hud-top">
+                    <div class="threat-hud-badge">
+                        <span class="live-dot"></span>
+                        <span style="font-weight:700">DEFENSA PERIMETRAL VIVA</span>
+                        <span style="color:#8fa0cf;">· 360° ACTIVO</span>
+                        <span style="color:#3de8a4;">· LATENCIA: &lt; 0.04ms</span>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <button type="button" class="btn-ng btn-ng-outline sm" id="pluginNodeLocBtn" style="padding:4px 10px; font-size:0.72rem; background:rgba(6,12,34,0.9); border-color:rgba(255,207,51,0.4); color:#ffcf33;" title="Haz clic en cualquier punto del mapa para mover tu nodo">🎯 TU NODO: Detectando ubicación...</button>
+                        <button type="button" class="btn-ng btn-ng-outline sm" id="pluginStreamToggleBtn" style="padding:4px 10px; font-size:0.72rem; background:rgba(6,12,34,0.9); color:#3ff0ff;">⚡ Flujo en Vivo: ACTIVO</button>
+                        <button type="button" class="btn-ng btn-ng-outline sm" id="pluginAudioBtn" style="padding:4px 10px; font-size:0.72rem; background:rgba(6,12,34,0.9); color:#8fa0cf;">🔈 Sonar: MUTE</button>
+                    </div>
+                </div>
+
+                <div class="threat-map-canvas-wrap" id="pluginThreatMapWrap"></div>
+
+                <div class="threat-map-hud-bot">
+                    <div class="threat-hud-badge" style="font-size:0.68rem;">
+                        <span style="color:#ff3366">🔴 Crítico (SQLi/RCE)</span>
+                        <span style="color:#ffcf33; margin-left:8px">🟡 Honeypot/Traversal</span>
+                        <span style="color:#3ff0ff; margin-left:8px">🔵 Bad Bot Scanner</span>
+                        <span style="color:#ffcf33; margin-left:8px">🎯 Tu Servidor (Nodo Protegido)</span>
+                    </div>
+                    <div class="threat-hud-badge">
+                        <span>ESCUDO WAF ACTIVO · NEUTRALIZADOS: </span>
+                        <b id="pluginInterceptedCounter" style="color:#3de8a4; margin-left:4px">0</b>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Ataques con Flechas Animadas -->
+            <div class="threat-feed-box">
+                <div class="threat-feed-head">
+                    <h4 style="margin:0; font-size:0.82rem; color:#3ff0ff; letter-spacing:0.05em; display:flex; align-items:center; gap:8px;">
+                        <span>⚡</span> FLUJO DE ATAQUES INTERCEPTADOS EN TIEMPO REAL
+                    </h4>
+                    <span style="font-size:0.72rem; color:#8fa0cf;">Haz clic en cualquier fila para trazar el haz balístico en el mapa</span>
+                </div>
+                <div class="threat-feed-list" id="pluginThreatFeedList"></div>
+            </div>
+        </div>
+    </div><!-- /tab-ballistic -->
+
+    <!-- ====================================================================== -->
+    <!-- TAB 8: COMPARATIVA PRO                                                 -->
+    <!-- ====================================================================== -->
+    <div class="ng-tab-panel" id="tab-compare">
+        <div class="ng-card" style="padding: 28px; border: 1.5px solid rgba(255,207,51,0.3); border-radius: 16px; background: #0c1338;">
+            <div style="text-align: center; max-width: 780px; margin: 0 auto 28px;">
+                <?php if ($is_pro): ?>
+                    <span class="ng-badge-pill" style="background: rgba(61,232,164,0.15); color: #3de8a4; border: 1px solid rgba(61,232,164,0.35); font-weight: 800; text-transform: uppercase; padding: 4px 14px; border-radius: 999px; font-size: 0.78rem; display: inline-block; margin-bottom: 10px;">🛡️ Plan PRO Activo</span>
+                    <h2 style="font-size: 1.6rem; color: #ffffff; margin: 0 0 10px; font-weight: 800;">Comparativa: Modo Estándar vs NexaGuard PRO</h2>
+                    <p style="color: #b6c4eb; font-size: 0.95rem; line-height: 1.55; margin: 0;">
+                        Tu instalación cuenta actualmente con la protección de <strong>NexaGuard PRO</strong>. Revisa a continuación todas las capacidades y módulos avanzados que tienes activos en este sitio:
+                    </p>
+                <?php else: ?>
+                    <span class="ng-badge-pill" style="background: rgba(255,207,51,0.15); color: #ffcf33; border: 1px solid rgba(255,207,51,0.35); font-weight: 800; text-transform: uppercase; padding: 4px 14px; border-radius: 999px; font-size: 0.78rem; display: inline-block; margin-bottom: 10px;">⚖️ Transparencia & Libertad Total</span>
+                    <h2 style="font-size: 1.6rem; color: #ffffff; margin: 0 0 10px; font-weight: 800;">Comparativa: Modo Estándar vs NexaGuard PRO</h2>
+                    <p style="color: #b6c4eb; font-size: 0.95rem; line-height: 1.55; margin: 0;">
+                        Tu instalación actual cuenta con la <strong>Edición Estándar (Gratuita)</strong>. Funciona de manera 100% operativa y sin límites artificiales para auditar y desinfectar este sitio. Compara aquí las capacidades de cada edición:
+                    </p>
+                <?php endif; ?>
+            </div>
+
+            <div style="overflow-x: auto; border-radius: 14px; border: 1px solid rgba(255,207,51,0.25); background: rgba(14,22,62,0.85); box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
+                <table style="width: 100%; border-collapse: collapse; min-width: 640px; text-align: left; font-size: 0.92rem; color: #e1ebff;">
+                    <thead>
+                        <tr style="border-bottom: 1.5px solid rgba(255,207,51,0.3); background: rgba(20,31,79,0.95);">
+                            <th style="padding: 16px 20px; color: #ffffff; font-size: 1rem; font-weight: 700;">Módulos & Capacidades de Seguridad</th>
+                            <th style="padding: 16px 14px; text-align: center; width: 195px;">
+                                <div style="color: #ffffff; font-weight: 700; font-size: 1rem;">Modo Estándar</div>
+                                <div style="color: #8ba5e3; font-size: 0.75rem;">WordPress.org (Gratuito)</div>
+                            </th>
+                            <th style="padding: 16px 14px; text-align: center; width: 220px; background: rgba(255,207,51,0.08); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <div style="color: #ffcf33; font-weight: 800; font-size: 1.05rem;">⚡ NexaGuard PRO</div>
+                                <div style="color: #ffeaa7; font-size: 0.75rem;"><?php echo $is_pro ? '✓ Activo en este Sitio' : 'Suscripción Oficial'; ?></div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 1. Escáner Forense -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Escáner Forense Profundo</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Inspección de archivos PHP, temas, plugins, uploads y tablas wp_options</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Ilimitado (Manual)</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Ilimitado (Auto + Cloud Intel)</span>
+                            </td>
+                        </tr>
+
+                        <!-- 2. Integridad Sentinel -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Integridad del Núcleo (Sentinel)</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Auditoría de archivos vitales con hashes criptográficos SHA-256 de WordPress.org</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Auditoría Local</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Vigilancia Activa 24/7 en Vivo</span>
+                            </td>
+                        </tr>
+
+                        <!-- 3. Reconstrucción de Archivos Vitales -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Reconstrucción Oficial de Archivos Vitales</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Restaura archivos clave (index.php, wp-load, etc.) con copias oficiales inmaculadas de WordPress.org</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ Solo detección (Manual)</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Reconstrucción Oficial 1-Clic</span>
+                            </td>
+                        </tr>
+
+                        <!-- 4. Endurecimiento de Permisos -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Endurecimiento de Permisos (Hardening 1-Clic)</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Sella wp-config.php en modo solo-lectura estricto (0440 / 0640) contra troyanos</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ Configuración manual en hosting</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Endurecimiento Automático 1-Clic</span>
+                            </td>
+                        </tr>
+
+                        <!-- 5. Erradicación Quirúrgica & Cuarentena -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Erradicación Quirúrgica & Cuarentena</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Aislamiento seguro con Deny from all y restauración con 1 clic</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Incluido (Sin límites)</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Incluido + Asistencia Forense</span>
+                            </td>
+                        </tr>
+
+                        <!-- 6. Reglas Perimetrales de Blindaje (.htaccess) -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Reglas Perimetrales de Blindaje (.htaccess)</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Bloqueo de PHP en /uploads/, denegación de listado de carpetas (-Indexes) y bloqueo de edición de código en panel</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ 3 Reglas Esenciales Activas</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Blindaje Completo + WAF L7</span>
+                            </td>
+                        </tr>
+
+                        <!-- 7. Bloquear Enumeración de Usuarios -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Protección Anti-Espionaje de Usuarios (REST API)</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Impide que atacantes y bots rastreen usuarios administradores a través de /wp-json/wp/v2/users</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Protección Básica Activa</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Anti-Reconnaissance Avanzado</span>
+                            </td>
+                        </tr>
+
+                        <!-- 8. Bloqueo XML-RPC y Ocultación Versión -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Bloqueo Total de XML-RPC y Ocultación de Versión</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Cierra la puerta de enlace xmlrpc.php (ataques de amplificación DDoS) y oculta la versión de WP</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Bloqueo Total + Cloaking de Versión</span>
+                            </td>
+                        </tr>
+
+                        <!-- 9. Cortafuegos WAF L7 -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Cortafuegos WAF Inteligente en Runtime (PHP / L7)</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Filtrado en milisegundos contra Inyecciones SQL, XSS, Path Traversal, RCE y bots maliciosos</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ WAF L7 Activo en Tiempo Real</span>
+                            </td>
+                        </tr>
+
+                        <!-- 10. Filtro Anti-ClearFake -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Filtro Activo Anti-ClearFake & Falsos Captchas</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Inspecciona el HTML de salida y neutraliza al vuelo popups fraudulentos y scripts Web3 maliciosos</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Filtro en Vivo de Salida HTML</span>
+                            </td>
+                        </tr>
+
+                        <!-- 11. Fuerza Bruta & Auto-Jail -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Protección Anti Fuerza Bruta & Auto-Jail de IPs</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Límite configurable de reintentos y encarcelamiento perimetral automático de atacantes</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Auto-Jail Perimetral Autónomo</span>
+                            </td>
+                        </tr>
+
+                        <!-- 12. Trampas Honeypot Tripwire -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Trampas Honeypot (Tripwire Perimetral)</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Enlaces trampa invisibles para escáneres maliciosos con expulsión y baneo instantáneo</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Honeypot Activo con Baneo Inmediato</span>
+                            </td>
+                        </tr>
+
+                        <!-- 13. Ocultar wp-login.php -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Ocultar wp-login.php (Ruta de Acceso Secreta)</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Sustituye la ruta por defecto por un slug privado personalizado (ej: /acceso-seguro/)</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ Ruta estándar wp-login.php</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Slug Secreto Personalizado</span>
+                            </td>
+                        </tr>
+
+                        <!-- 14. Personalizador Visual de Login -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Personalizador Visual de Login (3 Plantillas)</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">3 Plantillas corporativas (Deep Navy, Cyber Dark, Matrix), logo personalizado y aviso de seguridad</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ Pantalla estándar de WP</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ 3 Plantillas Visuales + Logo Personalizado</span>
+                            </td>
+                        </tr>
+
+                        <!-- 15. Modo Lockdown 503 -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Modo Aislamiento de Emergencia (Lockdown 503)</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Pantalla de mantenimiento blindada para desinfección forense sin perder posicionamiento en Google</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Aislamiento Seguro en 1 Clic</span>
+                            </td>
+                        </tr>
+
+                        <!-- 16. Vigilancia Automática y Alertas -->
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Vigilancia Automatizada & Alertas (Email / Webhooks)</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Monitoreo programado, avisos de acceso de administradores y webhooks en tiempo real</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Escaneo Diario (WP-Cron)</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Vigilancia 24/7 + Alertas Inmediatas</span>
+                            </td>
+                        </tr>
+
+                        <!-- 17. Soporte Prioritario -->
+                        <tr style="background: rgba(255,255,255,0.015);">
+                            <td style="padding: 13px 20px;">
+                                <strong style="color: #ffffff;">Soporte Prioritario & Rescate Forense Humano</strong>
+                                <div style="font-size: 0.8rem; color: #94a6d1;">Intervención directa por ingenieros forenses si tu sitio sufre una intrusión persistente</div>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center;">
+                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ Foros de la Comunidad WP.org</span>
+                            </td>
+                            <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Asistencia Prioritaria (&lt; 2h)</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer Callout Dinámico -->
+            <?php if ($is_pro): ?>
+                <div style="margin-top: 24px; padding: 20px 24px; background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(11,18,53,0.95)); border: 1px solid rgba(61,232,164,0.4); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h4 style="margin: 0 0 4px; color: #3de8a4; font-size: 1.05rem;">✓ Disfrutas de todos los beneficios de NexaGuard PRO</h4>
+                        <p style="margin: 0; color: #b6c4eb; font-size: 0.88rem;">Tu sitio cuenta con telemetría en tiempo real, WAF L7 perimetral, reconstrucción de archivos y soporte prioritario.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <a href="https://www.nexaguards.com/login" target="_blank" class="btn-ng btn-ng-outline" style="text-decoration: none; padding: 9px 20px; font-weight: 700; border-color:#3de8a4; color:#3de8a4;">
+                            Gestionar Cuenta NexaGuard ›
+                        </a>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div style="margin-top: 24px; padding: 20px 24px; background: linear-gradient(135deg, rgba(20,31,79,0.95), rgba(11,18,53,0.95)); border: 1px solid rgba(255,207,51,0.35); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h4 style="margin: 0 0 4px; color: #ffffff; font-size: 1.05rem;">¿Deseas activar Inteligencia de Amenazas Global en la Nube y Soporte Forense 24/7?</h4>
+                        <p style="margin: 0; color: #b6c4eb; font-size: 0.88rem;">Conecta tu sitio a NexaGuard Threat Intelligence Cloud desde solo $9.99/mes para recibir firmas actualizadas en tiempo real y asistencia técnica especializada.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="text-decoration: none; padding: 9px 20px; font-weight: 700;">
+                            Conocer Más sobre NexaGuard Cloud ›
+                        </a>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div><!-- /tab-compare -->
 
