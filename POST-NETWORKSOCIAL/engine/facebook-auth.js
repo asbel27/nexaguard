@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getOrLaunchBrowser, getUserDataDir, checkLoginStatus } = require('./browser');
+const sessionManager = require('./session-manager');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -211,9 +212,10 @@ async function loginToFacebookWithCredentials({ email, password, twoFactorCode =
 /**
  * Importa cookies de Facebook directamente (c_user y xs) sin pasar por formularios
  */
-async function importFacebookCookies({ cUser, xs, cookieString }) {
+async function importFacebookCookies({ cUser, xs, cookieString, cookieList }) {
   let finalCUser = (cUser || '').trim();
   let finalXs = (xs || '').trim();
+  let cookiesToSave = Array.isArray(cookieList) ? cookieList : [];
 
   if (cookieString) {
     const matchCUser = cookieString.match(/c_user=([^;]+)/);
@@ -222,40 +224,30 @@ async function importFacebookCookies({ cUser, xs, cookieString }) {
     if (matchXs) finalXs = matchXs[1].trim();
   }
 
-  if (!finalCUser || !finalXs) {
-    throw new Error('Debes proporcionar el valor de c_user y xs (o la cadena completa de cookies de Facebook).');
+  // Si se envió lista de cookies desde la extensión o JSON
+  if (cookiesToSave.length > 0) {
+    const foundCUser = cookiesToSave.find(c => c.name === 'c_user');
+    const foundXs = cookiesToSave.find(c => c.name === 'xs');
+    if (foundCUser) finalCUser = foundCUser.value;
+    if (foundXs) finalXs = foundXs.value;
   }
 
-  const browser = await getOrLaunchBrowser({ headless: false });
-  const page = await browser.newPage();
-
-  try {
-    await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
-
-    await page.setCookie(
-      { name: 'c_user', value: finalCUser, domain: '.facebook.com', path: '/', httpOnly: false, secure: true },
-      { name: 'xs', value: finalXs, domain: '.facebook.com', path: '/', httpOnly: true, secure: true }
-    );
-
-    await page.goto('https://www.facebook.com/', { waitUntil: 'networkidle2', timeout: 30000 });
-    const cookies = await page.cookies();
-    const verified = cookies.some(c => c.name === 'c_user');
-
-    await page.close().catch(() => {});
-
-    if (verified) {
-      return {
-        ok: true,
-        userId: finalCUser,
-        message: '¡Cookies importadas y cuenta de Facebook vinculada con éxito!'
-      };
-    } else {
-      throw new Error('Las cookies proporcionadas no fueron aceptadas por Facebook o están expiradas.');
-    }
-  } catch (err) {
-    await page.close().catch(() => {});
-    throw err;
+  if (!finalCUser) {
+    throw new Error('No se detectó la cookie c_user (ID de usuario de Facebook).');
   }
+
+  // 1. Guardar de inmediato en SessionManager persistente
+  sessionManager.saveSession({
+    cUser: finalCUser,
+    xs: finalXs,
+    cookies: cookiesToSave
+  });
+
+  return {
+    ok: true,
+    userId: finalCUser,
+    message: `¡Sesión de Facebook vinculada con éxito! ID de Usuario: ${finalCUser}`
+  };
 }
 
 module.exports = {

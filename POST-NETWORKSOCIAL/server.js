@@ -19,7 +19,7 @@ const { detectUserFacebookGroups } = require('./engine/group-detector');
 const { COPYWRITING_FRAMEWORKS, generatePersuasiveCopy } = require('./engine/ai-copywriter');
 const { isWithinOptimalHours, getSmartInterval, assessComplianceRisk, OPTIMAL_HOURS } = require('./engine/scheduler');
 const { autopilotInstance } = require('./engine/bot-autopilot');
-const { BANNER_PRESETS, generateMarketingBanner, generateMarketingVideo } = require('./engine/image-generator');
+const { BANNER_PRESETS, generateMarketingBanner, generateMarketingVideo, getRandomMediaForCampaign } = require('./engine/image-generator');
 const { detectLanguage, getLanguageName } = require('./engine/language-detector');
 const { generateContextualReply, checkAndReplyToInstagramComments, scanAllActivePostsAndReply } = require('./engine/comment-responder');
 const { scanUrlNiche } = require('./engine/url-niche-scanner');
@@ -188,16 +188,41 @@ app.post('/api/session/facebook/login', async (req, res) => {
   }
 });
 
-// 1.2.3 Importación directa de cookies (c_user y xs)
+// 1.2.3 Importación directa de cookies (c_user y xs o extensión)
+app.options('/api/session/facebook/import-cookies', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.sendStatus(200);
+});
+
 app.post('/api/session/facebook/import-cookies', async (req, res) => {
-  const { cUser, xs, cookieString } = req.body;
+  res.header('Access-Control-Allow-Origin', '*');
+  const { cUser, xs, cookieString, cookieList } = req.body;
   try {
     broadcastLog({ type: 'step', msg: '🍪 [COOKIES] Importando cookies de sesión de Facebook...' });
-    const result = await importFacebookCookies({ cUser, xs, cookieString });
+    const result = await importFacebookCookies({ cUser, xs, cookieString, cookieList });
+    broadcastLog({ type: 'success', msg: `🎉 [FACEBOOK] ¡Cuenta vinculada exitosamente! ID: ${result.userId}` });
     res.json(result);
   } catch (err) {
     broadcastLog({ type: 'error', msg: `❌ [COOKIES] Error: ${err.message}` });
     res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// 1.2.4 Abrir carpeta de la Extensión de Chrome
+app.post('/api/session/facebook/open-extension-folder', (req, res) => {
+  try {
+    const extFolder = path.join(__dirname, 'fb_sync_extension');
+    exec(`explorer.exe "${extFolder}"`);
+    const settings = readJson('settings.json', {});
+    const chromePath = findChromePath(settings.chromePath);
+    if (chromePath) {
+      exec(`"${chromePath}" "chrome://extensions"`);
+    }
+    res.json({ ok: true, extFolder });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
   }
 });
 
@@ -905,7 +930,15 @@ app.post('/api/campaign/start', async (req, res) => {
     return res.status(400).json({ ok: false, error: 'Ya existe una campaña de auto-publicación en progreso.' });
   }
 
-  const { spintaxText, imagePath, selectedGroupIds, delayMode = 'safe' } = req.body;
+  const {
+    spintaxText,
+    imagePath,
+    selectedGroupIds,
+    delayMode = 'safe',
+    dynamicMedia = true,
+    notifyEveryone = true,
+    highlightPost = true
+  } = req.body;
   if (!spintaxText || !spintaxText.trim()) {
     return res.status(400).json({ ok: false, error: 'El texto del post no puede estar vacío.' });
   }
@@ -959,12 +992,33 @@ app.post('/api/campaign/start', async (req, res) => {
       // Generar variación de texto Spintax única para este grupo
       const uniqueMessage = parseSpintax(spintaxText);
 
-      // Publicar en Facebook con auto-detección de idioma
+      // Determinar archivo multimedia (Imagen o Video Dinámico de Marca/Programador)
+      let activeMediaForGroup = imagePath || null;
+      if (dynamicMedia) {
+        try {
+          broadcastLog({
+            type: 'step',
+            msg: `🎨 [CREATIVIDAD DINÁMICA] Sintetizando multimedia variada (Banner Ultra HD / Video Programador NexaGuard) para "${group.name}"...`
+          });
+          const generatedCreative = await getRandomMediaForCampaign();
+          activeMediaForGroup = generatedCreative.filePath;
+          broadcastLog({
+            type: 'success',
+            msg: `✓ ${generatedCreative.mediaType === 'video' ? '🎬 VIDEO ANIMADO' : '🖼️ BANNER GRÁFICO'} listo: "${generatedCreative.preset.title}"`
+          });
+        } catch (eMedia) {
+          broadcastLog({ type: 'warn', msg: `⚠️ Usando multimedia base: ${eMedia.message}` });
+        }
+      }
+
+      // Publicar en Facebook con auto-detección de idioma y notificación masiva
       const postResult = await postToFacebookGroup({
         groupUrl: group.url,
         message: uniqueMessage,
-        imagePath: imagePath || null,
+        imagePath: activeMediaForGroup,
         simulateTyping: settings.simulateTyping !== false,
+        notifyEveryone: notifyEveryone !== false,
+        highlightPost: highlightPost !== false,
         autoTranslateByGroupLanguage: true,
         onLog: (msg) => broadcastLog({ type: 'log', msg })
       });
@@ -980,8 +1034,8 @@ app.post('/api/campaign/start', async (req, res) => {
 
       // Guardar en historial completo
       const postUrlFinal = postResult.postUrl || group.url;
-      const mediaRelUrl = imagePath ? (imagePath.includes('public') ? imagePath.replace(/.*public/, '').replace(/\\/g, '/') : `/assets/uploads/${path.basename(imagePath)}`) : null;
-      const isVideoMedia = imagePath ? /\.(mp4|mov|webm)$/i.test(imagePath) : false;
+      const mediaRelUrl = activeMediaForGroup ? (activeMediaForGroup.includes('public') ? activeMediaForGroup.replace(/.*public/, '').replace(/\\/g, '/') : `/assets/uploads/${path.basename(activeMediaForGroup)}`) : null;
+      const isVideoMedia = activeMediaForGroup ? /\.(mp4|mov|webm)$/i.test(activeMediaForGroup) : false;
 
       history.unshift({
         id: `post-${Date.now()}`,
@@ -1039,6 +1093,9 @@ app.post('/api/campaign/start', async (req, res) => {
         } else if (delayMode === 'moderate') {
           // 4 a 8 minutos
           delaySec = Math.floor(Math.random() * (480 - 240 + 1)) + 240;
+        } else if (delayMode === 'fast_2_3m') {
+          // 2 a 3 minutos (120 a 180 segundos)
+          delaySec = Math.floor(Math.random() * (180 - 120 + 1)) + 120;
         } else {
           // Instantáneo / Pruebas (45 a 120 segundos)
           const minS = Math.max(15, settings.minDelaySeconds || 45);

@@ -9,6 +9,7 @@ const path = require('path');
 const http = require('http');
 const { exec, spawn } = require('child_process');
 const puppeteer = require('puppeteer-core');
+const sessionManager = require('./session-manager');
 
 const DEFAULT_CHROME_PATHS = [
   'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -145,69 +146,97 @@ async function getOrLaunchBrowser(options = {}) {
     browserInstance = null;
   });
 
+  // Interceptar newPage para inyectar cookies de sesión automáticamente
+  const origNewPage = browserInstance.newPage.bind(browserInstance);
+  browserInstance.newPage = async function(...args) {
+    const page = await origNewPage(...args);
+    await sessionManager.applySessionToPage(page);
+    return page;
+  };
+
   return browserInstance;
 }
 
 /**
  * Abre la ventana visual interactiva de inicio de sesión (Facebook / Instagram)
- * Se ejecuta en modo App nativo (--app=URL) garantizando que se abra en el escritorio
- * visible de Windows con foco inmediato (exactamente como ventana de autorización).
+ * Se ejecuta lanzando Puppeteer en modo interactivo visible (headless: false)
+ * garantizando que Windows dibuje la ventana en el escritorio visible del usuario.
  */
-/**
- * Abre la ventana visual interactiva de inicio de sesión (Facebook / Instagram)
- * Se ejecuta lanzando el script .bat nativo desacoplado para garantizar que Windows
- * dibuje la ventana en el monitor interactivo visible del usuario.
- */
-async function openInteractiveSession(targetUrl = 'https://www.facebook.com/login', platform = 'facebook') {
-  // 1. Desconectar Puppeteer si estaba conectado
+async function openInteractiveSession(targetUrl = 'https://www.facebook.com/', platform = 'facebook') {
   await closeBrowser();
-
-  // 2. Limpiar procesos huérfanos de Chrome con user_data_fb
   await killOrphanUserDataChrome();
 
   const userDataDir = getUserDataDir();
   cleanStaleLocks(userDataDir);
 
-  const batPath = platform === 'instagram'
-    ? path.join(__dirname, '..', 'ABRIR-SESION-INSTAGRAM.bat')
-    : path.join(__dirname, '..', 'ABRIR-SESION-FACEBOOK.bat');
+  const chromePath = findChromePath();
+  if (!chromePath) {
+    throw new Error('No se encontró Google Chrome en las rutas estándar de Windows.');
+  }
 
-  // 3. Lanzar mediante cmd.exe /c start
-  exec(`cmd.exe /c start "" "${batPath}"`, (err) => {
-    if (err) {
-      const chromePath = findChromePath();
-      if (chromePath) {
-        const startArgs = [
-          `--remote-debugging-port=${DEBUG_PORT}`,
-          `--user-data-dir=\`"${userDataDir}\`"`,
-          '--window-size=1080,780',
-          '--no-first-run',
-          '--no-default-browser-check',
-          `--app=\`"${targetUrl}\`"`
-        ].join(' ');
-        exec(`powershell -NoProfile -Command "Start-Process -FilePath '${chromePath}' -ArgumentList '${startArgs}' -WindowStyle Normal"`);
-      }
-    }
+  // Lanzar navegador interactivo visible con Puppeteer
+  const browser = await puppeteer.launch({
+    executablePath: chromePath,
+    headless: false,
+    userDataDir: userDataDir,
+    defaultViewport: null,
+    args: [
+      '--start-maximized',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--disable-notifications'
+    ],
+    ignoreDefaultArgs: ['--enable-automation']
   });
 
-  return { ok: true, launched: true, url: targetUrl, platform, batPath };
+  browserInstance = browser;
+
+  const pages = await browser.pages();
+  const page = pages.length > 0 ? pages[0] : await browser.newPage();
+  await page.setViewport(null);
+
+  // Inyectar sesión si ya existe
+  await sessionManager.applySessionToPage(page);
+
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' }).catch(() => {});
+
+  // Monitorear en segundo plano para detectar cuando el usuario inicie sesión
+  const pollInterval = setInterval(async () => {
+    try {
+      if (!browserInstance || !browserInstance.isConnected()) {
+        clearInterval(pollInterval);
+        return;
+      }
+      const cookies = await page.cookies();
+      const cUser = cookies.find(c => c.name === 'c_user');
+      const xs = cookies.find(c => c.name === 'xs');
+      if (cUser) {
+        sessionManager.saveSession({
+          cUser: cUser.value,
+          xs: xs ? xs.value : null,
+          cookies: cookies
+        });
+        console.log(`[BROWSER] 🎉 ¡Sesión detectada en la ventana visual! ID: ${cUser.value}`);
+      }
+    } catch (e) {
+      clearInterval(pollInterval);
+    }
+  }, 2500);
+
+  browser.on('disconnected', () => {
+    clearInterval(pollInterval);
+    browserInstance = null;
+  });
+
+  return { ok: true, launched: true, url: targetUrl, platform };
 }
 
 /**
  * Cierra la ventana interactiva si está abierta
  */
 async function closeInteractiveWindow() {
-  const isPortActive = await isDebugPortActive(DEBUG_PORT);
-  if (isPortActive) {
-    try {
-      const browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${DEBUG_PORT}` });
-      await browser.close();
-      browserInstance = null;
-      return { ok: true, closed: true };
-    } catch (e) {}
-  }
+  await closeBrowser();
   await killOrphanUserDataChrome();
-  browserInstance = null;
   return { ok: true, closed: true };
 }
 
@@ -219,38 +248,37 @@ async function checkLoginStatus() {
   let facebookLoggedIn = false;
   let instagramLoggedIn = false;
   let facebookUserId = null;
-  let activeWindow = false;
+  let activeWindow = !!(browserInstance && browserInstance.isConnected());
 
-  // 1. Probar en vivo mediante CDP si la ventana interactiva está abierta
-  const isPortActive = await isDebugPortActive(DEBUG_PORT);
-  if (isPortActive) {
-    activeWindow = true;
+  // 1. Revisar SessionManager persistente
+  const savedSession = sessionManager.getSession();
+  if (savedSession && (savedSession.cUser || savedSession.userId)) {
+    facebookLoggedIn = true;
+    facebookUserId = savedSession.cUser || savedSession.userId;
+  }
+
+  // 2. Si la ventana visual está abierta en vivo, verificar cookies directamente
+  if (activeWindow && browserInstance) {
     try {
-      const browser = await puppeteer.connect({
-        browserURL: `http://127.0.0.1:${DEBUG_PORT}`,
-        defaultViewport: null
-      });
-      const pages = await browser.pages();
+      const pages = await browserInstance.pages();
       for (const page of pages) {
-        try {
-          const cookies = await page.cookies();
-          const cUser = cookies.find(c => c.name === 'c_user');
-          if (cUser) {
-            facebookLoggedIn = true;
-            facebookUserId = cUser.value;
-          }
-          const instaUser = cookies.find(c => c.name === 'ds_user_id' || c.name === 'sessionid');
-          if (instaUser) {
-            instagramLoggedIn = true;
-          }
-        } catch (e) {}
+        const cookies = await page.cookies();
+        const cUser = cookies.find(c => c.name === 'c_user');
+        if (cUser) {
+          facebookLoggedIn = true;
+          facebookUserId = cUser.value;
+          sessionManager.saveSession({
+            cUser: cUser.value,
+            xs: (cookies.find(c => c.name === 'xs') || {}).value || null,
+            cookies: cookies
+          });
+        }
       }
-      browser.disconnect();
     } catch (e) {}
   }
 
-  // 2. Si no se detectó vía CDP (ej. Chrome cerrado), inspeccionar el archivo SQLite de Cookies en disco
-  if (!facebookLoggedIn || !instagramLoggedIn) {
+  // 3. Fallback a inspección en disco si fuera necesario
+  if (!facebookLoggedIn) {
     const defaultDir = path.join(userDataDir, 'Default');
     const networkDir = path.join(defaultDir, 'Network');
     const cookiesPath = fs.existsSync(path.join(networkDir, 'Cookies'))
@@ -263,20 +291,14 @@ async function checkLoginStatus() {
         const str = buf.toString('latin1');
         if (str.includes('c_user')) {
           facebookLoggedIn = true;
-          // Intentar extraer el ID numérico que sigue a c_user
           const match = str.match(/c_user[^\d]*(\d{8,22})/);
           if (match) facebookUserId = match[1];
         }
-        if (str.includes('sessionid') || str.includes('ds_user_id')) {
-          instagramLoggedIn = true;
-        }
-      } catch (e) {
-        // Archivo en uso exclusivo o sin acceso
-      }
+      } catch (e) {}
     }
   }
 
-  const profileExists = fs.existsSync(path.join(userDataDir, 'Default'));
+  const profileExists = fs.existsSync(path.join(userDataDir, 'Default')) || !!savedSession;
 
   return {
     profileExists,

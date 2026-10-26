@@ -59,9 +59,9 @@ function assessComplianceRisk({ totalGroups, delayMode, dailyCount }) {
     if (riskLevel !== 'HIGH') riskLevel = 'MEDIUM';
   }
 
-  if (delayMode === 'instant' && totalGroups > 5) {
-    warnings.push('Publicar en más de 5 grupos con intervalos menores a 2 minutos puede activar las alertas de spam de Facebook.');
-    riskLevel = 'HIGH';
+  if ((delayMode === 'instant' || delayMode === 'fast_2_3m') && totalGroups > 8) {
+    warnings.push('Publicar en más de 8 grupos con intervalos cortos puede activar las alertas de spam de Facebook.');
+    if (riskLevel !== 'HIGH') riskLevel = 'MEDIUM';
   }
 
   return {

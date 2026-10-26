@@ -80,7 +80,17 @@ async function tryAutoJoinGroup(page, onLog) {
 /**
  * Publica un mensaje con posible imagen o video en un grupo de Facebook
  */
-async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTyping = true, frameworkId = null, autoTranslateByGroupLanguage = true, onLog = console.log }) {
+async function postToFacebookGroup({
+  groupUrl,
+  message,
+  imagePath,
+  simulateTyping = true,
+  notifyEveryone = true,
+  highlightPost = true,
+  frameworkId = null,
+  autoTranslateByGroupLanguage = true,
+  onLog = console.log
+}) {
   const browser = await getOrLaunchBrowser({ headless: false });
   const page = await browser.newPage();
 
@@ -261,6 +271,20 @@ async function postToFacebookGroup({ groupUrl, message, imagePath, simulateTypin
 
     await editorHandle.click();
     await sleep(800);
+
+    // 3.5 Insertar etiqueta de notificación masiva para todos los miembros (@destacar / @everyone)
+    if (notifyEveryone) {
+      const mentionTag = targetLang === 'en' ? '@everyone' : '@destacar';
+      onLog(`📢 [NOTIFICACIÓN MASIVA] Insertando mención activa "${mentionTag}" para notificar a todos los miembros del grupo...`);
+      try {
+        await page.keyboard.type(mentionTag, { delay: 45 });
+        await sleep(900);
+        // Presionar Enter para que Facebook convierta el texto en el chip/etiqueta oficial de mención global
+        await page.keyboard.press('Enter');
+        await sleep(400);
+        await page.keyboard.type(' \n\n');
+      } catch (eTag) {}
+    }
 
     // 4. Escribir el mensaje
     onLog('📝 Escribiendo mensaje con simulación humana...');

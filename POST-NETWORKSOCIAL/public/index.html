@@ -223,8 +223,23 @@
               <select id="delayModeSelect" style="width:auto;padding:3px 8px;font-size:0.78rem">
                 <option value="safe" selected>🛡️ Seguro (15-30 min · Recomendado Meta)</option>
                 <option value="moderate">⚖️ Moderado (4-8 min)</option>
-                <option value="instant">⚡ Rápido / Pruebas (45-120 seg)</option>
+                <option value="fast_2_3m">⏱️ Cadencia Rápida (2-3 min · 120-180 seg)</option>
+                <option value="instant">⚡ Ultrarrápido / Pruebas (45-120 seg)</option>
               </select>
+            </div>
+            <div class="opt-row">
+              <span class="opt-label">Creatividad IA Dinámica:</span>
+              <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.78rem;color:#00f0ff">
+                <input type="checkbox" id="chkDynamicMedia" checked>
+                <span>🎬 Alternar Videos de Programador y Banners Ultra HD con Gemini Pro</span>
+              </label>
+            </div>
+            <div class="opt-row">
+              <span class="opt-label">Notificación Masiva:</span>
+              <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.78rem;color:#00ffaa">
+                <input type="checkbox" id="chkNotifyEveryone" checked>
+                <span>📢 Notificar a todos los miembros (@destacar / @everyone)</span>
+              </label>
             </div>
             <div class="opt-row">
               <span class="opt-label">Horario Óptimo Meta:</span>
@@ -1131,92 +1146,68 @@
       <div class="modal-body">
         <!-- Estado Dinámico: Opciones de Vinculación -->
         <div id="fbLinkWaitingSection">
-          <!-- Opción 1: Abrir Facebook en tu Navegador (Enlace Directo 100% Nativo) -->
-          <div style="background:rgba(24,119,242,0.1);border:1px solid rgba(24,119,242,0.4);border-radius:10px;padding:16px;margin-bottom:16px;text-align:center">
-            <h4 style="margin:0 0 6px 0;font-size:1.05rem;color:#4da3ff">Opción 1: Abrir Facebook en tu Navegador</h4>
-            <p style="margin:0 0 12px 0;font-size:0.82rem;color:var(--text);line-height:1.4">
-              Haz clic en el enlace oficial de abajo para abrir Facebook directamente en una nueva pestaña e iniciar sesión:
+          <!-- Opción 1: Abrir Ventana en Pantalla (Puppeteer Real Visible) -->
+          <div style="background:rgba(24,119,242,0.12);border:1px solid rgba(24,119,242,0.5);border-radius:12px;padding:18px;margin-bottom:16px;text-align:center">
+            <h4 style="margin:0 0 6px 0;font-size:1.1rem;color:#4da3ff;display:flex;align-items:center;justify-content:center;gap:8px">
+              🖥️ Opción 1: Abrir Ventana de Facebook en mi Pantalla
+            </h4>
+            <p style="margin:0 0 14px 0;font-size:0.84rem;color:var(--text);line-height:1.5">
+              Abre Google Chrome directamente en tu monitor. Al hacer clic en tu perfil o iniciar sesión, <strong>el bot vinculará tu cuenta automáticamente en tiempo real</strong>.
             </p>
             <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-              <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-weight:700;padding:10px 20px;font-size:0.95rem;text-decoration:none;display:inline-flex;align-items:center;gap:8px" onclick="startFbSessionPolling()">
-                🌐 Abrir Facebook en Nueva Pestaña
-              </a>
-              <button class="btn btn-outline" onclick="openBotFolder()" title="Abre la carpeta del programa y resalta ABRIR-SESION-FACEBOOK.bat">
-                📂 Abrir Archivo .bat en Windows
+              <button class="btn btn-primary" onclick="openInteractiveFbWindow()" style="font-weight:700;padding:12px 24px;font-size:1rem;display:inline-flex;align-items:center;gap:10px;box-shadow:0 0 16px rgba(24,119,242,0.5)">
+                🚀 Abrir Navegador en mi Pantalla Ahora
               </button>
             </div>
           </div>
 
-          <!-- Opción 2: Formulario Directo de Credenciales -->
-          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px">
-            <h4 style="margin:0 0 10px 0;font-size:0.92rem;color:var(--cyan);display:flex;align-items:center;gap:6px">
-              <span>🔐 Opción 2: Vinculación Rápida con Credenciales</span>
+          <!-- Opción 2: Sincronizar desde tu Chrome Actual (Extensión 1 Clic) -->
+          <div style="background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.3);border-radius:12px;padding:16px;margin-bottom:16px">
+            <h4 style="margin:0 0 8px 0;font-size:0.95rem;color:var(--cyan);display:flex;align-items:center;gap:8px">
+              ⚡ Opción 2: Sincronizar desde mi Chrome Actual (Extensión 1 Clic)
             </h4>
-            <p style="margin:0 0 12px 0;font-size:0.78rem;color:var(--muted)">
-              El bot iniciará sesión directamente por ti y guardará las cookies de forma permanente y segura en tu equipo:
+            <p style="margin:0 0 10px 0;font-size:0.8rem;color:var(--muted);line-height:1.4">
+              Si ya tienes tu cuenta de Facebook abierta en tu Google Chrome personal, puedes sincronizarla al instante con la mini-extensión oficial de NexaGuard:
             </p>
-
-            <div class="form-group" style="margin-bottom:10px">
-              <label style="font-size:0.8rem">Correo o Teléfono de Facebook:</label>
-              <input type="text" id="fbLoginEmail" placeholder="ejemplo@correo.com o número de teléfono" style="font-size:0.85rem">
+            <div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.78rem;line-height:1.5;color:var(--text)">
+              <strong>1.</strong> Haz clic en el botón de abajo para abrir <code>chrome://extensions</code> y la carpeta de la extensión.<br>
+              <strong>2.</strong> En Chrome, activa <strong>"Modo de desarrollador"</strong> (arriba a la derecha).<br>
+              <strong>3.</strong> Haz clic en <strong>"Cargar descomprimida"</strong> y selecciona la carpeta <code>fb_sync_extension</code> (o arrástrala a Chrome). ¡Listo!
             </div>
-
-            <div class="form-group" style="margin-bottom:12px">
-              <label style="font-size:0.8rem">Contraseña de Facebook:</label>
-              <div style="display:flex;gap:8px">
-                <input type="password" id="fbLoginPass" placeholder="Tu contraseña de Facebook" style="flex:1;font-size:0.85rem">
-                <button type="button" class="btn btn-outline btn-sm" onclick="togglePasswordVisibility('fbLoginPass', this)">👁️</button>
-              </div>
-            </div>
-
-            <!-- Campo 2FA opcional si Facebook lo solicita -->
-            <div class="form-group" id="fb2faContainer" style="display:none;margin-bottom:12px;background:rgba(255,184,0,0.08);border:1px solid #ffb800;border-radius:8px;padding:10px">
-              <label style="font-size:0.8rem;color:#ffb800;font-weight:700">Código de Verificación 2FA (6 dígitos):</label>
-              <input type="text" id="fbLogin2FA" placeholder="Ej: 123456" style="font-size:0.9rem;letter-spacing:2px;font-weight:700">
-              <small style="color:var(--muted);display:block;margin-top:4px">Ingresa el código generado por tu app de autenticación o enviado por SMS.</small>
-            </div>
-
-            <div id="fbLoginFeedback" style="display:none;padding:10px;border-radius:8px;font-size:0.82rem;margin-bottom:12px;line-height:1.4"></div>
-
-            <div style="display:flex;gap:10px">
-              <button class="btn btn-primary" id="btnSubmitFbCredentials" onclick="submitFbCredentials()" style="flex:1">
-                🚀 Iniciar Sesión y Vincular
-              </button>
-              <button class="btn btn-outline" onclick="checkFbSessionNow()">
-                ⚡ Comprobar Estado
-              </button>
-            </div>
+            <button class="btn btn-outline" onclick="openExtensionFolder()" style="width:100%;border-color:var(--cyan);color:var(--cyan);font-weight:600">
+              📂 Abrir Carpeta & Chrome Extensions
+            </button>
           </div>
 
-          <!-- Opción 3: Importar Cookies Directas (100% Infalible sin Bloqueos de Meta) -->
-          <div style="background:rgba(255,255,255,0.02);border:1px dashed rgba(0,255,170,0.3);border-radius:10px;padding:14px;margin-bottom:16px">
+          <!-- Opción 3: Vinculación Rápida con Cookies c_user y xs -->
+          <div style="background:rgba(255,255,255,0.02);border:1px dashed rgba(0,255,170,0.35);border-radius:12px;padding:16px;margin-bottom:16px">
             <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleCookieImportSection()">
-              <h4 style="margin:0;font-size:0.88rem;color:#00ffaa;display:flex;align-items:center;gap:6px">
-                <span>🍪 Opción 3: Conectar mediante Cookies (c_user y xs)</span>
+              <h4 style="margin:0;font-size:0.92rem;color:#00ffaa;display:flex;align-items:center;gap:8px">
+                🍪 Opción 3: Pegar Cookies Directas (c_user y xs)
               </h4>
               <span id="cookieToggleIcon" style="font-size:0.8rem;color:var(--muted)">▼ Desplegar</span>
             </div>
             
-            <div id="cookieImportSection" style="display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:10px">
-              <p style="margin:0 0 10px 0;font-size:0.76rem;color:var(--muted)">
-                Si ya tienes tu Facebook abierto en este navegador, puedes vincular tu cuenta pegando tus cookies de sesión:
+            <div id="cookieImportSection" style="display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+              <p style="margin:0 0 10px 0;font-size:0.78rem;color:var(--muted)">
+                En tu pestaña de Facebook abierta en Chrome, presiona <strong>F12</strong> → pestaña <strong>Application</strong> → <strong>Cookies</strong> → <code>facebook.com</code>:
               </p>
               <div class="form-row">
                 <div class="form-group col-6">
-                  <label style="font-size:0.75rem">Cookie c_user (ID de usuario):</label>
+                  <label style="font-size:0.75rem">Cookie c_user (ID de Facebook):</label>
                   <input type="text" id="fbImportCUser" placeholder="Ej: 100088912345678" style="font-size:0.8rem">
                 </div>
                 <div class="form-group col-6">
-                  <label style="font-size:0.75rem">Cookie xs (Token de sesión):</label>
+                  <label style="font-size:0.75rem">Cookie xs (Token de Sesión):</label>
                   <input type="password" id="fbImportXs" placeholder="Ej: 25%3Aabc...xyz" style="font-size:0.8rem">
                 </div>
               </div>
               <div class="form-group" style="margin-top:6px">
-                <label style="font-size:0.75rem">O pega la cadena completa de Cookies de Facebook:</label>
+                <label style="font-size:0.75rem">O pega el texto completo de cookies:</label>
                 <input type="text" id="fbImportFullString" placeholder="c_user=1000...; xs=25%3A...;" style="font-size:0.75rem">
               </div>
               <div id="fbCookieFeedback" style="display:none;padding:8px;border-radius:6px;font-size:0.8rem;margin-top:8px"></div>
-              <button class="btn btn-sm btn-outline" onclick="submitImportCookies()" style="margin-top:8px;width:100%;border-color:#00ffaa;color:#00ffaa">
+              <button class="btn btn-sm btn-outline" onclick="submitImportCookies()" style="margin-top:10px;width:100%;border-color:#00ffaa;color:#00ffaa;font-weight:700">
                 💾 Guardar Cookies y Vincular al Instante
               </button>
             </div>

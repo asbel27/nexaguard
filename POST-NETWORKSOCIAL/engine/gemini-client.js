@@ -155,21 +155,24 @@ async function resolveBestGeminiModel(apiKey) {
 
   const { version, models } = await queryAvailableModels(key);
   if (models.length > 0) {
-    // Lista de preferencia por calidad y velocidad
+    // Lista de preferencia enfocada en GEMINI PRO para máxima calidad
     const priorities = [
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-flash-8b',
-      'gemini-1.5-pro',
+      'gemini-2.5-pro',
       'gemini-1.5-pro-latest',
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-exp',
-      'gemini-pro'
+      'gemini-1.5-pro',
+      'gemini-2.0-pro-exp',
+      'gemini-pro',
+      'gemini-2.5-flash',
+      'gemini-flash-latest',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-flash',
+      'gemma-4-31b-it',
+      'gemma-4-26b-a4b-it'
     ];
 
     let chosen = priorities.find(p => models.includes(p));
     if (!chosen) {
-      chosen = models.find(m => m.includes('gemini') && !m.includes('embedding') && !m.includes('aqa')) || models[0];
+      chosen = models.find(m => m.includes('pro')) || models.find(m => m.includes('gemini') && !m.includes('embedding') && !m.includes('aqa')) || models[0];
     }
 
     cachedWorkingModel = chosen;
@@ -178,7 +181,7 @@ async function resolveBestGeminiModel(apiKey) {
   }
 
   // Fallback seguro
-  return { model: 'gemini-1.5-flash-latest', version: 'v1beta' };
+  return { model: 'gemini-2.5-pro', version: 'v1beta' };
 }
 
 /**
@@ -193,15 +196,17 @@ async function testGeminiConnection(apiKey) {
   // 1. Consultar dinámicamente qué modelos tiene habilitados esta clave específica
   const { version: detectedVersion, models: availableModels } = await queryAvailableModels(key);
 
-  // 2. Ordenar modelos candidatos
+  // 2. Ordenar modelos candidatos priorizando GEMINI PRO
   const defaultCandidates = [
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-flash',
+    'gemini-2.5-pro',
     'gemini-1.5-pro-latest',
     'gemini-1.5-pro',
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-exp',
-    'gemini-pro'
+    'gemini-2.0-pro-exp',
+    'gemini-pro',
+    'gemini-2.5-flash',
+    'gemini-flash-latest',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash'
   ];
 
   let candidatesToTry = [];
@@ -354,11 +359,63 @@ Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta (sin mark
   }
 }
 
+/**
+ * Genera el guión y datos técnicos para el Video Animado del Programador con Gemini Pro
+ */
+async function generateGeminiDevVideoScript({ topic, brandName = 'NexaGuard' }) {
+  const prompt = `Actúa como un desarrollador senior de ciberseguridad y programador de la empresa ${brandName}.
+Crea el contenido para un video animado de un programador hablando y mostrando su terminal de código en vivo sobre:
+Tema/Nicho: ${topic}
+Marca: ${brandName}
+
+Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown ni comillas adicionales):
+{
+  "title": "TITULAR DEL VIDEO EN MAYÚSCULAS (máx 38 caracteres)",
+  "badge": "👨‍💻 DEV AUDITORÍA EN VIVO",
+  "developerQuote": "Frase directa y empática del programador explicando cómo soluciona el problema (máx 90 caracteres).",
+  "developerSubquote": "Frase de garantía de calidad sin pérdida de datos (máx 75 caracteres).",
+  "terminalLines": [
+    "$ nexaguard scan --target=wordpress --ai-shield",
+    "[*] Analizando archivos PHP, temas y base de datos...",
+    "[!] DETECCIÓN: 3 Webshells ofuscadas + Redirección maliciosa",
+    "[+] Desinfectando con IA NexaGuard Core... Erradicando backdoors",
+    "[✓] AUDITORÍA FORENSE COMPLETADA: Sitio 100% Limpio y Seguro",
+    "🛡️ Estado del Servidor: PROTEGIDO 24/7 · CERO MALWARE"
+  ],
+  "cta": "CONSULTA CON UN DESARROLLADOR · nexaguards.com",
+  "theme": "cyan"
+}`;
+
+  try {
+    const raw = await generateWithGemini({ prompt, maxTokens: 600, temperature: 0.7 });
+    const clean = raw.replace(/^```json/i, '').replace(/```$/i, '').trim();
+    return JSON.parse(clean);
+  } catch (err) {
+    return {
+      title: 'AUDITORÍA FORENSE DE UN PROGRAMADOR',
+      badge: '👨‍💻 DESARROLLADOR EN VIVO',
+      developerQuote: 'No permitas que un hackeo destruya tu negocio. Recuperamos tu web en 24h sin perder datos.',
+      developerSubquote: 'Garantía total de desinfección y blindaje con IA para tu tranquilidad.',
+      terminalLines: [
+        '$ nexaguard scan --target=wordpress --ai-shield',
+        '[*] Analizando archivos PHP, temas y base de datos...',
+        '[!] DETECCIÓN: 3 Webshells ofuscadas + Redirección maliciosa',
+        '[+] Desinfectando con IA NexaGuard Core... Erradicando backdoors',
+        '[✓] AUDITORÍA FORENSE COMPLETADA: Sitio 100% Limpio y Seguro',
+        '🛡️ Estado del Servidor: PROTEGIDO 24/7 · CERO MALWARE'
+      ],
+      cta: 'CONSULTA CON UN DESARROLLADOR · nexaguards.com',
+      theme: 'cyan'
+    };
+  }
+}
+
 module.exports = {
   getGeminiApiKey,
   testGeminiConnection,
   generateWithGemini,
   generateGeminiPost,
-  generateGeminiCreativeConcept
+  generateGeminiCreativeConcept,
+  generateGeminiDevVideoScript
 };
 

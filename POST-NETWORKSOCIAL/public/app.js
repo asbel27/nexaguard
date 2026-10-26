@@ -635,16 +635,38 @@ function closeFbLinkModal() {
   }
 }
 
-async function reopenFbWindow() {
-  showToast('Enfocando ventana de Facebook...', 'info', 2000);
+async function openInteractiveFbWindow() {
+  showToast('🚀 Abriendo Google Chrome en tu pantalla...', 'info', 4000);
   try {
-    await fetch('/api/browser/open', {
+    const res = await fetch('/api/browser/open', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ platform: 'facebook' })
     });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('¡Ventana de Facebook abierta en tu pantalla! Inicia sesión para vincular.', 'success', 6000);
+      startFbSessionPolling();
+    } else {
+      showToast('Error al abrir navegador: ' + data.error, 'error', 5000);
+    }
+  } catch (e) {
+    showToast('Error de conexión: ' + e.message, 'error');
+  }
+}
+
+async function openExtensionFolder() {
+  try {
+    showToast('Abriendo carpeta de la extensión y Chrome Extensions...', 'info', 4000);
+    await fetch('/api/session/facebook/open-extension-folder', { method: 'POST' });
     startFbSessionPolling();
-  } catch (e) {}
+  } catch (e) {
+    showToast('Error al abrir la carpeta: ' + e.message, 'error');
+  }
+}
+
+async function reopenFbWindow() {
+  return openInteractiveFbWindow();
 }
 
 async function checkFbSessionNow() {
@@ -1593,6 +1615,8 @@ async function startCampaign() {
     appendTerminalLog('step', `[INICIO] Lanzando campaña para ${selectedIds.length} grupos...`);
 
     const delayMode = document.getElementById('delayModeSelect') ? document.getElementById('delayModeSelect').value : 'safe';
+    const dynamicMedia = document.getElementById('chkDynamicMedia') ? document.getElementById('chkDynamicMedia').checked : true;
+    const notifyEveryone = document.getElementById('chkNotifyEveryone') ? document.getElementById('chkNotifyEveryone').checked : true;
 
     const res = await fetch('/api/campaign/start', {
       method: 'POST',
@@ -1601,7 +1625,10 @@ async function startCampaign() {
         spintaxText,
         imagePath: state.attachedImagePath,
         selectedGroupIds: selectedIds,
-        delayMode
+        delayMode,
+        dynamicMedia,
+        notifyEveryone,
+        highlightPost: notifyEveryone
       })
     });
 

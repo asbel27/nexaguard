@@ -102,6 +102,33 @@ const BANNER_PRESETS = [
     subtitle: 'Descubre nuestros servicios exclusivos pensados para satisfacer tus necesidades con garantía total.',
     cta: 'CONTÁCTANOS POR WHATSAPP O MENSAJE PRIVADO',
     stats: ['✓ Atención Rápida', '✓ Mejor Precio', '✓ Garantía 100%']
+  },
+  {
+    id: 'programador-seguridad',
+    theme: 'cyan',
+    badge: '👨‍💻 DESARROLLADOR DE CIBERSEGURIDAD',
+    title: 'UN PROGRAMADOR TE EXPLICA CÓMO BLINDAR TU WEB',
+    subtitle: 'Análisis forense de código, parcheo de brechas y blindaje del Core con tecnología NexaGuard.',
+    cta: 'CONSULTA CON UN DESARROLLADOR · nexaguards.com',
+    stats: ['✓ Auditoría de Código', '✓ Cero Backdoors', '✓ Soporte Directo']
+  },
+  {
+    id: 'terminal-hacker',
+    theme: 'green',
+    badge: '⚡ AUDITORÍA DE CÓDIGO EN VIVO',
+    title: 'EXTRACCIÓN DE BACKDOORS Y MALWARE OCULTO',
+    subtitle: 'Inspección de archivos PHP comprometidos, scripts maliciosos ofuscados y bases de datos infectadas.',
+    cta: 'DESINFECTA TU CÓDIGO HOY · nexaguards.com',
+    stats: ['✓ Desofuscación PHP', '✓ Limpieza de BD', '✓ Certificado Seguro']
+  },
+  {
+    id: 'ia-defensa-activa',
+    theme: 'purple',
+    badge: '🛡️ DEFENSOR CON INTELIGENCIA ARTIFICIAL',
+    title: 'CIBERDEFENSA AUTOMÁTICA EN TIEMPO REAL',
+    subtitle: 'NexaGuard neutraliza ataques de fuerza bruta, inyecciones SQL y bots de spam 24/7.',
+    cta: 'PROTEGE TU SERVIDOR · nexaguards.com',
+    stats: ['✓ Mitigación Inmediata', '✓ WAF Inteligente', '✓ Monitoreo 24/7']
   }
 ];
 
@@ -366,10 +393,20 @@ async function generateMarketingBanner({ presetId, format = 'fb', customData = n
 
 /**
  * Genera un Video Clip Animado (WebM/MP4) para Facebook & Instagram utilizando Canvas y MediaRecorder
+ * Soporta múltiples estilos dinámicos:
+ * - 'coder': Un programador en vivo en terminal analizando y blindando el sitio web con NexaGuard.
+ * - 'radar': Radar táctico de ciberseguridad interceptando ataques en tiempo real.
+ * - 'scanner': Escaneo láser de vulnerabilidades con resolución 100% protegida.
  */
-async function generateMarketingVideo({ presetId = 'escaner-radar', customData = null, durationSeconds = 5 }) {
+async function generateMarketingVideo({ presetId = 'escaner-radar', videoType = 'auto', customData = null, durationSeconds = 5 }) {
   let preset = BANNER_PRESETS.find(p => p.id === presetId) || BANNER_PRESETS[0];
   if (customData) preset = { ...preset, ...customData };
+
+  // Selección automática de tipo de video
+  const availableTypes = ['coder', 'radar', 'scanner'];
+  const finalType = (videoType && videoType !== 'auto')
+    ? videoType
+    : (preset.id.includes('programador') || preset.id.includes('terminal') ? 'coder' : availableTypes[Math.floor(Math.random() * availableTypes.length)]);
 
   const browser = await getRenderBrowser();
   const page = await browser.newPage();
@@ -398,6 +435,7 @@ async function generateMarketingVideo({ presetId = 'escaner-radar', customData =
   const subtitle = ${JSON.stringify(preset.subtitle)};
   const cta = ${JSON.stringify(preset.cta)};
   const theme = ${JSON.stringify(preset.theme)};
+  const vType = ${JSON.stringify(finalType)};
 
   const colors = {
     red: '#ff4560',
@@ -409,8 +447,118 @@ async function generateMarketingVideo({ presetId = 'escaner-radar', customData =
   const primaryColor = colors[theme] || '#00f0ff';
 
   let frame = 0;
-  function draw() {
-    frame++;
+
+  function drawCoderVideo() {
+    ctx.fillStyle = '#060a1d';
+    ctx.fillRect(0, 0, 1200, 630);
+
+    // Fondo Cyber Grid
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < 1200; x += 35) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 630); ctx.stroke();
+    }
+    for (let y = 0; y < 630; y += 35) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1200, y); ctx.stroke();
+    }
+
+    // Borde Neón exterior
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(12, 12, 1176, 606);
+
+    // Ventana IDE / Terminal de Código
+    ctx.fillStyle = 'rgba(10, 16, 38, 0.95)';
+    ctx.fillRect(40, 35, 1120, 520);
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(40, 35, 1120, 520);
+
+    // Barra superior de la ventana
+    ctx.fillStyle = 'rgba(15, 25, 60, 0.98)';
+    ctx.fillRect(40, 35, 1120, 42);
+
+    // Botones de ventana (Mac / Linux style)
+    ctx.fillStyle = '#ff5f56'; ctx.beginPath(); ctx.arc(65, 56, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffbd2e'; ctx.beginPath(); ctx.arc(88, 56, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#27c93f'; ctx.beginPath(); ctx.arc(111, 56, 7, 0, Math.PI * 2); ctx.fill();
+
+    // Título de la pestaña
+    ctx.fillStyle = '#a0aec0';
+    ctx.font = 'bold 13px monospace';
+    ctx.fillText('👨‍💻 dev_asbel@nexaguard-security: ~/sentinel-core (bash)', 140, 61);
+
+    // Badge de Programador en vivo
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
+    ctx.fillRect(900, 42, 240, 28);
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(900, 42, 240, 28);
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText('● PROGRAMADOR EN VIVO', 925, 61);
+
+    // Contenido del terminal (Escritura progresiva de código)
+    const terminalLines = [
+      { text: '$ nexaguard scan --target=wordpress --ai-shield', color: '#00f0ff', delay: 10 },
+      { text: '[*] Analizando archivos PHP, temas y base de datos...', color: '#90cdf4', delay: 35 },
+      { text: '[!] DETECCIÓN: 3 Webshells ofuscadas + Redirección maliciosa', color: '#ff4560', delay: 70 },
+      { text: '[+] Desinfectando con IA NexaGuard Core... Erradicando backdoors', color: '#ffcf33', delay: 110 },
+      { text: '[✓] AUDITORÍA FORENSE COMPLETADA: Sitio 100% Limpio y Seguro', color: '#3de8a4', delay: 155 },
+      { text: '🛡️ Estado del Servidor: PROTEGIDO 24/7 · CERO MALWARE', color: '#ffffff', delay: 200 }
+    ];
+
+    let startY = 120;
+    terminalLines.forEach((line) => {
+      if (frame >= line.delay) {
+        ctx.fillStyle = line.color;
+        ctx.font = 'bold 18px monospace';
+        
+        // Efecto de tecleo progresivo
+        const charProgress = Math.min(line.text.length, Math.floor((frame - line.delay) * 2));
+        const currentText = line.text.substring(0, charProgress);
+        ctx.fillText(currentText, 70, startY);
+
+        if (charProgress < line.text.length && Math.floor(frame / 6) % 2 === 0) {
+          ctx.fillText('█', 70 + ctx.measureText(currentText).width + 4, startY);
+        }
+        startY += 38;
+      }
+    });
+
+    // Cuadro de Dialogo del Programador Asbel (Avatar y Voz)
+    if (frame >= 90) {
+      ctx.fillStyle = 'rgba(18, 30, 75, 0.95)';
+      ctx.fillRect(70, 360, 1060, 105);
+      ctx.strokeStyle = '#3de8a4';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(70, 360, 1060, 105);
+
+      // Icono Programador
+      ctx.font = '40px sans-serif';
+      ctx.fillText('👨‍💻', 90, 425);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 19px sans-serif';
+      ctx.fillText('Desarrollador de NexaGuard:', 150, 395);
+
+      ctx.fillStyle = '#c3d5f5';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('"No permitas que un hackeo destruya tu negocio. Recuperamos tu web en 24h sin perder datos."', 150, 425);
+      ctx.fillText('Garantía total de desinfección y blindaje con IA para tu tranquilidad.', 150, 448);
+    }
+
+    // Barra inferior de llamada a la acción
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 18px monospace';
+    ctx.fillText('👉 ' + cta, 70, 520);
+
+    ctx.fillStyle = '#8ea0cf';
+    ctx.font = '13px monospace';
+    ctx.fillText('⚡ NEXAGUARD DEV INTELLIGENCE · CIBERSEGURIDAD', 730, 520);
+  }
+
+  function drawRadarVideo() {
     ctx.fillStyle = '#060a22';
     ctx.fillRect(0, 0, 1200, 630);
 
@@ -425,23 +573,22 @@ async function generateMarketingVideo({ presetId = 'escaner-radar', customData =
     }
 
     // Efecto Radar Céntrico Animado
-    const cx = 1000, cy = 315;
-    const radius = (frame * 2.5) % 350;
+    const cx = 980, cy = 315;
+    const radius = (frame * 2.8) % 360;
     ctx.strokeStyle = primaryColor;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Pulso secundario
-    const r2 = (radius + 150) % 350;
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    const r2 = (radius + 140) % 360;
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
     ctx.beginPath();
     ctx.arc(cx, cy, r2, 0, Math.PI * 2);
     ctx.stroke();
 
     // Línea láser escaneando verticalmente
-    const laserY = (frame * 3) % 630;
+    const laserY = (frame * 3.5) % 630;
     const grad = ctx.createLinearGradient(0, laserY - 15, 0, laserY + 15);
     grad.addColorStop(0, 'transparent');
     grad.addColorStop(0.5, primaryColor);
@@ -458,12 +605,12 @@ async function generateMarketingVideo({ presetId = 'escaner-radar', customData =
     ctx.fillStyle = 'rgba(10, 20, 50, 0.85)';
     ctx.strokeStyle = primaryColor;
     ctx.lineWidth = 1.5;
-    ctx.fillRect(60, 55, 360, 40);
-    ctx.strokeRect(60, 55, 360, 40);
+    ctx.fillRect(60, 55, 420, 42);
+    ctx.strokeRect(60, 55, 420, 42);
 
     ctx.fillStyle = primaryColor;
     ctx.font = 'bold 15px sans-serif';
-    ctx.fillText(badge, 75, 80);
+    ctx.fillText(badge, 75, 82);
 
     // Titular Impactante
     ctx.fillStyle = '#ffffff';
@@ -471,29 +618,25 @@ async function generateMarketingVideo({ presetId = 'escaner-radar', customData =
     const words = title.split(' ');
     let line1 = words.slice(0, 5).join(' ');
     let line2 = words.slice(5).join(' ');
-    ctx.fillText(line1, 60, 180);
-    if (line2) ctx.fillText(line2, 60, 230);
+    ctx.fillText(line1, 60, 175);
+    if (line2) ctx.fillText(line2, 60, 225);
 
     // Subtítulo
     ctx.fillStyle = '#b8c7eb';
     ctx.font = '20px sans-serif';
-    ctx.fillText(subtitle.slice(0, 75) + '...', 60, 300);
+    ctx.fillText(subtitle.slice(0, 75) + '...', 60, 290);
 
     // Cuadros KPI animados
-    const stat1 = '✓ 100% Protegido';
-    const stat2 = '✓ Inteligencia en la Nube';
-    const stat3 = '✓ Detección en Tiempo Real';
-
     ctx.fillStyle = 'rgba(14, 25, 70, 0.9)';
-    ctx.fillRect(60, 360, 200, 45);
-    ctx.fillRect(280, 360, 260, 45);
-    ctx.fillRect(560, 360, 280, 45);
+    ctx.fillRect(60, 350, 230, 45);
+    ctx.fillRect(310, 350, 270, 45);
+    ctx.fillRect(600, 350, 290, 45);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 15px monospace';
-    ctx.fillText(stat1, 75, 388);
-    ctx.fillText(stat2, 295, 388);
-    ctx.fillText(stat3, 575, 388);
+    ctx.font = 'bold 14px monospace';
+    ctx.fillText('✓ 100% Desinfección', 75, 378);
+    ctx.fillText('✓ Monitoreo Táctico 24/7', 325, 378);
+    ctx.fillText('✓ Blindaje Anti-Reincidencia', 615, 378);
 
     // Barra de llamada a la acción
     ctx.fillStyle = primaryColor;
@@ -502,8 +645,16 @@ async function generateMarketingVideo({ presetId = 'escaner-radar', customData =
 
     ctx.fillStyle = '#8ea0cf';
     ctx.font = '14px monospace';
-    ctx.fillText('🛡️ NEXAGUARD INTELLIGENT MOTION SYSTEM', 740, 560);
+    ctx.fillText('🛡️ RADAR TÁCTICO NEXAGUARD EN VIVO', 730, 560);
+  }
 
+  function draw() {
+    frame++;
+    if (vType === 'coder') {
+      drawCoderVideo();
+    } else {
+      drawRadarVideo();
+    }
     requestAnimationFrame(draw);
   }
   draw();
@@ -547,7 +698,7 @@ async function generateMarketingVideo({ presetId = 'escaner-radar', customData =
   const outDir = path.join(__dirname, '..', 'public', 'assets', 'generated');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
-  const filename = `motion_${preset.id}_${Date.now()}.webm`;
+  const filename = `motion_${finalType}_${preset.id}_${Date.now()}.webm`;
   const filePath = path.join(outDir, filename);
   fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
 
@@ -555,12 +706,47 @@ async function generateMarketingVideo({ presetId = 'escaner-radar', customData =
     filePath,
     publicUrl: `/assets/generated/${filename}`,
     preset,
+    videoType: finalType,
     mediaType: 'video'
   };
+}
+
+/**
+ * Sintetizador Inteligente: Obtiene de forma aleatoria y variada una imagen Ultra HD o un video animado
+ * de alta calidad, asegurando que cada publicación en cada grupo sea única y atractiva.
+ */
+async function getRandomMediaForCampaign({ preferredPresetId = null, forceVideo = null, forceImage = null } = {}) {
+  // Elegir preset aleatorio
+  let preset = BANNER_PRESETS[Math.floor(Math.random() * BANNER_PRESETS.length)];
+  if (preferredPresetId) {
+    const found = BANNER_PRESETS.find(p => p.id === preferredPresetId);
+    if (found) preset = found;
+  }
+
+  // Decisión aleatoria 50% Video / 50% Imagen
+  let shouldBeVideo = Math.random() > 0.5;
+  if (forceVideo) shouldBeVideo = true;
+  if (forceImage) shouldBeVideo = false;
+
+  if (shouldBeVideo) {
+    const videoTypes = ['coder', 'radar'];
+    const selectedType = videoTypes[Math.floor(Math.random() * videoTypes.length)];
+    return await generateMarketingVideo({
+      presetId: preset.id,
+      videoType: selectedType,
+      durationSeconds: 5
+    });
+  } else {
+    return await generateMarketingBanner({
+      presetId: preset.id,
+      format: 'fb'
+    });
+  }
 }
 
 module.exports = {
   BANNER_PRESETS,
   generateMarketingBanner,
-  generateMarketingVideo
+  generateMarketingVideo,
+  getRandomMediaForCampaign
 };
