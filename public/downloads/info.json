@@ -7,7 +7,7 @@
   "fallback_download_url": "https://www.nexaguards.com/downloads/nexaguard-malware-scanner.zip",
   "tested": "6.7",
   "requires_php": "7.4",
-  "last_updated": "2026-10-25",
+  "last_updated": "2026-10-26",
   "sections": {
     "description": "Protección experta para WordPress: escáner forense profundo de archivos y base de datos, erradicación de backdoors y webshells, radar de integridad en tiempo real y blindaje WAF.",
     "changelog": "<h4>Versión 1.5.7</h4><ul><li><strong>Cumplimiento de Directrices Oficiales WordPress.org:</strong> Plugin 100% libre de restricciones de prueba. Todas las herramientas estándar de limpieza y blindaje totalmente operativas.</li><li><strong>Monitor de Núcleo (Sentinel) en Vivo:</strong> Telemetría forense e inspección continua de integridad de archivos vitales abierta para todos los usuarios.</li><li><strong>Blindaje de Servidor:</strong> Protección de subidas contra ejecución PHP, bloqueo de listado de directorios y protección de archivos críticos del sistema.</li><li><strong>Sincronización Opt-in de Ciberinteligencia:</strong> Respeto estricto de privacidad con motor heurístico local autónomo.</li></ul>"

@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /panel/
 Disallow: /panel.html
+Disallow: /api/
+Disallow: /capture
 
 Sitemap: https://www.nexaguards.com/sitemap.xml
-
