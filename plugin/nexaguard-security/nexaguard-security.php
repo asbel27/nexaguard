@@ -41,6 +41,7 @@ class NexaGuard_Plugin {
         NexaGuard_Firewall::init();
 
         add_action('admin_menu', array($this, 'register_admin_menu'));
+        add_filter('plugin_action_links_' . plugin_basename(NEXAGUARD_FILE), array($this, 'plugin_action_links'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
 
         // Endpoints AJAX para el panel de administración
@@ -197,6 +198,14 @@ class NexaGuard_Plugin {
             echo '<p style="margin:0; font-size:0.9rem; color:#e2eafc;">' . esc_html($msg) . '</p>';
             echo '</div>';
         }
+    }
+
+    public function plugin_action_links($links) {
+        $custom_links = array(
+            '<a href="' . esc_url(admin_url('admin.php?page=nexaguard-security')) . '">' . __('Ajustes', 'nexaguard-malware-scanner') . '</a>',
+            '<a href="https://www.nexaguards.com/#planes" target="_blank" style="color:#d97706; font-weight:700;">' . __('NexaGuard PRO ↗', 'nexaguard-malware-scanner') . '</a>'
+        );
+        return array_merge($custom_links, $links);
     }
 
     public function register_admin_menu() {

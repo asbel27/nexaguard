@@ -88,6 +88,11 @@ $rollback_count = count($backup_history);
                 <p class="sub">Auditoría forense profunda, erradicación de malware e inteligencia en la nube</p>
             </div>
         </div>
+        <div class="nexaguard-header-actions" style="margin-left:auto; display:flex; align-items:center; gap:12px;">
+            <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:800; background:linear-gradient(135deg, #ffcf33 0%, #f59e0b 100%); color:#080e28; border:none; padding:8px 18px; border-radius:8px; box-shadow:0 0 16px rgba(245,158,11,0.35);">
+                <span>⚡</span> NexaGuard PRO & Rescate 24/7 ↗
+            </a>
+        </div>
     </div>
 
     <!-- ====== ESTADO DE CONEXIÓN CLOUD (DISCRETO) ====== -->
@@ -393,6 +398,24 @@ $rollback_count = count($backup_history);
             </div>
         </div>
 
+
+        <!-- Tarjeta de Asistencia y Rescate Forense (Momento de Alta Urgencia) -->
+        <div class="ng-card" style="margin-top:22px; padding:20px 24px; background:linear-gradient(135deg, rgba(14,22,62,0.95), rgba(7,10,25,0.98)); border:1.5px solid rgba(245,158,11,0.35); border-radius:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+            <div style="flex:1; min-width:280px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                    <span style="font-size:1.3rem;">🚑</span>
+                    <strong style="color:#ffffff; font-size:1.05rem; font-weight:800;">¿Tu sitio sufrió una infección grave o advertencia de Google?</strong>
+                </div>
+                <p style="color:#b6c4eb; font-size:0.88rem; margin:0; line-height:1.5;">
+                    Si tu WordPress tiene redirecciones maliciosas, spam japonés o pantalla roja, nuestro equipo forense ejecuta una limpieza manual exhaustiva, retirada de listas negras y blindaje en menos de 24h.
+                </p>
+            </div>
+            <div>
+                <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:800; background:linear-gradient(135deg, #ffcf33 0%, #f59e0b 100%); color:#080e28; border:none; padding:10px 20px; border-radius:8px; box-shadow:0 0 16px rgba(245,158,11,0.35);">
+                    <span>⚡</span> Solicitar Rescate Forense ($89) ↗
+                </a>
+            </div>
+        </div>
     </div><!-- /tab-scanner -->
 
     <!-- ====================================================================== -->
