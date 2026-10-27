@@ -152,8 +152,8 @@ function createServer(opts = {}) {
   const server = http.createServer(async (req, res) => {
     const url = req.url.split('?')[0];
 
-    // 0. Infraestructura crítica: robots.txt, sitemap.xml y health check NUNCA pasan por el WAF
-    if (url === '/robots.txt' || url === '/sitemap.xml' || url === '/health') {
+    // 0. Infraestructura crítica: robots.txt, sitemap.xml, favicon y health check NUNCA pasan por el WAF
+    if (url === '/robots.txt' || url === '/sitemap.xml' || url === '/favicon.ico' || url === '/health') {
       if (req.method === 'GET' || req.method === 'HEAD') {
         if (url === '/health') return sendJson(res, 200, { ok: true, v: '2.1.3' });
         return serveStatic(req, res);
