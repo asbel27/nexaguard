@@ -287,7 +287,7 @@ class NexaGuard_Cleaner {
         $plugin_folder_name = $parts[0];
 
         // Evitar eliminar NexaGuard Security o plugins esenciales del sitio
-        $protected_essential_plugins = array('nexaguard-security', 'woocommerce', 'elementor', 'js_composer', 'contact-form-7', 'wordpress-seo');
+        $protected_essential_plugins = array('nexaguard-security', 'nexaguard-malware-scanner', 'nexaguard-pro', 'nexaguard-malware-scanner-pro', 'woocommerce', 'elementor', 'js_composer', 'contact-form-7', 'wordpress-seo');
         if (empty($plugin_folder_name) || in_array($plugin_folder_name, $protected_essential_plugins, true)) {
             return array('success' => false, 'message' => "Por seguridad de tu web, no se puede eliminar la carpeta completa de '{$plugin_folder_name}'. Desinfecta las inyecciones de forma individual para evitar caídas.");
         }

@@ -581,7 +581,7 @@ class NexaGuard_Scanner {
                 $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $filepath);
 
                 // Omitir el propio plugin NexaGuard Security para no auto-analizarse
-                if (strpos($rel, 'nexaguard-security') !== false) {
+                if (stripos($rel, 'nexaguard') !== false) {
                     continue;
                 }
 
@@ -1206,6 +1206,10 @@ class NexaGuard_Scanner {
      * Análisis forense de contenido de un archivo
      */
     private function check_file_content($filepath, $location = '') {
+        $rel_check = str_replace(array(ABSPATH, '\\'), array('', '/'), $filepath);
+        if (stripos($rel_check, 'nexaguard') !== false) {
+            return;
+        }
         $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $filepath);
 
         if (in_array($rel, $this->whitelist) || in_array($filepath, $this->whitelist)) {
