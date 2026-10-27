@@ -575,7 +575,7 @@ async function runScan(target, emit, isAborted) {
       const src = t.attrs.src || '', h = hostOf(src, finalUrl), st = (t.attrs.style || '').toLowerCase();
       const hidden = /display\s*:\s*none|visibility\s*:\s*hidden|left\s*:\s*-\d{3,}|top\s*:\s*-\d{3,}|opacity\s*:\s*0(?![.\d])/.test(st) || +t.attrs.width <= 5 && t.attrs.width !== undefined || +t.attrs.height <= 5 && t.attrs.height !== undefined;
       if (/^data:text\/html/i.test(src)) report({ sev: 'crit', title: 'Iframe con contenido incrustado', label: '', evidence: src.slice(0, 100), detail: 'Un iframe carga HTML incrustado en la propia dirección: se usa para ocultar código.' });
-      else if (hidden && h && !sameSite(h, finalHost) && !sameSite(h, host)) report({ sev: 'crit', title: 'Iframe oculto hacia otro dominio', label: h, evidence: src, detail: 'Hay un marco invisible que carga contenido de ' + h + '. Es la firma clásica de una inyección de malware o de spam.' });
+      else if (hidden && h && !sameSite(h, finalHost) && !sameSite(h, host) && !isKnownHost(h)) report({ sev: 'crit', title: 'Iframe oculto hacia otro dominio', label: h, evidence: src, detail: 'Hay un marco invisible que carga contenido de ' + h + '. Es la firma clásica de una inyección de malware o de spam.' });
     }
     for (const t of tagsOf(html, 'meta')) {
       if ((t.attrs['http-equiv'] || '').toLowerCase() === 'refresh') {
