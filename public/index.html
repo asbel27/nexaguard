@@ -1921,18 +1921,6 @@ a[data-go],a[data-act]{cursor:pointer}
         </div>
       </div>
     </div>
-
-    <!-- Lista de Ataques con Flechas Animadas -->
-    <div class="threat-feed-box">
-      <div class="threat-feed-head">
-        <h4>
-          <svg class="ic" style="width:16px;height:16px"><use href="#i-activity"/></svg>
-          FLUJO DE ATAQUES INTERCEPTADOS EN TIEMPO REAL
-        </h4>
-        <span style="font-family:var(--fm);font-size:.72rem;color:var(--muted)">Haz clic en cualquier fila para trazar el haz balístico en el mapa</span>
-      </div>
-      <div class="threat-feed-list" id="pubThreatFeedList"></div>
-    </div>
   </div>
 </section>
 
@@ -4980,9 +4968,10 @@ requestAnimationFrame(function (t) { tPrev = t; frame(t); });
     var totalCount = 0;
 
     function appendPubCard(ev, prepend) {
-      if (!feedList || !ev) return;
+      if (!ev) return;
       totalCount++;
       if (counterEl) counterEl.textContent = String(totalCount);
+      if (!feedList) return;
 
       var d = new Date(ev.timestamp || ev.at || Date.now());
       var timeStr = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2);
