@@ -253,7 +253,11 @@ jQuery(document).ready(function ($) {
     // Restaurar pestaña activa al cargar (prioridad: URL param > sessionStorage > pestaña por defecto)
     try {
         var urlParams = new URLSearchParams(window.location.search);
+        var pageParam = urlParams.get('page');
         var paramTab = urlParams.get('tab');
+        if (pageParam === 'nexaguard-history') {
+            paramTab = 'quarantine';
+        }
         var savedTab = sessionStorage.getItem('nexaguard_active_tab');
         var initialTab = (paramTab && $('#tab-' + paramTab).length) ? paramTab : savedTab;
         if (initialTab && $('#tab-' + initialTab).length) {

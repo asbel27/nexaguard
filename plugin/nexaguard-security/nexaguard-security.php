@@ -72,10 +72,6 @@ class NexaGuard_Plugin {
 
         // Autoprotección activa: Verificación de Integridad del Núcleo NexaGuard (Self-Defense Anti-Tampering)
         add_action('admin_notices', array($this, 'check_plugin_integrity_notice'));
-
-        // Sincronización periódica de estado de licencia con NexaGuard Threat Cloud
-        add_action('admin_init', array($this, 'maybe_sync_license'));
-        add_action('admin_notices', array($this, 'check_license_revocation_notice'));
     }
 
     /**
@@ -129,76 +125,6 @@ class NexaGuard_Plugin {
         }
     }
 
-    /**
-     * Sincronización periódica de estado de licencia con NexaGuard Threat Cloud.
-     * Si la licencia fue transferida a otro dominio o liberada en la nube,
-     * el plugin revoca inmediatamente el estado PRO en este sitio para evitar licencias duplicadas.
-     */
-    public function maybe_sync_license() {
-        if (!is_admin() || !current_user_can('manage_options')) {
-            return;
-        }
-
-        $license = get_option('nexaguard_license_data', null);
-        if (empty($license) || empty($license['valid']) || empty($license['key'])) {
-            return;
-        }
-
-        // Si estamos dentro del panel de NexaGuard, sincronizar cada 5 minutos; en el resto de WordPress, cada 12 horas
-        $is_nexaguard_page = (isset($_GET['page']) && strpos(sanitize_text_field($_GET['page']), 'nexaguard') !== false);
-        $sync_lock_key = $is_nexaguard_page ? 'nexaguard_lic_sync_quick' : 'nexaguard_license_sync_lock';
-        if (get_transient($sync_lock_key)) {
-            return;
-        }
-
-        $raw_host = wp_parse_url(home_url(), PHP_URL_HOST);
-        if (!$raw_host && !empty($_SERVER['HTTP_HOST'])) {
-            $raw_host = sanitize_text_field($_SERVER['HTTP_HOST']);
-        }
-        $site_domain = strtolower(preg_replace('/^www\./i', '', trim(explode(':', (string)$raw_host)[0])));
-
-        // Bloqueo temporal para no saturar con peticiones en cada recarga
-        set_transient($sync_lock_key, 1, $is_nexaguard_page ? 300 : 12 * HOUR_IN_SECONDS);
-
-        $response = wp_remote_post('https://www.nexaguards.com/api/license/validate', array(
-            'timeout'   => 12,
-            'sslverify' => true,
-            'headers'   => array('Content-Type' => 'application/json'),
-            'body'      => wp_json_encode(array(
-                'key'    => $license['key'],
-                'domain' => $site_domain
-            ))
-        ));
-
-        if (!is_wp_error($response)) {
-            $code = wp_remote_retrieve_response_code($response);
-            $body = wp_remote_retrieve_body($response);
-            $data = json_decode($body, true);
-
-            if ($code === 200 && !empty($data) && !empty($data['valid'])) {
-                $data['key'] = $license['key'];
-                update_option('nexaguard_license_data', $data);
-            } elseif ($code === 403 || $code === 404) {
-                // La licencia ya no pertenece a este dominio o fue liberada en la nube
-                delete_option('nexaguard_license_data');
-                delete_transient('nexaguard_license_sync_lock');
-                $msg = (!empty($data) && !empty($data['message'])) ? $data['message'] : 'Tu licencia NexaGuard PRO ha sido desvinculada o transferida a otro dominio en la nube.';
-                set_transient('nexaguard_license_revoked_notice', $msg, 120);
-            }
-        }
-    }
-
-    public function check_license_revocation_notice() {
-        $msg = get_transient('nexaguard_license_revoked_notice');
-        if ($msg) {
-            delete_transient('nexaguard_license_revoked_notice');
-            echo '<div class="notice notice-warning is-dismissible" style="background:#201910 !important; border-left-color:#ffaa00 !important; color:#ffffff !important; padding:14px 18px; margin:20px 0;">';
-            echo '<p style="margin:0 0 6px; font-weight:800; font-size:1.05rem; color:#ffaa00;">⚠️ NEXAGUARD SECURITY: LICENCIA DESVINCULADA EN LA NUBE</p>';
-            echo '<p style="margin:0; font-size:0.9rem; color:#e2eafc;">' . esc_html($msg) . '</p>';
-            echo '</div>';
-        }
-    }
-
     public function plugin_action_links($links) {
         $custom_links = array(
             '<a href="' . esc_url(admin_url('admin.php?page=nexaguard-security')) . '">' . __('Ajustes', 'nexaguard-malware-scanner') . '</a>',
@@ -224,8 +150,8 @@ class NexaGuard_Plugin {
 
         add_submenu_page(
             'nexaguard-security',
-            'Escáner Forense',
-            'Escáner Forense',
+            'Panel de Control',
+            'Panel de Control',
             'manage_options',
             'nexaguard-security',
             array($this, 'render_admin_page')
@@ -233,11 +159,11 @@ class NexaGuard_Plugin {
 
         add_submenu_page(
             'nexaguard-security',
-            'Blindaje & WAF',
-            'Blindaje & WAF',
+            'Bóveda & Historial',
+            'Bóveda & Historial',
             'manage_options',
-            'nexaguard-waf',
-            array($this, 'render_waf_page')
+            'nexaguard-history',
+            array($this, 'render_history_page')
         );
     }
 
@@ -322,10 +248,8 @@ class NexaGuard_Plugin {
         include NEXAGUARD_DIR . 'inc/view-scanner.php';
     }
 
-    public function render_waf_page() {
-        // Redirigir a la pestaña WAF/Hardening dentro de la interfaz principal
-        wp_safe_redirect(admin_url('admin.php?page=nexaguard-security&tab=waf'));
-        exit;
+    public function render_history_page() {
+        include NEXAGUARD_DIR . 'inc/view-scanner.php';
     }
 
     public function ajax_run_scan() {
