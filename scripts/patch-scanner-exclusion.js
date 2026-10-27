@@ -37,3 +37,4 @@ console.log('✅ cleaner.php patched successfully.');
 
 fs.writeFileSync(scannerPath, content, 'utf8');
 console.log('✅ scanner.php patched successfully.');
+

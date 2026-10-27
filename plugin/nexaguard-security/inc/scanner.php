@@ -1133,8 +1133,22 @@ class NexaGuard_Scanner {
             ABSPATH . 'wp-mail.php'
         );
 
+        global $wp_version;
+        $locale = function_exists('get_locale') ? get_locale() : 'en_US';
+        $cache_key = 'nexaguard_core_checksums_' . md5($wp_version . '_' . $locale);
+        $checksums = get_transient($cache_key);
+        if (!is_array($checksums)) $checksums = array();
+
         foreach ($critical_core as $file) {
             if (file_exists($file)) {
+                $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $file);
+                if (in_array($rel, $this->whitelist) || in_array($file, $this->whitelist)) continue;
+                if (!empty($checksums) && isset($checksums[$rel])) {
+                    $local_md5 = @md5_file($file);
+                    if ($local_md5 !== false && $local_md5 === $checksums[$rel]) {
+                        continue;
+                    }
+                }
                 $mtime = filemtime($file);
                 // Si fue modificado en las últimas 48 horas y no es una instalación nueva del día de hoy
                 if ($mtime > $recent_threshold && !file_exists($file . '.bak_nexaguard')) {
