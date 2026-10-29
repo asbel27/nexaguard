@@ -1393,14 +1393,14 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       notice: isFree
         ? 'Licencia Comunitaria Gratuita activa en ' + domain + '.'
         : (isExpired
-          ? 'Tu suscripción a NexaGuard Security Pro ha vencido. Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
+          ? 'Tu suscripción a ' + planName + ' ha vencido. Debes renovar tu ' + (isAnnual ? 'anualidad' : 'mensualidad') + ' para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
           : isExpiringSoon
-            ? 'Atención: Tu suscripción a NexaGuard Security Pro vencerá en ' + daysLeft + ' días. Renueva a tiempo en nexaguards.com para mantener el escudo activo.'
+            ? 'Atención: Tu suscripción a ' + planName + ' vencerá en ' + daysLeft + ' días. Renueva a tiempo en nexaguards.com para mantener el escudo activo.'
             : 'Licencia PRO activa y sincronizada con NexaGuard Threat Cloud en ' + domain + '.'),
       message: isFree
         ? 'Licencia Comunitaria Gratuita activa en ' + domain + '.'
         : (isExpired
-          ? 'Tu suscripción a NexaGuard Security Pro ha vencido. Debes abonar tu mensualidad para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
+          ? 'Tu suscripción a ' + planName + ' ha vencido. Debes renovar tu ' + (isAnnual ? 'anualidad' : 'mensualidad') + ' para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
           : 'Licencia PRO activa y sincronizada con NexaGuard Threat Cloud en ' + domain + '.'),
       renew_url: 'https://www.nexaguards.com/#planes',
       features: {
