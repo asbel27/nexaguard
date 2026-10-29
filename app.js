@@ -1921,7 +1921,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     return true;
   }
 
-  return { handle, ensureAdmin, startScheduler, schedulerTick, entitlement, PLANS, db };
+  return { handle, ensureAdmin, startScheduler, schedulerTick, entitlement, sessionUser, PLANS, db };
 }
 
 module.exports = { createApp, PLANS, STAGES };

@@ -133,6 +133,23 @@ function createServer(opts = {}) {
       return sendJson(res, 403, { error: 'Acceso denegado por política de seguridad' });
     }
 
+    // Control estricto de acceso para software comercial NexaGuard PRO
+    if (baseName === 'nexaguard-malware-scanner-pro.zip' || baseName === 'nexaguard-pro.zip') {
+      const u = app.sessionUser ? app.sessionUser(req) : null;
+      if (!u) {
+        return sendJson(res, 403, { error: 'Acceso denegado: Inicia sesión con una cuenta activa de NexaGuard PRO para descargar este software comercial.' });
+      }
+      if (u.role !== 'admin') {
+        const ent = app.entitlement ? app.entitlement(u.id) : { level: 'none' };
+        const orders = (app.db && app.db.orders) ? app.db.orders : [];
+        const hasPro = (ent.level === 'active' && ent.order && ent.order.plan !== 'free') ||
+          orders.some(o => o.userId === u.id && o.plan !== 'free' && o.licenseKey && o.status !== 'cancelled' && o.status !== 'pending_payment');
+        if (!hasPro) {
+          return sendJson(res, 403, { error: 'Acceso denegado: Tu plan actual es Gratuito. Adquiere una licencia oficial NexaGuard PRO para descargar este complemento comercial.' });
+        }
+      }
+    }
+
     fs.readFile(file, (err, data) => {
       if (err) {
         const notFoundPage = path.join(staticDir, '404.html');
