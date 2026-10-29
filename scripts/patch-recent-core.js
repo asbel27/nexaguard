@@ -35,3 +35,4 @@ if (normContent.includes(normTarget)) {
 } else {
     console.log('ℹ️ target pattern not found in scanner.php');
 }
+

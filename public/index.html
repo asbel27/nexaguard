@@ -401,6 +401,19 @@ a[data-go],a[data-act]{cursor:pointer}
 .stat span{color:var(--muted);font-size:.92rem}
 
 /* ---------- Precios ---------- */
+/* Switcher Facturación Mensual / Anual */
+.billing-switcher-container { display: flex; justify-content: center; align-items: center; margin: 0 auto 34px; position: relative; z-index: 5; }
+.billing-switcher-box { display: inline-flex; align-items: center; background: rgba(11, 16, 48, 0.95); border: 1.5px solid var(--line2); border-radius: 999px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 24px rgba(255, 207, 51, 0.08); gap: 6px; }
+.billing-toggle-btn { background: transparent; border: 1px solid transparent; color: var(--muted); font-family: var(--fb); font-size: 0.92rem; font-weight: 700; padding: 10px 24px; border-radius: 999px; cursor: pointer; transition: all .25s cubic-bezier(.16, 1, .3, 1); display: inline-flex; align-items: center; gap: 8px; }
+.billing-toggle-btn:hover { color: #fff; }
+.billing-toggle-btn.active { background: linear-gradient(135deg, var(--yellow) 0%, #e5b320 100%); color: var(--yellow-ink); box-shadow: 0 4px 18px rgba(255, 207, 51, 0.35); border-color: rgba(255, 207, 51, 0.6); }
+.billing-save-badge { display: inline-block; background: #00f0ff; color: #061026; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; letter-spacing: .3px; box-shadow: 0 2px 8px rgba(0, 240, 255, 0.4); animation: pulseBadge 2.4s infinite ease-in-out; }
+@keyframes pulseBadge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.plan .price-subtext { display: block; font-size: 0.76rem; color: #00f0ff; font-weight: 700; margin-top: 4px; }
+.plan.feat .price-subtext { color: #0b1030; }
+.plans.annual-mode { grid-template-columns: repeat(5, 1fr) !important; }
+@media (max-width: 1440px) { .plans.annual-mode { grid-template-columns: repeat(3, 1fr) !important; } }
+@media (max-width: 900px) { .plans.annual-mode { grid-template-columns: 1fr !important; } }
 #planes .wrap{max-width:1620px;width:96%}
 .plans{display:grid;grid-template-columns:repeat(6,1fr);border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--line);gap:1px;align-items:stretch}
 .plan{padding:26px 16px 22px;display:flex;flex-direction:column;gap:12px;background:var(--panel);height:100%}
@@ -2615,8 +2628,21 @@ a[data-go],a[data-act]{cursor:pointer}
       <h2 id="t-plan">Precios claros, sin letra chica</h2>
       <p class="lead">Elige un punto de partida. El diagnóstico es gratis y la cotización final se confirma antes de tocar nada.</p>
     </div>
-    <div class="plans">
-      <article class="plan" style="border-top:3px solid var(--green)">
+    <!-- Switcher Facturación Mensual / Anual -->
+    <div class="billing-switcher-container">
+      <div class="billing-switcher-box">
+        <button type="button" class="billing-toggle-btn active" id="btnBillMonthly">
+          <span>📅 Facturación Mensual</span>
+        </button>
+        <button type="button" class="billing-toggle-btn" id="btnBillAnnual">
+          <span>⭐ Facturación Anual</span>
+          <span class="billing-save-badge">Ahorra hasta 25% · 2 Meses Gratis</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="plans" id="plansGrid">
+      <article class="plan" id="cardFree" style="border-top:3px solid var(--green)">
         <span class="tag-sub" style="color:var(--green);background:rgba(61,232,164,.08);border-color:rgba(61,232,164,.35)">Plugin Free 100%</span>
         <h3>Plan Gratuito</h3>
         <p class="d">Diagnóstico forense y escáner de seguridad esencial para tu WordPress.</p>
@@ -2634,11 +2660,12 @@ a[data-go],a[data-act]{cursor:pointer}
         </div>
       </article>
 
-      <article class="plan">
-        <span class="tag-sub">Software SaaS</span>
-        <h3>Plan NexaGuard Security Pro</h3>
-        <p class="d">Licencia oficial para tu WordPress con Vigilancia 24H activa.</p>
-        <div class="price">$9.99<small>al mes</small></div>
+      <article class="plan" id="cardSecurityPro">
+        <span class="tag-sub" id="proTag">Software SaaS</span>
+        <h3 id="proTitle">Plan NexaGuard Security Pro</h3>
+        <p class="d" id="proDesc">Licencia oficial para tu WordPress con Vigilancia 24H activa.</p>
+        <div class="price" id="proPrice">$9.99<small>al mes</small></div>
+        <span class="price-subtext" id="proSubtext" style="display:none"></span>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>Licencia Oficial NexaGuard PRO</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Sistema de Vigilancia 24 Horas activo</li>
@@ -2646,10 +2673,11 @@ a[data-go],a[data-act]{cursor:pointer}
           <li><svg class="ic"><use href="#i-check"/></svg>Radar en la nube contra amenazas</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Actualizaciones continuas de firmas</li>
         </ul>
-        <a class="btn btn-o" href="#contacto" data-plan="Plan NexaGuard Security Pro" data-pid="security_pro">Elegir Security Pro</a>
+        <a class="btn btn-o" href="#contacto" id="btnPro" data-plan="Plan NexaGuard Security Pro" data-pid="security_pro">Elegir Security Pro</a>
       </article>
 
-      <article class="plan">
+      <article class="plan" id="cardRescate">
+        <span class="tag-sub" style="background:rgba(255,255,255,.08);color:var(--muted)">Servicio Urgente</span>
         <h3>Rescate</h3>
         <p class="d">Para sitios con síntomas puntuales que necesitan arreglo ya.</p>
         <div class="price">$89<small>pago único</small></div>
@@ -2660,14 +2688,15 @@ a[data-go],a[data-act]{cursor:pointer}
           <li><svg class="ic"><use href="#i-check"/></svg>Informe forense de intrusiones</li>
           <li><svg class="ic"><use href="#i-check"/></svg>3 análisis del escáner por mes</li>
         </ul>
-        <a class="btn btn-o" href="#contacto" data-plan="Rescate" data-pid="rescate">Elegir Rescate</a>
+        <a class="btn btn-o" href="#contacto" id="btnRescate" data-plan="Rescate" data-pid="rescate">Elegir Rescate</a>
       </article>
 
-      <article class="plan feat">
+      <article class="plan feat" id="cardBlindaje">
         <span class="tag">El más elegido</span>
         <h3>Rescate + Blindaje</h3>
         <p class="d">Limpiamos y protegemos para que no se repita.</p>
         <div class="price">$189<small>pago único</small></div>
+        <span class="price-subtext" style="color:#0b1030;font-weight:800">⭐ Incluye 1 Año Completo de Licencia PRO</span>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>Todo lo del plan Rescate</li>
           <li><svg class="ic"><use href="#i-check"/></svg><strong>1 Año Completo de Licencia PRO</strong></li>
@@ -2675,13 +2704,15 @@ a[data-go],a[data-act]{cursor:pointer}
           <li><svg class="ic"><use href="#i-check"/></svg>wp-config y permisos endurecidos</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Revisión de Google y 30 días de garantía</li>
         </ul>
-        <a class="btn" href="#contacto" data-plan="Rescate + Blindaje" data-pid="blindaje">Elegir Rescate + Blindaje</a>
+        <a class="btn" href="#contacto" id="btnBlindaje" data-plan="Rescate + Blindaje" data-pid="blindaje">Elegir Rescate + Blindaje</a>
       </article>
 
-      <article class="plan">
-        <h3>Guardián</h3>
-        <p class="d">Vigilancia continua e ingeniería dedicada.</p>
-        <div class="price">$39<small>al mes</small></div>
+      <article class="plan" id="cardGuardian">
+        <span class="tag-sub" id="guardianTag">Ingeniería Dedicada</span>
+        <h3 id="guardianTitle">Guardián</h3>
+        <p class="d" id="guardianDesc">Vigilancia continua e ingeniería dedicada.</p>
+        <div class="price" id="guardianPrice">$39<small>al mes</small></div>
+        <span class="price-subtext" id="guardianSubtext" style="display:none"></span>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>Licencia NexaGuard PRO activa</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Sistema de Vigilancia 24 Horas continuo</li>
@@ -2689,14 +2720,15 @@ a[data-go],a[data-act]{cursor:pointer}
           <li><svg class="ic"><use href="#i-check"/></svg>Backups diarios fuera del servidor</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Limpiezas y soporte prioritario incluidos</li>
         </ul>
-        <a class="btn btn-o" href="#contacto" data-plan="Guardián" data-pid="guardian">Elegir Guardián</a>
+        <a class="btn btn-o" href="#contacto" id="btnGuardian" data-plan="Guardián" data-pid="guardian">Elegir Guardián</a>
       </article>
 
       <article class="plan" id="planAgencyCard" style="border-top:3px solid #00f0ff">
         <span class="tag-sub" style="color:#00f0ff;background:rgba(0,240,255,.08);border-color:rgba(0,240,255,.35)">⭐ Multidominio Agencias</span>
-        <h3>Plan Agencia / Freelancer</h3>
+        <h3 id="agencyTitle">Plan Agencia / Freelancer</h3>
         <p class="d">1 sola clave maestra para centralizar y proteger los sitios de tus clientes.</p>
         <div class="price" id="agencyPriceTag">$29.99<small>al mes</small></div>
+        <span class="price-subtext" id="agencySubtext" style="display:none"></span>
 
         <div style="margin:8px 0 4px;background:rgba(0,240,255,.05);border:1px solid rgba(0,240,255,.2);border-radius:8px;padding:8px">
           <span style="display:block;font-size:.72rem;color:#00f0ff;font-weight:700;text-transform:uppercase;margin-bottom:6px">Selecciona sitios a proteger:</span>
@@ -3845,8 +3877,14 @@ function ensurePayPalSdk() {
   return ppSdkPromise;
 }
 
-function getAgencyPrice(sites) {
+function getAgencyPrice(sites, isAnnual) {
   var s = Number(sites) || 5;
+  if (isAnnual) {
+    if (s <= 5) return 289;
+    if (s <= 10) return 490;
+    if (s <= 25) return 890;
+    return 1490;
+  }
   if (s <= 5) return 29.99;
   if (s <= 10) return 49.99;
   if (s <= 25) return 99.99;
@@ -3857,8 +3895,9 @@ function getAgencyPrice(sites) {
 function checkoutScreen(planId, preselectedSites) {
   var plan = PLAN_BY_ID[planId], wrap = acEl('div', null), err = acEl('p', { class: 'err', role: 'alert' });
   var chosenSites = Number(preselectedSites) || (plan && plan.sites) || 1;
-  var isAgency = planId === 'agency';
-  var initialPrice = isAgency ? getAgencyPrice(chosenSites) : (plan ? plan.price : 0);
+  var isAgency = planId === 'agency' || planId === 'agency_annual';
+  var isAnnual = planId === 'agency_annual' || planId === 'security_pro_annual' || planId === 'guardian_annual';
+  var initialPrice = isAgency ? getAgencyPrice(chosenSites, isAnnual) : (plan ? plan.price : 0);
 
   wrap.appendChild(acEl('h3', { class: 'ad-t' }, plan && initialPrice <= 0 ? 'Activa tu plan gratis ($0)' : 'Paga tu plan'));
   wrap.appendChild(acEl('p', { class: 'ad-sub' }, plan ? 'Estás por contratar ' + plan.name + '. ' + (initialPrice <= 0 ? 'Plan sin costo. Al activar, tu panel y tu licencia quedan habilitados al instante.' : 'Al confirmar el pago con PayPal, tu panel y tu licencia se activan al instante.') : ''));
@@ -3867,7 +3906,7 @@ function checkoutScreen(planId, preselectedSites) {
   function renderSummary() {
     summaryWrap.innerHTML = '';
     if (!plan) return;
-    var currentPrice = isAgency ? getAgencyPrice(chosenSites) : plan.price;
+    var currentPrice = isAgency ? getAgencyPrice(chosenSites, isAnnual) : plan.price;
     summaryWrap.appendChild(acEl('div', { class: 'ad-plan' },
       acEl('strong', null,
         acEl('span', null, plan.name + (isAgency ? ' (' + chosenSites + ' Sitios)' : '')),
@@ -3885,9 +3924,14 @@ function checkoutScreen(planId, preselectedSites) {
     var pRow = acEl('div', { style: 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap' });
     var pDesc = acEl('p', { class: 'hint', style: 'margin:8px 0 0;font-size:.82rem;text-align:center' });
     function updateAgencyDesc() {
-      var pr = getAgencyPrice(chosenSites);
+      var pr = getAgencyPrice(chosenSites, isAnnual);
       var perSite = (pr / chosenSites).toFixed(2);
-      pDesc.textContent = 'Tu clave autoriza hasta ' + chosenSites + ' sitios por ' + acMoney(pr, 'USD') + '/mes ($' + perSite + '/sitio).';
+      if (isAnnual) {
+        var perMo = (pr / 12).toFixed(2);
+        pDesc.textContent = 'Tu clave autoriza hasta ' + chosenSites + ' sitios por ' + acMoney(pr, 'USD') + '/año (~$' + perMo + '/mes · $' + perSite + '/sitio).';
+      } else {
+        pDesc.textContent = 'Tu clave autoriza hasta ' + chosenSites + ' sitios por ' + acMoney(pr, 'USD') + '/mes ($' + perSite + '/sitio).';
+      }
     }
     updateAgencyDesc();
     [5, 10, 25, 50].forEach(function (num) {
@@ -3916,7 +3960,7 @@ function checkoutScreen(planId, preselectedSites) {
       var btnFree = acEl('button', { type: 'button', class: 'btn btn-y', style: 'width:100%;font-size:16px;padding:14px;font-weight:700', on: { click: async function () {
         btnFree.disabled = true; btnFree.textContent = 'Activando tu licencia...'; err.textContent = '';
         try {
-          var r = await acFetch('/api/checkout/free', { method: 'POST', body: JSON.stringify({ plan: planId, maxSites: (planId === 'agency' ? chosenSites : 1) }) });
+          var r = await acFetch('/api/checkout/free', { method: 'POST', body: JSON.stringify({ plan: planId, maxSites: (isAgency ? chosenSites : 1) }) });
           ACCOUNTS.user = r.user; $('#navPanel').textContent = 'Mi panel';
           paidSuccessScreen(planId, null, r.order || null);
         } catch (x) {
@@ -3966,7 +4010,7 @@ function checkoutScreen(planId, preselectedSites) {
               method: 'POST',
               body: JSON.stringify({
                 plan: planId,
-                maxSites: (planId === 'agency' ? chosenSites : 1),
+                maxSites: (isAgency ? chosenSites : 1),
                 email: (ACCOUNTS.user && ACCOUNTS.user.email) || ''
               })
             });
@@ -4013,7 +4057,7 @@ function checkoutScreen(planId, preselectedSites) {
         style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal' },
         createOrder: function () {
           err.textContent = '';
-          return acFetch('/api/checkout/paypal/orders', { method: 'POST', body: JSON.stringify({ plan: planId, maxSites: (planId === 'agency' ? chosenSites : 1) }) })
+          return acFetch('/api/checkout/paypal/orders', { method: 'POST', body: JSON.stringify({ plan: planId, maxSites: (isAgency ? chosenSites : 1) }) })
             .then(function (r) { return r.id; })
             .catch(function (x) { err.textContent = x.message; throw x; });
         },
@@ -4055,7 +4099,7 @@ function authScreen(planId, mode, preselectedSites) {
       wrap.appendChild(acEl('form', { novalidate: true, on: { submit: async function (e) {
         e.preventDefault(); err.textContent = '';
         try {
-          var d = await acFetch('/api/register', { method: 'POST', body: JSON.stringify({ name: nm.value, email: em.value, phone: ph.value, password: pw.value, plan: planId || '', maxSites: (planId === 'agency' ? chosenSites : 1), accept: ac.checked }) });
+          var d = await acFetch('/api/register', { method: 'POST', body: JSON.stringify({ name: nm.value, email: em.value, phone: ph.value, password: pw.value, plan: planId || '', maxSites: (isAgency ? chosenSites : 1), accept: ac.checked }) });
           ACCOUNTS.user = d.user; $('#navPanel').textContent = 'Mi panel';
           var curPlan = PLAN_BY_ID[planId];
           if (curPlan && curPlan.price <= 0 && d.order) {
@@ -4183,22 +4227,141 @@ $$('[data-plan]').forEach(function (a) {
   });
 });
 
+/* =====================================================
+   Switcher de Facturación: Mensual vs Anual & Multisitio
+   ===================================================== */
+var isAnnualBilling = false;
+
+function updateAgencyDisplay(sites) {
+  var s = Number(sites) || 5;
+  var agencyBtn = $('#btnAgencyHome');
+  var agencyPrice = $('#agencyPriceTag');
+  var agencySitesTxt = $('#agencySitesText');
+  var agencySub = $('#agencySubtext');
+
+  if (isAnnualBilling) {
+    var prMapAnual = {
+      5: { p: '$289', sub: 'Equivale a $24/mes ($4.81/web/mes)', note: '¡2 meses gratis!' },
+      10: { p: '$490', sub: 'Equivale a $40.83/mes ($4.08/web/mes)', note: '¡Ahorras $110!' },
+      25: { p: '$890', sub: 'Equivale a $74.16/mes ($2.96/web/mes)', note: '¡Ahorras $310!' }
+    };
+    var info = prMapAnual[s] || { p: '$289', sub: 'Equivale a $24/mes', note: '¡2 meses gratis!' };
+    if (agencyPrice) agencyPrice.innerHTML = info.p + '<small>al año</small>';
+    if (agencySub) {
+      agencySub.textContent = info.sub + ' · ' + info.note;
+      agencySub.style.display = 'block';
+    }
+    if (agencySitesTxt) {
+      var perSiteCalc = (parseInt(info.p.replace('$', '')) / (s * 12)).toFixed(2);
+      agencySitesTxt.textContent = 'Hasta ' + s + ' sitios simultáneos ($' + perSiteCalc + '/web/mes)';
+    }
+    if (agencyBtn) {
+      agencyBtn.dataset.pid = 'agency_annual';
+      agencyBtn.dataset.plan = 'Plan Agencia / Freelancer (Anual)';
+      agencyBtn.dataset.sites = s;
+    }
+  } else {
+    var prMapMes = {
+      5: { p: '$29.99', sub: '$5.99/web' },
+      10: { p: '$49.99', sub: '$4.99/web' },
+      25: { p: '$99.99', sub: '$3.99/web' }
+    };
+    var info = prMapMes[s] || { p: '$29.99', sub: '$5.99/web' };
+    if (agencyPrice) agencyPrice.innerHTML = info.p + '<small>al mes</small>';
+    if (agencySub) { agencySub.style.display = 'none'; }
+    if (agencySitesTxt) agencySitesTxt.textContent = 'Hasta ' + s + ' sitios simultáneos (' + info.sub + ')';
+    if (agencyBtn) {
+      agencyBtn.dataset.pid = 'agency';
+      agencyBtn.dataset.plan = 'Plan Agencia / Freelancer';
+      agencyBtn.dataset.sites = s;
+    }
+  }
+}
+
+function setBillingCycle(annual) {
+  isAnnualBilling = !!annual;
+  var btnM = $('#btnBillMonthly');
+  var btnA = $('#btnBillAnnual');
+  var grid = $('#plansGrid');
+  var cardRescate = $('#cardRescate');
+  var proPrice = $('#proPrice');
+  var proSubtext = $('#proSubtext');
+  var btnPro = $('#btnPro');
+  var guardianPrice = $('#guardianPrice');
+  var guardianSubtext = $('#guardianSubtext');
+  var btnGuardian = $('#btnGuardian');
+  var agencyBtn = $('#btnAgencyHome');
+
+  if (btnM && btnA) {
+    btnM.classList.toggle('active', !isAnnualBilling);
+    btnA.classList.toggle('active', isAnnualBilling);
+  }
+
+  if (grid) {
+    grid.classList.toggle('annual-mode', isAnnualBilling);
+  }
+
+  // Rescate: oculto en anual (es servicio urgente puntual de 24-48h)
+  if (cardRescate) {
+    cardRescate.style.display = isAnnualBilling ? 'none' : 'flex';
+  }
+
+  // Security PRO
+  if (proPrice && btnPro) {
+    if (isAnnualBilling) {
+      proPrice.innerHTML = '$79<small>al año</small>';
+      if (proSubtext) {
+        proSubtext.textContent = 'Equivale a $6.58/mes · ¡2 Meses Gratis / 34% OFF!';
+        proSubtext.style.display = 'block';
+      }
+      btnPro.dataset.pid = 'security_pro_annual';
+      btnPro.dataset.plan = 'Plan NexaGuard Security Pro (Anual)';
+    } else {
+      proPrice.innerHTML = '$9.99<small>al mes</small>';
+      if (proSubtext) { proSubtext.style.display = 'none'; }
+      btnPro.dataset.pid = 'security_pro';
+      btnPro.dataset.plan = 'Plan NexaGuard Security Pro';
+    }
+  }
+
+  // Guardián
+  if (guardianPrice && btnGuardian) {
+    if (isAnnualBilling) {
+      guardianPrice.innerHTML = '$390<small>al año</small>';
+      if (guardianSubtext) {
+        guardianSubtext.textContent = 'Equivale a $32.50/mes · ¡Ahorras $78!';
+        guardianSubtext.style.display = 'block';
+      }
+      btnGuardian.dataset.pid = 'guardian_annual';
+      btnGuardian.dataset.plan = 'Plan Guardián (Anual)';
+    } else {
+      guardianPrice.innerHTML = '$39<small>al mes</small>';
+      if (guardianSubtext) { guardianSubtext.style.display = 'none'; }
+      btnGuardian.dataset.pid = 'guardian';
+      btnGuardian.dataset.plan = 'Guardián';
+    }
+  }
+
+  // Plan Agencia
+  var currentSites = Number((agencyBtn && agencyBtn.dataset.sites) || 5);
+  updateAgencyDisplay(currentSites);
+}
+
 document.addEventListener('click', function (e) {
-  var b = e.target.closest('.btn-agency-opt');
-  if (!b) return;
-  e.preventDefault();
-  var p = b.parentElement;
-  if (p) p.querySelectorAll('.btn-agency-opt').forEach(function (x) { x.className = 'btn btn-o sm btn-agency-opt'; });
-  b.className = 'btn btn-y sm btn-agency-opt';
-  var s = Number(b.dataset.sites) || 5;
-  var prMap = { 5: { p: '$29.99', sub: '$5.99/web' }, 10: { p: '$49.99', sub: '$4.99/web' }, 25: { p: '$99.99', sub: '$3.99/web' } };
-  var info = prMap[s] || { p: '$29.99', sub: '$5.99/web' };
-  var txt = $('#agencySitesText');
-  if (txt) txt.textContent = 'Hasta ' + s + ' sitios simultáneos (' + info.sub + ')';
-  var prTag = $('#agencyPriceTag');
-  if (prTag) prTag.innerHTML = info.p + '<small>al mes</small>';
-  var aBtn = $('#btnAgencyHome');
-  if (aBtn) { aBtn.dataset.sites = s; }
+  var bMonthly = e.target.closest('#btnBillMonthly');
+  if (bMonthly) { e.preventDefault(); setBillingCycle(false); return; }
+  var bAnnual = e.target.closest('#btnBillAnnual');
+  if (bAnnual) { e.preventDefault(); setBillingCycle(true); return; }
+
+  var bAgency = e.target.closest('.btn-agency-opt');
+  if (bAgency) {
+    e.preventDefault();
+    var p = bAgency.parentElement;
+    if (p) p.querySelectorAll('.btn-agency-opt').forEach(function (x) { x.className = 'btn btn-o sm btn-agency-opt'; });
+    bAgency.className = 'btn btn-y sm btn-agency-opt';
+    var s = Number(bAgency.dataset.sites) || 5;
+    updateAgencyDisplay(s);
+  }
 });
 
 function syncPlan() {

@@ -19,6 +19,11 @@ const PLANS = {
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
     features: ['Licencia Oficial NexaGuard Security PRO para WordPress', 'Sistema de Vigilancia 24 Horas contra amenazas activo', 'Auditoría forense y erradicación de malware con 1 clic', 'Sincronización en tiempo real con NexaGuard Threat Cloud', 'Actualizaciones continuas de firmas Zero-Day']
   },
+  security_pro_annual: {
+    id: 'security_pro_annual', tier: 1, name: 'Plan NexaGuard Security Pro (Anual)', price: 79, currency: 'USD', period: 'al año', type: 'subscription',
+    sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
+    features: ['1 Año Completo de Licencia Oficial NexaGuard Security PRO', 'Sistema de Vigilancia 24 Horas continuo', 'Auditoría forense y erradicación de malware con 1 clic', 'Sincronización en tiempo real con NexaGuard Threat Cloud', 'Actualizaciones continuas de firmas Zero-Day · 2 meses gratis']
+  },
   rescate: {
     id: 'rescate', tier: 2, name: 'Rescate', price: 89, currency: 'USD', period: 'pago único', type: 'oneoff',
     sites: 1, scansPerMonth: 3, scheduled: false, priority: false, afterDeliveryDays: 14, response: '24 a 48 horas',
@@ -34,10 +39,20 @@ const PLANS = {
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 24, priority: true, afterDeliveryDays: 0, response: 'menos de 24 horas',
     features: ['Licencia NexaGuard Security PRO siempre activa', 'Sistema de Vigilancia 24 Horas continuo', 'Monitoreo automático diario con el escáner', 'Backups diarios y actualizaciones probadas asistidas', 'Limpiezas y soporte prioritario incluidos']
   },
+  guardian_annual: {
+    id: 'guardian_annual', tier: 4, name: 'Plan Guardián (Anual)', price: 390, currency: 'USD', period: 'al año', type: 'subscription',
+    sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 24, priority: true, afterDeliveryDays: 0, response: 'menos de 24 horas',
+    features: ['1 Año de Licencia NexaGuard Security PRO activa', 'Sistema de Vigilancia 24 Horas continuo', 'Monitoreo automático diario con el escáner', 'Backups diarios y actualizaciones probadas asistidas', 'Limpiezas y soporte prioritario incluidos (Ahorras $78)']
+  },
   agency: {
     id: 'agency', tier: 5, name: 'Plan Agencia / Freelancer', price: 29.99, currency: 'USD', period: 'al mes', type: 'subscription',
     sites: 5, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
     features: ['Licencia Multidominio Oficial NexaGuard PRO', 'Protección para 5, 10, 25 o 50 sitios web simultáneos', 'Radar de Vigilancia 24H y Erradicación en cada sitio', '1 sola clave de licencia para centralizar a tus clientes', 'Actualizaciones continuas y soporte prioritario para agencias']
+  },
+  agency_annual: {
+    id: 'agency_annual', tier: 5, name: 'Plan Agencia / Freelancer (Anual)', price: 289, currency: 'USD', period: 'al año', type: 'subscription',
+    sites: 5, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
+    features: ['1 Año Completo de Licencia Multidominio Oficial NexaGuard PRO', 'Protección para 5, 10, 25 o 50 sitios web simultáneos', 'Radar de Vigilancia 24H y Erradicación en cada sitio', '1 sola clave de licencia para centralizar a tus clientes', 'Ahorro de hasta $310 al año y soporte prioritario']
   }
 };
 
@@ -50,6 +65,13 @@ function getPlanPrice(planId, maxSites) {
     if (s <= 10) return 49.99;
     if (s <= 25) return 99.99;
     return 179.99;
+  }
+  if (planId === 'agency_annual') {
+    const s = Number(maxSites) || 5;
+    if (s <= 5) return 289;
+    if (s <= 10) return 490;
+    if (s <= 25) return 890;
+    return 1590;
   }
   return p.price;
 }
@@ -223,8 +245,9 @@ function createApp({ store, scanner, waf, sentinel, config }) {
         licenseStatus: 'active'
       };
     } else if (p && p.type === 'subscription') {
-      expiresAt = o.nextBilling || ((o.paidAt || o.createdAt) + 30 * DAY);
-    } else if (o.plan === 'blindaje') {
+      const isAnnualSub = (p.id && p.id.endsWith('_annual')) || (p.period && p.period.includes('año'));
+      expiresAt = o.nextBilling || ((o.paidAt || o.createdAt) + (isAnnualSub ? 365 * DAY : 30 * DAY));
+    } else if (o.plan === 'blindaje' || (o.plan && o.plan.endsWith('_annual'))) {
       const start = o.paidAt || o.createdAt || now;
       expiresAt = start + 365 * DAY;
     } else if (p.afterDeliveryDays) {
@@ -932,14 +955,15 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const { req, res, body } = ctx, ip = clientIp(req);
     if (!pp.enabled) return fail(res, 503, 'El pago con PayPal no está configurado.');
     if (limited('pp-c|' + ip, 20, 3600e3)) return fail(res, 429, 'Demasiados intentos. Espera un momento.');
-    const planId = clean(body.plan, 20), plan = PLANS[planId];
+    const planId = clean(body.plan, 25), plan = PLANS[planId];
     if (!plan) return fail(res, 400, 'Plan no válido.');
-    const maxSites = planId === 'agency' ? Math.max(1, Math.min(100, Number(body.maxSites) || 5)) : 1;
+    const isAgency = planId === 'agency' || planId === 'agency_annual';
+    const maxSites = isAgency ? Math.max(1, Math.min(100, Number(body.maxSites) || 5)) : 1;
     const price = getPlanPrice(planId, maxSites);
     hit('pp-c|' + ip);
     try {
-      const refId = planId === 'agency' ? (planId + ':' + maxSites) : planId;
-      const desc = (planId === 'agency' ? (plan.name + ' (' + maxSites + ' Sitios)') : plan.name) + ' · NexaGuard';
+      const refId = isAgency ? (planId + ':' + maxSites) : planId;
+      const desc = (isAgency ? (plan.name + ' (' + maxSites + ' Sitios)') : plan.name) + ' · NexaGuard';
       const order = await pp.createOrder({ amount: price.toFixed(2), currency: plan.currency, referenceId: refId, description: desc, requestId: id('ppreq') });
       send(res, 201, { id: order.id });
     } catch (e) { console.error('paypal createOrder:', e.message); fail(res, 502, 'No se pudo iniciar el pago con PayPal. Inténtalo de nuevo.'); }
@@ -973,7 +997,8 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const planId = refParts[0];
     const plan = PLANS[planId];
     if (!plan) return fail(res, 400, 'El pago no corresponde a un plan reconocido. Escríbenos con tu comprobante.');
-    const maxSites = planId === 'agency' ? Math.max(1, Math.min(100, Number(refParts[1]) || 5)) : 1;
+    const isAgency = planId === 'agency' || planId === 'agency_annual';
+    const maxSites = isAgency ? Math.max(1, Math.min(100, Number(refParts[1]) || 5)) : 1;
     const expectedPrice = getPlanPrice(planId, maxSites);
     const amt = parseFloat(captured.amount && captured.amount.value), curr = captured.amount && captured.amount.currency_code;
     if (!(amt > 0) || Math.abs(amt - expectedPrice) > 0.05 || curr !== plan.currency) return fail(res, 409, 'El monto del pago no coincide con el del plan. Escríbenos con tu comprobante y lo revisamos a mano.');
@@ -1013,9 +1038,10 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     const { req, res, user, body } = ctx, ip = clientIp(req);
     if (!np.enabled) return fail(res, 503, 'El pago con NOWPayments / Cripto no está configurado.');
     if (limited('np-inv|' + ip, 20, 3600e3)) return fail(res, 429, 'Demasiados intentos. Espera un momento.');
-    const planId = clean(body.plan, 20), plan = PLANS[planId];
+    const planId = clean(body.plan, 25), plan = PLANS[planId];
     if (!plan) return fail(res, 400, 'Plan no válido.');
-    const maxSites = planId === 'agency' ? Math.max(1, Math.min(100, Number(body.maxSites) || 5)) : 1;
+    const isAgency = planId === 'agency' || planId === 'agency_annual';
+    const maxSites = isAgency ? Math.max(1, Math.min(100, Number(body.maxSites) || 5)) : 1;
     const price = getPlanPrice(planId, maxSites);
     hit('np-inv|' + ip);
 
@@ -1046,7 +1072,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
     }
     save();
 
-    const desc = (planId === 'agency' ? (plan.name + ' (' + maxSites + ' Sitios)') : plan.name) + ' · NexaGuard';
+    const desc = (isAgency ? (plan.name + ' (' + maxSites + ' Sitios)') : plan.name) + ' · NexaGuard';
     const host = req.headers.host || 'www.nexaguards.com';
     const proto = (req.headers['x-forwarded-proto'] || 'https');
     const baseUrl = proto + '://' + host;
@@ -1276,7 +1302,7 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       return fail(res, 403, 'No se ha acreditado ningún pago para esta licencia.');
     }
 
-    const isAnnual = order.plan === 'blindaje';
+    const isAnnual = order.plan === 'blindaje' || (order.plan && order.plan.endsWith('_annual'));
     const planObj = PLANS[order.plan] || {};
     const maxAllowed = order.maxSites || planObj.sites || 1;
     const isMultiDomain = maxAllowed > 1;
