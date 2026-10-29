@@ -1383,6 +1383,8 @@ function createApp({ store, scanner, waf, sentinel, config }) {
       valid: !isExpired,
       status: isFree ? 'active' : status,
       plan_type: isFree ? 'free' : 'pro',
+      pro_authorized: !isFree && !isExpired,
+      is_pro: !isFree && !isExpired,
       plan: planName,
       period: isFree ? 'lifetime' : (isAnnual ? 'annual' : 'monthly'),
       expires_at: isFree ? null : expiresAt,
@@ -1398,15 +1400,18 @@ function createApp({ store, scanner, waf, sentinel, config }) {
             ? 'Atención: Tu suscripción a ' + planName + ' vencerá en ' + daysLeft + ' días. Renueva a tiempo en nexaguards.com para mantener el escudo activo.'
             : 'Licencia PRO activa y sincronizada con NexaGuard Threat Cloud en ' + domain + '.'),
       message: isFree
-        ? 'Licencia Comunitaria Gratuita activa en ' + domain + '.'
+        ? 'Licencia Comunitaria Gratuita activa en ' + domain + '. No autorizada para NexaGuard PRO Suite.'
         : (isExpired
           ? 'Tu suscripción a ' + planName + ' ha vencido. Debes renovar tu ' + (isAnnual ? 'anualidad' : 'mensualidad') + ' para reactivar el Sistema de Vigilancia 24h y las actualizaciones en tiempo real.'
           : 'Licencia PRO activa y sincronizada con NexaGuard Threat Cloud en ' + domain + '.'),
       renew_url: 'https://www.nexaguards.com/#planes',
       features: {
         vigilance_24h: !isFree && !isExpired,
-        deep_clean: true,
-        cloud_intel: !isExpired
+        deep_clean: !isFree && !isExpired,
+        cloud_intel: !isExpired,
+        core_rebuild: !isFree && !isExpired,
+        layer7_waf: !isFree && !isExpired,
+        auto_remediation: !isFree && !isExpired
       }
     });
   });

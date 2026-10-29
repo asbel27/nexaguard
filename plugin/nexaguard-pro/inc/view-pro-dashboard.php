@@ -8,6 +8,17 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+
+$render_pro_lock_notice = function($feature_name) {
+    ?>
+    <div style="background: rgba(245, 158, 11, 0.08); border: 1.5px dashed #f59e0b; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+        <div style="font-size: 2.2rem; margin-bottom: 8px;">🔒</div>
+        <h3 style="color: #f59e0b; margin: 0 0 8px 0; font-size: 1.2rem;">Módulo Bloqueado: <?php echo esc_html($feature_name); ?></h3>
+        <p style="color: #cbd5e1; max-width: 620px; margin: 0 auto 16px auto; font-size: 0.92rem; line-height: 1.5;">Esta función avanzada requiere una licencia <strong>NexaGuard PRO activa</strong>. Si tienes una clave PRO, actívala en la pestaña <a href="#tab-license" onclick="document.querySelector('[data-tab=\'tab-license\']').click();" style="color:#f59e0b;text-decoration:underline;">🔑 Clave & Licencia</a>. Las claves gratuitas no habilitan la suite PRO.</p>
+        <a href="https://www.nexaguards.com/#planes" target="_blank" class="nxg-btn nxg-btn-gold" style="display: inline-block; padding: 10px 22px; font-weight: 700; text-decoration: none;">⚡ Adquirir Licencia NexaGuard PRO →</a>
+    </div>
+    <?php
+};
 ?>
 
 <div class="wrap nexaguard-pro-wrap">
@@ -94,12 +105,13 @@ if (!defined('ABSPATH')) {
         <!-- PESTAÑA 2: RECONSTRUCCIÓN DE ARCHIVOS VITALES -->
         <div class="nxg-tab-pane" id="tab-vital">
             <div class="nxg-card">
+                <?php if (!$is_active) { $render_pro_lock_notice('Reconstrucción de Archivos Vitales del Núcleo'); } ?>
                 <div class="nxg-card-header">
                     <div>
                         <h3>Reconstrucción Oficial de Archivos Vitales (WordPress.org Core)</h3>
                         <p class="nxg-muted">Descarga réplicas inmaculadas directamente desde los repositorios oficiales de WordPress.org y reemplaza de forma segura archivos alterados o inyectados por malware.</p>
                     </div>
-                    <button type="button" id="btn-rebuild-all-vital-pro" class="nxg-btn nxg-btn-gold">🛠️ Reconstruir TODOS los Archivos Vitales</button>
+                    <button type="button" id="btn-rebuild-all-vital-pro" class="nxg-btn nxg-btn-gold" <?php echo !$is_active ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''; ?>>🛠️ Reconstruir TODOS los Archivos Vitales</button>
                 </div>
 
                 <div class="nxg-table-wrap">
@@ -128,7 +140,7 @@ if (!defined('ABSPATH')) {
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <button type="button" class="nxg-btn nxg-btn-sm nxg-btn-rebuild-single" data-file="<?php echo esc_attr($rel); ?>">Reconstruir Copia Oficial</button>
+                                        <button type="button" class="nxg-btn nxg-btn-sm nxg-btn-rebuild-single" data-file="<?php echo esc_attr($rel); ?>" <?php echo !$is_active ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''; ?>>Reconstruir Copia Oficial</button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -141,14 +153,15 @@ if (!defined('ABSPATH')) {
         <!-- PESTAÑA 3: ENDURECIMIENTO PROFUNDO -->
         <div class="nxg-tab-pane" id="tab-hardening">
             <div class="nxg-card">
+                <?php if (!$is_active) { $render_pro_lock_notice('Endurecimiento Profundo (Deep Hardening)'); } ?>
                 <div class="nxg-card-header">
                     <div>
                         <h3>Endurecimiento Avanzado de Sistema y Servidor (Deep Hardening)</h3>
                         <p class="nxg-muted">Aplica directivas de seguridad a nivel de servidor (.htaccess), bloquea el editor de código y neutraliza ataques de fuerza bruta.</p>
                     </div>
                     <div style="display:flex;gap:10px;">
-                        <button type="button" id="btn-apply-full-hardening" class="nxg-btn nxg-btn-gold">🔒 Aplicar Blindaje Completo</button>
-                        <button type="button" id="btn-regenerate-salts" class="nxg-btn nxg-btn-outline">🔑 Regenerar Sales de Seguridad</button>
+                        <button type="button" id="btn-apply-full-hardening" class="nxg-btn nxg-btn-gold" <?php echo !$is_active ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''; ?>>🔒 Aplicar Blindaje Completo</button>
+                        <button type="button" id="btn-regenerate-salts" class="nxg-btn nxg-btn-outline" <?php echo !$is_active ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''; ?>>🔑 Regenerar Sales de Seguridad</button>
                     </div>
                 </div>
 
@@ -180,13 +193,14 @@ if (!defined('ABSPATH')) {
         <!-- PESTAÑA 4: WAF CAPA 7 & AUTO-CÁRCEL -->
         <div class="nxg-tab-pane" id="tab-waf">
             <div class="nxg-card">
+                <?php if (!$is_active) { $render_pro_lock_notice('Cortafuegos Layer 7 WAF & Auto-Cárcel 24H'); } ?>
                 <div class="nxg-card-header">
                     <div>
                         <h3>Cortafuegos de Aplicación Web (Layer 7 WAF) & Auto-Cárcel 24H</h3>
                         <p class="nxg-muted">Inspección activa en tiempo real contra SQL Injection, RCE, Cross-Site Scripting y Bots Hostiles con confinamiento automático de 24 horas.</p>
                     </div>
                     <?php if (!empty($jailed_ips)): ?>
-                        <button type="button" id="btn-clear-jail" class="nxg-btn nxg-btn-outline">Vaciar Cárcel de IPs</button>
+                        <button type="button" id="btn-clear-jail" class="nxg-btn nxg-btn-outline" <?php echo !$is_active ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''; ?>>Vaciar Cárcel de IPs</button>
                     <?php endif; ?>
                 </div>
 
@@ -217,7 +231,7 @@ if (!defined('ABSPATH')) {
                                         <td><?php echo date('Y-m-d H:i:s', $data['jailed_at']); ?></td>
                                         <td><span class="nxg-tag warning"><?php echo "{$hours}h {$mins}m"; ?></span></td>
                                         <td>
-                                            <button type="button" class="nxg-btn nxg-btn-sm btn-unjail-ip" data-ip="<?php echo esc_attr($ip); ?>">Liberar IP</button>
+                                            <button type="button" class="nxg-btn nxg-btn-sm btn-unjail-ip" data-ip="<?php echo esc_attr($ip); ?>" <?php echo !$is_active ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''; ?>>Liberar IP</button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -261,11 +275,12 @@ if (!defined('ABSPATH')) {
         <!-- PESTAÑA 5: ERRADICACIÓN TOTAL EN 1 CLIC -->
         <div class="nxg-tab-pane" id="tab-remediation">
             <div class="nxg-card">
+                <?php if (!$is_active) { $render_pro_lock_notice('Erradicación Forense & Rescate Total'); } ?>
                 <div class="nxg-eradication-hero">
                     <div class="hero-icon">🚨</div>
                     <h3>Erradicación & Remediación Integral con 1 Clic</h3>
                     <p>Si tu sitio ha sufrido una infección masiva o hackeo, este motor realiza automáticamente el protocolo de rescate forense completo: aísla todas las webshells en cuarentena, reconstruye los archivos del núcleo con copias oficiales inmaculadas de WordPress.org y blinda el servidor para impedir reinfecciones.</p>
-                    <button type="button" id="btn-auto-remediate-pro" class="nxg-btn nxg-btn-gold lg">⚡ Ejecutar Erradicación & Blindaje Total</button>
+                    <button type="button" id="btn-auto-remediate-pro" class="nxg-btn nxg-btn-gold lg" <?php echo !$is_active ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''; ?>>⚡ Ejecutar Erradicación & Blindaje Total</button>
                 </div>
             </div>
         </div>

@@ -149,6 +149,9 @@ class NexaGuard_Pro {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
+        if (!NexaGuard_Pro_License::is_active()) {
+            wp_send_json_error(array('message' => 'Acceso denegado: Requiere una licencia NexaGuard PRO activa.'));
+        }
 
         $file = isset($_POST['file']) ? sanitize_text_field($_POST['file']) : '';
         $res = NexaGuard_Pro_Reconstructor::restore_core_file(ABSPATH . ltrim($file, '/'));
@@ -165,6 +168,9 @@ class NexaGuard_Pro {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
+        if (!NexaGuard_Pro_License::is_active()) {
+            wp_send_json_error(array('message' => 'Acceso denegado: Requiere una licencia NexaGuard PRO activa.'));
+        }
 
         $res = NexaGuard_Pro_Reconstructor::rebuild_all_vital_files();
         wp_send_json_success($res);
@@ -175,6 +181,9 @@ class NexaGuard_Pro {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
+        if (!NexaGuard_Pro_License::is_active()) {
+            wp_send_json_error(array('message' => 'Acceso denegado: Requiere una licencia NexaGuard PRO activa.'));
+        }
 
         $res = NexaGuard_Pro_Hardening::apply_full_hardening();
         wp_send_json_success($res);
@@ -184,6 +193,9 @@ class NexaGuard_Pro {
         check_ajax_referer('nexaguard_pro_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+        if (!NexaGuard_Pro_License::is_active()) {
+            wp_send_json_error(array('message' => 'Acceso denegado: Requiere una licencia NexaGuard PRO activa.'));
         }
 
         $res = NexaGuard_Pro_Hardening::regenerate_security_salts();
@@ -199,6 +211,9 @@ class NexaGuard_Pro {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
+        if (!NexaGuard_Pro_License::is_active()) {
+            wp_send_json_error(array('message' => 'Acceso denegado: Requiere una licencia NexaGuard PRO activa.'));
+        }
 
         $res = NexaGuard_Pro_Remediation::auto_remediate_all();
         wp_send_json_success($res);
@@ -208,6 +223,9 @@ class NexaGuard_Pro {
         check_ajax_referer('nexaguard_pro_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+        if (!NexaGuard_Pro_License::is_active()) {
+            wp_send_json_error(array('message' => 'Acceso denegado: Requiere una licencia NexaGuard PRO activa.'));
         }
 
         $ip = isset($_POST['ip']) ? sanitize_text_field($_POST['ip']) : '';
@@ -220,6 +238,9 @@ class NexaGuard_Pro {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
+        if (!NexaGuard_Pro_License::is_active()) {
+            wp_send_json_error(array('message' => 'Acceso denegado: Requiere una licencia NexaGuard PRO activa.'));
+        }
 
         NexaGuard_Pro_WAF::clear_all_jail();
         wp_send_json_success(array('message' => 'Registro de IPs en cárcel vaciado con éxito.'));
@@ -228,6 +249,9 @@ class NexaGuard_Pro {
     // --- OVERRIDES PARA EL PLUGIN BASE ---
 
     public function ajax_sentinel_restore_override() {
+        if (!NexaGuard_Pro_License::is_active()) {
+            return;
+        }
         if (!empty($_POST['file'])) {
             $file = sanitize_text_field($_POST['file']);
             $res = NexaGuard_Pro_Reconstructor::restore_core_file(ABSPATH . ltrim($file, '/'));
@@ -237,12 +261,18 @@ class NexaGuard_Pro {
     }
 
     public function ajax_sentinel_rebuild_all_override() {
+        if (!NexaGuard_Pro_License::is_active()) {
+            return;
+        }
         $res = NexaGuard_Pro_Reconstructor::rebuild_all_vital_files();
         wp_send_json_success($res);
         exit;
     }
 
     public function ajax_auto_remediate_override() {
+        if (!NexaGuard_Pro_License::is_active()) {
+            return;
+        }
         $res = NexaGuard_Pro_Remediation::auto_remediate_all();
         wp_send_json_success($res);
         exit;

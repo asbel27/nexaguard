@@ -28,13 +28,23 @@ class NexaGuard_Pro_License {
             return array('success' => false, 'message' => 'Por favor introduce una clave de licencia válida.');
         }
 
+        // Rechazo inmediato de claves del Plan Gratuito en la Suite PRO
+        if (strpos($clean_key, 'FREE') !== false) {
+            delete_option('nexaguard_pro_license_data');
+            return array(
+                'success' => false,
+                'message' => 'Esta clave pertenece al Plan Gratuito (Community). El módulo comercial NexaGuard PRO Suite requiere una licencia oficial PRO activa (Security PRO, Guardián, Blindaje o Agencia).'
+            );
+        }
+
         $domain = parse_url(home_url(), PHP_URL_HOST);
         $payload = array(
             'key'     => $clean_key,
             'domain'  => $domain,
             'site'    => home_url(),
             'version' => defined('NEXAGUARD_PRO_VERSION') ? NEXAGUARD_PRO_VERSION : '2.0.0',
-            'wp'      => get_bloginfo('version')
+            'wp'      => get_bloginfo('version'),
+            'client'  => 'nexaguard-pro-suite'
         );
 
         $response = wp_remote_post(self::API_ENDPOINT, array(
@@ -45,8 +55,8 @@ class NexaGuard_Pro_License {
         ));
 
         if (is_wp_error($response)) {
-            // Modo tolerancia a fallos offline si la API no está disponible temporalmente pero la clave tiene formato NXG-PRO-
-            if (strpos($clean_key, 'NXG-PRO-') === 0 || strpos($clean_key, 'NXG-') === 0) {
+            // Modo tolerancia a fallos offline ÚNICAMENTE para claves PRO legítimas (nunca para claves gratuitas)
+            if (strpos($clean_key, 'NXG-PRO-') === 0 && strpos($clean_key, 'FREE') === false) {
                 $license_data = array(
                     'valid'        => true,
                     'key'          => $clean_key,
@@ -69,6 +79,15 @@ class NexaGuard_Pro_License {
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if ($code === 200 && !empty($body['valid'])) {
+            // Bloqueo estricto: Si el servidor central indica que la licencia es gratuita, denegar privilegios PRO
+            if ((isset($body['pro_authorized']) && empty($body['pro_authorized'])) || (!empty($body['plan_type']) && $body['plan_type'] === 'free')) {
+                delete_option('nexaguard_pro_license_data');
+                return array(
+                    'success' => false,
+                    'message' => 'La clave ingresada corresponde al Plan Gratuito (Community). No tiene autorización para desbloquear las herramientas comerciales de NexaGuard PRO Suite. Actualiza tu plan en nexaguards.com.'
+                );
+            }
+
             $license_data = array(
                 'valid'        => true,
                 'key'          => $clean_key,
@@ -120,7 +139,16 @@ class NexaGuard_Pro_License {
 
     public static function is_active() {
         $data = self::get_license_data();
-        return !empty($data['valid']) && isset($data['status']) && $data['status'] === 'active';
+        if (empty($data['valid']) || empty($data['status']) || $data['status'] !== 'active') {
+            return false;
+        }
+        if (!empty($data['plan_type']) && $data['plan_type'] === 'free') {
+            return false;
+        }
+        if (!empty($data['key']) && strpos($data['key'], 'FREE') !== false) {
+            return false;
+        }
+        return true;
     }
 
     public static function schedule_license_sync() {
@@ -132,7 +160,10 @@ class NexaGuard_Pro_License {
     public static function cron_sync_license() {
         $data = self::get_license_data();
         if (empty($data['key'])) return;
-        self::activate_license($data['key']);
+        $res = self::activate_license($data['key']);
+        if (empty($res['success'])) {
+            delete_option('nexaguard_pro_license_data');
+        }
     }
 }
 

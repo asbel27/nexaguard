@@ -24,6 +24,10 @@ class NexaGuard_Pro_WAF {
      * Inspección en tiempo de ejecución de todas las peticiones entrantes
      */
     public static function inspect_request() {
+        if (!class_exists('NexaGuard_Pro_License') || !NexaGuard_Pro_License::is_active()) {
+            return;
+        }
+
         // Eximir solicitudes legítimas de administradores autenticados si no hay payload crítico
         $ip = self::get_client_ip();
 
@@ -186,6 +190,10 @@ class NexaGuard_Pro_WAF {
      * Trampa Honeypot: Captura bots que exploran rutas señuelo
      */
     public static function check_honeypot_tripwires() {
+        if (!class_exists('NexaGuard_Pro_License') || !NexaGuard_Pro_License::is_active()) {
+            return;
+        }
+
         if (!isset($_SERVER['REQUEST_URI'])) return;
         $uri = strtolower($_SERVER['REQUEST_URI']);
 
