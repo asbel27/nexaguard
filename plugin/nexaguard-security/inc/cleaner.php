@@ -257,18 +257,20 @@ class NexaGuard_Cleaner {
         $this->fs_chmod(dirname($full_path), 0777);
         $this->fs_chmod($full_path, 0777);
 
-        // Vaciar archivo antes de eliminar
-        @file_put_contents($full_path, '');
-
+        // Eliminar el archivo directamente mediante la API de WordPress
         if (wp_delete_file($full_path) || !file_exists($full_path)) {
-            return array('success' => true, 'message' => 'Amenaza destruida y eliminada definitivamente del servidor.');
+            return array('success' => true, 'message' => 'Amenaza eliminada definitivamente del servidor.');
         }
 
         if (file_exists($full_path)) {
             @unlink($full_path);
         }
 
-        return array('success' => true, 'message' => 'El archivo malicioso fue vaciado y neutralizado en el servidor.');
+        if (!file_exists($full_path)) {
+            return array('success' => true, 'message' => 'Amenaza eliminada definitivamente del servidor.');
+        }
+
+        return array('success' => false, 'message' => 'No se pudo eliminar el archivo por restricciones de permisos en el servidor.');
     }
 
     /**
@@ -507,17 +509,52 @@ class NexaGuard_Cleaner {
         }
 
         $entry = $log[$id];
-        if (!file_exists($entry['quarantine_file'])) {
+        $quarantine_file = wp_normalize_path($entry['quarantine_file']);
+        $quarantine_norm = wp_normalize_path($this->quarantine_dir);
+        if (strpos($quarantine_file, $quarantine_norm) !== 0 || !file_exists($quarantine_file)) {
             return array('success' => false, 'message' => 'El archivo aislado ya no se encuentra en cuarentena.');
         }
 
-        $this->fs_chmod(dirname($entry['original_path']), 0777);
-        @copy($entry['quarantine_file'], $entry['original_path']);
-        wp_delete_file($entry['quarantine_file']);
+        $target_path = wp_normalize_path($entry['original_path']);
+        $abs_norm    = wp_normalize_path(ABSPATH);
+        if (strpos($target_path, $abs_norm) !== 0) {
+            return array('success' => false, 'message' => 'Ruta de archivo no autorizada fuera de la instalación de WordPress.');
+        }
+
+        // Salvaguarda: No permitir restaurar archivos hacia directorios del núcleo (wp-admin / wp-includes)
+        if (strpos($target_path, wp_normalize_path(ABSPATH . WPINC)) !== false ||
+            strpos($target_path, wp_normalize_path(ABSPATH . 'wp-admin')) !== false) {
+            return array('success' => false, 'message' => 'Los archivos del núcleo de WordPress deben restaurarse exclusivamente desde Escritorio → Actualizaciones.');
+        }
+
+        $target_dir = dirname($target_path);
+        if (!is_dir($target_dir)) {
+            wp_mkdir_p($target_dir);
+        }
+
+        $fs = $this->get_filesystem();
+        $restored = false;
+        if ($fs && method_exists($fs, 'move')) {
+            $restored = $fs->move($quarantine_file, $target_path, true);
+        }
+        if (!$restored) {
+            $restored = @rename($quarantine_file, $target_path);
+        }
+        if (!$restored) {
+            if (@copy($quarantine_file, $target_path)) {
+                wp_delete_file($quarantine_file);
+                $restored = true;
+            }
+        }
+
+        if (!$restored || !file_exists($target_path)) {
+            return array('success' => false, 'message' => 'No se pudo mover el archivo de cuarentena a su ubicación original por restricciones de permisos.');
+        }
+
         unset($log[$id]);
         update_option('nexaguard_quarantine_log', $log);
 
-        return array('success' => true, 'message' => 'Archivo restaurado a su ubicación original.');
+        return array('success' => true, 'message' => 'Archivo restaurado exitosamente a su ubicación original.');
     }
 
     /**
@@ -693,13 +730,9 @@ class NexaGuard_Cleaner {
         $settings['disallow_file_edit'] = true;
         update_option('nexaguard_settings', $settings);
 
-        if (!defined('DISALLOW_FILE_EDIT')) {
-            define('DISALLOW_FILE_EDIT', true);
-        }
-
         return array(
             'success' => true,
-            'message' => 'Blindaje aplicado con éxito: Se deshabilitó el editor de temas y plugins desde las directivas de seguridad de NexaGuard.'
+            'message' => 'Preferencia de blindaje guardada: Para deshabilitar la edición de temas en todo el sitio, WordPress recomienda añadir define("DISALLOW_FILE_EDIT", true); directamente en wp-config.php.'
         );
     }
 
@@ -851,8 +884,8 @@ class NexaGuard_Cleaner {
         }
 
         if (file_exists($config_file)) {
-            $this->create_snapshot($config_file, 'Regeneración Sales de Seguridad (wp-config.php)');
-            $this->create_file_backup($config_file);
+            // Nota de seguridad WordPress.org: NO respaldamos wp-config.php en disco (uploads)
+            // para evitar exponer contraseñas de BD y sales secretas persistidas.
             if (!wp_is_writable($config_file)) {
                 $this->fs_chmod($config_file, 0644);
             }
@@ -878,26 +911,13 @@ class NexaGuard_Cleaner {
      * Vector clave del SC WordPress Malware (Sucuri Sept/Oct 2026).
      */
     public function clean_dropin($target) {
+        // WordPress.org Policy: Los plugins no deben modificar código ejecutable en drop-ins.
+        // Se aísla el drop-in malicioso de forma segura enviándolo a cuarentena protegida.
         $full_path = (strpos($target, ABSPATH) === 0) ? $target : (ABSPATH . ltrim($target, '/'));
         if (!file_exists($full_path)) {
             return array('success' => true, 'message' => 'El archivo drop-in ya no existe en la ruta.');
         }
 
-        $this->create_file_backup($full_path);
-
-        $content = @file_get_contents($full_path);
-        if ($content === false) {
-            return array('success' => false, 'message' => 'No se pudo leer el archivo drop-in.');
-        }
-
-        // Si contiene delimitadores bounded (SC_START / SC_END)
-        if (preg_match('/\/\*[\s\S]*?(SC_START|BEGIN_SC_BLOCK)[\s\S]*?(SC_END|END_SC_BLOCK)[\s\S]*?\*\//i', $content)) {
-            $cleaned = preg_replace('/\/\*[\s\S]*?(SC_START|BEGIN_SC_BLOCK)[\s\S]*?(SC_END|END_SC_BLOCK)[\s\S]*?\*\//i', '', $content);
-            @file_put_contents($full_path, $cleaned);
-            return array('success' => true, 'message' => 'Inyección en drop-in erradicada exitosamente sin alterar funciones legítimas.');
-        }
-
-        // Si todo el archivo es un dropper malicioso sin clase legítima de WordPress, aislarlo en cuarentena
         return $this->quarantine_file($full_path);
     }
 
@@ -907,44 +927,53 @@ class NexaGuard_Cleaner {
      * for up to 300 seconds, empty the prepend target first, then strip the directive."
      */
     public function neutralize_auto_prepend($config_file) {
-        $full_path = (strpos($config_file, ABSPATH) === 0) ? $config_file : (ABSPATH . ltrim($config_file, '/'));
-        if (!file_exists($full_path)) {
-            return array('success' => true, 'message' => 'El archivo de configuración ya no existe.');
+        $allowed_names = array('.user.ini', 'php.ini', '.htaccess');
+        $base = basename($config_file);
+        if (!in_array($base, $allowed_names, true)) {
+            return array('success' => false, 'message' => 'Tipo de archivo de configuración no permitido.');
         }
 
-        $content = @file_get_contents($full_path);
+        $full_path = (strpos($config_file, ABSPATH) === 0) ? $config_file : (ABSPATH . ltrim($config_file, '/'));
+        $real_path = realpath($full_path);
+        $abs_norm = wp_normalize_path(ABSPATH);
+
+        if (!$real_path || strpos(wp_normalize_path($real_path), $abs_norm) !== 0 || !file_exists($real_path)) {
+            return array('success' => true, 'message' => 'El archivo de configuración ya no existe o es inválido.');
+        }
+
+        $content = @file_get_contents($real_path);
         if ($content === false) {
             return array('success' => false, 'message' => 'No se pudo leer el archivo de configuración.');
         }
 
-        $this->create_file_backup($full_path);
+        $this->create_file_backup($real_path);
 
-        // 1. Localizar la ruta del archivo prepend
+        // 1. Localizar la ruta del archivo prepend y verificar contención estricta en ABSPATH
         if (preg_match('/(auto_prepend_file|auto_append_file)\s*=\s*[\'"]?([^\r\n\'"]+)[\'"]?/i', $content, $matches)) {
             $prepend_target = trim($matches[2]);
             $target_file = (strpos($prepend_target, '/') === 0 || preg_match('/^[a-zA-Z]:\\\\/', $prepend_target))
                 ? $prepend_target
-                : dirname($full_path) . '/' . ltrim($prepend_target, '/');
+                : dirname($real_path) . '/' . ltrim($prepend_target, '/');
 
-            // 2. Vaciar el archivo objetivo primero para que PHP-FPM en caché no lance Fatal Error 500
-            if (file_exists($target_file)) {
-                $this->create_file_backup($target_file);
-                @file_put_contents($target_file, '');
+            $real_target = realpath($target_file);
+            if ($real_target && strpos(wp_normalize_path($real_target), $abs_norm) === 0 && file_exists($real_target)) {
+                $this->create_file_backup($real_target);
+                wp_delete_file($real_target);
             }
         }
 
-        // 3. Eliminar la directiva de .user.ini / php.ini / .htaccess
+        // 2. Eliminar la directiva de .user.ini / php.ini / .htaccess
         $cleaned_config = preg_replace('/^\s*(auto_prepend_file|auto_append_file)\s*=.*$/m', '', $content);
         $cleaned_config = preg_replace('/^\s*php_value\s+(auto_prepend_file|auto_append_file)\s+.*$/m', '', $cleaned_config);
-        @file_put_contents($full_path, $cleaned_config);
+        @file_put_contents($real_path, $cleaned_config);
 
-        // 4. Actualizar mtime para invalidar user_ini.cache_ttl de PHP
+        // 3. Actualizar mtime para invalidar user_ini.cache_ttl de PHP
         $fs = $this->get_filesystem();
         if ($fs) {
-            $fs->touch($full_path);
+            $fs->touch($real_path);
         }
 
-        return array('success' => true, 'message' => 'Directiva auto_prepend_file neutralizada de forma segura. El objetivo fue vaciado antes de desvincularlo para prevenir caídas HTTP 500.');
+        return array('success' => true, 'message' => 'Directiva auto_prepend_file neutralizada de forma segura.');
     }
 
     /**
@@ -1256,26 +1285,33 @@ class NexaGuard_Cleaner {
             return array('success' => false, 'message' => 'Ruta de archivo no autorizada fuera de la instalación de WordPress.');
         }
 
+        // Salvaguarda: No permitir restaurar archivos ejecutables hacia directorios del núcleo (wp-admin / wp-includes)
+        if (strpos($target_path, wp_normalize_path(ABSPATH . WPINC)) !== false ||
+            strpos($target_path, wp_normalize_path(ABSPATH . 'wp-admin')) !== false) {
+            return array('success' => false, 'message' => 'Los archivos del núcleo de WordPress deben restaurarse exclusivamente desde Escritorio → Actualizaciones.');
+        }
+
         $target_dir = dirname($target_path);
         if (!is_dir($target_dir)) {
             wp_mkdir_p($target_dir);
         }
 
-        $this->fs_chmod($target_dir, 0755);
-        if (file_exists($target_path)) {
-            $this->fs_chmod($target_path, 0644);
+        $fs = $this->get_filesystem();
+        $restored = false;
+        if ($fs && method_exists($fs, 'copy')) {
+            $restored = $fs->copy($backup_file, $target_path, true);
         }
-
-        $copied = @copy($backup_file, $target_path);
-        if (!$copied) {
+        if (!$restored) {
+            $restored = @copy($backup_file, $target_path);
+        }
+        if (!$restored) {
             $content = @file_get_contents($backup_file);
             if ($content !== false) {
-                @file_put_contents($target_path, $content);
-                $copied = true;
+                $restored = (@file_put_contents($target_path, $content) !== false);
             }
         }
 
-        if (!$copied || !file_exists($target_path)) {
+        if (!$restored || !file_exists($target_path)) {
             return array('success' => false, 'message' => "No se pudo restaurar el archivo en '{$entry['rel_path']}' por restricciones de permisos.");
         }
 

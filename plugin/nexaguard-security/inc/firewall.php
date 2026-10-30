@@ -4,32 +4,6 @@ if (!defined('ABSPATH')) {
 }
 
 class NexaGuard_Firewall {
-    public static function is_pro() {
-        $license = get_option('nexaguard_license_data', null);
-        if (empty($license) || empty($license['valid']) || empty($license['key'])) {
-            return false;
-        }
-        if (!empty($license['plan_type']) && $license['plan_type'] === 'free') {
-            return false;
-        }
-        if (!empty($license['plan']) && (
-            stripos($license['plan'], 'gratuit') !== false ||
-            stripos($license['plan'], 'community') !== false ||
-            stripos($license['plan'], 'comunitaria') !== false ||
-            stripos($license['plan'], 'free') !== false
-        )) {
-            return false;
-        }
-        if (strpos($license['key'], 'NEXA-FREE-') === 0 || strpos($license['key'], 'NXG-FREE-') === 0 || strpos($license['key'], 'FREE-') === 0) {
-            return false;
-        }
-        $days_left = isset($license['days_left']) ? intval($license['days_left']) : 0;
-        if ((isset($license['status']) && $license['status'] === 'expired') || $days_left <= 0) {
-            return false;
-        }
-        return (isset($license['status']) && ($license['status'] === 'active' || $license['status'] === 'expiring_soon'));
-    }
-
     public static function get_client_ip() {
         $ip = '';
         if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
@@ -44,8 +18,6 @@ class NexaGuard_Firewall {
     }
 
     public static function init() {
-        $is_pro = self::is_pro();
-
         $settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
             // Reglas Básicas
             'block_php_uploads'     => true,
@@ -83,9 +55,7 @@ class NexaGuard_Firewall {
         // =========================================================================
 
         // 1.1 Bloqueo de edición de temas y plugins desde el panel de WordPress (Hardening)
-        if (!empty($settings['disallow_file_edit']) && !defined('DISALLOW_FILE_EDIT')) {
-            define('DISALLOW_FILE_EDIT', true);
-        }
+        // NOTA: No definimos DISALLOW_FILE_EDIT globalmente para no interferir con otros plugins o configuraciones del sitio.
 
         // 1.2 Bloqueo de Enumeración de Usuarios (Anti-Reconnaissance en REST API y autor)
         if (!empty($settings['block_user_enumeration'])) {

@@ -203,45 +203,11 @@ class NexaGuard_Plugin {
             true
         );
 
-        $is_pro = $this->is_pro_active() ? 1 : 0;
         wp_localize_script('nexaguard-admin-js', 'nexaguardData', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce'    => wp_create_nonce('nexaguard_security_nonce'),
-            'site_url' => site_url(),
-            'is_pro'   => $is_pro
+            'site_url' => site_url()
         ));
-    }
-
-    public function is_pro_active() {
-        if (defined('NEXAGUARD_PRO_ACTIVE') && class_exists('NexaGuard_Pro_License') && NexaGuard_Pro_License::is_active()) {
-            return true;
-        }
-        $license = get_option('nexaguard_license_data', null);
-        if (!$license) {
-            $license = get_option('nexaguard_pro_license_data', null);
-        }
-        if (empty($license) || empty($license['valid']) || empty($license['key'])) {
-            return false;
-        }
-        if (!empty($license['plan_type']) && $license['plan_type'] === 'free') {
-            return false;
-        }
-        if (!empty($license['plan']) && (
-            stripos($license['plan'], 'gratuit') !== false ||
-            stripos($license['plan'], 'community') !== false ||
-            stripos($license['plan'], 'comunitaria') !== false ||
-            stripos($license['plan'], 'free') !== false
-        )) {
-            return false;
-        }
-        if (strpos($license['key'], 'NEXA-FREE-') === 0 || strpos($license['key'], 'NXG-FREE-') === 0 || strpos($license['key'], 'FREE-') === 0) {
-            return false;
-        }
-        $days_left = isset($license['days_left']) ? intval($license['days_left']) : 0;
-        if ((isset($license['status']) && $license['status'] === 'expired') || $days_left <= 0) {
-            return false;
-        }
-        return (isset($license['status']) && ($license['status'] === 'active' || $license['status'] === 'expiring_soon'));
     }
 
     public function render_admin_page() {
@@ -338,8 +304,6 @@ class NexaGuard_Plugin {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
-
-        $is_pro = NexaGuard_Firewall::is_pro();
 
         $settings = array(
             // Reglas de Endurecimiento y Blindaje
@@ -490,12 +454,10 @@ class NexaGuard_Plugin {
             wp_clear_scheduled_hook('nexaguard_daily_vigilance_scan');
         }
 
-        $is_pro = $this->is_pro_active();
         wp_send_json_success(array(
             'active'  => $active,
-            'is_pro'  => $is_pro,
             'message' => $active
-                ? ($is_pro ? 'Vigilancia continua 24H y Radar Cloud perimetral activados.' : 'Vigilancia programada diaria activa en tu servidor (WP-Cron).')
+                ? 'Vigilancia programada diaria activa en tu servidor (WP-Cron).'
                 : 'Sistema de vigilancia en pausa.'
         ));
     }

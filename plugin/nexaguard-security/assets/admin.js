@@ -223,7 +223,7 @@ jQuery(document).ready(function ($) {
             if (typeof fetchAndRenderRealThreatLogs === 'function') {
                 fetchAndRenderRealThreatLogs();
             }
-            if (nexaguardData && nexaguardData.is_pro && typeof startRadarTerminalStream === 'function' && $('#vigilance-radar-box').hasClass('radar-scanning')) {
+            if (typeof startRadarTerminalStream === 'function' && $('#vigilance-radar-box').hasClass('radar-scanning')) {
                 startRadarTerminalStream();
             }
         }
@@ -1061,13 +1061,10 @@ jQuery(document).ready(function ($) {
             $btn.addClass('is-active').attr('data-active', '1');
             $('#v-toggle-label').text('VIGILANCIA ACTIVA');
             $('#vigilance-radar-box').removeClass('radar-paused').addClass('radar-scanning');
-            if (nexaguardData.is_pro) {
-                $('#radar-status-text').html('🟢 Vigilancia perimetral 24/7 con NexaGuard Cloud Radar activada.');
-                $('#radar-status-sub').text('NexaGuard Cloud Radar supervisa continuamente inyecciones PHP, cambios en archivos y peticiones maliciosas.');
+            $('#radar-status-text').html('🟢 Vigilancia automática activa en tu servidor (auditoría programada diaria).');
+            $('#radar-status-sub').text('Tu sitio ejecuta auditorías automáticas de integridad vía WP-Cron.');
+            if (typeof startRadarTerminalStream === 'function') {
                 startRadarTerminalStream();
-            } else {
-                $('#radar-status-text').html('🟢 Vigilancia automática activa en tu servidor (auditoría programada diaria).');
-                $('#radar-status-sub').text('Tu sitio ejecuta auditorías automáticas de integridad vía WP-Cron.');
             }
         } else {
             $btn.removeClass('is-active').attr('data-active', '0');
@@ -1781,8 +1778,8 @@ jQuery(document).ready(function ($) {
     // Inicializar estado del control de volumen al cargar
     updateRadarVolumeUI();
 
-    // Auto-iniciar telemetría si el radar ya está activo al cargar (sólo en modo PRO)
-    if (nexaguardData && nexaguardData.is_pro && $('#vigilance-radar-box').hasClass('radar-scanning')) {
+    // Auto-iniciar telemetría si el radar ya está activo al cargar
+    if ($('#vigilance-radar-box').hasClass('radar-scanning') && typeof startRadarTerminalStream === 'function') {
         startRadarTerminalStream();
     } else {
         fetchAndRenderRealThreatLogs();
@@ -2579,21 +2576,21 @@ jQuery(document).ready(function ($) {
                                 : '<span style="color:#ff8ba0;font-weight:700;">⚠️ Ausente</span>';
 
                             var actionCol = '';
-                            if (isPro) {
-                                if (file.rel_path === 'wp-config.php') {
-                                    actionCol = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline btn-sm" style="font-size:0.72rem; padding:2px 8px; border-color:rgba(255,207,51,0.4); color:#ffd859; cursor:pointer;" title="Endurecer wp-config.php a 0440">🔒 Endurecer</button>';
-                                } else if (file.rel_path === '.htaccess') {
-                                    actionCol = '<span style="color:#8fa0cf; font-size:0.75rem;">Reglas Activas</span>';
-                                } else {
-                                    actionCol = '<button type="button" class="btn-ng btn-ng-primary btn-sm btn-sentinel-rebuild" data-file="' + file.rel_path + '" style="font-size:0.72rem; padding:2px 8px; background:#10b981; color:#fff; border:none; border-radius:4px; font-weight:700; cursor:pointer;" title="Reconstruir con copia oficial limpia de WordPress.org">🛠️ Reconstruir</button>';
-                                }
+                            if (file.rel_path === 'wp-config.php') {
+                                actionCol = '<button type="button" id="btn-sentinel-harden-now" class="btn-ng btn-ng-outline btn-sm" style="font-size:0.72rem; padding:2px 8px; border-color:rgba(255,207,51,0.4); color:#ffd859; cursor:pointer;" title="Endurecer wp-config.php a 0440">🔒 Endurecer</button>';
+                            } else if (file.rel_path === '.htaccess') {
+                                actionCol = '<span style="color:#8fa0cf; font-size:0.75rem;">Reglas Activas</span>';
+                            } else if (file.status === 'tampered' || file.status === 'missing') {
+                                actionCol = '<a href="' + (d.reinstall_url || 'update-core.php') + '" class="btn-ng btn-ng-primary btn-sm" style="font-size:0.72rem; padding:2px 8px; background:#10b981; color:#fff; border:none; border-radius:4px; font-weight:700; text-decoration:none; display:inline-block;" target="_blank">Reinstalar Oficial ↗</a>';
+                            } else {
+                                actionCol = '<span style="color:#3de8a4; font-size:0.75rem;">✓ Oficial</span>';
                             }
 
                             rowsHtml += '<tr>' +
                                 '<td><code>' + file.path + '</code></td>' +
                                 '<td><span class="badge-status-pill ' + (file.status === 'warning' || file.status === 'tampered' ? 'danger' : 'ok') + '">' + file.perms + '</span></td>' +
                                 '<td>' + statusCol + '</td>' +
-                                (isPro ? '<td style="text-align:right;">' + actionCol + '</td>' : '') +
+                                '<td style="text-align:right;">' + actionCol + '</td>' +
                                 '</tr>';
                         });
                         $('#sentinel-vital-files-tbody').html(rowsHtml);
