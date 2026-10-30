@@ -1228,7 +1228,7 @@ $rollback_count = count($backup_history);
                         Para garantizar la seguridad, evitar backdoors y preservar la integridad del sistema, <strong>se aconseja reconstruir estos archivos</strong> restaurando sus copias oficiales originales de WordPress.org.
                     </p>
                 </div>
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <div id="sentinel-anomalies-header-btn" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                     <a href="<?php echo esc_url(admin_url('update-core.php')); ?>" class="btn-ng btn-ng-outline" style="border-color:#ff8ba0; color:#ff8ba0; font-size:0.8rem; padding:6px 14px; font-weight:700;">
                         🔄 Reinstalar Núcleo Oficial de WordPress
                     </a>

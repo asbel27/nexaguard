@@ -862,7 +862,8 @@ class NexaGuard_Plugin {
             $verdict = 'Firma oficial verificada · Intacto';
 
             if ($is_wp_config) {
-                if (intval($perms, 8) > intval('0644', 8)) {
+                $is_win = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' || DIRECTORY_SEPARATOR === '\\');
+                if (!$is_win && intval($perms, 8) > intval('0644', 8)) {
                     $status = 'warning';
                     $verdict = "Permisos débiles ($perms). Se aconseja 0640 o 0440.";
                     $warnings[] = "wp-config.php tiene permisos vulnerables ($perms).";
@@ -877,6 +878,9 @@ class NexaGuard_Plugin {
                         'can_rebuild' => false,
                         'verdict'     => "Permisos vulnerables ($perms) · Se aconseja endurecer permisos"
                     );
+                } elseif ($is_win) {
+                    $status = 'intact';
+                    $verdict = 'Entorno Windows (Permisos administrados por ACL de Windows)';
                 }
             } elseif (!$meta['is_custom'] && !empty($checksums) && isset($checksums[$rel_path])) {
                 $expected_md5 = $checksums[$rel_path];
@@ -959,18 +963,42 @@ class NexaGuard_Plugin {
         }
 
         $config_file = ABSPATH . 'wp-config.php';
-        $hardened = false;
-        if (file_exists($config_file)) {
-            $hardened = @chmod($config_file, 0440);
-            if (!$hardened) {
-                $hardened = @chmod($config_file, 0640);
-            }
+        if (!file_exists($config_file)) {
+            wp_send_json_error(array('message' => 'No se encontró el archivo wp-config.php en la raíz del sitio.'));
         }
 
-        wp_send_json_success(array(
-            'hardened' => $hardened,
-            'message'  => 'Permisos de wp-config.php endurecidos a modo seguro solo-lectura (0440) exitosamente.'
-        ));
+        $is_win = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' || DIRECTORY_SEPARATOR === '\\');
+        if ($is_win) {
+            wp_send_json_success(array(
+                'hardened'  => true,
+                'new_perms' => '0644',
+                'message'   => 'Tu servidor utiliza sistema operativo Windows. Las listas de control de acceso (ACL) de Windows gestionan la seguridad del archivo nativamente.'
+            ));
+        }
+
+        $hardened = @chmod($config_file, 0440);
+        if (!$hardened) {
+            $hardened = @chmod($config_file, 0640);
+        }
+        if (!$hardened) {
+            $hardened = @chmod($config_file, 0644);
+        }
+
+        clearstatcache(true, $config_file);
+        $new_perms = substr(sprintf('%o', fileperms($config_file)), -4);
+
+        if ($hardened && intval($new_perms, 8) <= intval('0644', 8)) {
+            wp_send_json_success(array(
+                'hardened'  => true,
+                'new_perms' => $new_perms,
+                'message'   => "Permisos de wp-config.php endurecidos a {$new_perms} exitosamente."
+            ));
+        } else {
+            wp_send_json_error(array(
+                'hardened'  => false,
+                'message'   => 'El proceso de PHP no tiene privilegios de propietario para cambiar los permisos con chmod. Por favor establece los permisos de wp-config.php a 0640 o 0440 desde el Administrador de Archivos de tu cPanel o por FTP.'
+            ));
+        }
     }
 
     /**

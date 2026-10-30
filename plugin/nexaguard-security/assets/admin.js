@@ -2532,8 +2532,16 @@ jQuery(document).ready(function ($) {
                     if (d.has_anomalies && d.anomalies && d.anomalies.length > 0) {
                         var anomHtml = '';
                         var reinstallUrl = d.reinstall_url || 'update-core.php';
+                        var hasOnlyHardening = true;
+
                         d.anomalies.forEach(function (anom) {
-                            var actionBtn = '<a href="' + reinstallUrl + '" class="btn-ng btn-ng-primary btn-sm" style="background:#10b981; color:#fff; font-weight:700; font-size:0.75rem; text-decoration:none; padding:4px 10px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;" target="_blank">Reinstalar Oficial ↗</a>';
+                            var actionBtn = '';
+                            if (anom.can_harden || anom.rel_path === 'wp-config.php') {
+                                actionBtn = '<button type="button" class="btn-ng btn-sentinel-harden btn-sm" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#000; font-weight:800; font-size:0.75rem; border:none; padding:5px 12px; border-radius:4px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;" title="Endurecer permisos de wp-config.php a 0440">🔒 Endurecer Permisos</button>';
+                            } else {
+                                hasOnlyHardening = false;
+                                actionBtn = '<a href="' + reinstallUrl + '" class="btn-ng btn-ng-primary btn-sm" style="background:#10b981; color:#fff; font-weight:700; font-size:0.75rem; text-decoration:none; padding:4px 10px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;" target="_blank">Reinstalar Oficial ↗</a>';
+                            }
 
                             anomHtml += '<tr style="border-bottom:1px solid rgba(255,69,96,0.15);">' +
                                 '<td style="padding:10px 14px;"><code style="color:#ff8ba0; font-weight:700; font-size:0.85rem;">' + anom.path + '</code></td>' +
@@ -2542,6 +2550,13 @@ jQuery(document).ready(function ($) {
                                 '<td style="padding:10px 14px; text-align:right;">' + actionBtn + '</td>' +
                                 '</tr>';
                         });
+
+                        if (hasOnlyHardening) {
+                            $('#sentinel-anomalies-header-btn').html('<button type="button" class="btn-ng btn-sentinel-harden" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#000; font-size:0.8rem; padding:6px 14px; font-weight:800; border:none; border-radius:6px; cursor:pointer;">🔒 Endurecer Permisos de wp-config.php</button>');
+                        } else {
+                            $('#sentinel-anomalies-header-btn').html('<a href="' + reinstallUrl + '" class="btn-ng btn-ng-outline" style="border-color:#ff8ba0; color:#ff8ba0; font-size:0.8rem; padding:6px 14px; font-weight:700;" target="_blank">🔄 Reinstalar Núcleo Oficial de WordPress</a>');
+                        }
+
                         $('#sentinel-anomalies-tbody').html(anomHtml);
                         $('#sentinel-anomalies-card').slideDown(250);
                         $('#sentinel-curr-badge').html('⚠️ ANOMALÍA').css({ color: '#ff5f56', borderColor: 'rgba(255,95,86,0.5)', background: 'rgba(255,95,86,0.15)' });
