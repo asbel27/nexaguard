@@ -24,6 +24,11 @@ const PLANS = {
     sites: 1, scansPerMonth: null, scheduled: true, scanEveryHours: 12, priority: true, afterDeliveryDays: 0, response: 'inmediata',
     features: ['1 Año Completo de Licencia Oficial NexaGuard Security PRO', 'Sistema de Vigilancia 24 Horas continuo', 'Auditoría forense y erradicación de malware con 1 clic', 'Sincronización en tiempo real con NexaGuard Threat Cloud', 'Actualizaciones continuas de firmas Zero-Day · 2 meses gratis']
   },
+  reparacion_express: {
+    id: 'reparacion_express', tier: 2, name: 'Reparación Express', price: 49, currency: 'USD', period: 'pago único', type: 'oneoff',
+    sites: 1, scansPerMonth: 2, scheduled: false, priority: false, afterDeliveryDays: 14, response: 'menos de 2 horas',
+    features: ['Solución de pantalla blanca (WSoD) y errores 500', 'Resolución de conflictos entre plugins y temas', 'Corrección de errores PHP, bases de datos y WooCommerce', 'Copia de seguridad previa de seguridad', '30 días de garantía total sobre la reparación', 'Opción de añadir mantenimiento preventivo continuo ($39/mes)']
+  },
   rescate: {
     id: 'rescate', tier: 2, name: 'Rescate', price: 89, currency: 'USD', period: 'pago único', type: 'oneoff',
     sites: 1, scansPerMonth: 3, scheduled: false, priority: false, afterDeliveryDays: 14, response: '24 a 48 horas',

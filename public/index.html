@@ -1576,17 +1576,18 @@ a[data-go],a[data-act]{cursor:pointer}
     <div class="grid-bg" aria-hidden="true"></div>
     <div class="hero-inner" data-hfade>
       <div class="hero-copy">
-        <span class="pill"><i></i>Atendemos emergencias 24/7</span>
-        <h1>¿Tu WordPress fue <span class="glitch" data-text="hackeado">hackeado</span>? Lo dejamos limpio hoy.</h1>
-        <p class="lead">Eliminamos malware y backdoors, arreglamos errores críticos y cerramos la puerta para que no vuelva a entrar. Sin perder tu contenido ni tu posicionamiento en Google.</p>
+        <span class="pill"><i></i>Seguridad · Reparación de Errores · Mantenimiento WordPress 24/7</span>
+        <h1>¿Tu WordPress fue <span class="glitch" data-text="hackeado">hackeado</span> o falló? Lo dejamos limpio y operativo hoy.</h1>
+        <p class="lead">Eliminamos malware y backdoors, <strong>reparamos errores críticos (pantalla blanca, caídas, plugins rotos)</strong> y brindamos <strong>mantenimiento preventivo continuo</strong> para que tu negocio nunca se detenga.</p>
         <div class="cta-row">
           <a class="btn btn-y" href="#contacto">Pedir diagnóstico gratis</a>
           <a class="btn btn-o" href="#escaner">Escanear mi sitio gratis</a>
         </div>
         <ul class="ticks">
           <li><svg class="ic"><use href="#i-check"/></svg>Primera respuesta en menos de 1 hora</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Garantía de 30 días sobre la limpieza</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Solución de errores PHP, WooCommerce y bases de datos</li>
           <li><svg class="ic"><use href="#i-check"/></svg>Retiramos la alerta de "sitio engañoso"</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Garantía de 30 días y planes de mantenimiento preventivo</li>
         </ul>
       </div>
     </div>
@@ -2676,10 +2677,26 @@ a[data-go],a[data-act]{cursor:pointer}
         <a class="btn btn-o" href="#contacto" id="btnPro" data-plan="Plan NexaGuard Security Pro" data-pid="security_pro">Elegir Security Pro</a>
       </article>
 
+      <article class="plan" id="cardExpress" style="border-top:3px solid #ffaa00">
+        <span class="tag-sub" style="color:#ffaa00;background:rgba(255,170,0,.08);border-color:rgba(255,170,0,.35)">Servicio Urgente · Errores Web</span>
+        <h3>Reparación Express</h3>
+        <p class="d">Para webs con pantalla blanca, error 500, plugins rotos o fallos en WooCommerce.</p>
+        <div class="price">$49<small>pago único</small></div>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Diagnóstico y análisis forense de logs en vivo</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Arreglo de pantalla blanca (WSoD) y error 500</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Resolución de conflictos en plugins y temas</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Respaldo preventivo completo de seguridad</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>30 días de garantía total sobre la reparación</li>
+          <li><svg class="ic"><use href="#i-check"/></svg><strong>Opción de añadir mantenimiento preventivo continuo ($39/mes)</strong></li>
+        </ul>
+        <a class="btn btn-o" href="#contacto" id="btnExpress" data-plan="Reparación Express" data-pid="reparacion_express" style="border-color:rgba(255,170,0,.35);color:#ffaa00">Elegir Reparación Express</a>
+      </article>
+
       <article class="plan" id="cardRescate">
-        <span class="tag-sub" style="background:rgba(255,255,255,.08);color:var(--muted)">Servicio Urgente</span>
-        <h3>Rescate</h3>
-        <p class="d">Para sitios con síntomas puntuales que necesitan arreglo ya.</p>
+        <span class="tag-sub" style="background:rgba(255,255,255,.08);color:var(--muted)">Servicio Urgente · Desinfección</span>
+        <h3>Rescate de Malware</h3>
+        <p class="d">Para sitios hackeados, con redirecciones o virus que necesitan limpieza forense.</p>
         <div class="price">$89<small>pago único</small></div>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>Limpieza forense de archivos y DB</li>
@@ -2708,9 +2725,9 @@ a[data-go],a[data-act]{cursor:pointer}
       </article>
 
       <article class="plan" id="cardGuardian">
-        <span class="tag-sub" id="guardianTag">Ingeniería Dedicada</span>
-        <h3 id="guardianTitle">Guardián</h3>
-        <p class="d" id="guardianDesc">Vigilancia continua e ingeniería dedicada.</p>
+        <span class="tag-sub" id="guardianTag">Mantenimiento & Vigilancia 24/7</span>
+        <h3 id="guardianTitle">Guardián · Mantenimiento</h3>
+        <p class="d" id="guardianDesc">Mantenimiento preventivo continuo, copias de seguridad externas y soporte técnico.</p>
         <div class="price" id="guardianPrice">$39<small>al mes</small></div>
         <span class="price-subtext" id="guardianSubtext" style="display:none"></span>
         <ul>
@@ -2809,6 +2826,8 @@ a[data-go],a[data-act]{cursor:pointer}
                   <label class="chip"><input type="checkbox" value="blocked"><span>Alerta de sitio engañoso</span></label>
                   <label class="chip"><input type="checkbox" value="admin"><span>Usuarios admin desconocidos</span></label>
                   <label class="chip"><input type="checkbox" value="odd"><span>Archivos raros o web lenta</span></label>
+                  <label class="chip"><input type="checkbox" value="repair"><span>Error en plugins, PHP o WooCommerce</span></label>
+                  <label class="chip"><input type="checkbox" value="maintenance"><span>Busco mantenimiento mensual preventivo</span></label>
                   <label class="chip" style="grid-column:1/-1"><input type="checkbox" value="unknown"><span>No estoy seguro, solo sé que algo anda mal</span></label>
                 </div>
                 <p class="err" id="err1" role="alert"></p>
@@ -2892,6 +2911,8 @@ a[data-go],a[data-act]{cursor:pointer}
 
 <footer class="foot">
   <span>© 2026 NexaGuard. Servicio de reparación y seguridad para sitios WordPress.</span>
+  <span style="opacity:0.4">|</span>
+  <a href="/reparar-errores-y-mantenimiento-wordpress/" style="color:var(--muted);text-decoration:none">Soporte: Reparación y Mantenimiento</a>
   <span style="opacity:0.4">|</span>
   <a href="/reparar-wordpress-hackeado/" style="color:var(--muted);text-decoration:none">Guía: Reparar WordPress Hackeado</a>
   <span style="opacity:0.4">|</span>
@@ -3714,6 +3735,8 @@ var SYM = {
   blocked: { t: 'Alerta de sitio engañoso', w: 22, scan: 'Consultando el estado del sitio en Safe Browsing…' },
   admin: { t: 'Usuarios admin desconocidos', w: 24, scan: 'Auditando usuarios, roles y sesiones activas…' },
   odd: { t: 'Archivos raros o web lenta', w: 14, scan: 'Buscando archivos PHP sospechosos y procesos costosos…' },
+  repair: { t: 'Error en plugins, PHP o WooCommerce', w: 10, scan: 'Auditando compatibilidad de extensiones, pasarelas de pago y consultas MySQL…' },
+  maintenance: { t: 'Mantenimiento preventivo mensual', w: 4, scan: 'Configurando política de backups externos y actualizaciones supervisadas…' },
   unknown: { t: 'No está seguro de qué pasa', w: 6, scan: 'Preparando escaneo general de archivos y base de datos…' }
 };
 var S = { sym: new Set(), plan: '', step: 1 };
@@ -4284,6 +4307,7 @@ function setBillingCycle(annual) {
   var btnA = $('#btnBillAnnual');
   var grid = $('#plansGrid');
   var cardRescate = $('#cardRescate');
+  var cardExpress = $('#cardExpress');
   var proPrice = $('#proPrice');
   var proSubtext = $('#proSubtext');
   var btnPro = $('#btnPro');
@@ -4302,6 +4326,9 @@ function setBillingCycle(annual) {
   }
 
   // Rescate: oculto en anual (es servicio urgente puntual de 24-48h)
+  if (cardExpress) {
+    cardExpress.style.display = isAnnualBilling ? 'none' : 'flex';
+  }
   if (cardRescate) {
     cardRescate.style.display = isAnnualBilling ? 'none' : 'flex';
   }
@@ -4454,7 +4481,16 @@ function showResult(f) {
   var lvl = score >= 65 ? { t: 'Gravedad crítica', c: 'var(--red)', eta: '2 a 6 horas' }
     : score >= 35 ? { t: 'Gravedad alta', c: 'var(--amber)', eta: '1 a 3 horas' }
     : { t: 'Gravedad moderada', c: 'var(--green)', eta: '30 a 90 minutos' };
-  var plan = S.plan || (score >= 35 ? 'Rescate + Blindaje' : 'Rescate');
+  var plan = S.plan;
+  if (!plan) {
+    if (S.sym.has('maintenance')) {
+      plan = 'Guardián (Mantenimiento Mensual)';
+    } else if (S.sym.has('repair') && !S.sym.has('hacked') && !S.sym.has('blocked')) {
+      plan = 'Reparación Express ($49)';
+    } else {
+      plan = score >= 35 ? 'Rescate + Blindaje' : 'Rescate';
+    }
+  }
   var durTxt = { hoy: 'desde hoy', semana: 'esta semana', mes: 'hace más de un mes' }[f.dur];
   var accTxt = { si: 'sí', no: 'no', ns: 'no sabe' }[f.acc];
   var syms = Array.from(S.sym).map(function (k) { return SYM[k].t; }).join(', ');
