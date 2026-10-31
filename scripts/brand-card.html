@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1200px;
+    height: 630px;
+    background: #060a1d;
+    background: radial-gradient(circle at 50% 45%, #0f1c4d 0%, #060a1d 70%, #03050f 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+  /* Cyber Grid overlay */
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(107, 140, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(107, 140, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+  /* Subtle ambient glow */
+  .glow {
+    position: absolute;
+    width: 600px;
+    height: 350px;
+    background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.15), rgba(255, 207, 51, 0.08) 50%, transparent 75%);
+    filter: blur(40px);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
+    pointer-events: none;
+  }
+  .card-border {
+    position: absolute;
+    inset: 12px;
+    border: 1px solid rgba(0, 240, 255, 0.18);
+    border-radius: 16px;
+    pointer-events: none;
+  }
+  .logo-wrap {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+  .logo-wrap svg {
+    width: 720px;
+    height: auto;
+    filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 25px rgba(0, 240, 255, 0.25));
+  }
+  .badge {
+    position: relative;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 28px;
+    background: rgba(14, 25, 65, 0.75);
+    border: 1px solid rgba(255, 207, 51, 0.4);
+    border-radius: 50px;
+    color: #eaf0ff;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  }
+  .badge .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00f0ff;
+    box-shadow: 0 0 10px #00f0ff;
+  }
+  .badge .gold {
+    color: #ffcf33;
+  }
+  .footer-url {
+    position: absolute;
+    bottom: 32px;
+    color: rgba(160, 185, 230, 0.75);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="glow"></div>
+  <div class="card-border"></div>
+
+  <div class="logo-wrap">
+    <!-- EXACT OFFICIAL SVG LOGO FROM /brand/logo.svg -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 331.5 64" role="img" aria-label="NexaGuard">
+      <defs>
+        <linearGradient id="nxga" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#ffcf33"/>
+          <stop offset="1" stop-color="#6b8cff"/>
+        </linearGradient>
+        <linearGradient id="nxfa" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#15214f"/>
+          <stop offset="1" stop-color="#0b1235"/>
+        </linearGradient>
+        <clipPath id="nxca">
+          <rect x="-2" y="0" width="240" height="20"/>
+        </clipPath>
+      </defs>
+      <path d="M32 4L54 12V31C54 45.5 44.5 55.5 32 60C19.5 55.5 10 45.5 10 31V12Z" fill="url(#nxfa)" stroke="url(#nxga)" stroke-width="3.2" stroke-linejoin="round"/>
+      <path d="M22 42V22L42 42V22" fill="none" stroke="#eaf0ff" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="22" cy="22" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/>
+      <circle cx="22" cy="42" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/>
+      <circle cx="42" cy="42" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/>
+      <circle cx="42" cy="22" r="4.3" fill="#ffcf33" stroke="#0b1235" stroke-width="2.2"/>
+      <g transform="translate(78.0 19.0) scale(1.3)">
+        <g clip-path="url(#nxca)">
+          <path d="M 2.1 20V 0M 2.1 0L 14.9 20M 14.9 20V 0 M 23.1 0V 20M 21 2.1H 35.5M 21 10H 33.5M 21 17.9H 35.5 M 40 0L 58 20M 58 0L 40 20 M 62 20L 72 0L 82 20M 66.6 14.2H 77.4" fill="none" stroke="#eaf0ff" stroke-width="4.2" stroke-linejoin="miter" stroke-miterlimit="10"/>
+          <path d="M 102.05 4.92A 7.9 7.9 0 1 0 103.9 10H 96.5 M 112.1 0V 11A 6.9 6.9 0 0 0 125.9 11V 0 M 132 20L 142 0L 152 20M 136.6 14.2H 147.4 M 158.1 20V 0M 156 2.1H 165.6A 3.9 3.9 0 0 1 165.6 9.9H 158.1M 164 9.9L 171.5 20 M 179.1 0V 20M 177 2.1H 184.6A 7.9 7.9 0 0 1 184.6 17.9H 177" fill="none" stroke="#ffcf33" stroke-width="4.2" stroke-linejoin="miter" stroke-miterlimit="10"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="badge">
+    <span class="dot"></span>
+    <span>Reparación de Errores <span class="gold">·</span> Mantenimiento <span class="gold">·</span> Seguridad WordPress</span>
+  </div>
+
+  <div class="footer-url">nexaguards.com · Soporte y Protección 24/7</div>
+</body>
+</html>
