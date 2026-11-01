@@ -147,3 +147,4 @@ $bmp.Save($out2, [System.Drawing.Imaging.ImageFormat]::Png)
 $g.Dispose()
 $bmp.Dispose()
 Write-Host "Created nexaguard-preview.png and updated og-image.png successfully!"
+

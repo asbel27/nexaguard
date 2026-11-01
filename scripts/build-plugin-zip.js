@@ -186,8 +186,8 @@ function generateIntegrityManifest(sourceDir) {
 
 function generateUpdateInfo(sourceDir, downloadsDir) {
   const mainPhp = fs.readFileSync(path.join(sourceDir, 'nexaguard-security.php'), 'utf8');
-  const match = mainPhp.match(/define\(\s*['"]NEXAGUARD_VERSION['"]\s*,\s*['"]([^'"]+)['"]\s*\)/i);
-  const version = match ? match[1] : '1.0.0';
+  const match = mainPhp.match(/(?:define\(\s*['"](?:NEXAMASC_VERSION|NEXAGUARD_VERSION)['"]\s*,\s*['"]([^'"]+)['"]\s*\)|Version:\s*([0-9\.]+))/i);
+  const version = match ? (match[1] || match[2]) : '1.5.8';
 
   const info = {
     name: "NexaGuard – Malware Scanner & Web Security",

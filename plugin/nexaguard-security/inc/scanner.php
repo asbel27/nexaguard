@@ -409,7 +409,7 @@ class NexaGuard_Scanner {
                 $this->breakdown['uploads']['files']++;
                 $ext = strtolower($item->getExtension());
                 $filepath = $item->getPathname();
-                $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $filepath);
+                $rel = str_replace(array(nexamasc_get_root_path(), '\\'), array('', '/'), $filepath);
 
                 // Si está en lista blanca, saltar
                 if (in_array($rel, $this->whitelist) || in_array($filepath, $this->whitelist)) {
@@ -536,7 +536,7 @@ class NexaGuard_Scanner {
 
         // 5. Verificar blindaje de ejecución PHP en Uploads (CVE-2026-27540 Arbitrary File Upload Protection)
         $upload_protect_ht = trailingslashit($path) . '.htaccess';
-        $root_protect_ht = ABSPATH . '.htaccess';
+        $root_protect_ht = trailingslashit(nexamasc_get_root_path()) . '.htaccess';
 
         $uploads_ht_protected = file_exists($upload_protect_ht) && (
             stripos(@file_get_contents($upload_protect_ht), 'Deny from all') !== false ||
@@ -567,7 +567,7 @@ class NexaGuard_Scanner {
      * Escaneo de todos los plugins instalados en wp-content/plugins/
      */
     private function scan_plugins() {
-        $plugins_dir = WP_PLUGIN_DIR;
+        $plugins_dir = nexamasc_get_plugins_path();
         if (!is_dir($plugins_dir)) return;
 
         $iterator = new RecursiveIteratorIterator(
@@ -578,7 +578,7 @@ class NexaGuard_Scanner {
         foreach ($iterator as $item) {
             if ($item->isFile()) {
                 $filepath = $item->getPathname();
-                $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $filepath);
+                $rel = str_replace(array(nexamasc_get_root_path(), '\\'), array('', '/'), $filepath);
 
                 // Omitir el propio plugin NexaGuard Security para no auto-analizarse
                 if (stripos($rel, 'nexaguard') !== false) {
@@ -625,7 +625,7 @@ class NexaGuard_Scanner {
      * (Vector clave de persistencia del SC WordPress Malware reportado por Sucuri en sept/oct 2026).
      */
     private function scan_dropins_and_shims() {
-        $content_dir = WP_CONTENT_DIR;
+        $content_dir = nexamasc_get_content_path();
         if (!is_dir($content_dir)) return;
 
         $official_dropins = array(
@@ -723,11 +723,13 @@ class NexaGuard_Scanner {
      * (Sucuri SC Malware: Paso 1 del informe de limpieza).
      */
     private function scan_php_config_prepend() {
+        $root = trailingslashit(nexamasc_get_root_path());
+        $content_dir = trailingslashit(nexamasc_get_content_path());
         $paths_to_check = array(
-            ABSPATH . '.user.ini',
-            ABSPATH . 'php.ini',
-            WP_CONTENT_DIR . '/.user.ini',
-            WP_CONTENT_DIR . '/php.ini'
+            $root . '.user.ini',
+            $root . 'php.ini',
+            $content_dir . '.user.ini',
+            $content_dir . 'php.ini'
         );
 
         foreach ($paths_to_check as $file) {
@@ -737,7 +739,7 @@ class NexaGuard_Scanner {
             $content = @file_get_contents($file);
             if ($content === false) continue;
 
-            $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $file);
+            $rel = str_replace(array(nexamasc_get_root_path(), '\\'), array('', '/'), $file);
             if (in_array($rel, $this->whitelist) || in_array($file, $this->whitelist)) continue;
 
             if (preg_match('/(auto_prepend_file|auto_append_file)\s*=\s*[\'"]?([^\r\n\'"]+)[\'"]?/i', $content, $matches)) {
@@ -795,15 +797,16 @@ class NexaGuard_Scanner {
      * Escaneo de integridad del Core de WordPress y archivos raíz
      */
     private function scan_core() {
+        $root = trailingslashit(nexamasc_get_root_path());
         $root_files = array(
-            ABSPATH . 'index.php',
-            ABSPATH . 'wp-blog-header.php',
-            ABSPATH . 'wp-config.php',
-            ABSPATH . 'wp-settings.php',
-            ABSPATH . 'wp-load.php',
-            ABSPATH . 'wp-login.php',
-            ABSPATH . 'wp-cron.php',
-            ABSPATH . '.htaccess'
+            $root . 'index.php',
+            $root . 'wp-blog-header.php',
+            $root . 'wp-config.php',
+            $root . 'wp-settings.php',
+            $root . 'wp-load.php',
+            $root . 'wp-login.php',
+            $root . 'wp-cron.php',
+            $root . '.htaccess'
         );
 
         // 1. Escanear archivos raíz principales con firmas heurísticas
@@ -838,7 +841,7 @@ class NexaGuard_Scanner {
         }
 
         // 2. Inspeccionar archivos clave de wp-includes
-        $includes_dir = ABSPATH . WPINC;
+        $includes_dir = nexamasc_get_includes_path();
         if (is_dir($includes_dir)) {
             $critical_includes = array(
                 $includes_dir . '/template-loader.php',
@@ -879,10 +882,11 @@ class NexaGuard_Scanner {
      * Verifica sales criptográficas y deshabilitación de edición de código en panel (Hardening)
      */
     private function audit_wp_config() {
-        $config_file = ABSPATH . 'wp-config.php';
+        $root = nexamasc_get_root_path();
+        $config_file = trailingslashit($root) . 'wp-config.php';
         if (!file_exists($config_file)) {
-            if (file_exists(dirname(ABSPATH) . '/wp-config.php')) {
-                $config_file = dirname(ABSPATH) . '/wp-config.php';
+            if (file_exists(dirname($root) . '/wp-config.php')) {
+                $config_file = dirname($root) . '/wp-config.php';
             } else {
                 return;
             }
@@ -931,7 +935,7 @@ class NexaGuard_Scanner {
      * Comprueba redirecciones maliciosas de tráfico y falta de 'Options -Indexes'
      */
     private function audit_htaccess() {
-        $htaccess_file = ABSPATH . '.htaccess';
+        $htaccess_file = trailingslashit(nexamasc_get_root_path()) . '.htaccess';
         if (!file_exists($htaccess_file)) return;
 
         $content = @file_get_contents($htaccess_file);
@@ -1011,9 +1015,10 @@ class NexaGuard_Scanner {
             'wp-includes/default-filters.php', 'wp-includes/formatting.php', 'wp-includes/general-template.php'
         );
 
+        $root = trailingslashit(nexamasc_get_root_path());
         foreach ($core_critical_rel as $rel_file) {
             if (!isset($checksums[$rel_file])) continue;
-            $local_path = ABSPATH . $rel_file;
+            $local_path = $root . $rel_file;
             if (!file_exists($local_path)) continue;
 
             $official_md5 = $checksums[$rel_file];
@@ -1089,7 +1094,7 @@ class NexaGuard_Scanner {
         }
 
         // Inspeccionar archivos rogue desconocidos en wp-admin/
-        $admin_dir = ABSPATH . 'wp-admin';
+        $admin_dir = nexamasc_get_admin_path();
         if (is_dir($admin_dir)) {
             $admin_files = @scandir($admin_dir);
             if ($admin_files) {
@@ -1124,13 +1129,14 @@ class NexaGuard_Scanner {
      */
     private function scan_recent_core_tampering() {
         $recent_threshold = time() - (48 * 3600); // 48 horas atrás
+        $root = trailingslashit(nexamasc_get_root_path());
         $critical_core = array(
-            ABSPATH . 'index.php',
-            ABSPATH . 'wp-blog-header.php',
-            ABSPATH . 'wp-settings.php',
-            ABSPATH . 'wp-load.php',
-            ABSPATH . 'wp-login.php',
-            ABSPATH . 'wp-mail.php'
+            $root . 'index.php',
+            $root . 'wp-blog-header.php',
+            $root . 'wp-settings.php',
+            $root . 'wp-load.php',
+            $root . 'wp-login.php',
+            $root . 'wp-mail.php'
         );
 
         global $wp_version;
@@ -1141,7 +1147,7 @@ class NexaGuard_Scanner {
 
         foreach ($critical_core as $file) {
             if (file_exists($file)) {
-                $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $file);
+                $rel = str_replace(array(nexamasc_get_root_path(), '\\'), array('', '/'), $file);
                 if (in_array($rel, $this->whitelist) || in_array($file, $this->whitelist)) continue;
                 if (!empty($checksums) && isset($checksums[$rel])) {
                     $local_md5 = @md5_file($file);
@@ -1152,7 +1158,7 @@ class NexaGuard_Scanner {
                 $mtime = filemtime($file);
                 // Si fue modificado en las últimas 48 horas y no es una instalación nueva del día de hoy
                 if ($mtime > $recent_threshold && !file_exists($file . '.bak_nexaguard')) {
-                    $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $file);
+                    $rel = str_replace(array(nexamasc_get_root_path(), '\\'), array('', '/'), $file);
                     // Comprobar si ya se reportó por checksum para no duplicar
                     $already_reported = false;
                     foreach ($this->threats as $t) {
@@ -1220,11 +1226,12 @@ class NexaGuard_Scanner {
      * Análisis forense de contenido de un archivo
      */
     private function check_file_content($filepath, $location = '') {
-        $rel_check = str_replace(array(ABSPATH, '\\'), array('', '/'), $filepath);
+        $root = nexamasc_get_root_path();
+        $rel_check = str_replace(array($root, '\\'), array('', '/'), $filepath);
         if (stripos($rel_check, 'nexaguard') !== false) {
             return;
         }
-        $rel = str_replace(array(ABSPATH, '\\'), array('', '/'), $filepath);
+        $rel = str_replace(array($root, '\\'), array('', '/'), $filepath);
 
         if (in_array($rel, $this->whitelist) || in_array($filepath, $this->whitelist)) {
             return;

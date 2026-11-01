@@ -497,8 +497,9 @@ class NexaGuard_Firewall {
     public static function send_threat_alert_email($log) {
         try {
             if (!function_exists('is_email') || !function_exists('wp_mail')) {
-                if (defined('ABSPATH') && file_exists(ABSPATH . 'wp-includes/pluggable.php')) {
-                    require_once ABSPATH . 'wp-includes/pluggable.php';
+                $pluggable = nexamasc_get_includes_path() . '/pluggable.php';
+                if (file_exists($pluggable)) {
+                    require_once $pluggable;
                 }
             }
 
@@ -791,12 +792,13 @@ class NexaGuard_Firewall {
         }
         set_transient('nexaguard_tripwire_check_cache', 1, 5 * MINUTE_IN_SECONDS);
 
+        $root = trailingslashit(nexamasc_get_root_path());
         $critical_files = array(
-            'wp-config.php'   => file_exists(ABSPATH . 'wp-config.php') ? ABSPATH . 'wp-config.php' : (file_exists(dirname(ABSPATH) . '/wp-config.php') ? dirname(ABSPATH) . '/wp-config.php' : null),
-            '.htaccess'       => file_exists(ABSPATH . '.htaccess') ? ABSPATH . '.htaccess' : null,
-            'index.php'       => file_exists(ABSPATH . 'index.php') ? ABSPATH . 'index.php' : null,
-            'wp-settings.php' => file_exists(ABSPATH . 'wp-settings.php') ? ABSPATH . 'wp-settings.php' : null,
-            'wp-load.php'     => file_exists(ABSPATH . 'wp-load.php') ? ABSPATH . 'wp-load.php' : null
+            'wp-config.php'   => file_exists($root . 'wp-config.php') ? $root . 'wp-config.php' : (file_exists(dirname($root) . '/wp-config.php') ? dirname($root) . '/wp-config.php' : null),
+            '.htaccess'       => file_exists($root . '.htaccess') ? $root . '.htaccess' : null,
+            'index.php'       => file_exists($root . 'index.php') ? $root . 'index.php' : null,
+            'wp-settings.php' => file_exists($root . 'wp-settings.php') ? $root . 'wp-settings.php' : null,
+            'wp-load.php'     => file_exists($root . 'wp-load.php') ? $root . 'wp-load.php' : null
         );
 
         $baseline = get_option('nexaguard_tripwire_baseline', null);
@@ -1091,8 +1093,11 @@ class NexaGuard_Firewall {
             // Procesar el entorno de login de WordPress directamente bajo la URL personalizada.
             // Conserva la URL limpia en el navegador (ej: /acceso-seguro/) y procesa el POST
             // de usuario y contraseña sin redirecciones 302 que descarten credenciales.
-            require_once ABSPATH . 'wp-login.php';
-            exit;
+            $login_file = trailingslashit(nexamasc_get_root_path()) . 'wp-login.php';
+            if (file_exists($login_file)) {
+                require_once $login_file;
+                exit;
+            }
         }
 
         // 2. Acceso directo a wp-login.php sin la ruta secreta

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NexaGuard – Malware Scanner & Web Security
  * Description: Deep forensic malware scanner, core integrity monitor, webshell quarantine, and hardened perimeter security defense for WordPress sites.
- * Version: 1.5.7
+ * Version: 1.5.8
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: NexaGuard Cybersecurity Team
@@ -16,14 +16,93 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('NEXAGUARD_VERSION', '1.5.7');
-define('NEXAGUARD_FILE', __FILE__);
-define('NEXAGUARD_DIR', plugin_dir_path(__FILE__));
-define('NEXAGUARD_URL', plugin_dir_url(__FILE__));
+// Constantes oficiales recomendadas por WordPress.org (Prefijo de Plugin NEXAMASC)
+define('NEXAMASC_VERSION', '1.5.8');
+define('NEXAMASC_PLUGIN_FILE', __FILE__);
+define('NEXAMASC_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('NEXAMASC_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-require_once NEXAGUARD_DIR . 'inc/firewall.php';
-require_once NEXAGUARD_DIR . 'inc/scanner.php';
-require_once NEXAGUARD_DIR . 'inc/cleaner.php';
+// Aliases para compatibilidad interna del motor
+define('NEXAGUARD_VERSION', NEXAMASC_VERSION);
+define('NEXAGUARD_FILE', NEXAMASC_PLUGIN_FILE);
+define('NEXAGUARD_DIR', NEXAMASC_PLUGIN_DIR);
+define('NEXAGUARD_URL', NEXAMASC_PLUGIN_URL);
+
+/**
+ * Funciones normalizadas para determinación de rutas según directrices oficiales de WordPress.org
+ * https://developer.wordpress.org/plugins/plugin-basics/determining-plugin-and-content-directories/
+ */
+if (!function_exists('nexamasc_get_root_path')) {
+    function nexamasc_get_root_path() {
+        static $root = null;
+        if ($root !== null) {
+            return $root;
+        }
+        if (function_exists('get_home_path')) {
+            $home = get_home_path();
+            if (!empty($home) && @is_dir($home)) {
+                $root = wp_normalize_path($home);
+                return $root;
+            }
+        }
+        $root = defined('ABSPATH') ? wp_normalize_path(ABSPATH) : '';
+        return $root;
+    }
+}
+
+if (!function_exists('nexamasc_get_plugins_path')) {
+    function nexamasc_get_plugins_path() {
+        static $dir = null;
+        if ($dir !== null) {
+            return $dir;
+        }
+        if (defined('WP_PLUGIN_DIR')) {
+            $dir = wp_normalize_path(WP_PLUGIN_DIR);
+        } else {
+            $dir = wp_normalize_path(nexamasc_get_content_path() . '/plugins');
+        }
+        return $dir;
+    }
+}
+
+if (!function_exists('nexamasc_get_content_path')) {
+    function nexamasc_get_content_path() {
+        static $dir = null;
+        if ($dir !== null) {
+            return $dir;
+        }
+        if (defined('WP_CONTENT_DIR')) {
+            $dir = wp_normalize_path(WP_CONTENT_DIR);
+        } else {
+            $dir = wp_normalize_path(trailingslashit(nexamasc_get_root_path()) . 'wp-content');
+        }
+        return $dir;
+    }
+}
+
+if (!function_exists('nexamasc_get_uploads_path')) {
+    function nexamasc_get_uploads_path() {
+        $upload_dir = wp_upload_dir();
+        return !empty($upload_dir['basedir']) ? wp_normalize_path($upload_dir['basedir']) : '';
+    }
+}
+
+if (!function_exists('nexamasc_get_admin_path')) {
+    function nexamasc_get_admin_path() {
+        return wp_normalize_path(trailingslashit(nexamasc_get_root_path()) . 'wp-admin');
+    }
+}
+
+if (!function_exists('nexamasc_get_includes_path')) {
+    function nexamasc_get_includes_path() {
+        $inc = defined('WPINC') ? WPINC : 'wp-includes';
+        return wp_normalize_path(trailingslashit(nexamasc_get_root_path()) . $inc);
+    }
+}
+
+require_once NEXAMASC_PLUGIN_DIR . 'inc/firewall.php';
+require_once NEXAMASC_PLUGIN_DIR . 'inc/scanner.php';
+require_once NEXAMASC_PLUGIN_DIR . 'inc/cleaner.php';
 
 class NexaGuard_Plugin {
     private static $instance = null;
@@ -786,10 +865,10 @@ class NexaGuard_Plugin {
         $clean_count = 0;
         $warnings = array();
         $anomalies = array();
-        $abs_root = wp_normalize_path(ABSPATH);
+        $abs_root = nexamasc_get_root_path();
 
         foreach ($core_files as $rel_path => $meta) {
-            $full_path = $abs_root . $rel_path;
+            $full_path = trailingslashit($abs_root) . $rel_path;
             if (!file_exists($full_path)) {
                 if ($rel_path === '.htaccess' && isset($_SERVER['SERVER_SOFTWARE']) && stripos($_SERVER['SERVER_SOFTWARE'], 'nginx') !== false) {
                     continue;
@@ -924,9 +1003,14 @@ class NexaGuard_Plugin {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
-        $config_file = ABSPATH . 'wp-config.php';
+        $root = nexamasc_get_root_path();
+        $config_file = trailingslashit($root) . 'wp-config.php';
         if (!file_exists($config_file)) {
-            wp_send_json_error(array('message' => 'No se encontró el archivo wp-config.php en la raíz del sitio.'));
+            if (file_exists(dirname($root) . '/wp-config.php')) {
+                $config_file = dirname($root) . '/wp-config.php';
+            } else {
+                wp_send_json_error(array('message' => 'No se encontró el archivo wp-config.php en la raíz del sitio.'));
+            }
         }
 
         $is_win = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' || DIRECTORY_SEPARATOR === '\\');
@@ -978,7 +1062,8 @@ class NexaGuard_Plugin {
         }
 
         $cleaner = new NexaGuard_Cleaner();
-        $result = $cleaner->restore_core_file(ABSPATH . $rel_path);
+        $root = nexamasc_get_root_path();
+        $result = $cleaner->restore_core_file(trailingslashit($root) . $rel_path);
 
         if (!empty($result['success'])) {
             wp_send_json_success($result);
@@ -988,7 +1073,7 @@ class NexaGuard_Plugin {
     }
 
     /**
-     * Reconstrucción Masiva de Todos los Archivos Vitales de WordPress (PRO)
+     * Verificación Masiva de Todos los Archivos Vitales de WordPress
      */
     public function ajax_sentinel_rebuild_all_vital() {
         check_ajax_referer('nexaguard_security_nonce', 'nonce');
@@ -997,6 +1082,7 @@ class NexaGuard_Plugin {
         }
 
         $cleaner = new NexaGuard_Cleaner();
+        $root = nexamasc_get_root_path();
         $vital_files = array(
             'index.php',
             'wp-blog-header.php',
@@ -1012,7 +1098,7 @@ class NexaGuard_Plugin {
         $details = array();
 
         foreach ($vital_files as $rel) {
-            $full_path = ABSPATH . $rel;
+            $full_path = trailingslashit($root) . $rel;
             $res = $cleaner->restore_core_file($full_path);
             if (!empty($res['success'])) {
                 $restored++;

@@ -383,7 +383,7 @@ $rollback_count = count($backup_history);
                     <tbody>
                         <?php foreach ($quarantine_log as $qid => $q): ?>
                             <tr>
-                                <td><code><?php echo esc_html(str_replace(ABSPATH, '', $q['original_path'])); ?></code></td>
+                                <td><code><?php echo esc_html(str_replace(nexamasc_get_root_path(), '', $q['original_path'])); ?></code></td>
                                 <td><?php echo esc_html($q['date']); ?></td>
                                 <td><?php echo esc_html(size_format($q['size'])); ?></td>
                                 <td>

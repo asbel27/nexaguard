@@ -5,7 +5,7 @@ Tags: security, malware scanner, malware cleaner, anti malware, firewall
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.7
+Stable tag: 1.5.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,16 @@ This plugin can connect to the following external services:
 4. Perimeter security hardening settings and directory protections.
 
 == Changelog ==
+
+= 1.5.8 =
+* Standardized directory and path resolution using official WordPress functions (`plugin_dir_path()`, `plugin_dir_url()`, `get_home_path()`, `wp_upload_dir()`).
+* Replaced all internal constants (`WP_PLUGIN_DIR`, `WP_CONTENT_DIR`, `WPINC`, `ABSPATH`) with WordPress core API path handlers.
+* Added official plugin constants `NEXAMASC_PLUGIN_FILE`, `NEXAMASC_PLUGIN_DIR`, and `NEXAMASC_PLUGIN_URL` matching WordPress.org requirements.
+* Strict write boundary enforcement: removed all arbitrary file write and copy operations targeting plugin and theme directories.
+* Quarantine storage relocated to dedicated `/wp-content/uploads/nexaguard-malware-scanner/quarantine/` with access denial `.htaccess`.
+* Hardened database remediation: option cleanup and deletion are strictly constrained to threats recorded during verified forensic scans.
+* Replaced in-place file editing of infected plugin/theme files with native guidance to reinstall clean copies from WordPress.org repository.
+* Automated neutralization of rogue configuration files located inside `wp-content` using `wp_delete_file()`.
 
 = 1.5.7 =
 * Updated plugin display name to "NexaGuard – Malware Scanner & Web Security" and slug to "nexaguard-malware-scanner".
