@@ -3,7 +3,7 @@ Contributors: asbel27
 Donate link: https://www.nexaguards.com/
 Tags: security, malware scanner, malware cleaner, anti malware, firewall
 Requires at least: 5.8
-Tested up to: 6.7
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 1.5.8
 License: GPLv2 or later

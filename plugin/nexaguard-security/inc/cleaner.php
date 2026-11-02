@@ -138,9 +138,6 @@ class NexaGuard_Cleaner {
 
         // Eliminación segura del archivo infectado (sin stubs ejecutables)
         wp_delete_file($full_path);
-        if (file_exists($full_path)) {
-            @unlink($full_path);
-        }
 
         // Guardar registro en opciones
         $log = get_option('nexaguard_quarantine_log', array());
@@ -268,14 +265,6 @@ class NexaGuard_Cleaner {
             return array('success' => true, 'message' => 'Amenaza eliminada definitivamente del servidor.');
         }
 
-        if (file_exists($full_path)) {
-            @unlink($full_path);
-        }
-
-        if (!file_exists($full_path)) {
-            return array('success' => true, 'message' => 'Amenaza eliminada definitivamente del servidor.');
-        }
-
         return array('success' => false, 'message' => 'No se pudo eliminar el archivo por restricciones de permisos en el servidor.');
     }
 
@@ -344,6 +333,7 @@ class NexaGuard_Cleaner {
             return array(
                 'success' => true,
                 'message' => sprintf(
+                    /* translators: %s: Plugins management URL */
                     __('Conforme a las directrices de seguridad de WordPress.org, los archivos de plugins no deben modificarse en disco para prevenir la corrupción de código ejecutable. Por favor, reinstala o actualiza el plugin correspondiente desde el repositorio oficial: <a href="%s" class="button button-secondary" target="_blank" style="margin-left:8px;">Gestionar Plugins ↗</a>', 'nexaguard-malware-scanner'),
                     esc_url($plugins_url)
                 )
@@ -357,6 +347,7 @@ class NexaGuard_Cleaner {
             return array(
                 'success' => true,
                 'message' => sprintf(
+                    /* translators: %s: Themes management URL */
                     __('Conforme a las directrices de seguridad de WordPress.org, los archivos de temas no deben modificarse en disco. Por favor, reinstala o actualiza el tema desde el repositorio oficial: <a href="%s" class="button button-secondary" target="_blank" style="margin-left:8px;">Gestionar Temas ↗</a>', 'nexaguard-malware-scanner'),
                     esc_url($themes_url)
                 )
@@ -547,6 +538,7 @@ class NexaGuard_Cleaner {
         return array(
             'success' => true,
             'message' => sprintf(
+                /* translators: %s: Plugins management URL */
                 __('Conforme a las directrices de seguridad de WordPress.org, los archivos en cuarentena no pueden reinsertarse automáticamente en rutas ejecutables del sitio. Si este archivo pertenecía a un plugin o tema oficial, por favor reinstálalo directamente desde el repositorio oficial: <a href="%s" class="button button-secondary" target="_blank" style="margin-left:8px;">Gestionar Plugins ↗</a>', 'nexaguard-malware-scanner'),
                 esc_url(admin_url('plugins.php'))
             )
@@ -1082,7 +1074,8 @@ class NexaGuard_Cleaner {
             'is_info'       => true,
             'reinstall_url' => $reinstall_url,
             'message'       => sprintf(
-                __('El archivo del núcleo "%s" presenta discrepancias con la firma oficial. Conforme a las directrices de seguridad de WordPress.org, los archivos del núcleo deben actualizarse mediante las herramientas oficiales nativas de WordPress: <a href="%s" class="button button-primary" target="_blank" style="margin-left:8px;">Reinstalar WordPress Oficialmente ↗</a>', 'nexaguard-malware-scanner'),
+                /* translators: 1: WordPress core relative file path, 2: WordPress core reinstall URL */
+                __('El archivo del núcleo "%1$s" presenta discrepancias con la firma oficial. Conforme a las directrices de seguridad de WordPress.org, los archivos del núcleo deben actualizarse mediante las herramientas oficiales nativas de WordPress: <a href="%2$s" class="button button-primary" target="_blank" style="margin-left:8px;">Reinstalar WordPress Oficialmente ↗</a>', 'nexaguard-malware-scanner'),
                 esc_html($rel_path),
                 esc_url($reinstall_url)
             )
@@ -1319,6 +1312,7 @@ class NexaGuard_Cleaner {
         return array(
             'success' => true,
             'message' => sprintf(
+                /* translators: %s: Plugins management URL */
                 __('Conforme a las directrices de seguridad de WordPress.org, las copias de respaldo se conservan como evidencia forense en la carpeta de subidas y no pueden sobrescribir archivos ejecutables en disco. Para restaurar archivos oficiales de plugins o temas de forma segura, utiliza el gestor oficial: <a href="%s" class="button button-secondary" target="_blank" style="margin-left:8px;">Gestionar Plugins ↗</a>', 'nexaguard-malware-scanner'),
                 esc_url(admin_url('plugins.php'))
             )

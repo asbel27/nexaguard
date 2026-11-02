@@ -230,7 +230,7 @@ class NexaGuard_Firewall {
         </div>
         <?php
         $output = ob_get_clean();
-        wp_die($output, 'Mantenimiento de Seguridad · NexaGuard', array('response' => 503, 'code' => 'nexaguard_lockdown'));
+        wp_die(wp_kses_post($output), 'Mantenimiento de Seguridad · NexaGuard', array('response' => 503, 'code' => 'nexaguard_lockdown'));
     }
 
     public static function send_security_headers() {
@@ -414,7 +414,7 @@ class NexaGuard_Firewall {
         </div>
         <?php
         $output = ob_get_clean();
-        wp_die($output, '403 Acceso Denegado · NexaGuard WAF', array('response' => 403, 'code' => 'nexaguard_waf_blocked'));
+        wp_die(wp_kses_post($output), '403 Acceso Denegado · NexaGuard WAF', array('response' => 403, 'code' => 'nexaguard_waf_blocked'));
     }
 
     /**
@@ -772,7 +772,7 @@ class NexaGuard_Firewall {
         </div>
         <?php
         $output = ob_get_clean();
-        wp_die($output, '403 Aislamiento Disciplinario · NexaGuard Cyber Jail', array('response' => 403, 'code' => 'nexaguard_jail_blocked'));
+        wp_die(wp_kses_post($output), '403 Aislamiento Disciplinario · NexaGuard Cyber Jail', array('response' => 403, 'code' => 'nexaguard_jail_blocked'));
     }
 
     /* =========================================================================
@@ -1045,7 +1045,7 @@ class NexaGuard_Firewall {
         </div>
         <?php
         $output = ob_get_clean();
-        wp_die($output, 'Bloqueo de Seguridad · NexaGuard Protection', array('response' => 429, 'code' => 'nexaguard_login_lockout'));
+        wp_die(wp_kses_post($output), 'Bloqueo de Seguridad · NexaGuard Protection', array('response' => 429, 'code' => 'nexaguard_login_lockout'));
     }
 
     /* =========================================================================

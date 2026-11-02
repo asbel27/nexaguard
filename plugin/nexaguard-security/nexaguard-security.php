@@ -1022,12 +1022,21 @@ class NexaGuard_Plugin {
             ));
         }
 
-        $hardened = @chmod($config_file, 0440);
-        if (!$hardened) {
-            $hardened = @chmod($config_file, 0640);
+        global $wp_filesystem;
+        if (empty($wp_filesystem)) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            WP_Filesystem();
         }
-        if (!$hardened) {
-            $hardened = @chmod($config_file, 0644);
+
+        $hardened = false;
+        if (!empty($wp_filesystem) && method_exists($wp_filesystem, 'chmod')) {
+            $hardened = $wp_filesystem->chmod($config_file, 0440);
+            if (!$hardened) {
+                $hardened = $wp_filesystem->chmod($config_file, 0640);
+            }
+            if (!$hardened) {
+                $hardened = $wp_filesystem->chmod($config_file, 0644);
+            }
         }
 
         clearstatcache(true, $config_file);
