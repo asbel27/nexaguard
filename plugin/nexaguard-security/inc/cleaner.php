@@ -1009,15 +1009,35 @@ class NexaGuard_Cleaner {
      */
     public function clean_db_trigger($trigger_name) {
         global $wpdb;
+        $trigger_name = sanitize_text_field(trim($trigger_name));
         if (empty($trigger_name)) {
             return array('success' => false, 'message' => 'Nombre de trigger no especificado.');
         }
 
-        $sanitized_name = esc_sql(preg_replace('/[^a-zA-Z0-9_]/', '', $trigger_name));
+        // Validación de Seguridad exigida por WordPress.org:
+        // Constrain target trigger strictly to threats recorded in the last scan
+        $report = get_option('nexaguard_last_scan_report', array());
+        $is_flagged = false;
+        if (!empty($report['threats']) && is_array($report['threats'])) {
+            foreach ($report['threats'] as $t) {
+                $target_candidate = !empty($t['target']) ? $t['target'] : (!empty($t['full_path']) ? $t['full_path'] : '');
+                if ($target_candidate === $trigger_name) {
+                    $is_flagged = true;
+                    break;
+                }
+            }
+        }
+        if (!$is_flagged) {
+            return array('success' => false, 'message' => 'Acción denegada: el trigger no se encuentra registrado entre las amenazas detectadas en el escaneo.');
+        }
+
+        $sanitized_name = preg_replace('/[^a-zA-Z0-9_]/', '', $trigger_name);
         if (empty($sanitized_name)) {
             return array('success' => false, 'message' => 'Nombre de trigger no válido.');
         }
-        $wpdb->query("DROP TRIGGER IF EXISTS `{$sanitized_name}`");
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $wpdb->query( "DROP TRIGGER IF EXISTS `" . esc_sql( $sanitized_name ) . "`" );
         return array('success' => true, 'message' => "Trigger malicioso '{$sanitized_name}' eliminado de MySQL con éxito.");
     }
 

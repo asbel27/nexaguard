@@ -1602,7 +1602,8 @@ class NexaGuard_Scanner {
 
         // Auditoría de Triggers Maliciosos de MySQL (Sucuri SC Malware: triggers que recrean administradores en wp_users)
         if (isset($wpdb) && method_exists($wpdb, 'get_results')) {
-            $triggers = $wpdb->get_results("SHOW TRIGGERS LIKE '{$wpdb->prefix}users'");
+            $table_like = $wpdb->esc_like($wpdb->prefix . 'users');
+            $triggers = $wpdb->get_results($wpdb->prepare("SHOW TRIGGERS LIKE %s", $table_like));
             if ($triggers) {
                 foreach ($triggers as $trig) {
                     $trig_name = isset($trig->Trigger) ? $trig->Trigger : '';
