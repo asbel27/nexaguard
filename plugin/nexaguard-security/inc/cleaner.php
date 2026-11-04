@@ -74,31 +74,47 @@ class NexaGuard_Cleaner {
      * Crea un respaldo centralizado y protegido dentro de uploads/nexaguard-malware-scanner/backups/
      */
     public function create_file_backup($source_path) {
-        if (!file_exists($source_path) || is_dir($source_path)) {
+        if (empty($source_path) || !is_string($source_path)) {
+            return false;
+        }
+        $real_source = realpath($source_path);
+        if (!$real_source || !is_file($real_source)) {
+            return false;
+        }
+        // Salvaguarda estricta: el archivo a respaldar debe residir estrictamente dentro de la instalación de WordPress
+        if (!nexamasc_is_path_in_root($real_source)) {
             return false;
         }
         $this->ensure_backup_dir();
-        $safe_name = sanitize_file_name(basename($source_path));
-        $backup_file = $this->backup_dir . $safe_name . '.' . md5($source_path) . '.' . time() . '.bak';
-        return @copy($source_path, $backup_file);
+        $safe_name = sanitize_file_name(basename($real_source));
+        $backup_file = wp_normalize_path($this->backup_dir . $safe_name . '.' . md5($real_source) . '.' . time() . '.bak');
+        if (!nexamasc_is_dest_in_dir($backup_file, $this->backup_dir)) {
+            return false;
+        }
+        return @copy($real_source, $backup_file);
     }
 
     public function quarantine_file($relative_or_full_path) {
+        if (empty($relative_or_full_path) || !is_string($relative_or_full_path)) {
+            return array('success' => false, 'message' => 'Ruta de archivo no válida.');
+        }
+
         $root = nexamasc_get_root_path();
-        $raw_path = (strpos($relative_or_full_path, $root) === 0) ? $relative_or_full_path : (trailingslashit($root) . ltrim($relative_or_full_path, '/'));
+        $raw_path = (strpos($relative_or_full_path, trailingslashit($root)) === 0) 
+            ? $relative_or_full_path 
+            : (trailingslashit($root) . ltrim($relative_or_full_path, '/\\'));
         $real_path = realpath($raw_path);
 
-        if (!$real_path || !file_exists($real_path)) {
+        if (!$real_path || !is_file($real_path)) {
             return array('success' => false, 'message' => 'El archivo no existe en la ruta indicada: ' . esc_html($relative_or_full_path));
         }
 
-        $full_path = wp_normalize_path($real_path);
-        $abs_norm  = $root;
-
-        // Salvaguarda Anti Path-Traversal: la ruta debe residir estrictamente dentro de la instalación
-        if (strpos($full_path, $abs_norm) !== 0) {
+        // Salvaguarda Anti Path-Traversal y Sibling-Prefix: contención estricta en el directorio raíz de WordPress
+        if (!nexamasc_is_path_in_root($real_path)) {
             return array('success' => false, 'message' => 'Ruta de archivo no autorizada fuera de la instalación de WordPress.');
         }
+
+        $full_path = wp_normalize_path($real_path);
 
         // Salvaguarda: No permitir cuarentena de archivos del núcleo o archivos maestros
         $protected_basenames = array(
@@ -123,9 +139,14 @@ class NexaGuard_Cleaner {
             $this->fs_chmod($full_path, 0777);
         }
 
+        $this->ensure_quarantine_dir();
         $id = uniqid('q_');
         $dest_filename = $id . '_' . sanitize_file_name(basename($full_path)) . '.isolated';
-        $dest_path = $this->quarantine_dir . $dest_filename;
+        $dest_path = wp_normalize_path($this->quarantine_dir . $dest_filename);
+
+        if (!nexamasc_is_dest_in_dir($dest_path, $this->quarantine_dir)) {
+            return array('success' => false, 'message' => 'Ruta de cuarentena no válida.');
+        }
 
         // Copiar y luego eliminar original
         if (!@copy($full_path, $dest_path)) {
@@ -215,20 +236,19 @@ class NexaGuard_Cleaner {
         }
 
         $root = nexamasc_get_root_path();
-        $raw_path = (strpos($target, $root) === 0) ? $target : (trailingslashit($root) . ltrim($target, '/'));
+        $raw_path = (strpos($target, trailingslashit($root)) === 0) ? $target : (trailingslashit($root) . ltrim($target, '/\\'));
         $real_path = realpath($raw_path);
 
         if (!$real_path || !file_exists($real_path)) {
             return array('success' => true, 'message' => 'El elemento indicado ya no existe en el servidor.');
         }
 
-        $full_path = wp_normalize_path($real_path);
-        $abs_norm  = $root;
-
-        // Salvaguarda Anti Path-Traversal: la ruta debe residir estrictamente dentro de la instalación
-        if (strpos($full_path, $abs_norm) !== 0) {
+        // Salvaguarda Anti Path-Traversal y Sibling-Prefix: contención estricta en el directorio raíz de WordPress
+        if (!nexamasc_is_path_in_root($real_path)) {
             return array('success' => false, 'message' => 'Ruta de archivo no autorizada fuera de la instalación de WordPress.');
         }
+
+        $full_path = wp_normalize_path($real_path);
 
         // Salvaguarda: PROHIBIR terminantemente la eliminación forzada de archivos del Núcleo de WordPress
         $protected_basenames = array(
@@ -317,11 +337,16 @@ class NexaGuard_Cleaner {
      */
     private function clean_file_injection($filepath) {
         $root = nexamasc_get_root_path();
-        $raw_path = (strpos($filepath, $root) === 0) ? $filepath : (trailingslashit($root) . ltrim($filepath, '/'));
+        $raw_path = (strpos($filepath, trailingslashit($root)) === 0) ? $filepath : (trailingslashit($root) . ltrim($filepath, '/\\'));
         $real_path = realpath($raw_path);
 
         if (!$real_path || !file_exists($real_path)) {
             return array('success' => false, 'message' => 'El archivo no existe: ' . esc_html($filepath));
+        }
+
+        // Salvaguarda Anti Path-Traversal y Sibling-Prefix
+        if (!nexamasc_is_path_in_root($real_path)) {
+            return array('success' => false, 'message' => 'Ruta de archivo no autorizada fuera de la instalación de WordPress.');
         }
 
         $full_path = wp_normalize_path($real_path);
@@ -934,18 +959,16 @@ class NexaGuard_Cleaner {
         }
 
         $root = nexamasc_get_root_path();
-        $full_path = (strpos($config_file, $root) === 0) ? $config_file : (trailingslashit($root) . ltrim($config_file, '/'));
+        $full_path = (strpos($config_file, trailingslashit($root)) === 0) ? $config_file : (trailingslashit($root) . ltrim($config_file, '/\\'));
         $real_path = realpath($full_path);
-        $abs_norm = $root;
 
-        if (!$real_path || strpos(wp_normalize_path($real_path), $abs_norm) !== 0 || !file_exists($real_path)) {
+        if (!$real_path || !file_exists($real_path) || !nexamasc_is_path_in_root($real_path)) {
             return array('success' => true, 'message' => 'El archivo de configuración ya no existe o es inválido.');
         }
 
         // DIRECTRIZ OFICIAL WORDPRESS.ORG: Los plugins nunca deben escribir en wp-content/.
         // Si el archivo rogue .user.ini o php.ini reside en wp-content/, se elimina directamente con wp_delete_file()
-        $content_dir = nexamasc_get_content_path();
-        if (strpos(wp_normalize_path($real_path), $content_dir) === 0) {
+        if (nexamasc_is_path_in_content($real_path)) {
             wp_delete_file($real_path);
             return array('success' => true, 'message' => 'Archivo de configuración no autorizado dentro de wp-content eliminado exitosamente.');
         }
@@ -965,7 +988,7 @@ class NexaGuard_Cleaner {
                 : dirname($real_path) . '/' . ltrim($prepend_target, '/');
 
             $real_target = realpath($target_file);
-            if ($real_target && strpos(wp_normalize_path($real_target), $abs_norm) === 0 && file_exists($real_target)) {
+            if ($real_target && nexamasc_is_path_in_root($real_target) && file_exists($real_target)) {
                 $this->create_file_backup($real_target);
                 wp_delete_file($real_target);
             }
@@ -1243,19 +1266,37 @@ class NexaGuard_Cleaner {
     }
 
     /**
-     * Guarda un punto de restauración seguro antes de cualquier modificación
+     * Guarda una copia de respaldo forense protegida antes de cualquier modificación
      */
     public function create_snapshot($full_path, $action_name = 'Modificación') {
-        if (!file_exists($full_path) || is_dir($full_path)) {
+        if (empty($full_path) || !is_string($full_path)) {
+            return false;
+        }
+        $real_path = realpath($full_path);
+        if (!$real_path || !is_file($real_path)) {
             return false;
         }
 
-        $id = uniqid('rb_');
-        $dest_filename = $id . '_' . basename($full_path) . '.snapshot';
-        $dest_path = $this->backup_dir . $dest_filename;
+        // Salvaguarda Anti Path-Traversal y Sibling-Prefix: la ruta de origen debe residir estrictamente en la raíz de WordPress
+        if (!nexamasc_is_path_in_root($real_path)) {
+            return false;
+        }
 
-        if (!@copy($full_path, $dest_path)) {
-            $data = @file_get_contents($full_path);
+        $this->ensure_backup_dir();
+        $id = uniqid('rb_');
+        $safe_name = sanitize_file_name(basename($real_path));
+        $dest_filename = $id . '_' . $safe_name . '.snapshot';
+        $dest_path = wp_normalize_path($this->backup_dir . $dest_filename);
+
+        // Salvaguarda de destino: el archivo de respaldo debe residir estrictamente dentro del directorio de backups
+        if (!nexamasc_is_dest_in_dir($dest_path, $this->backup_dir)) {
+            return false;
+        }
+
+        $norm_full_path = wp_normalize_path($real_path);
+
+        if (!@copy($norm_full_path, $dest_path)) {
+            $data = @file_get_contents($norm_full_path);
             if ($data !== false) {
                 @file_put_contents($dest_path, $data);
             }

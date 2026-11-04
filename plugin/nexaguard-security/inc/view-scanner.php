@@ -9,27 +9,6 @@ $backup_history = get_option('nexaguard_backup_history', array());
 $cloud_cache = get_option('nexaguard_cloud_intel_cache', null);
 $cloud_ver = ($cloud_cache && !empty($cloud_cache['feed_version'])) ? $cloud_cache['feed_version'] : '2026.10';
 
-$license_data = get_option('nexaguard_license_data', null);
-$has_license = !empty($license_data) && !empty($license_data['key']);
-$is_free_license = $has_license && (
-    (!empty($license_data['plan_type']) && $license_data['plan_type'] === 'free') ||
-    (!empty($license_data['plan']) && (
-        stripos($license_data['plan'], 'gratuit') !== false ||
-        stripos($license_data['plan'], 'community') !== false ||
-        stripos($license_data['plan'], 'comunitaria') !== false ||
-        stripos($license_data['plan'], 'free') !== false
-    )) ||
-    (!empty($license_data['key']) && (
-        strpos($license_data['key'], 'NEXA-FREE-') === 0 ||
-        strpos($license_data['key'], 'NXG-FREE-') === 0 ||
-        strpos($license_data['key'], 'FREE-') === 0
-    ))
-);
-
-$days_left = ($has_license && !$is_free_license && isset($license_data['days_left'])) ? intval($license_data['days_left']) : 0;
-$is_expired = $has_license && !$is_free_license && (($license_data['status'] === 'expired') || $days_left <= 0);
-$is_expiring_soon = $has_license && !$is_free_license && !$is_expired && $days_left <= 7;
-$is_standard = !$has_license;
 $vigilance_active = (int) get_option('nexaguard_vigilance_active', 1);
 
 // WAF settings (integrado en la misma vista)
@@ -39,7 +18,7 @@ $settings = wp_parse_args(get_option('nexaguard_settings', array()), array(
     'disable_dir_browsing'  => true,
     'disallow_file_edit'    => true,
     'block_user_enumeration'=> true,
-    // Módulos Avanzados (activos únicamente con licencia PRO)
+    // Módulos de Cortafuegos y Blindaje Activo (100% disponibles bajo GPLv2)
     'disable_xmlrpc'        => false,
     'hide_wp_version'       => false,
     'waf_enabled'           => false,
@@ -88,7 +67,7 @@ $rollback_count = count($backup_history);
             </div>
         </div>
         <div class="nexaguard-header-actions" style="margin-left:auto; display:flex; align-items:center; gap:12px;">
-            <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:800; background:linear-gradient(135deg, #ffcf33 0%, #f59e0b 100%); color:#080e28; border:none; padding:8px 18px; border-radius:8px; box-shadow:0 0 16px rgba(245,158,11,0.35);">
+            <a href="https://www.nexaguards.com/#soporte" target="_blank" class="btn-ng btn-ng-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:800; background:linear-gradient(135deg, #ffcf33 0%, #f59e0b 100%); color:#080e28; border:none; padding:8px 18px; border-radius:8px; box-shadow:0 0 16px rgba(245,158,11,0.35);">
                 <span>⚡</span> NexaGuard PRO & Rescate 24/7 ↗
             </a>
         </div>
@@ -144,8 +123,8 @@ $rollback_count = count($backup_history);
         </button>
         <button type="button" class="ng-tab" data-tab="compare">
             <span class="ng-tab-icon">⚡</span>
-            <span class="ng-tab-label">NexaGuard PRO</span>
-            <span class="ng-tab-badge" style="background:rgba(255,207,51,0.18);color:#ffcf33;border:1px solid rgba(255,207,51,0.4);">UPGRADE</span>
+            <span class="ng-tab-label">Cloud & Soporte</span>
+            <span class="ng-tab-badge" style="background:rgba(255,207,51,0.18);color:#ffcf33;border:1px solid rgba(255,207,51,0.4);">SERVICIOS</span>
         </button>
     </div>
 
@@ -239,11 +218,11 @@ $rollback_count = count($backup_history);
                     <div style="flex: 1; min-width: 280px;">
                         <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">⚡ ¿Infección Compleja o Archivos del Núcleo Dañados?</span>
                         <h4 style="color: #ffffff; margin: 8px 0 4px; font-size: 1.1rem;">Desinfección Automática 1-Clic o Rescate Forense Experto</h4>
-                        <p style="color: #94a3b8; margin: 0; font-size: 0.88rem; line-height: 1.5;">Puedes poner en cuarentena o eliminar manualmente cada amenaza detectada en la lista inferior. Si requieres reconstrucción de archivos del núcleo sin riesgo de caída o blindaje continuo WAF, adquiere <strong>NexaGuard PRO</strong> o solicita una intervención urgente.</p>
+                        <p style="color: #94a3b8; margin: 0; font-size: 0.88rem; line-height: 1.5;">Puedes poner en cuarentena o eliminar manualmente cada amenaza detectada en la lista inferior. Si requieres reconstrucción de archivos del núcleo sin riesgo de caída o blindaje continuo WAF, puedes consultar nuestro equipo de asistencia forense especializada.</p>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 800; padding: 10px 20px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">⚡ Obtener NexaGuard PRO ↗</a>
-                        <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng" style="background: #334155; color: #fff; font-weight: 700; padding: 10px 18px; border-radius: 8px; text-decoration: none;">Rescate Forense ($89) ↗</a>
+                        <a href="https://www.nexaguards.com/#soporte" target="_blank" class="btn-ng" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 800; padding: 10px 20px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">Asistencia Forense Especializada ↗</a>
+                        <a href="https://www.nexaguards.com/#soporte" target="_blank" class="btn-ng" style="background: #334155; color: #fff; font-weight: 700; padding: 10px 18px; border-radius: 8px; text-decoration: none;">Rescate Forense ($89) ↗</a>
                     </div>
                 </div>
             <?php endif; ?>
@@ -354,7 +333,7 @@ $rollback_count = count($backup_history);
                 </p>
             </div>
             <div>
-                <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:800; background:linear-gradient(135deg, #ffcf33 0%, #f59e0b 100%); color:#080e28; border:none; padding:10px 20px; border-radius:8px; box-shadow:0 0 16px rgba(245,158,11,0.35);">
+                <a href="https://www.nexaguards.com/#soporte" target="_blank" class="btn-ng btn-ng-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:800; background:linear-gradient(135deg, #ffcf33 0%, #f59e0b 100%); color:#080e28; border:none; padding:10px 20px; border-radius:8px; box-shadow:0 0 16px rgba(245,158,11,0.35);">
                     <span>⚡</span> Solicitar Rescate Forense ($89) ↗
                 </a>
             </div>
@@ -388,7 +367,7 @@ $rollback_count = count($backup_history);
                                 <td><?php echo esc_html(size_format($q['size'])); ?></td>
                                 <td>
                                     <button type="button" class="btn-ng btn-ng-outline btn-restore-file" data-id="<?php echo esc_attr($qid); ?>">
-                                        ↩️ Restaurar
+                                        ℹ️ Guía de Reinstalación
                                     </button>
                                 </td>
                             </tr>
@@ -742,7 +721,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Cierra la puerta de enlace xmlrpc.php (ataques de amplificación DDoS) y oculta la versión de WP</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Incluido (GPLv2)</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Bloqueo Total + Cloaking de Versión</span>
@@ -756,7 +735,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Filtrado en milisegundos contra Inyecciones SQL, XSS, Path Traversal, RCE y bots maliciosos</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Incluido (GPLv2)</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ WAF L7 Activo en Tiempo Real</span>
@@ -770,7 +749,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Inspecciona el HTML de salida y neutraliza al vuelo popups fraudulentos y scripts Web3 maliciosos</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Incluido (GPLv2)</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Filtro en Vivo de Salida HTML</span>
@@ -784,7 +763,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Límite configurable de reintentos y encarcelamiento perimetral automático de atacantes</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Incluido (GPLv2)</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Auto-Jail Perimetral Autónomo</span>
@@ -798,7 +777,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Enlaces trampa invisibles para escáneres maliciosos con expulsión y baneo instantáneo</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Incluido (GPLv2)</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Honeypot Activo con Baneo Inmediato</span>
@@ -812,7 +791,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Sustituye la ruta por defecto por un slug privado personalizado (ej: /acceso-seguro/)</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ Ruta estándar wp-login.php</span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Slug Personalizable (GPLv2)</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Slug Secreto Personalizado</span>
@@ -826,7 +805,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">3 Plantillas corporativas (Deep Navy, Cyber Dark, Matrix), logo personalizado y aviso de seguridad</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ Pantalla estándar de WP</span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ 3 Plantillas Visuales (GPLv2)</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ 3 Plantillas Visuales + Logo Personalizado</span>
@@ -840,7 +819,7 @@ $rollback_count = count($backup_history);
                                 <div style="font-size: 0.8rem; color: #94a6d1;">Pantalla de mantenimiento blindada para desinfección forense sin perder posicionamiento en Google</div>
                             </td>
                             <td style="padding: 13px 14px; text-align: center;">
-                                <span style="display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255,69,96,0.12); color: #ff6b81; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(255,69,96,0.3);">✕ No disponible</span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.12); color: #3de8a4; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.3);">✓ Incluido (GPLv2)</span>
                             </td>
                             <td style="padding: 13px 14px; text-align: center; background: rgba(255,207,51,0.04); border-left: 1px solid rgba(255,207,51,0.25); border-right: 1px solid rgba(255,207,51,0.25);">
                                 <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(61,232,164,0.18); color: #3de8a4; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(61,232,164,0.4);">✓ Aislamiento Seguro en 1 Clic</span>
@@ -886,7 +865,7 @@ $rollback_count = count($backup_history);
                         <p style="margin: 0; color: #b6c4eb; font-size: 0.88rem;">Conecta tu sitio a NexaGuard Threat Intelligence Cloud desde solo $9.99/mes para recibir firmas actualizadas en tiempo real y asistencia técnica especializada.</p>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <a href="https://www.nexaguards.com/#planes" target="_blank" class="btn-ng btn-ng-primary" style="text-decoration: none; padding: 9px 20px; font-weight: 700;">
+                        <a href="https://www.nexaguards.com/#soporte" target="_blank" class="btn-ng btn-ng-primary" style="text-decoration: none; padding: 9px 20px; font-weight: 700;">
                             Conocer Más sobre NexaGuard Cloud ›
                         </a>
                     </div>

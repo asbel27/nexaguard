@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NexaGuard – Malware Scanner & Web Security
  * Description: Deep forensic malware scanner, core integrity monitor, webshell quarantine, and hardened perimeter security defense for WordPress sites.
- * Version: 1.5.8
+ * Version: 1.5.9
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: NexaGuard Cybersecurity Team
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Constantes oficiales recomendadas por WordPress.org (Prefijo de Plugin NEXAMASC)
-define('NEXAMASC_VERSION', '1.5.8');
+define('NEXAMASC_VERSION', '1.5.9');
 define('NEXAMASC_PLUGIN_FILE', __FILE__);
 define('NEXAMASC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('NEXAMASC_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -97,6 +97,77 @@ if (!function_exists('nexamasc_get_includes_path')) {
     function nexamasc_get_includes_path() {
         $inc = defined('WPINC') ? WPINC : 'wp-includes';
         return wp_normalize_path(trailingslashit(nexamasc_get_root_path()) . $inc);
+    }
+}
+
+/**
+ * Verificación estricta de límites de ruta para prevenir Path Traversal y ataques Sibling-Prefix
+ */
+if (!function_exists('nexamasc_is_path_in_dir')) {
+    function nexamasc_is_path_in_dir($path, $allowed_dir) {
+        if (empty($path) || !is_string($path) || empty($allowed_dir) || !is_string($allowed_dir)) {
+            return false;
+        }
+        $real_path = realpath($path);
+        if (!$real_path) {
+            return false;
+        }
+        $real_dir = realpath($allowed_dir);
+        if (!$real_dir) {
+            return false;
+        }
+
+        $norm_path = wp_normalize_path($real_path);
+        $norm_dir  = trailingslashit(wp_normalize_path($real_dir));
+
+        if (strpos($norm_path . '/', $norm_dir) === 0) {
+            return true;
+        }
+        return false;
+    }
+}
+
+if (!function_exists('nexamasc_is_path_in_root')) {
+    function nexamasc_is_path_in_root($path) {
+        return nexamasc_is_path_in_dir($path, nexamasc_get_root_path());
+    }
+}
+
+if (!function_exists('nexamasc_is_path_in_content')) {
+    function nexamasc_is_path_in_content($path) {
+        return nexamasc_is_path_in_dir($path, nexamasc_get_content_path());
+    }
+}
+
+if (!function_exists('nexamasc_is_path_in_plugins')) {
+    function nexamasc_is_path_in_plugins($path) {
+        return nexamasc_is_path_in_dir($path, nexamasc_get_plugins_path());
+    }
+}
+
+if (!function_exists('nexamasc_is_dest_in_dir')) {
+    function nexamasc_is_dest_in_dir($dest_path, $allowed_dir) {
+        if (empty($dest_path) || !is_string($dest_path) || empty($allowed_dir) || !is_string($allowed_dir)) {
+            return false;
+        }
+        $real_dir = realpath($allowed_dir);
+        if (!$real_dir) {
+            return false;
+        }
+        if (file_exists($dest_path)) {
+            return nexamasc_is_path_in_dir($dest_path, $allowed_dir);
+        }
+        $parent = dirname($dest_path);
+        while (!empty($parent) && !file_exists($parent) && $parent !== dirname($parent)) {
+            $parent = dirname($parent);
+        }
+        $real_parent = realpath($parent);
+        if (!$real_parent) {
+            return false;
+        }
+        $norm_parent = trailingslashit(wp_normalize_path($real_parent));
+        $norm_dir    = trailingslashit(wp_normalize_path($real_dir));
+        return (strpos($norm_parent, $norm_dir) === 0);
     }
 }
 
@@ -207,7 +278,7 @@ class NexaGuard_Plugin {
     public function plugin_action_links($links) {
         $custom_links = array(
             '<a href="' . esc_url(admin_url('admin.php?page=nexaguard-security')) . '">' . __('Ajustes', 'nexaguard-malware-scanner') . '</a>',
-            '<a href="https://www.nexaguards.com/#planes" target="_blank" style="color:#d97706; font-weight:700;">' . __('NexaGuard PRO ↗', 'nexaguard-malware-scanner') . '</a>'
+            '<a href="https://www.nexaguards.com/" target="_blank" style="color:#d97706; font-weight:700;">' . __('Sitio Oficial ↗', 'nexaguard-malware-scanner') . '</a>'
         );
         return array_merge($custom_links, $links);
     }
@@ -597,23 +668,10 @@ class NexaGuard_Plugin {
             $prev_data = get_option('nexaguard_license_data', array());
             $prev_key = !empty($prev_data['key']) ? $prev_data['key'] : '';
 
-            // 1. Borrar de inmediato en la base de datos local de WordPress (garantía instantánea)
+            // 1. Borrar clave de API en la base de datos local
             delete_option('nexaguard_license_data');
             delete_transient('nexaguard_license_sync_lock');
             delete_transient('nexaguard_license_revoked_notice');
-
-            // Pausar módulos PRO del WAF y restablecer sólo las 4 reglas básicas
-            $reset_settings = wp_parse_args(get_option('nexaguard_settings', array()), array());
-            $reset_settings['waf_enabled']            = false;
-            $reset_settings['anti_clearfake']         = false;
-            $reset_settings['brute_force_protection'] = false;
-            $reset_settings['waf_auto_jail']          = false;
-            $reset_settings['emergency_lockdown']     = false;
-            $reset_settings['hide_backend']           = false;
-            $reset_settings['tripwire_enabled']       = false;
-            $reset_settings['admin_login_alerts']     = false;
-            $reset_settings['login_custom_design']    = false;
-            update_option('nexaguard_settings', $reset_settings);
 
             // 2. Notificar a la nube de NexaGuard para liberar este dominio
             if (!empty($prev_key)) {
@@ -654,44 +712,10 @@ class NexaGuard_Plugin {
             $data = json_decode($body, true);
 
             if ($code === 200 && $data && (!empty($data['valid']) || (isset($data['status']) && $data['status'] === 'expired'))) {
-                $is_free = (!empty($data['plan_type']) && $data['plan_type'] === 'free') ||
-                           (!empty($data['plan']) && (
-                               stripos($data['plan'], 'gratuit') !== false ||
-                               stripos($data['plan'], 'community') !== false ||
-                               stripos($data['plan'], 'comunitaria') !== false ||
-                               stripos($data['plan'], 'free') !== false
-                           )) ||
-                           strpos($license_key, 'NEXA-FREE-') === 0 ||
-                           strpos($license_key, 'NXG-FREE-') === 0 ||
-                           strpos($license_key, 'FREE-') === 0;
-
-                if ($is_free) {
-                    $data['plan_type'] = 'free';
-                    $data['expires_formatted'] = 'Sin Vencimiento (Comunidad)';
-                }
-
                 $data['key'] = $license_key;
                 update_option('nexaguard_license_data', $data);
                 delete_transient('nexaguard_license_sync_lock');
                 delete_transient('nexaguard_license_revoked_notice');
-
-                // Si la licencia es PRO (no gratuita) y activa, activar funciones avanzadas del WAF
-                if (!$is_free && !empty($data['valid']) && (!isset($data['status']) || $data['status'] === 'active' || $data['status'] === 'expiring_soon')) {
-                    $pro_settings = wp_parse_args(get_option('nexaguard_settings', array()), array());
-                    $pro_settings['waf_enabled']            = true;
-                    $pro_settings['anti_clearfake']         = true;
-                    $pro_settings['brute_force_protection'] = true;
-                    $pro_settings['waf_auto_jail']          = true;
-                    $pro_settings['disable_xmlrpc']         = true;
-                    $pro_settings['hide_wp_version']        = true;
-                    $pro_settings['protect_system_files']   = true;
-                    $pro_settings['admin_login_alerts']     = true;
-                    $pro_settings['tripwire_enabled']       = true;
-                    update_option('nexaguard_settings', $pro_settings);
-
-                    $cleaner = new NexaGuard_Cleaner();
-                    $cleaner->protect_system_files(true);
-                }
 
                 wp_send_json_success($data);
                 return;
@@ -706,19 +730,6 @@ class NexaGuard_Plugin {
             delete_option('nexaguard_license_data');
             delete_transient('nexaguard_license_sync_lock');
             delete_transient('nexaguard_license_revoked_notice');
-
-            // Pausar módulos PRO en caso de revocación
-            $reset_settings = wp_parse_args(get_option('nexaguard_settings', array()), array());
-            $reset_settings['waf_enabled']            = false;
-            $reset_settings['anti_clearfake']         = false;
-            $reset_settings['brute_force_protection'] = false;
-            $reset_settings['waf_auto_jail']          = false;
-            $reset_settings['emergency_lockdown']     = false;
-            $reset_settings['hide_backend']           = false;
-            $reset_settings['tripwire_enabled']       = false;
-            $reset_settings['admin_login_alerts']     = false;
-            $reset_settings['login_custom_design']    = false;
-            update_option('nexaguard_settings', $reset_settings);
 
             wp_send_json_error(array(
                 'message' => $error_message,

@@ -5,7 +5,7 @@ Tags: security, malware scanner, malware cleaner, anti malware, firewall
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.8
+Stable tag: 1.5.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,8 +22,8 @@ NexaGuard uses an optimized heuristic engine and cryptographic checksums to audi
 * **Deep Forensic Scanner:** Audits the root directory, themes, plugins, mu-plugins, uploads, and wp_options for malicious code and spam injections (such as Japanese keyword hack and gambling SEO spam).
 * **Detect ClearFake, EtherHiding & ClickFix:** Flags injected base64 scripts, malicious blockchain RPC calls, and fake captcha popups.
 * **Core Integrity Monitor (Sentinel):** Compares core WordPress files directly against official WordPress.org cryptographic hashes to flag unauthorized modifications instantly.
-* **Malware Quarantine & Eradication:** Safely isolates infected files into a protected quarantine directory with rollback capabilities.
-* **Perimeter Hardening:** Disables PHP execution in `/uploads/`, blocks directory browsing (Options -Indexes), disables file editing in the admin panel, and prevents unauthorized user enumeration.
+* **Malware Quarantine & Isolation:** Safely isolates suspicious or infected files into a protected quarantine directory with execution disabled, preserving forensic evidence.
+* **Perimeter Hardening & WAF:** Disables PHP execution in `/uploads/`, blocks directory browsing (Options -Indexes), disables file editing in the admin panel, prevents user enumeration, and inspects incoming requests.
 
 == Installation ==
 
@@ -38,10 +38,10 @@ NexaGuard uses an optimized heuristic engine and cryptographic checksums to audi
 No. NexaGuard is built with performance in mind. The forensic scanner processes files in controlled batches with dynamic pauses to keep CPU and memory usage minimal.
 
 = What happens if NexaGuard detects an infected file? =
-You can isolate the file in a hardened quarantine directory or clean the malicious injection. A backup is created before any modification so you can roll back at any time.
+You can safely isolate the infected file into a protected quarantine directory (with execution strictly blocked via .htaccess) or neutralize unauthorized configuration files. A forensic backup is stored securely in your uploads directory for reference.
 
 = Does this plugin require an external service to work? =
-No. The core functionality—local forensic scanner, WordPress core integrity verification, quarantine, and essential perimeter hardening rules—is 100% free and runs locally on your server. Optionally, you may enable Cloud Threat Intelligence in settings to receive updated malware signatures from NexaGuard Cloud.
+No. The core functionality—local forensic scanner, WordPress core integrity verification, quarantine, and perimeter hardening rules—is 100% free, runs locally on your server under GPLv2, and does not require any license key. Optionally, you may enable Cloud Threat Intelligence in settings to receive updated malware signatures from NexaGuard Cloud.
 
 == External Services ==
 
@@ -79,6 +79,11 @@ This plugin can connect to the following external services:
 
 == Changelog ==
 
+= 1.5.9 =
+* Strict path boundary validation: added comprehensive checks against sibling-prefix bypasses and directory escapes across all quarantine, backup, and neutralization functions.
+* 100% unlocked WAF and defense modules: made all perimeter rules, brute force defense, and WAF inspection fully accessible and configurable locally under GPLv2 without any license gating.
+* Aligned documentation with security best practices: updated quarantine descriptions to accurately describe forensic isolation and guidance to reinstall clean plugins/themes from WordPress.org.
+
 = 1.5.8 =
 * Standardized directory and path resolution using official WordPress functions (`plugin_dir_path()`, `plugin_dir_url()`, `get_home_path()`, `wp_upload_dir()`).
 * Replaced all internal constants (`WP_PLUGIN_DIR`, `WP_CONTENT_DIR`, `WPINC`, `ABSPATH`) with WordPress core API path handlers.
@@ -104,7 +109,7 @@ This plugin can connect to the following external services:
 * Compatibility update for WordPress 7.1 and PHP 8.2+.
 * Intuitive tab reorganization: Core Sentinel and 24H Vigilance positioned alongside Forensic Scanner.
 * Enhanced heuristic detection for ClearFake, ClickFix, and Web3 smart contract injectors.
-* Optimized quarantine backup and rollback management.
+* Optimized quarantine backup and forensic evidence management.
 
 = 1.5.0 =
 * Initial release of the unified NexaGuard Security Suite.

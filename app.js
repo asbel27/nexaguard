@@ -394,6 +394,11 @@ function createApp({ store, scanner, waf, sentinel, config }) {
   const routes = [];
   const route = (method, pattern, role, fn) => routes.push({ method, re: new RegExp('^' + pattern.replace(/:[a-z]+/gi, '([^/]+)') + '$'), role, fn });
 
+  // Monitoreo y Keep-Alive (Previene el reposo en Render / UptimeRobot)
+  route('GET', '/health', null, (ctx) => {
+    send(ctx.res, 200, { ok: true, status: 'UP', uptime: Math.floor(process.uptime()), timestamp: Date.now() });
+  });
+
   // Públicas
   route('GET', '/api/plans', null, (ctx) => send(ctx.res, 200, { plans: Object.values(PLANS).map(planView), paymentText: (db.settings && db.settings.paymentInstructions) || DEFAULT_PAYMENT_TEXT }));
   route('GET', '/api/me', null, (ctx) => {

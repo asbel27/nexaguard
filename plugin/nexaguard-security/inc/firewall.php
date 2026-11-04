@@ -24,7 +24,7 @@ class NexaGuard_Firewall {
             'disable_dir_browsing'  => true,
             'disallow_file_edit'    => false, // Opt-in por el administrador para no alterar el comportamiento global por defecto
             'block_user_enumeration'=> true,
-            // Módulos Avanzados PRO (inactivos en versión gratuita sin licencia)
+            // Módulos de Cortafuegos y Blindaje Perimetral (100% disponibles bajo GPLv2)
             'disable_xmlrpc'        => false,
             'hide_wp_version'       => false,
             'waf_enabled'           => false,

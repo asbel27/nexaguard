@@ -2060,7 +2060,7 @@ jQuery(document).ready(function ($) {
     updateLoginPreview();
 
     /* =========================================================================
-     * AUTO-ACTUALIZADOR DE NEXAGUARD (COMPROBACIÓN Y UPGRADE EN VIVO)
+     * AUTO-ACTUALIZADOR DE NEXAGUARD (COMPROBACIÓN Y ACTUALIZACIÓN EN VIVO)
      * ========================================================================= */
     $(document).on('click', '#btn-check-plugin-update', function (e) {
         e.preventDefault();

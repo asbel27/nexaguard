@@ -211,15 +211,17 @@ function createServer(opts = {}) {
 
 /* ---- Latido (keep-alive) ---- */
 function startHeartbeat(store) {
-  // Render: auto-ping cada 14 min para evitar que el servicio se duerma
-  const selfUrl = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL;
-  if (selfUrl) {
-    const url = selfUrl.replace(/\/$/, '') + '/health';
-    setInterval(async () => { try { await fetch(url); } catch {} }, 14 * 60 * 1000).unref();
-    console.log('  Latido Render:   cada 14 min → ' + url);
-  } else {
-    console.log('  Latido Render:   inactivo (define RENDER_EXTERNAL_URL o SELF_URL)');
-  }
+  // Render: auto-ping para evitar que el servicio se duerma en el free tier
+  const selfUrl = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL || 'https://www.nexaguards.com';
+  const url = selfUrl.replace(/\/$/, '') + '/health';
+  // Ping cada 8 minutos (Render suspende a los 15 min de inactividad)
+  setInterval(async () => {
+    try {
+      await fetch(url);
+    } catch {}
+  }, 8 * 60 * 1000).unref();
+  console.log('  Latido Render:   cada 8 min → ' + url);
+
   // Supabase: ping cada 4 h para evitar pausa por inactividad (free tier)
   setInterval(() => { store.ping().catch(() => {}); }, 4 * 3600 * 1000).unref();
   console.log('  Latido Supabase: cada 4 h');
