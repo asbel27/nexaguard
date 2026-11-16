@@ -1535,7 +1535,7 @@ a[data-go],a[data-act]{cursor:pointer}
     <a href="#plugin">Plugin WordPress</a>
     <a href="#planes">Precios</a>
   </nav>
-  <div class="health" aria-hidden="true"><span>Salud del sitio</span><div class="hbar"><i id="hFill"></i></div><b id="hPct">8%</b><em id="hState">Infectado</em></div>
+  <div class="health" aria-hidden="true"><span>Salud del sitio</span><div class="hbar"><i id="hFill"></i></div><b id="hPct">8%</b></div>
   <div class="nav-r">
     <button type="button" class="btn btn-o sm" id="navOpenMail" title="Escríbenos directamente" aria-label="Enviar correo"><svg class="ic" style="width:14px;height:14px;margin-right:4px;vertical-align:-2px"><use href="#i-mail"/></svg><span class="nav-btn-txt">Enviar correo</span></button>
     <button type="button" class="btn btn-o sm" id="navPanel">Ingresar</button>
@@ -3118,7 +3118,7 @@ var L = { secs: [], hs: { top: 0, h: 1, dist: 0 }, st: { top: 0, h: 1 }, cmp: { 
 var mouse = { x: 0, y: 0 };
 
 var heroFade = $$('[data-hfade]');
-var nav = $('#nav'), hFill = $('#hFill'), hPct = $('#hPct'), hState = $('#hState');
+var nav = $('#nav'), hFill = $('#hFill'), hPct = $('#hPct');
 var hs = $('#servicios'), hsTrack = $('#hsTrack'), hsProg = $('#hsProg'), pnls = $$('.pnl'), pnlC = [];
 var st = $('#proceso'), stItems = $$('.st-item'), hps = $$('.hp'), stBar = $('#stBar'), hudTitle = $('#hudTitle');
 var HUD = ['triage.log', 'respaldo.log', 'limpieza.diff', 'blindaje.log'];
@@ -3503,7 +3503,6 @@ function frame(now) {
     var col = 'hsl(' + Math.round(gp * 128) + ' 90% 58%)';
     hFill.style.width = pct + '%'; hFill.style.background = col;
     hPct.textContent = pct + '%';
-    hState.textContent = gp < .3 ? 'Infectado' : gp < .75 ? 'Reparando' : 'Protegido';
     nav.style.setProperty('--prog', gp.toFixed(3));
     nav.style.setProperty('--pcol', col);
   }
