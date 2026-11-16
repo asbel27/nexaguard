@@ -23,7 +23,7 @@ const { createApp } = require('./app.js');
 const { createWaf } = require('./waf.js');
 const { createSentinel } = require('./sentinel.js');
 
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.zip': 'application/zip', '.xml': 'application/xml; charset=utf-8' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.zip': 'application/zip', '.xml': 'application/xml; charset=utf-8', '.exe': 'application/vnd.microsoft.portable-executable' };
 const SEC = { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'same-origin' };
 // Se permite el dominio de PayPal (para su botón de pago) aunque no esté configurado:
 // si no hay credenciales, la página nunca carga ese script, así que no baja la seguridad.
@@ -114,11 +114,13 @@ function createServer(opts = {}) {
     if (p === '/panel' || p === '/panel/') p = '/panel.html';
 
     // Si la ruta solicitada es un directorio existente sin barra final, redirigir con 301 para consistencia canónica
-    const candidatePath = path.normalize(path.join(staticDir, p));
-    if (!p.endsWith('/') && fs.existsSync(candidatePath) && fs.statSync(candidatePath).isDirectory()) {
-      res.writeHead(301, { 'Location': p + '/', 'Cache-Control': 'public, max-age=86400' });
-      return res.end();
-    }
+    try {
+      const candidatePath = path.normalize(path.join(staticDir, p));
+      if (!p.endsWith('/') && fs.existsSync(candidatePath) && fs.statSync(candidatePath).isDirectory()) {
+        res.writeHead(301, { 'Location': p + '/', 'Cache-Control': 'public, max-age=86400' });
+        return res.end();
+      }
+    } catch {}
 
     if (p.endsWith('/')) p += 'index.html';
     let file = path.normalize(path.join(staticDir, p));
@@ -128,7 +130,10 @@ function createServer(opts = {}) {
     // Blindaje de archivos estáticos: Bloqueo estricto de dotfiles, archivos de entorno y extensiones peligrosas
     const baseName = path.basename(file).toLowerCase();
     const ext = path.extname(file).toLowerCase();
-    const forbiddenExts = ['.env', '.git', '.sql', '.bak', '.php', '.sh', '.py', '.bat', '.cmd', '.exe', '.yml', '.yaml', '.log'];
+    const isDownloadsDir = file.startsWith(path.normalize(path.join(staticDir, 'downloads')));
+    const forbiddenExts = isDownloadsDir
+      ? ['.env', '.git', '.sql', '.bak', '.php', '.sh', '.py', '.bat', '.cmd', '.yml', '.yaml', '.log']
+      : ['.env', '.git', '.sql', '.bak', '.php', '.sh', '.py', '.bat', '.cmd', '.exe', '.yml', '.yaml', '.log'];
     if (baseName.startsWith('.') || forbiddenExts.includes(ext) || (ext === '.json' && baseName !== 'info.json')) {
       return sendJson(res, 403, { error: 'Acceso denegado por política de seguridad' });
     }
@@ -160,6 +165,10 @@ function createServer(opts = {}) {
         return sendJson(res, 404, { error: 'No encontrado' });
       }
       const h = Object.assign({ 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' }, SEC);
+      if (isDownloadsDir) {
+        h['Content-Disposition'] = `attachment; filename="${path.basename(file)}"`;
+        h['Cache-Control'] = 'public, max-age=3600';
+      }
       if (path.extname(file) === '.html') h['Cache-Control'] = 'no-cache, must-revalidate';
       if (path.basename(file) === 'panel.html') { h['Content-Security-Policy'] = PANEL_CSP; h['Cache-Control'] = 'no-store'; }
       res.writeHead(200, h); res.end(data);
@@ -167,43 +176,57 @@ function createServer(opts = {}) {
   }
 
   const server = http.createServer(async (req, res) => {
-    const url = req.url.split('?')[0];
+    try {
+      const url = req.url.split('?')[0];
 
-    // 0. Infraestructura crítica: robots.txt, sitemap.xml, favicon y health check NUNCA pasan por el WAF
-    if (url === '/robots.txt' || url === '/sitemap.xml' || url === '/favicon.ico' || url === '/health') {
-      if (req.method === 'GET' || req.method === 'HEAD') {
-        if (url === '/health') return sendJson(res, 200, { ok: true, v: '2.1.3' });
-        return serveStatic(req, res);
+      // 0. Infraestructura crítica: robots.txt, sitemap.xml, favicon y health check NUNCA pasan por el WAF
+      if (url === '/robots.txt' || url === '/sitemap.xml' || url === '/favicon.ico' || url === '/health') {
+        if (req.method === 'GET' || req.method === 'HEAD') {
+          if (url === '/health') return sendJson(res, 200, { ok: true, v: '2.1.3' });
+          return serveStatic(req, res);
+        }
+      }
+
+      // 1. Escudo Perimetral WAF (NexaGuard Web Defense): Inspección en tiempo real
+      if (waf.inspect(req, res)) return;
+      if (url.startsWith('/api/')) { if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); } return app.handle(req, res); }
+      if (req.method === 'OPTIONS') { if (!corsOk(req, res)) return sendJson(res, 403, { error: 'Origen no permitido' }); res.writeHead(204); return res.end(); }
+      if (req.method === 'GET' || req.method === 'HEAD') return serveStatic(req, res);
+      if (req.method !== 'POST' || url !== '/scan') return sendJson(res, 404, { error: 'No encontrado' });
+      if (!corsOk(req, res)) return sendJson(res, 403, { t: 'error', message: 'Origen no permitido.' });
+
+      let raw = '';
+      req.on('data', d => { raw += d; if (raw.length > 4096) req.destroy(); });
+      req.on('end', async () => {
+        try {
+          let body; try { body = JSON.parse(raw || '{}'); } catch { return sendJson(res, 400, { t: 'error', message: 'Petición no válida.' }); }
+          if (body.consent !== true) return sendJson(res, 400, { t: 'error', message: 'Debes confirmar que eres el propietario del sitio o que tienes autorización para analizarlo.' });
+          const target = parseTarget(body.url);
+          if (target.error) return sendJson(res, 400, { t: 'error', message: target.error });
+          const ip = clientIp(req), list = (hits.get(ip) || []).filter(t => t > Date.now() - 3600e3);
+          if (list.length >= CFG.ratePerHour) return sendJson(res, 429, { t: 'error', message: 'Alcanzaste el límite de análisis por hora. Inténtalo más tarde.' });
+          if (running >= CFG.maxConcurrent) return sendJson(res, 503, { t: 'error', message: 'El escáner está ocupado. Inténtalo de nuevo en un minuto.' });
+          list.push(Date.now()); hits.set(ip, list); running++;
+          res.writeHead(200, Object.assign({ 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' }, SEC));
+          let aborted = false; res.on('close', () => { if (!res.writableEnded) aborted = true; });
+          const emit = o => { if (!aborted && !res.writableEnded) res.write(JSON.stringify(o) + '\n'); };
+          emit({ t: 'hello', target: target.base });
+          try { await runScan(target, emit, () => aborted); }
+          catch (e) { if (e.message !== 'aborted') { console.error('scan error:', e); emit({ t: 'error', message: 'Ocurrió un error inesperado durante el análisis.' }); } }
+          finally { running--; if (!res.writableEnded) res.end(); }
+        } catch (innerErr) {
+          console.error('[Scan Request Error]', innerErr);
+          if (!res.headersSent && !res.writableEnded) {
+            sendJson(res, 500, { error: 'Error interno del servidor' });
+          }
+        }
+      });
+    } catch (err) {
+      console.error('[Fatal Server Request Error]', req.method, req.url, err);
+      if (!res.headersSent && !res.writableEnded) {
+        sendJson(res, 500, { error: 'Error interno del servidor' });
       }
     }
-
-    // 1. Escudo Perimetral WAF (NexaGuard Web Defense): Inspección en tiempo real
-    if (waf.inspect(req, res)) return;
-    if (url.startsWith('/api/')) { if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); } return app.handle(req, res); }
-    if (req.method === 'OPTIONS') { if (!corsOk(req, res)) return sendJson(res, 403, { error: 'Origen no permitido' }); res.writeHead(204); return res.end(); }
-    if (req.method === 'GET' || req.method === 'HEAD') return serveStatic(req, res);
-    if (req.method !== 'POST' || url !== '/scan') return sendJson(res, 404, { error: 'No encontrado' });
-    if (!corsOk(req, res)) return sendJson(res, 403, { t: 'error', message: 'Origen no permitido.' });
-
-    let raw = '';
-    req.on('data', d => { raw += d; if (raw.length > 4096) req.destroy(); });
-    req.on('end', async () => {
-      let body; try { body = JSON.parse(raw || '{}'); } catch { return sendJson(res, 400, { t: 'error', message: 'Petición no válida.' }); }
-      if (body.consent !== true) return sendJson(res, 400, { t: 'error', message: 'Debes confirmar que eres el propietario del sitio o que tienes autorización para analizarlo.' });
-      const target = parseTarget(body.url);
-      if (target.error) return sendJson(res, 400, { t: 'error', message: target.error });
-      const ip = clientIp(req), list = (hits.get(ip) || []).filter(t => t > Date.now() - 3600e3);
-      if (list.length >= CFG.ratePerHour) return sendJson(res, 429, { t: 'error', message: 'Alcanzaste el límite de análisis por hora. Inténtalo más tarde.' });
-      if (running >= CFG.maxConcurrent) return sendJson(res, 503, { t: 'error', message: 'El escáner está ocupado. Inténtalo de nuevo en un minuto.' });
-      list.push(Date.now()); hits.set(ip, list); running++;
-      res.writeHead(200, Object.assign({ 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' }, SEC));
-      let aborted = false; res.on('close', () => { if (!res.writableEnded) aborted = true; });
-      const emit = o => { if (!aborted && !res.writableEnded) res.write(JSON.stringify(o) + '\n'); };
-      emit({ t: 'hello', target: target.base });
-      try { await runScan(target, emit, () => aborted); }
-      catch (e) { if (e.message !== 'aborted') { console.error('scan error:', e); emit({ t: 'error', message: 'Ocurrió un error inesperado durante el análisis.' }); } }
-      finally { running--; if (!res.writableEnded) res.end(); }
-    });
   });
   server.requestTimeout = 0; server.headersTimeout = 20000; server.keepAliveTimeout = 5000;
   return { server, app, store, waf, sentinel };
